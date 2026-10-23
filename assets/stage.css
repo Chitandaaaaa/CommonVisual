@@ -1,0 +1,483 @@
+/* ============================================================
+   CommonVisual · Gather 动态演示页（精简版 / 白底）
+   设计目标：只保留动态舞台，视觉全部让位给数据流动画
+   ============================================================ */
+
+:root {
+  --bg:        #f4f6fb;
+  --panel:    #ffffff;
+  --line:     #e5e8f1;
+  --line-2:   #d3d8e6;
+  --tx:       #161b2e;
+  --tx-2:     #5f6780;
+  --tx-3:     #939bb2;
+
+  --accent:   #6d28d9;
+  --accent-2: #7c3aed;
+  --accent-soft: rgba(109, 40, 217, .08);
+
+  /* 控制条中性色：低存在感，白灰体系 */
+  --ctl-ink:   #6b7488;   /* 播放键 / 图标主体 */
+  --ctl-ink-2: #7d8699;   /* 悬停 */
+  --ctl-track: #e6e9f0;   /* 进度条轨道 */
+  --ctl-fill:  #8b93a6;   /* 进度条已播放段 */
+
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  color: var(--tx);
+  background:
+    radial-gradient(900px 460px at 80% -10%, #efe9ff 0%, rgba(239,233,255,0) 60%),
+    radial-gradient(760px 420px at 6% 6%, #e4f1fd 0%, rgba(228,241,253,0) 58%),
+    var(--bg);
+  background-attachment: fixed;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+/* ───────────── 顶栏 ───────────── */
+.hd {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 20;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 30px;
+}
+.hd h1 {
+  margin: 0;
+  font-size: 40px; font-weight: 700; letter-spacing: -.03em;
+  line-height: 1;
+  color: var(--tx);
+}
+
+/* ───────────── 舞台 ───────────── */
+.stagewrap {
+  position: relative; z-index: 10;
+  height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 72px 30px 142px;
+}
+.stagebox {
+  flex: 1;
+  width: 100%;
+  max-width: 1280px;
+  min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+#stage { width: 100%; height: 100%; max-height: 100%; display: block; }
+
+/* ───────────── 字幕（置于控制条上方，居中） ───────────── */
+.caption {
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+  width: 100%;
+}
+.cap-text {
+  font-size: 13.5px; color: var(--tx-2);
+  flex: 0 1 auto; min-width: 0;
+  text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cap-text b { color: var(--tx); font-weight: 600; }
+/* 数据字母 = 数据块的缩小版，颜色与画面里的块一一对应 */
+.cap-text em {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 17px; height: 17px; border-radius: 4px;
+  font-style: normal; font-family: var(--mono);
+  font-size: 10.5px; font-weight: 700; line-height: 1;
+  color: #fff; vertical-align: 1.3px;
+  margin: 0 1px;
+}
+.cap-text .cA { background: #7c3aed; }
+.cap-text .cB { background: #0891b2; }
+.cap-text .cC { background: #059669; }
+.cap-text .cD { background: #d97706; }
+/* rank 编号与它持有的那段数据同色，一眼对上 */
+.cap-text .r0 { background: #7c3aed; }
+.cap-text .r1 { background: #0891b2; }
+.cap-text .r2 { background: #059669; }
+.cap-text .r3 { background: #d97706; }
+/* 整个 "rankN" 做成一个胶囊，宽度随内容 */
+.cap-text em.rk {
+  width: auto; min-width: 17px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 9.5px; letter-spacing: .01em;
+}
+
+/* ───────────── 控制条 ───────────── */
+.bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  display: flex; justify-content: center;
+  padding: 0 30px 24px;
+  pointer-events: none;
+}
+.bar-stack {
+  pointer-events: auto;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 14px;
+  max-width: 1200px; width: 100%;
+}
+
+/* 面板：两行 —— 上进度条，下按钮组。无外框 */
+.bar-panel {
+  pointer-events: auto;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+/* 进度条：六段，每段对应一个步骤；段内按该步进度填充 */
+.track {
+  position: relative;
+  width: 100%; height: 16px;
+}
+.segs {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; gap: 5px;
+}
+.seg {
+  flex: 1 1 0; min-width: 0;
+  height: 3px; border-radius: 2px;
+  background: var(--ctl-track);
+  overflow: hidden;
+  transition: height .22s cubic-bezier(.45, .05, .55, .95);
+}
+.seg i {
+  display: block; height: 100%; width: 0;
+  border-radius: 2px;
+  background: var(--ctl-fill);
+}
+.track:hover .seg,
+.track:active .seg { height: 4px; }
+
+/* range 只作为交互层，视觉全部交给 .segs */
+#scrub {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; margin: 0; padding: 0;
+  -webkit-appearance: none; appearance: none;
+  background: transparent; cursor: pointer;
+  opacity: 0;
+}
+#scrub::-webkit-slider-runnable-track { height: 100%; background: transparent; border: 0; }
+#scrub::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 1px; height: 1px; background: transparent; border: 0;
+}
+#scrub::-moz-range-track { height: 100%; background: transparent; border: 0; }
+#scrub::-moz-range-thumb { width: 1px; height: 1px; border: 0; background: transparent; }
+
+/* 按钮组：居中排列 */
+.ctrls {
+  display: flex; align-items: center; justify-content: center;
+  gap: 26px;
+}
+
+/* 通用按钮 */
+.ic {
+  display: grid; place-items: center;
+  border: 0; padding: 0; background: none;
+  color: var(--tx-2);
+  cursor: pointer;
+  transition: transform .2s cubic-bezier(.3,.8,.4,1.2), box-shadow .22s ease,
+              background .2s ease, color .2s ease, opacity .2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.ic svg { display: block; }
+
+/* 步进键：无背景圆，纯图标，悬停放大并加深 */
+.ic-step {
+  width: 30px; height: 30px;
+  color: var(--ctl-ink);
+}
+.ic-step:hover {
+  color: var(--tx);
+  transform: scale(1.14);
+}
+.ic-step:active { transform: scale(.92); }
+
+/* 播放键：中性深灰实心圆，低存在感 */
+.ic-main {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--ctl-ink);
+  box-shadow: 0 4px 12px rgba(90, 99, 119, .28);
+}
+.ic-main:hover {
+  background: var(--ctl-ink-2);
+  box-shadow: 0 8px 20px rgba(90, 99, 119, .32);
+  transform: scale(1.07);
+}
+.ic-main:active {
+  transform: scale(.94);
+  box-shadow: 0 2px 8px rgba(90, 99, 119, .24);
+}
+.ic-main:focus-visible,
+.ic-step:focus-visible {
+  outline: 2px solid var(--ctl-ink);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ───────────── SVG 内部 ───────────── */
+.gpu-card { transition: opacity .3s ease; }
+.gpu-title {
+  font-family: var(--sans); font-size: 18px; font-weight: 700; fill: var(--tx);
+}
+.slot-g { transition: opacity .32s ease; }
+.slot-bg { transition: fill .3s ease, stroke .3s ease; }
+
+/* ───────── 悬停聚焦：指向某类数据块时，其余类缓缓褪成灰 ─────────
+   SVG 元素上 CSS filter 兼容性不稳（实测 grayscale 未生效），
+   改为覆盖 fill + 降低不透明度，并给足 0.5s 缓动，避免颜色硬切。
+   注意：飞行中的数据包 .pkt 的 opacity 由 JS 逐帧控制（显示/隐藏），
+   必须排除在 opacity 规则之外，否则隐藏的包会被强制显示、出现时序也会滞后 */
+#stage [data-l]:not(.pkt):not(.wire) {
+  transition: opacity .5s cubic-bezier(.45, .05, .55, .95);
+}
+#stage [data-l] rect,
+#stage [data-l] text {
+  transition: fill .5s cubic-bezier(.45, .05, .55, .95);
+}
+
+/* 数据块可点击「钉住」聚焦，给出指针反馈 */
+#stage [data-l]:not(.wire) { cursor: pointer; }
+
+/* 其余类：整体略微后退 */
+#stage[data-focus="A"] [data-l]:not([data-l="A"]):not(.pkt):not(.wire),
+#stage[data-focus="B"] [data-l]:not([data-l="B"]):not(.pkt):not(.wire),
+#stage[data-focus="C"] [data-l]:not([data-l="C"]):not(.pkt):not(.wire),
+#stage[data-focus="D"] [data-l]:not([data-l="D"]):not(.pkt):not(.wire) {
+  opacity: .78;
+}
+#stage[data-focus="A"] [data-l]:not([data-l="A"]) rect,
+#stage[data-focus="B"] [data-l]:not([data-l="B"]) rect,
+#stage[data-focus="C"] [data-l]:not([data-l="C"]) rect,
+#stage[data-focus="D"] [data-l]:not([data-l="D"]) rect {
+  fill: #e4e8f0 !important;
+  stroke: none !important;
+}
+#stage[data-focus="A"] [data-l]:not([data-l="A"]) text,
+#stage[data-focus="B"] [data-l]:not([data-l="B"]) text,
+#stage[data-focus="C"] [data-l]:not([data-l="C"]) text,
+#stage[data-focus="D"] [data-l]:not([data-l="D"]) text {
+  fill: #b7becc !important;
+}
+
+/* 链路与箭头同属某类数据，一并随聚焦褪色（只改颜色，不碰 dash/opacity） */
+#stage path.wire { transition: stroke .45s cubic-bezier(.45, .05, .55, .95); }
+#stage[data-focus="A"] path.wire[data-l]:not([data-l="A"]),
+#stage[data-focus="B"] path.wire[data-l]:not([data-l="B"]),
+#stage[data-focus="C"] path.wire[data-l]:not([data-l="C"]),
+#stage[data-focus="D"] path.wire[data-l]:not([data-l="D"]) {
+  stroke: #ccd2e0 !important;
+}
+#stage[data-focus="A"] path.arw[data-l]:not([data-l="A"]),
+#stage[data-focus="B"] path.arw[data-l]:not([data-l="B"]),
+#stage[data-focus="C"] path.arw[data-l]:not([data-l="C"]),
+#stage[data-focus="D"] path.arw[data-l]:not([data-l="D"]) {
+  fill: #ccd2e0 !important;
+}
+
+/* 卡片随聚焦置灰：只留「数据块所在的卡」和目的地 rank0 有颜色 */
+.card-bar, .gpu-title, .card-badge-bg, .dst-badge, .card-base {
+  transition: fill .5s cubic-bezier(.45, .05, .55, .95),
+              stroke .5s cubic-bezier(.45, .05, .55, .95);
+}
+.gpu-card[data-dim="1"] .card-bar { fill: #e8ecf4 !important; }
+.gpu-card[data-dim="1"] .gpu-title { fill: #aeb6c7 !important; }
+.gpu-card[data-dim="1"] .card-badge-bg { fill: rgba(158, 168, 188, .12) !important; }
+.gpu-card[data-dim="1"] .dst-badge { fill: #b8bfcd !important; }
+.gpu-card[data-dim="1"] .card-base { stroke: #eef1f8 !important; }
+
+.slot-tx {
+  font-family: var(--mono); font-size: 15px; font-weight: 700;
+  transition: fill .3s ease;
+}
+.dst-badge {
+  font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .06em;
+}
+.ann {
+  font-family: var(--sans); font-size: 12.5px; font-weight: 600;
+}
+.wire { transition: stroke .3s ease, opacity .3s ease; }
+.pkt { transition: opacity .25s ease; }
+.pkt-tx { font-family: var(--mono); font-size: 13px; font-weight: 700; fill: #fff; }
+
+/* ───────── 计算标签（reduce 专用）：只在归约过程中出现 ─────────
+   外层 .calc-wrap 的显隐由 JS 按时间轴逐帧控制（opacity 直接写 style，
+   不要 CSS 过渡 —— 会和逐帧插值打架），内层 .calc-tip 由悬停切换 */
+.calc-wrap {
+  opacity: 0;
+  pointer-events: none;
+}
+.calc-wrap[data-on="1"] { pointer-events: auto; }
+
+.calc-chip { cursor: help; }
+.calc-chip-bg { transition: stroke .22s ease, fill .22s ease; }
+.calc-wrap:hover .calc-chip-bg { stroke: #a78bfa; fill: #f7f3ff; }
+
+.calc-tx {
+  font-family: var(--sans); font-weight: 600; letter-spacing: .04em;
+  transition: fill .22s ease;
+}
+.calc-wrap:hover .calc-tx { fill: #6d28d9; }
+
+/* 悬停说明：默认藏起来，指针落在方牌上才浮出 */
+.calc-tip {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+.calc-wrap:hover .calc-tip { opacity: 1; }
+
+/* 待归约的整份：位置与透明度全部由 JS 逐帧控制。
+   颜色只在建场时写一次、之后不再变，所以关掉 fill 过渡 ——
+   否则首帧会从 SVG 默认黑色渐变过来（页签不可见时过渡还会被节流，卡在黑色）。
+   另：不要给这层加 will-change，Chrome 会把 SVG 分组提升为合成层，同样渲染成黑块。 */
+/* 特异性要压过 #stage [data-l] rect / text 的 0.5s 过渡，否则不生效 */
+#stage .ghost-g .slot-bg,
+#stage .ghost-g .slot-tx { transition: none; }
+
+/* 隐藏时别让透明的数据块挡住鼠标（否则空白处也会触发聚焦） */
+#stage .ghost-g[opacity="0"] { pointer-events: none; }
+
+/* 落位弹跳 + 涟漪 */
+.slot-g { transform-box: fill-box; transform-origin: center; }
+.slot-pop { animation: slotPop .55s cubic-bezier(.2, .9, .3, 1.45); }
+@keyframes slotPop {
+  0%   { transform: scale(.35); opacity: 0; }
+  55%  { transform: scale(1.16); opacity: 1; }
+  100% { transform: scale(1); }
+}
+/* 涟漪用 scale 展开而不是改 r，这样与数据块尺寸无关，宽窄屏比例一致 */
+.ring {
+  fill: none;                     /* 必须显式设 none，否则 SVG 默认用黑色填充成实心圆 */
+  transform-box: fill-box; transform-origin: center;
+  animation: ringOut 1.05s ease-out forwards;
+}
+@keyframes ringOut {
+  0%   { transform: scale(.32); opacity: .85; stroke-width: 4; }
+  100% { transform: scale(1.45); opacity: 0;  stroke-width: 1; }
+}
+
+/* ───────────── 原语关系导航（左上角） ─────────────
+   与首页原语树同构的局部小图，2 列 × 3 行：
+     第 1 行  [当前原语 h1]  →  [横向伙伴]
+     第 2 行        ↓
+     第 3 行     [下邻居]
+   箭头与 chip 走同一套视觉语言：紫罗兰色系，粗 chip / 细线，
+   一实一虚有层次，但颜色同源，看起来是一家人。
+   某项不存在时对应网格单元留空（高度 0），不留空隙。 */
+.relmap {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: repeat(3, auto);
+  align-items: center;
+  justify-items: start;
+  column-gap: 12px;
+}
+/* 当前原语：标题本身，点它回首页 */
+.rel-now {
+  text-decoration: none;
+  color: inherit;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity .2s ease;
+}
+.rel-now:hover { opacity: .66; }
+.rel-now:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+/* 横向伙伴：chip 与箭头同行 */
+.rel-side { display: flex; align-items: center; gap: 6px; }
+
+/* 邻居标签 */
+.rel-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 58, 237, .3);
+  background: rgba(255, 255, 255, .9);
+  font-family: var(--mono);
+  font-size: 12.5px; font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color .22s ease, color .22s ease,
+              background .22s ease, transform .22s cubic-bezier(.3, .8, .4, 1.2),
+              box-shadow .22s ease;
+}
+.rel-chip:hover {
+  color: var(--accent-2);
+  border-color: rgba(124, 58, 237, .62);
+  background: #fff;
+  box-shadow: 0 4px 14px -4px rgba(109, 40, 217, .35);
+  transform: translateY(-1px);
+}
+.rel-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* 还没实现的原语：虚线边 + 静态标签，不跳走 */
+.rel-chip-off {
+  border-style: dashed;
+  border-color: rgba(124, 58, 237, .22);
+  color: var(--tx-3);
+  background: transparent;
+  cursor: default;
+}
+.rel-chip-off:hover { transform: none; color: var(--tx-3);
+  border-color: rgba(124, 58, 237, .22); background: transparent; box-shadow: none; }
+.rel-chip-tag {
+  font-family: var(--sans);
+  font-size: 9.5px; font-weight: 400; letter-spacing: .04em;
+  color: var(--tx-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 5px;
+}
+
+/* 箭头：与 chip 同源的紫罗兰色，圆头线，比 chip 更细更淡 */
+.rel-arrow { display: block; overflow: visible; }
+.rel-arrow-ln {
+  fill: none;
+  stroke: rgba(124, 58, 237, .45);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.rel-arrow-hd {
+  fill: rgba(124, 58, 237, .55);
+  stroke: none;
+}
+
+/* ───────────── 响应式 ───────────── */
+@media (max-width: 860px) {
+  .hd { padding: 15px 18px; }
+  .hd h1 { font-size: 24px; }
+  /* 窄屏：关系导航跟着缩一档，避免把标题和右上角按钮挤到一起 */
+  .relmap { column-gap: 8px; }
+  .rel-chip { font-size: 11px; padding: 3px 9px; }
+  .rel-chip-tag { font-size: 8.5px; }
+  .rel-arrow { transform: scale(.82); transform-origin: left center; }
+  .rel-arrow-down { transform-origin: top center; }
+  /* 窄屏：舞台撑满可用高度，字幕与控制条固定在下方 */
+  .stagewrap { padding: 58px 10px 118px; gap: 10px; }
+  .stagebox { flex: 1 1 auto; min-height: 0; }
+  #stage { width: 100%; height: 100%; }
+  .bar { padding: 0 12px 16px; }
+  .bar-stack { gap: 10px; }
+  .bar-panel { gap: 12px; }
+  .ctrls { gap: 20px; }
+  .ic-step { width: 26px; height: 26px; }
+  .ic-main { width: 44px; height: 44px; }
+  .cap-text { font-size: 12.5px; }
+}
