@@ -1,0 +1,94 @@
+# CommonVisual
+
+**NCCL 集合通信原语的 Web 可视化** —— 把 gather / scatter / broadcast / reduce / all-gather 这些抽象概念，画成看得懂的数据流动画。
+
+零框架、零依赖、零构建：手写内联 SVG + 原生 `requestAnimationFrame` + IIFE。所有页面双击就能在浏览器里打开，不需要 npm install，不需要打包。
+
+---
+
+## 在线访问
+
+启用 GitHub Pages 后，直接打开：
+
+**<https://chitandaaaaa.github.io/CommonVisual/>**
+
+## 页面一览
+
+| 页面 | 说明 |
+|---|---|
+| [`index.html`](index.html) | **完整版** —— 8 个原语对比表，信息密集，留作参考 |
+| [`home.html`](home.html) | **首页** —— 原语关系树，从这儿开始逛 |
+| [`gather.html`](gather.html) | 收集 —— N 段拼成一份，只有 rank0 长大 |
+| [`scatter.html`](scatter.html) | 分散 —— 一份拆成 N 段分给各人 |
+| [`broadcast.html`](broadcast.html) | 广播 —— 一份复制给 N 人，每人都拿整份副本 |
+| [`reduce.html`](reduce.html) | 归约 —— N 份相加成一份，累加器逐段折入 |
+| [`allgather.html`](allgather.html) | 全收集 —— 2×2 网格顺时针转三轮，四张卡同步集齐 |
+
+每个原语页左上角有一块**关系导航**：横向是同族的全体版，纵向是同列的上/下一个，点原语名回首页。
+
+## 本地运行
+
+```bash
+# 方式一：直接双击 html 文件
+open index.html
+
+# 方式二：起个静态服务（推荐，避免 file:// 的个别限制）
+python3 -m http.server 8000
+# 然后访问 http://localhost:8000/home.html
+```
+
+## 目录结构
+
+```
+CommonVisual/
+├── index.html              完整版（保留作参考）
+├── home.html               首页：原语关系树
+├── gather.html             五个精简版单屏演示
+├── scatter.html
+├── broadcast.html
+├── reduce.html
+├── allgather.html
+├── 分布式通信原语详解.md    内容源
+├── docs/
+│   └── 待讨论-Ring与Tree.md
+└── assets/
+    ├── stage.css           五个精简版共用的全部样式
+    ├── style.css           完整版样式
+    ├── app.js              完整版逻辑
+    ├── home.css / home.js  首页样式与交互
+    ├── gather.js           各原语的数据 / 时间轴 / 渲染规则
+    ├── scatter.js
+    ├── broadcast.js
+    ├── reduce.js
+    ├── allgather.js
+    └── cv/                 公共绘制层
+        ├── dom.js          $ / $$ / el / clamp / easeInOutQuad
+        │                   / mix(hex+rgb 都吃) / cubicBezier(复刻 CSS 曲线)
+        ├── kit.js          drawCard / drawSlot / setSlot / drawWire
+        │                   / drawPacket / resizeCard / drawLegend
+        ├── controls.js     分段进度条 + 播放步进 + 键盘
+        ├── focus.js        悬停聚焦 + 点击钉住
+        └── relmap.js       原语页左上角的关系导航
+```
+
+## 几个设计决策
+
+**新增一个原语只改四块。** 每个 `assets/*.js` 里都按 ① DATA ② ROUTE ③ STEPS ④ GEO 分区，其余全部复用 `assets/cv/` 公共层和 `assets/stage.css`。
+
+**GEO 必须逐项抄齐。** SVG 用 `preserveAspectRatio="xMidYMid meet"` 等比缩放，**viewBox 越小 → 缩放倍率越大 → 整页内容都变大**。所以新增页面时 `view / card / slot / hdr / title / badge` 一个都不能自己定，改完用 `getBoundingClientRect()` 量一遍渲染像素。
+
+**时间轴用「秒」写。** 归一化进度容易让人算错实际间隔，所以每个原语的 `T` 对象都是秒。
+
+**CSS 曲线用 JS 复刻。** 落位弹跳的 `.slot-pop` 是 `cubic-bezier(.2, .9, .3, 1.45)`，y 控制点 > 1 会过冲。`CV.cubicBezier()` 在 JS 里原样复刻，这样弹跳与纯 CSS 版本逐点一致，又不用给 SVG 元素套 CSS 动画（双层 transform 会让 Chrome 提合成层并丢掉填充色，渲染成黑块）。
+
+**槽位三态语言。** ① 实心彩色块 = 有数据；② 浅紫底「···」= 传输中/待命；③ 浅灰虚线框 = 空。
+
+## 交互
+
+- 循环播放常开，进度条分段数 = 步骤数，可拖动跳步
+- 悬停任意数据块 → 同类保持彩色，其余缓缓褪成灰；点击可「钉住」聚焦
+- 键盘可操作：Tab 走节点，Enter/Space 触发
+
+## 许可
+
+MIT
