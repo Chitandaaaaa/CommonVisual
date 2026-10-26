@@ -144,7 +144,7 @@
 
     {
       key: 'allgather', en: 'All-Gather', cn: '全收集', tag: 'N → N',
-      act: '拼接并广播',
+      act: '各自拼齐全份',
       note: '四片拼齐，四张卡都拿到完整一份',
       pre: [
         { c: ['A'], flag: '只有 1 片' },
@@ -162,7 +162,7 @@
 
     {
       key: 'allreduce', en: 'All-Reduce', cn: '全归约', tag: 'N → N',
-      act: '相加并广播',
+      act: '互换并累加',
       note: '四份相加，四张卡拿到的和完全一样',
       pre: [
         { c: WHOLE, flag: '第 1 份' },
