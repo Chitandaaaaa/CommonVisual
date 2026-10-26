@@ -20,9 +20,13 @@
      第 j 步 —— 各卡把第 j 片发给 rank j，自己那片原地不动
    不分步的话 12 个包同时飞，谁也看不清。
 
-   连线是双向直连（2×2 网格的 4 条边 + 2 条弯曲对角线），
+   连线是双向直连（2×2 网格的 4 条边 + 2 条对角线，中心成 X 交叉），
    不画箭头 —— 每条边两个方向都用，箭头只会指向其中一半的事实。
    方向交给数据包的拖尾表达。
+
+   对角线走直线而非弧线：12 个包按目的地分 4 步，每一步里**最多只有
+   一条对角线在动**（其余两条是正交边），所以中心交叉点不会出现两个
+   包相撞的情况，直线既是真实拓扑，视觉上也更干净。
    ============================================================ */
 (function () {
   'use strict';
@@ -110,8 +114,7 @@
       slot: { sw: 44, sh: 44, gap: 10 },
       rowGap: 8,
       hdr: 36,
-      title: 15, badge: 10,
-      bend: -66
+      title: 15, badge: 10
     },
     narrow: {
       view: { w: 380, h: 720 },
@@ -121,8 +124,7 @@
       slot: { sw: 25, sh: 25, gap: 5 },
       rowGap: 5,
       hdr: 28,
-      title: 12.5, badge: 8.5,
-      bend: -34
+      title: 12.5, badge: 8.5
     }
   };
 
@@ -176,26 +178,20 @@
     return { sx: s.x, sy: s.y, tx: t2.x, ty: t2.y };
   }
 
-  /* 三次贝塞尔；bend = 法向偏移（对角线靠它绕开中心） */
-  function curvePath(e, bend) {
-    var dx = e.tx - e.sx, dy = e.ty - e.sy;
-    var len = Math.sqrt(dx * dx + dy * dy) || 1;
-    var nx = -dy / len * (bend || 0), ny = dx / len * (bend || 0);
-    return 'M ' + e.sx + ' ' + e.sy +
-           ' C ' + (e.sx + dx * 0.3 + nx) + ' ' + (e.sy + dy * 0.3 + ny) + ', ' +
-                 (e.sx + dx * 0.7 + nx) + ' ' + (e.sy + dy * 0.7 + ny) + ', ' +
-                 e.tx + ' ' + e.ty;
+  /* 两端点直连。四条正交边和两条对角线共用 —— 对角线就是网格的
+     真·几何对角线，在中心自然交叉成 X。 */
+  function linePath(e) {
+    return 'M ' + e.sx + ' ' + e.sy + ' L ' + e.tx + ' ' + e.ty;
   }
 
-  /* 六条边：四正交 + 两对角。对角线用同一个 bend 值 ——
-     法向由 a→b 的方向决定，两条弧会自动一上一下，不会叠在中心。 */
+  /* 六条边：四正交 + 两对角（中心交叉） */
   var EDGES = [
-    { a: 0, b: 1, bend: 0 },
-    { a: 0, b: 2, bend: 0 },
-    { a: 1, b: 3, bend: 0 },
-    { a: 2, b: 3, bend: 0 },
-    { a: 0, b: 3, bend: 1 },
-    { a: 1, b: 2, bend: 1 }
+    { a: 0, b: 1 },
+    { a: 0, b: 2 },
+    { a: 1, b: 3 },
+    { a: 2, b: 3 },
+    { a: 0, b: 3 },
+    { a: 1, b: 2 }
   ];
 
   function edgeOf(x, y) {
@@ -254,8 +250,7 @@
     /* 六条无箭头连线：每条边两个方向都要用，画箭头只会说对一半 */
     EDGES.forEach(function (ed) {
       var e = edgeEnds(cards[ed.a].geo, cards[ed.b].geo);
-      var bend = ed.bend ? L.bend : 0;
-      var w = CV.drawWire(layer.wires, { d: curvePath(e, bend) });
+      var w = CV.drawWire(layer.wires, { d: linePath(e) });
       wires[ed.a + '_' + ed.b] = {
         path: w.path, len: w.len,
         sx: e.sx, sy: e.sy, tx: e.tx, ty: e.ty
