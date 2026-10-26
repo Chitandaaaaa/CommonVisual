@@ -373,18 +373,17 @@ body {
 }
 
 /* ───────────── 原语关系导航（左上角） ─────────────
-   与首页原语树同构的局部小图，2 列 × 3 行：
+   2 列 × 3 行，只画向下和向右两种关系：
      第 1 行  [当前原语 h1]  →  [横向伙伴]
      第 2 行        ↓
      第 3 行     [下邻居]
-   箭头与 chip 走同一套视觉语言：紫罗兰色系，粗 chip / 细线，
-   一实一虚有层次，但颜色同源，看起来是一家人。
+   标题恒定占据左上角第一格 —— 没有「上邻居」来把它挤到第二行。
+   箭头与 chip 走同一套视觉语言：同色、粗 chip / 细线，一实一虚有层次。
    某项不存在时对应网格单元留空（高度 0），不留空隙。 */
 .relmap {
   display: grid;
   grid-template-columns: auto auto;
-  /* 最多用到 5 行（上邻居 1 + 当前 1 + 下邻居 2）；没用到的行 auto 高度为 0 */
-  grid-template-rows: repeat(5, auto);
+  grid-template-rows: repeat(3, auto);
   align-items: center;
   /* 竖向的「标题 / 箭头 / chip」三者同轴居中，不再左对齐。
      横向伙伴那一列宽度 = 内容宽度，居中不影响它。 */
@@ -396,8 +395,6 @@ body {
    底部会凭空多出 16px。 */
 .relmap > .rel-arrow-down { margin-top: 8px; }
 .relmap > .rel-chip       { margin-top: 8px; }
-/* 上邻居：箭头和 chip 同一行 —— 「↑ reducescatter」读作「上方是它」 */
-.rel-up { display: flex; align-items: center; gap: 6px; }
 /* 当前原语：标题本身，点它回首页 */
 .rel-now {
   text-decoration: none;
