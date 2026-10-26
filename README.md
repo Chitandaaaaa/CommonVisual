@@ -1,6 +1,6 @@
 # CommonVisual
 
-**NCCL 集合通信原语的 Web 可视化** —— 把 gather / scatter / broadcast / reduce / all-gather / all-reduce 这些抽象概念，画成看得懂的数据流动画。
+**NCCL 集合通信原语的 Web 可视化** —— 把 gather / scatter / broadcast / reduce / all-gather / all-reduce / reduce-scatter / all-to-all 这八个抽象概念，画成看得懂的数据流动画。
 
 零框架、零依赖、零构建：手写内联 SVG + 原生 `requestAnimationFrame` + IIFE。所有页面双击就能在浏览器里打开，不需要 npm install，不需要打包。
 
@@ -24,10 +24,12 @@
 | [`reduce.html`](reduce.html) | 归约 —— N 份相加成一份，累加器逐段折入 |
 | [`allgather.html`](allgather.html) | 全收集 —— 2×2 网格顺时针转三轮，四张卡同步集齐 |
 | [`allreduce.html`](allreduce.html) | 全归约 —— 2×2 网格互换并累加两轮，四张卡拿到同一份结果 |
+| [`reducescatter.html`](reducescatter.html) | 归约分散 —— 递归减半两轮，段数 4→2→1，每卡只留自己那段的和 |
+| [`alltoall.html`](alltoall.html) | 全互换 —— 上排待发、下排已收，按目的地分四步，12 条直连消息 |
 | [`layout.html`](layout.html) | **前后对照表** —— 八个原语各自「通信前 / 通信后」每张卡的缓冲区，没变化的行置灰 |
 | [`algorithms.html`](algorithms.html) | **实现方式** —— 原语 × 六类算法骨架矩阵、八种骨架、All-Reduce 的三条路线、NCCL 选型 |
 
-每个原语页左上角有一块**关系导航**：横向是同族的全体版，纵向是同列的上/下一个，点原语名回首页。Reduce-Scatter 与 All-to-All 只有静态对照（在 `layout.html`），没有动画页，所以在这块导航里画成虚线灰片。
+每个原语页左上角有一块**关系导航**：横向是同族的全体版，纵向是同列的上/下一个，点原语名回首页。八个原语现在都有动画页，导航里不再有虚线灰片。
 
 ## 本地运行
 
@@ -52,6 +54,8 @@ CommonVisual/
 ├── reduce.html
 ├── allgather.html
 ├── allreduce.html
+├── reducescatter.html
+├── alltoall.html
 ├── layout.html             前后对照表（静态，八个原语一页看完）
 ├── algorithms.html         实现方式（静态，骨架矩阵 + NCCL 选型）
 ├── 分布式通信原语详解.md    内容源
@@ -71,6 +75,8 @@ CommonVisual/
     ├── reduce.js
     ├── allgather.js
     ├── allreduce.js
+    ├── reducescatter.js
+    ├── alltoall.js
     ├── layout.js           对照表数据（PRIMS）+ 渲染
     └── cv/                 公共绘制层
         ├── dom.js          $ / $$ / el / clamp / easeInOutQuad
@@ -103,6 +109,12 @@ CommonVisual/
 **Reduce-Scatter 是「加完再切」，All-to-All 是「切片转置」。** Reduce-Scatter 先把四份逐段相加得到四段的和，再按段切开、第 k 张卡只留第 k 段，所以通信后每卡只剩一格；All-to-All 完全不求和，每卡把自己那份切成四片、第 k 片发给 rank k，回来时四格都在，只是每格来自不同卡。
 
 **「骨架」和「配方」要分开讲。** `algorithms.html` 的矩阵只放原子骨架 —— 链/树、环、倍增/减半、Bruck、全连接、分层与网内。`RS+AG` 和 `Rabenseifner` 是「拿两个原语拼出第三个」的配方，单独一节讲，不进矩阵；混在一起会让人以为它们又是两种新拓扑。
+
+**Reduce-Scatter 动画用递归减半，不用环形。** 环形的 ring reduce-scatter 同样正确，但它的段号会错开一格（卡 k 最后拿到的是第 k+1 段），和对照表「卡 k 留第 k 段」对不上。递归减半的两轮配对（先同列、再同行）天然对齐，而且和 `allreduce.html` 共用同一张 2×2 网格、同一套配对 —— 正着看是「份数 1→2→4」，倒着看是「段数 4→2→1」。
+
+**All-to-All 必须画两排缓冲。** 它是原地转置：输入槽 j 装「自己要发出去的第 j 片」，输出槽 j 装「别人发给自己的第 j 片」，同一个位置前后含义不同。只画一套格子的话，第 j 步会一边清空一边被填，怎么排步骤都自相矛盾。所以上排是待发的四片（每步清空一格），下排是收到的四片（轮到自己当接收方时一次填满）—— 这也是真实做法：in-place all-to-all 必须有一个临时缓冲。12 条消息按目的地分 4 步，每步只有 3 条边在动。
+
+**All-to-All 的连线不画箭头。** 每条边两个方向都要用（第 0 步是 1→0，第 1 步是 0→1），画一个箭头只会说对一半。方向交给数据包的拖尾表达。
 
 ## 交互
 

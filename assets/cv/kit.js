@@ -123,7 +123,8 @@
     return { g: g, rect: rect, text: text, x: x, y: y, w: w, h: h, cx: x + w / 2, cy: y + h / 2 };
   };
 
-  /* 三种状态：有数据 / 传输中占位 / 空 */
+  /* 三种状态：有数据 / 传输中占位 / 空
+     data.sub 可选：给数据块加一个右下角小下标（all-to-all 用它标第几片） */
   CV.setSlot = function (s, data, opt) {
     opt = opt || {};
     if (data) {
@@ -132,6 +133,10 @@
       s.rect.setAttribute('stroke-dasharray', 'none');
       s.text.setAttribute('fill', '#fff');
       s.text.textContent = data.letter;
+      if (data.sub != null) {
+        var sp = el('tspan', { 'font-size': '0.62em', dy: '0.34em' }, s.text);
+        sp.textContent = data.sub;
+      }
       if (s.g.getAttribute('data-l') !== data.letter) s.g.setAttribute('data-l', data.letter);
     } else if (opt.active) {
       s.rect.setAttribute('fill', '#f3eeff');
@@ -165,14 +170,15 @@
   };
 
   /* ---------- 连线 ---------- */
-  /* letter 可省略：broadcast 这类「整份数据」的流不对应单一字母，不该参与聚焦灰化 */
+  /* letter 可省略：broadcast 这类「整份数据」的流不对应单一字母，不该参与聚焦灰化
+     markerId 也可省略：all-to-all 的边是双向直连，画箭头反而会指错方向 */
   CV.drawWire = function (parent, o) {
     var attrs = {
       class: 'wire', d: o.d, fill: 'none',
       stroke: '#c3cadb', 'stroke-width': 2,
-      'stroke-linecap': 'round', 'stroke-dasharray': '8 7',
-      'marker-end': 'url(#' + o.markerId + ')'
+      'stroke-linecap': 'round', 'stroke-dasharray': '8 7'
     };
+    if (o.markerId) attrs['marker-end'] = 'url(#' + o.markerId + ')';
     if (o.letter) attrs['data-l'] = o.letter;
     var p = el('path', attrs, parent);
     return { path: p, len: p.getTotalLength() };
@@ -245,14 +251,19 @@
     return { g: g, head: head, t1: t1, t2: t2, half: total / 2 + pad };
   };
 
-  /* 把数据包放到路径的 e（0~1）处 */
-  CV.placePacket = function (pkt, wire, e) {
+  /* 把数据包放到路径的 e（0~1）处
+     rev = true 时沿路径反向走（线是按 a→b 画的，流却从 b→a） */
+  CV.placePacket = function (pkt, wire, e, rev) {
     var Lp = wire.len;
-    var pt = wire.path.getPointAtLength(e * Lp);
+    var pos = rev ? 1 - e : e;
+    var at = pos * Lp;
+    var pt = wire.path.getPointAtLength(at);
     pkt.g.setAttribute('opacity', '1');
     pkt.head.setAttribute('transform', 'translate(' + pt.x + ' ' + pt.y + ')');
-    var a = wire.path.getPointAtLength(Math.max(0, e * Lp - 24));
-    var b = wire.path.getPointAtLength(Math.max(0, e * Lp - 46));
+    /* 拖尾永远在「来路」上，所以反向走时要往后加而不是减 */
+    var step = rev ? 1 : -1;
+    var a = wire.path.getPointAtLength(Math.max(0, Math.min(Lp, at + step * 24)));
+    var b = wire.path.getPointAtLength(Math.max(0, Math.min(Lp, at + step * 46)));
     pkt.t1.setAttribute('transform', 'translate(' + a.x + ' ' + a.y + ') scale(.8)');
     pkt.t2.setAttribute('transform', 'translate(' + b.x + ' ' + b.y + ') scale(.6)');
     /* 拖尾随行进方向略微拉长，速度感更足 */

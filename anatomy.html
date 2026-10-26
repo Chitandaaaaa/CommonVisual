@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CommonVisual · 组件与动效规范</title>
+<meta name="description" content="所有原语页面共用的零件清单：完整数据、数据块、rank 卡片的名字、尺寸与配色，后续新增页面一律照这里整改。">
+<link rel="stylesheet" href="assets/layout.css">
+<link rel="stylesheet" href="assets/anatomy.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="hd">
+    <a class="back" href="home.html">
+      <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+        <path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      原语关系树
+    </a>
+    <h1>组件与动效规范</h1>
+    <p class="lead">所有原语页面共用的「零件清单」：每个基础组件叫什么、多大、什么颜色，都在这一页约定。后续新增页面一律照这里整改，不允许自行定义尺寸。页面里的示例不是示意图 —— 直接调用 <code>assets/cv/</code> 里真实的绘制函数渲染，规范即实现。</p>
+
+    <ul class="legend">
+      <li><i class="cell" style="--c:#7c3aed">A</i><span>数据块</span></li>
+      <li><i class="cell" style="--c:#4c1d95">Σ</i><span>归约结果</span></li>
+      <li><i class="cell is-blank"></i><span>空位 / 本卡没有这段</span></li>
+    </ul>
+  </header>
+
+  <nav class="jump" id="jump" aria-label="章节索引"></nav>
+
+  <main id="app"></main>
+
+  <footer class="ft">
+    <p>语义与前后状态在 <a href="layout.html" style="color:inherit">前后对照表</a>，实现方式在 <a href="algorithms.html" style="color:inherit">算法骨架</a>，这里是零件尺寸。</p>
+    <a class="back" href="home.html">← 回到原语关系树</a>
+  </footer>
+
+</div>
+
+<!-- 通用层：DOM 工具 + 绘制原语（demo 直接复用真实绘制函数） -->
+<script src="assets/cv/dom.js"></script>
+<script src="assets/cv/kit.js"></script>
+<script src="assets/anatomy.js"></script>
+</body>
+</html>
