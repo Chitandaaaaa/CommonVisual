@@ -28,7 +28,14 @@
     alltoall:      {}
   };
 
-  /* 中文名 */
+  /* 显示名：与 home.html 原语树里的 node-en / node-cn 逐字一致。
+     不能直接拿 key 当文字 —— key 是内部标识（alltoall、reducescatter），
+     大小写和连字符都跟树上对不上。 */
+  var EN = {
+    broadcast: 'Broadcast', scatter: 'Scatter', gather: 'Gather', reduce: 'Reduce',
+    allgather: 'All-Gather', allreduce: 'All-Reduce',
+    reducescatter: 'Reduce-Scatter', alltoall: 'All-to-All'
+  };
   var CN = {
     broadcast: '广播', scatter: '分散', gather: '收集', reduce: '归约',
     allgather: '全收集', allreduce: '全归约',
@@ -92,14 +99,15 @@
     return s;
   }
 
-  /* 邻居标签：能跳转的就是链接，不能跳的就是静态标签 */
+  /* 邻居标签：能跳转的就是链接，不能跳的就是静态标签。
+     文字与原语树一致 —— 英文正式名 + 中文简称。 */
   function chip(k) {
     var box = el(HREF[k] ? 'a' : 'span', 'rel-chip' + (HREF[k] ? '' : ' rel-chip-off'));
     if (HREF[k]) {
       box.href = HREF[k];
-      box.title = (CN[k] || k) + ' · ' + k;
+      box.title = EN[k] + ' · ' + CN[k];
     }
-    box.appendChild(el('span', 'rel-chip-en', k));
+    box.appendChild(el('span', 'rel-chip-en', EN[k]));
     if (!HREF[k]) box.appendChild(el('span', 'rel-chip-tag', '待实现'));
     return box;
   }

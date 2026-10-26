@@ -428,6 +428,16 @@ body {
 }
 .rel-chip:hover { color: var(--tx); }
 .rel-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+/* 中文简称：跟原语树一样，英文正式名后面挂中文。
+   用相对字号，窄屏 chip 缩小时它跟着缩，不用再写一条媒体查询。 */
+.rel-chip-cn {
+  font-size: .56em;
+  font-weight: 500;
+  letter-spacing: .01em;
+  color: rgba(22, 27, 46, .36);
+  transition: color .22s ease;
+}
+.rel-chip:hover .rel-chip-cn { color: rgba(22, 27, 46, .52); }
 /* 还没实现的原语：同样是纯文字，只是更灰、且不可点 */
 .rel-chip-off {
   color: var(--tx-3);
