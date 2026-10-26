@@ -9,7 +9,7 @@
    保证标题恒定占据左上角第一格，任何页面都不会被邻居顶掉。
    已实现页面的邻居是链接可点击；还没实现的画成静态标签 +「待实现」。
 
-   关系表与 home.html 的原语树一致，改树时这里也要同步改。
+   关系表与 index.html 的原语树一致，改树时这里也要同步改。
    ============================================================ */
 (function () {
   'use strict';
@@ -28,7 +28,7 @@
     alltoall:      {}
   };
 
-  /* 显示名：与 home.html 原语树里的 node-en / node-cn 逐字一致。
+  /* 显示名：与 index.html 原语树里的 node-en / node-cn 逐字一致。
      不能直接拿 key 当文字 —— key 是内部标识（alltoall、reducescatter），
      大小写和连字符都跟树上对不上。 */
   var EN = {
@@ -130,7 +130,7 @@
 
   /* 当前原语：h1 → 链接首页，永远在左上角第一格 */
   var home = el('a', 'rel-now');
-  home.href = 'home.html';
+  home.href = 'index.html';
   home.title = '回到首页原语树';
   put(home, 1, 1);
 

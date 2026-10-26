@@ -142,6 +142,6 @@ done
 
 1. `probe` 回归全部页面（不截图）
 2. 更新 `README.md` 的页面表 / 目录树 / 设计决策
-3. 新原语要补：`home.html` 节点、`relmap.js` 的 `REL` + `HREF`、`layout.html` 的 `PRIMS`
+3. 新原语要补：`index.html` 节点、`relmap.js` 的 `REL` + `HREF`、`layout.html` 的 `PRIMS`
 4. 追加 `.workbuddy/memory/YYYY-MM-DD.md`，长期约定写进 `MEMORY.md`
 5. 提交时把「为什么这么改」写进 commit message 正文，不只是标题

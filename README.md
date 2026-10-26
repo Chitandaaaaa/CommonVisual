@@ -16,8 +16,7 @@
 
 | 页面 | 说明 |
 |---|---|
-| [`index.html`](index.html) | **完整版** —— 8 个原语对比表，信息密集，留作参考 |
-| [`home.html`](home.html) | **首页** —— 原语关系树，从这儿开始逛 |
+| [`index.html`](index.html) | **首页** —— 原语关系树，从这儿开始逛 |
 | [`gather.html`](gather.html) | 收集 —— N 段拼成一份，只有 rank0 长大 |
 | [`scatter.html`](scatter.html) | 分散 —— 一份拆成 N 段分给各人 |
 | [`broadcast.html`](broadcast.html) | 广播 —— 一份复制给 N 人，每人都拿整份副本 |
@@ -39,15 +38,14 @@ open index.html
 
 # 方式二：起个静态服务（推荐，避免 file:// 的个别限制）
 python3 -m http.server 8000
-# 然后访问 http://localhost:8000/home.html
+# 然后访问 http://localhost:8000/
 ```
 
 ## 目录结构
 
 ```
 CommonVisual/
-├── index.html              完整版（保留作参考）
-├── home.html               首页：原语关系树
+├── index.html              首页：原语关系树
 ├── gather.html             精简版单屏演示
 ├── scatter.html
 ├── broadcast.html
@@ -58,6 +56,7 @@ CommonVisual/
 ├── alltoall.html
 ├── layout.html             前后对照表（静态，八个原语一页看完）
 ├── algorithms.html         实现方式（静态，骨架矩阵 + NCCL 选型）
+├── anatomy.html            组件与动效规范（一图一节，1:1 像素示例）
 ├── 分布式通信原语详解.md    内容源
 ├── docs/
 │   └── 待讨论-Ring与Tree.md
@@ -66,9 +65,8 @@ CommonVisual/
     ├── layout.css          对照表样式
     ├── algorithms.js       实现方式的数据（矩阵 / 骨架 / 配方）+ 渲染
     ├── algorithms.css      实现方式的样式（依赖 layout.css 的变量）
-    ├── style.css           完整版样式
-    ├── app.js              完整版逻辑
-    ├── home.css / home.js  首页样式与交互
+    ├── anatomy.css / .js   组件规范的样式与示例渲染（依赖 layout.css）
+    ├── index.css / .js     首页样式与交互
     ├── gather.js           各原语的数据 / 时间轴 / 渲染规则
     ├── scatter.js
     ├── broadcast.js
