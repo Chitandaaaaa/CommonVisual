@@ -143,6 +143,38 @@ body {
   transition: text-decoration-color .5s var(--ease);
 }
 .title:hover u { text-decoration-color: rgba(109, 40, 217, .7); }
+
+/* ── 画字：鼠标移上去，一道斜光从左下扫到右上 ──────────────
+   做法：把「紫底 + 中间一条白光」画成 45° 背景渐变，再用 background-clip:text
+   按字形裁切，所以光只出现在笔画上。
+   渐变图 = 元素宽高各 ×3，光带落在图正中，只有位移到中间区间才看得见；
+   关键帧 80% 20% → 20% 80% 让光带中心沿「左下角 → 右上角」走，
+   两端各留一点余量，起止时整片纯紫（光带在盒外），所以不会突兀地出现/消失。
+   光带用 8 个色标拉出晕开的边缘，避免一刀切的生硬白条。 */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .title u {
+    background-image: linear-gradient(45deg,
+        var(--violet) 0 46.8%,
+        #ddd6fe 47.9%,
+        #f0ebff 48.9%,
+        #fff 49.7%,
+        #fff 50.3%,
+        #f0ebff 51.1%,
+        #ddd6fe 52.1%,
+        var(--violet) 53.2% 100%);
+    background-size: 300% 300%;
+    background-repeat: no-repeat;
+    background-position: 100% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .title u:hover { animation: glyph-sweep .62s var(--ease) 1; }
+  @keyframes glyph-sweep {
+    from { background-position: 80% 20%; }
+    to   { background-position: 20% 80%; }
+  }
+}
 @keyframes swipe {
   from { transform: scaleX(0); }
   to   { transform: scaleX(1); }
