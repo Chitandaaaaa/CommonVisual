@@ -386,9 +386,16 @@ body {
   /* 最多用到 5 行（上邻居 1 + 当前 1 + 下邻居 2）；没用到的行 auto 高度为 0 */
   grid-template-rows: repeat(5, auto);
   align-items: center;
-  justify-items: start;
+  /* 竖向的「标题 / 箭头 / chip」三者同轴居中，不再左对齐。
+     横向伙伴那一列宽度 = 内容宽度，居中不影响它。 */
+  justify-items: center;
   column-gap: 12px;
 }
+/* 竖向排列的间距：标题 → 箭头 8px、箭头 → chip 8px。
+   不用 grid 的 row-gap，因为没用到的那两行高度为 0 却仍会产生 gap，
+   底部会凭空多出 16px。 */
+.relmap > .rel-arrow-down { margin-top: 8px; }
+.relmap > .rel-chip       { margin-top: 8px; }
 /* 上邻居：箭头和 chip 同一行 —— 「↑ reducescatter」读作「上方是它」 */
 .rel-up { display: flex; align-items: center; gap: 6px; }
 /* 当前原语：标题本身，点它回首页 */
@@ -405,17 +412,20 @@ body {
 /* 横向伙伴：chip 与箭头同行 */
 .rel-side { display: flex; align-items: center; gap: 6px; }
 
-/* 邻居标签 */
+/* 邻居标签
+   字体与页标题同族（--sans），不用等宽 —— 标题是黑体粗字、chip 是等宽小字时，
+   两者看着像两套系统。字号 15px 约为标题在 40px 下的四成，同级但轻一档。
+   默认只给淡淡的紫（浅、退后），鼠标悬浮才回到正常饱和度。 */
 .rel-chip {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 14px;
+  padding: 4px 16px;
   border-radius: 999px;
-  border: 1px solid rgba(124, 58, 237, .3);
-  background: rgba(255, 255, 255, .9);
-  font-family: var(--mono);
-  font-size: 12.5px; font-weight: 600;
+  border: 1px solid rgba(124, 58, 237, .22);
+  background: rgba(255, 255, 255, .6);
+  font-family: var(--sans);
+  font-size: 15px; font-weight: 600;
   letter-spacing: -.01em;
-  color: var(--accent);
+  color: rgba(124, 58, 237, .62);
   text-decoration: none;
   white-space: nowrap;
   transition: border-color .22s ease, color .22s ease,
@@ -449,16 +459,17 @@ body {
   padding: 0 5px;
 }
 
-/* 箭头：与 chip 同源的紫罗兰色，圆头线，比 chip 更细更淡 */
+/* 箭头：与 chip 同源的紫罗兰色，圆头线。
+   比 chip 的默认色再淡一档，静态时只作方向提示，不抢标题。 */
 .rel-arrow { display: block; overflow: visible; }
 .rel-arrow-ln {
   fill: none;
-  stroke: rgba(124, 58, 237, .45);
-  stroke-width: 1.6;
+  stroke: rgba(124, 58, 237, .48);
+  stroke-width: 1.9;
   stroke-linecap: round;
 }
 .rel-arrow-hd {
-  fill: rgba(124, 58, 237, .55);
+  fill: rgba(124, 58, 237, .56);
   stroke: none;
 }
 
@@ -468,9 +479,9 @@ body {
   .hd h1 { font-size: 24px; }
   /* 窄屏：关系导航跟着缩一档，避免把标题和右上角按钮挤到一起 */
   .relmap { column-gap: 8px; }
-  .rel-chip { font-size: 11px; padding: 3px 9px; }
+  .rel-chip { font-size: 12.5px; padding: 3px 11px; }
   .rel-chip-tag { font-size: 8.5px; }
-  .rel-arrow { transform: scale(.82); transform-origin: left center; }
+  .rel-arrow { transform: scale(.82); transform-origin: center center; }
   .rel-arrow-down { transform-origin: top center; }
   /* 窄屏：舞台撑满可用高度，字幕与控制条固定在下方 */
   .stagewrap { padding: 58px 10px 118px; gap: 10px; }
