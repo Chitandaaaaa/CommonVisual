@@ -1,0 +1,233 @@
+/* ============================================================
+   CommonVisual · 实现方式与算法骨架
+   ------------------------------------------------------------
+   这个页面复用 layout.css 的变量与 .wrap / .hd / .back / .lead
+   / .jump / .ft，只补四块新东西：
+       ① .mtx       原语 × 骨架矩阵（窄屏换成 .mtx-list）
+       ② .algo-card 骨架说明卡
+       ③ .path      All-Reduce 的三条路线
+       ④ .tbl       两张对照表
+   ============================================================ */
+
+/* ───────────── 章节 ───────────── */
+
+.sec {
+  padding: 30px 0 34px;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 24px;
+}
+/* 索引条之后的第一节不再画分隔线 */
+.jump + .sec { border-top: none; padding-top: 20px; }
+
+.sec-hd { margin-bottom: 18px; }
+.sec-hd h2 {
+  margin: 0 0 6px;
+  font-size: 17px; font-weight: 600; letter-spacing: -.1px;
+}
+.sec-hd p {
+  margin: 0;
+  max-width: 680px;
+  font-size: 12.5px; color: var(--tx-2);
+}
+
+/* ───────────── ① 矩阵 ───────────── */
+
+.mtx {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 18px 8px;
+}
+
+.mtx-hd, .mtx-row {
+  display: grid;
+  grid-template-columns: 124px repeat(6, 1fr);
+  align-items: center;
+}
+
+.mtx-hd { padding-bottom: 10px; }
+.mtx-hd span {
+  font-size: 11px; color: var(--tx-3); text-align: center;
+  line-height: 1.25; padding: 0 3px;
+}
+
+.mtx-row { height: 34px; }
+.mtx-row + .mtx-row { box-shadow: inset 0 1px 0 #f2f4f9; }
+.mtx-row:hover { background: #faf9ff; }
+
+.mtx-name {
+  font-family: var(--mono);
+  font-size: 11.5px; color: var(--tx-2);
+}
+.mtx-row:hover .mtx-name { color: var(--accent); }
+
+/* 一个点：深 = 常见默认，浅 = 也可以用，极浅 = 不适用（留个痕迹，别让行看起来断掉） */
+.d { justify-self: center; width: 20px; height: 20px; display: grid; place-items: center; }
+.d i { display: block; border-radius: 50%; }
+.d.def  i { width: 9px; height: 9px; background: var(--accent); }
+.d.ok   i { width: 7px; height: 7px; background: #c3c7d6; }
+.d.none i { width: 6px; height: 6px; background: #e2e6f0; }
+
+.mtx-key {
+  display: flex; flex-wrap: wrap; gap: 6px 20px;
+  margin: 10px 0 4px; padding: 0; list-style: none;
+  font-size: 11px; color: var(--tx-3);
+}
+.mtx-key li { display: inline-flex; align-items: center; gap: 6px; }
+.mtx-key b { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.mtx-key b.k-ok { width: 6px; height: 6px; background: #c3c7d6; }
+.mtx-key b.k-none { width: 6px; height: 6px; background: #e2e6f0; }
+
+/* 窄屏：矩阵收不起来，换成「一个原语一行」的胶囊列表 */
+.mtx-list { display: none; margin: 0; padding: 0; list-style: none; }
+.mtx-list li {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 7px;
+  padding: 11px 0;
+  border-bottom: 1px solid #f2f4f9;
+}
+.mtx-list li:last-child { border-bottom: none; }
+.mtx-list b {
+  font-family: var(--mono); font-size: 11.5px; color: var(--tx);
+}
+.mtx-list .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-size: 11px; padding: 2px 8px; border-radius: 999px;
+  white-space: nowrap;
+}
+.chip.def { background: #f1edfe; border: 1px solid #ded7fb; color: var(--accent); }
+.chip.ok  { background: var(--panel); border: 1px solid var(--line); color: var(--tx-3); }
+
+/* ───────────── ② 骨架卡 ───────────── */
+
+.algo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.algo-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 15px 16px 14px;
+}
+.algo-card h3 {
+  display: flex; align-items: baseline; gap: 8px;
+  margin: 0 0 4px;
+  font-size: 14px; font-weight: 600;
+}
+.algo-card h3 em {
+  font-style: normal;
+  font-family: var(--mono); font-size: 11px; font-weight: 400;
+  color: var(--tx-3);
+}
+.algo-card .one {
+  margin: 0 0 11px;
+  font-size: 12.5px; color: var(--tx-2);
+}
+.algo-card dl {
+  display: grid; grid-template-columns: 40px 1fr; gap: 5px 9px;
+  margin: 0;
+  font-size: 11.5px;
+}
+.algo-card dt { color: var(--tx-3); }
+.algo-card dd { margin: 0; color: var(--tx-2); }
+
+/* ───────────── ③ 三条路线 ───────────── */
+
+.paths { display: flex; flex-direction: column; gap: 10px; }
+
+.path {
+  display: grid;
+  grid-template-columns: 186px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 13px 17px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+}
+/* 第一条是 NCCL 默认，给个紫边 */
+.path.is-default { border-color: #d7cffa; }
+
+.path-a b { display: block; font-size: 13px; font-weight: 600; }
+.path-a em {
+  font-style: normal;
+  font-size: 11px; color: var(--tx-3);
+}
+
+.path-flow {
+  display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  font-size: 11.5px; color: var(--tx-2);
+}
+.path-flow u {
+  text-decoration: none;
+  padding: 3px 9px; border-radius: 7px;
+  background: #f4f2fe; border: 1px solid #e6e1fb;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.path-flow u.mid {
+  background: #fdf7ea; border-color: #f1e5c6; color: #8d6208;
+}
+.path-flow s {
+  text-decoration: none;
+  color: var(--tx-3);
+}
+
+.path-m {
+  text-align: right;
+  font-size: 11px; color: var(--tx-3);
+  white-space: nowrap; line-height: 1.6;
+}
+.path-m b { display: block; font-size: 12px; font-weight: 600; color: var(--tx-2); }
+
+/* ───────────── ④ 表格 ───────────── */
+
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th {
+  padding: 0 14px 8px 0;
+  text-align: left;
+  font-size: 11.5px; font-weight: 400; color: var(--tx-3);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.tbl td {
+  padding: 11px 14px 11px 0;
+  font-size: 12.5px; color: var(--tx-2);
+  border-bottom: 1px solid #f2f4f9;
+  vertical-align: top;
+}
+.tbl td b {
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  color: var(--tx);
+}
+
+/* ───────────── 收尾段落 ───────────── */
+
+.tail {
+  margin: 16px 0 0;
+  font-size: 12.5px; color: var(--tx-2);
+  max-width: 700px;
+}
+.tail + .tail { margin-top: 9px; }
+.tail b { color: var(--tx); font-weight: 600; }
+
+/* ───────────── 窄屏 ───────────── */
+
+@media (max-width: 720px) {
+  .mtx { display: none; }
+  .mtx-list { display: block; }
+
+  .algo-grid { grid-template-columns: 1fr; }
+
+  .path {
+    grid-template-columns: 1fr;
+    gap: 9px;
+    padding: 13px 14px;
+  }
+  .path-m { text-align: left; }
+  .path-m b { display: inline; margin-right: 8px; }
+
+  .tbl th:nth-child(3), .tbl td:nth-child(3) { display: none; }
+}

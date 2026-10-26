@@ -205,6 +205,11 @@ body {
   transition: color .3s var(--ease);
 }
 .hero-alt a:hover { color: var(--violet); }
+/* 多条次级入口之间的分隔符 */
+.hero-alt .sep {
+  margin: 0 7px;
+  color: var(--ink-3, #9b9daa);
+}
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(16px); }

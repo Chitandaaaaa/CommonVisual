@@ -25,6 +25,7 @@
 | [`allgather.html`](allgather.html) | 全收集 —— 2×2 网格顺时针转三轮，四张卡同步集齐 |
 | [`allreduce.html`](allreduce.html) | 全归约 —— 2×2 网格互换并累加两轮，四张卡拿到同一份结果 |
 | [`layout.html`](layout.html) | **前后对照表** —— 八个原语各自「通信前 / 通信后」每张卡的缓冲区，没变化的行置灰 |
+| [`algorithms.html`](algorithms.html) | **实现方式** —— 原语 × 六类算法骨架矩阵、八种骨架、All-Reduce 的三条路线、NCCL 选型 |
 
 每个原语页左上角有一块**关系导航**：横向是同族的全体版，纵向是同列的上/下一个，点原语名回首页。Reduce-Scatter 与 All-to-All 只有静态对照（在 `layout.html`），没有动画页，所以在这块导航里画成虚线灰片。
 
@@ -52,12 +53,15 @@ CommonVisual/
 ├── allgather.html
 ├── allreduce.html
 ├── layout.html             前后对照表（静态，八个原语一页看完）
+├── algorithms.html         实现方式（静态，骨架矩阵 + NCCL 选型）
 ├── 分布式通信原语详解.md    内容源
 ├── docs/
 │   └── 待讨论-Ring与Tree.md
 └── assets/
     ├── stage.css           精简版共用的全部样式
     ├── layout.css          对照表样式
+    ├── algorithms.js       实现方式的数据（矩阵 / 骨架 / 配方）+ 渲染
+    ├── algorithms.css      实现方式的样式（依赖 layout.css 的变量）
     ├── style.css           完整版样式
     ├── app.js              完整版逻辑
     ├── home.css / home.js  首页样式与交互
@@ -97,6 +101,8 @@ CommonVisual/
 **对照表里 reduce 的起点必须是「每卡一份完整数据」。** 数据切成四片、各卡只持一片时，reduce 根本用不了：不同位置的数据相加没有意义，那属于 gather 的场景。所以 gather / all-gather 的「通信前」是各卡 1 片，reduce / all-reduce / reduce-scatter 的「通信前」是各卡一整份 —— 这些原语的起点本来就不同，不能为了对齐而硬拉平。
 
 **Reduce-Scatter 是「加完再切」，All-to-All 是「切片转置」。** Reduce-Scatter 先把四份逐段相加得到四段的和，再按段切开、第 k 张卡只留第 k 段，所以通信后每卡只剩一格；All-to-All 完全不求和，每卡把自己那份切成四片、第 k 片发给 rank k，回来时四格都在，只是每格来自不同卡。
+
+**「骨架」和「配方」要分开讲。** `algorithms.html` 的矩阵只放原子骨架 —— 链/树、环、倍增/减半、Bruck、全连接、分层与网内。`RS+AG` 和 `Rabenseifner` 是「拿两个原语拼出第三个」的配方，单独一节讲，不进矩阵；混在一起会让人以为它们又是两种新拓扑。
 
 ## 交互
 
