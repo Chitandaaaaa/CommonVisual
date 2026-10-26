@@ -413,43 +413,30 @@ body {
 .rel-side { display: flex; align-items: center; gap: 6px; }
 
 /* 邻居标签
-   字体与页标题同族（--sans），不用等宽 —— 标题是黑体粗字、chip 是等宽小字时，
-   两者看着像两套系统。字号 15px 约为标题在 40px 下的四成，同级但轻一档。
-   默认只给淡淡的紫（浅、退后），鼠标悬浮才回到正常饱和度。 */
+   与页标题同一套字：--sans / 700 / var(--tx)，只小三个字号档位（40 → 28）。
+   不加边框、不加底色 —— 它读起来是标题旁的注记，不是一枚按钮；
+   加了胶囊边框就会被当成独立控件，和标题抢层级。
+   默认半透明退后，鼠标悬浮才回到与标题相同的实色。 */
 .rel-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(124, 58, 237, .22);
-  background: rgba(255, 255, 255, .6);
+  display: inline-flex; align-items: baseline; gap: 6px;
+  padding: 0;
   font-family: var(--sans);
-  font-size: 15px; font-weight: 600;
-  letter-spacing: -.01em;
-  color: rgba(124, 58, 237, .62);
+  font-size: 28px; font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -.03em;
+  color: rgba(22, 27, 46, .5);
   text-decoration: none;
   white-space: nowrap;
-  transition: border-color .22s ease, color .22s ease,
-              background .22s ease, transform .22s cubic-bezier(.3, .8, .4, 1.2),
-              box-shadow .22s ease;
+  transition: color .22s ease;
 }
-.rel-chip:hover {
-  color: var(--accent-2);
-  border-color: rgba(124, 58, 237, .62);
-  background: #fff;
-  box-shadow: 0 4px 14px -4px rgba(109, 40, 217, .35);
-  transform: translateY(-1px);
-}
-.rel-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-/* 还没实现的原语：虚线边 + 静态标签，不跳走 */
+.rel-chip:hover { color: var(--tx); }
+.rel-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+/* 还没实现的原语：同样是纯文字，只是更灰、且不可点 */
 .rel-chip-off {
-  border-style: dashed;
-  border-color: rgba(124, 58, 237, .22);
   color: var(--tx-3);
-  background: transparent;
   cursor: default;
 }
-.rel-chip-off:hover { transform: none; color: var(--tx-3);
-  border-color: rgba(124, 58, 237, .22); background: transparent; box-shadow: none; }
+.rel-chip-off:hover { color: var(--tx-3); }
 .rel-chip-tag {
   font-family: var(--sans);
   font-size: 9.5px; font-weight: 400; letter-spacing: .04em;
@@ -459,17 +446,17 @@ body {
   padding: 0 5px;
 }
 
-/* 箭头：与 chip 同源的紫罗兰色，圆头线。
-   比 chip 的默认色再淡一档，静态时只作方向提示，不抢标题。 */
+/* 箭头：与 chip 文字同色（--tx 的淡档），只是更细。
+   静态时只作方向提示，不抢标题。 */
 .rel-arrow { display: block; overflow: visible; }
 .rel-arrow-ln {
   fill: none;
-  stroke: rgba(124, 58, 237, .48);
-  stroke-width: 1.9;
+  stroke: rgba(22, 27, 46, .42);
+  stroke-width: 2.2;
   stroke-linecap: round;
 }
 .rel-arrow-hd {
-  fill: rgba(124, 58, 237, .56);
+  fill: rgba(22, 27, 46, .5);
   stroke: none;
 }
 
@@ -477,11 +464,12 @@ body {
 @media (max-width: 860px) {
   .hd { padding: 15px 18px; }
   .hd h1 { font-size: 24px; }
-  /* 窄屏：关系导航跟着缩一档，避免把标题和右上角按钮挤到一起 */
+  /* 窄屏：关系导航跟着缩一档（h1 24px → chip 17px，同样小三档），
+     避免把标题和右上角按钮挤到一起 */
   .relmap { column-gap: 8px; }
-  .rel-chip { font-size: 12.5px; padding: 3px 11px; }
+  .rel-chip { font-size: 17px; }
   .rel-chip-tag { font-size: 8.5px; }
-  .rel-arrow { transform: scale(.82); transform-origin: center center; }
+  .rel-arrow { transform: scale(.72); transform-origin: center center; }
   .rel-arrow-down { transform-origin: top center; }
   /* 窄屏：舞台撑满可用高度，字幕与控制条固定在下方 */
   .stagewrap { padding: 58px 10px 118px; gap: 10px; }

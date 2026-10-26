@@ -74,11 +74,12 @@
      left  = 伙伴 → 当前原语（伙伴在首页树里排在当前左边时） */
   function arrow(dir) {
     var vert = dir === 'down' || dir === 'up';
-    /* 竖向箭头放大到 18×20：下方 chip 用 15px 字号后，原来 14px 的箭头太轻 */
+    /* 与 28px 的 chip 字号配套：竖向 22×25、横向 30×19，
+       viewBox 不变，等比放大即可 */
     var s = svgEl('svg', {
       'viewBox': vert ? '0 0 14 16' : '0 0 22 14',
-      'width': vert ? 18 : 22,
-      'height': vert ? 20 : 14,
+      'width': vert ? 22 : 30,
+      'height': vert ? 25 : 19,
       'aria-hidden': 'true',
       'class': 'rel-arrow rel-arrow-' + dir
     });
