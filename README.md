@@ -24,6 +24,7 @@
 | [`reduce.html`](reduce.html) | 归约 —— N 份相加成一份，累加器逐段折入 |
 | [`allgather.html`](allgather.html) | 全收集 —— 2×2 网格顺时针转三轮，四张卡同步集齐 |
 | [`allreduce.html`](allreduce.html) | 全归约 —— 2×2 网格互换并累加两轮，四张卡拿到同一份结果 |
+| [`layout.html`](layout.html) | **前后对照表** —— 六个原语各自「通信前 / 通信后」每张卡的缓冲区，没变化的行置灰 |
 
 每个原语页左上角有一块**关系导航**：横向是同族的全体版，纵向是同列的上/下一个，点原语名回首页。还没实现的邻居（Reduce-Scatter、All-to-All）画成虚线灰片。
 
@@ -50,11 +51,13 @@ CommonVisual/
 ├── reduce.html
 ├── allgather.html
 ├── allreduce.html
+├── layout.html             前后对照表（静态，六个原语一页看完）
 ├── 分布式通信原语详解.md    内容源
 ├── docs/
 │   └── 待讨论-Ring与Tree.md
 └── assets/
     ├── stage.css           精简版共用的全部样式
+    ├── layout.css          对照表样式
     ├── style.css           完整版样式
     ├── app.js              完整版逻辑
     ├── home.css / home.js  首页样式与交互
@@ -64,6 +67,7 @@ CommonVisual/
     ├── reduce.js
     ├── allgather.js
     ├── allreduce.js
+    ├── layout.js           对照表数据（PRIMS）+ 渲染
     └── cv/                 公共绘制层
         ├── dom.js          $ / $$ / el / clamp / easeInOutQuad
         │                   / mix(hex+rgb 都吃) / cubicBezier(复刻 CSS 曲线)
@@ -87,6 +91,10 @@ CommonVisual/
 **槽位三态语言。** ① 实心彩色块 = 有数据；② 浅紫底「···」= 传输中/待命；③ 浅灰虚线框 = 空。
 
 **All-Reduce 的「双车道」。** 交换是双向的，同一条边上两个包对向而行，各走一条车道。法向偏移的符号**由行进方向自动反转**：两个方向都取 `+HUMP` 就够，不要按 `from < to` 再补正负号 —— 那样 `dx/dy` 已经反向，符号被二次抵消，两个包会永远叠在同一侧。`HUMP = 22px`，包主体 24px，留一道明显的缝才看得出是两条道。
+
+**对照表用三档行状态说话。** `layout.html` 把六个原语统一成同一套读法：左边四行是通信前的缓冲区，中间一个动作词，右边四行是通信后的缓冲区。行只有三种状态 —— 结果落在这张卡上（紫色描边）、通信前后没变化（整行退到 40%）、变了但结果不在它身上（正常显示）。
+
+**对照表里 reduce 的起点必须是「每卡一份完整数据」。** 数据切成四片、各卡只持一片时，reduce 根本用不了：不同位置的数据相加没有意义，那属于 gather 的场景。所以 gather / all-gather 的「通信前」是各卡 1 片，reduce / all-reduce 的「通信前」是各卡一整份 —— 两个原语的起点本来就不同，不能为了对齐而硬拉平。
 
 ## 交互
 
