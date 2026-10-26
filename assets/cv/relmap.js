@@ -37,7 +37,8 @@
     scatter:   'scatter.html',
     gather:    'gather.html',
     reduce:    'reduce.html',
-    allgather: 'allgather.html'
+    allgather: 'allgather.html',
+    allreduce: 'allreduce.html'
   };
 
   var key = document.body.getAttribute('data-rel');

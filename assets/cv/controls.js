@@ -66,7 +66,13 @@
       var si = 0;
       for (var i = 0; i < steps.length; i++) if (v >= steps[i].t) si = i;
       var cap = $('#capText');
-      if (cap) cap.innerHTML = steps[si].text;
+      if (cap) {
+        var st = steps[si];
+        /* 窄屏一行放不下长句（All-Reduce 那种要塞四个 rank 胶囊的），
+           有短版就用短版，没有就照原样渲 —— 截断留给 CSS 兜底 */
+        var narrow = window.innerWidth < 860;
+        cap.innerHTML = (narrow && st.short) ? st.short : st.text;
+      }
     }
 
     function setPlaying(v) {

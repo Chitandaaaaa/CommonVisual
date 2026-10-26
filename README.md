@@ -1,6 +1,6 @@
 # CommonVisual
 
-**NCCL 集合通信原语的 Web 可视化** —— 把 gather / scatter / broadcast / reduce / all-gather 这些抽象概念，画成看得懂的数据流动画。
+**NCCL 集合通信原语的 Web 可视化** —— 把 gather / scatter / broadcast / reduce / all-gather / all-reduce 这些抽象概念，画成看得懂的数据流动画。
 
 零框架、零依赖、零构建：手写内联 SVG + 原生 `requestAnimationFrame` + IIFE。所有页面双击就能在浏览器里打开，不需要 npm install，不需要打包。
 
@@ -23,8 +23,9 @@
 | [`broadcast.html`](broadcast.html) | 广播 —— 一份复制给 N 人，每人都拿整份副本 |
 | [`reduce.html`](reduce.html) | 归约 —— N 份相加成一份，累加器逐段折入 |
 | [`allgather.html`](allgather.html) | 全收集 —— 2×2 网格顺时针转三轮，四张卡同步集齐 |
+| [`allreduce.html`](allreduce.html) | 全归约 —— 2×2 网格互换并累加两轮，四张卡拿到同一份结果 |
 
-每个原语页左上角有一块**关系导航**：横向是同族的全体版，纵向是同列的上/下一个，点原语名回首页。
+每个原语页左上角有一块**关系导航**：横向是同族的全体版，纵向是同列的上/下一个，点原语名回首页。还没实现的邻居（Reduce-Scatter、All-to-All）画成虚线灰片。
 
 ## 本地运行
 
@@ -43,16 +44,17 @@ python3 -m http.server 8000
 CommonVisual/
 ├── index.html              完整版（保留作参考）
 ├── home.html               首页：原语关系树
-├── gather.html             五个精简版单屏演示
+├── gather.html             精简版单屏演示
 ├── scatter.html
 ├── broadcast.html
 ├── reduce.html
 ├── allgather.html
+├── allreduce.html
 ├── 分布式通信原语详解.md    内容源
 ├── docs/
 │   └── 待讨论-Ring与Tree.md
 └── assets/
-    ├── stage.css           五个精简版共用的全部样式
+    ├── stage.css           精简版共用的全部样式
     ├── style.css           完整版样式
     ├── app.js              完整版逻辑
     ├── home.css / home.js  首页样式与交互
@@ -61,6 +63,7 @@ CommonVisual/
     ├── broadcast.js
     ├── reduce.js
     ├── allgather.js
+    ├── allreduce.js
     └── cv/                 公共绘制层
         ├── dom.js          $ / $$ / el / clamp / easeInOutQuad
         │                   / mix(hex+rgb 都吃) / cubicBezier(复刻 CSS 曲线)
@@ -82,6 +85,8 @@ CommonVisual/
 **CSS 曲线用 JS 复刻。** 落位弹跳的 `.slot-pop` 是 `cubic-bezier(.2, .9, .3, 1.45)`，y 控制点 > 1 会过冲。`CV.cubicBezier()` 在 JS 里原样复刻，这样弹跳与纯 CSS 版本逐点一致，又不用给 SVG 元素套 CSS 动画（双层 transform 会让 Chrome 提合成层并丢掉填充色，渲染成黑块）。
 
 **槽位三态语言。** ① 实心彩色块 = 有数据；② 浅紫底「···」= 传输中/待命；③ 浅灰虚线框 = 空。
+
+**All-Reduce 的「双车道」。** 交换是双向的，同一条边上两个包对向而行，各走一条车道。法向偏移的符号**由行进方向自动反转**：两个方向都取 `+HUMP` 就够，不要按 `from < to` 再补正负号 —— 那样 `dx/dy` 已经反向，符号被二次抵消，两个包会永远叠在同一侧。`HUMP = 22px`，包主体 24px，留一道明显的缝才看得出是两条道。
 
 ## 交互
 
