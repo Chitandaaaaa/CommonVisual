@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>CommonVisual · 通信前后数据布局对照</title>
-<meta name="description" content="NCCL 集合通信原语的前后对照：每一行是一张卡的缓冲区，通信前是什么、通信后变成什么，没变化的行置灰。">
+<meta name="description" content="NCCL 八个集合通信原语的前后对照：每一行是一张卡的缓冲区，通信前是什么、通信后变成什么，没变化的行置灰。">
 <link rel="stylesheet" href="assets/layout.css">
 </head>
 <body>
@@ -19,12 +19,13 @@
       原语关系树
     </a>
     <h1>通信前后 · 数据布局对照</h1>
-    <p class="lead">每一行是一张卡的缓冲区。灰掉的行表示通信前后没有变化 —— 结果只落在该落的那张卡上。</p>
+    <p class="lead">每一行是一张卡的缓冲区。灰掉的行表示通信前后没有变化 —— 结果只落在该落的那张卡上。角标是「同一份数据被切成的第几片」。</p>
 
     <ul class="legend">
       <li><i class="cell" style="--c:#7c3aed">A</i><span>数据块</span></li>
+      <li><i class="cell" style="--c:#7c3aed">A<sub>0</sub></i><span>第 0 片</span></li>
       <li><i class="cell" style="--c:#4c1d95">Σ</i><span>求和结果</span></li>
-      <li><i class="cell is-blank"></i><span>空缓冲</span></li>
+      <li><i class="cell is-blank"></i><span>本卡没有这段</span></li>
       <li><i class="sw-demo"></i><span>未变化</span></li>
     </ul>
   </header>
@@ -32,7 +33,7 @@
   <main id="app"></main>
 
   <footer class="ft">
-    <p>Reduce-Scatter 与 All-to-All 还没做页面，这一版先覆盖已实现的六个原语。</p>
+    <p>八个原语的静态对照已全部覆盖。想要动画版，回关系树里点对应节点（Reduce-Scatter 与 All-to-All 暂无动画页）。</p>
     <a class="back" href="home.html">← 回到原语关系树</a>
   </footer>
 
