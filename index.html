@@ -61,7 +61,7 @@
           <span class="node-dir">1 → N</span>
         </span>
       </a>
-      <div class="conn conn-v" data-k="broadcast" style="grid-column:1;grid-row:2;--d:0.400s" aria-hidden="true">
+      <div class="conn conn-v" data-k="broadcast" data-from="n-broadcast" style="grid-column:1;grid-row:2;--d:0.400s" aria-hidden="true">
         <svg viewBox="0 0 20 34" width="20" height="34"><path class="ln" pathLength="1" d="M10 3V21"/><path class="fl" d="M10 3V21"/><path class="hd" d="M5.5 17 10 25 14.5 17"/></svg>
       </div>
 
@@ -75,7 +75,7 @@
           <span class="node-dir">1 → N</span>
         </span>
       </a>
-      <div class="conn conn-v" data-k="scatter" style="grid-column:1;grid-row:4;--d:0.475s" aria-hidden="true">
+      <div class="conn conn-v" data-k="scatter" data-from="n-scatter" style="grid-column:1;grid-row:4;--d:0.475s" aria-hidden="true">
         <svg viewBox="0 0 20 34" width="20" height="34"><path class="ln" pathLength="1" d="M10 3V21"/><path class="fl" d="M10 3V21"/><path class="hd" d="M5.5 17 10 25 14.5 17"/></svg>
       </div>
 
@@ -90,7 +90,7 @@
           <span class="node-dir">N → 1</span>
         </span>
       </a>
-      <div class="conn conn-h" data-k="gather" style="grid-column:2;grid-row:5;--d:0.550s" aria-hidden="true">
+      <div class="conn conn-h" data-k="gather" data-from="n-gather" style="grid-column:2;grid-row:5;--d:0.550s" aria-hidden="true">
         <svg viewBox="0 0 76 20" width="76" height="20"><path class="ln" pathLength="1" d="M4 10H58"/><path class="fl" d="M4 10H58"/><path class="hd" d="M54 5 62 10 54 15"/></svg>
       </div>
       <a class="node" id="n-allgather" href="allgather.html" style="grid-column:3;grid-row:5">
@@ -105,7 +105,7 @@
       </a>
 
       <!-- ── Reduce ⟶ All-Reduce ── -->
-      <div class="conn conn-v" data-k="gather" style="grid-column:1;grid-row:6;--d:0.625s" aria-hidden="true">
+      <div class="conn conn-v" data-k="gather" data-from="n-gather" style="grid-column:1;grid-row:6;--d:0.625s" aria-hidden="true">
         <svg viewBox="0 0 20 34" width="20" height="34"><path class="ln" pathLength="1" d="M10 3V21"/><path class="fl" d="M10 3V21"/><path class="hd" d="M5.5 17 10 25 14.5 17"/></svg>
       </div>
       <a class="node" id="n-reduce" href="reduce.html" style="grid-column:1;grid-row:7">
@@ -118,10 +118,10 @@
           <span class="node-dir">N → 1</span>
         </span>
       </a>
-      <div class="conn conn-h" data-k="reduce" style="grid-column:2;grid-row:7;--d:0.700s" aria-hidden="true">
+      <div class="conn conn-h" data-k="reduce" data-from="n-reduce" style="grid-column:2;grid-row:7;--d:0.700s" aria-hidden="true">
         <svg viewBox="0 0 76 20" width="76" height="20"><path class="ln" pathLength="1" d="M4 10H58"/><path class="fl" d="M4 10H58"/><path class="hd" d="M54 5 62 10 54 15"/></svg>
       </div>
-      <div class="conn conn-v" data-k="allgather" style="grid-column:3;grid-row:6;--d:0.775s" aria-hidden="true">
+      <div class="conn conn-v" data-k="allgather" data-from="n-allgather" style="grid-column:3;grid-row:6;--d:0.775s" aria-hidden="true">
         <svg viewBox="0 0 20 34" width="20" height="34"><path class="ln" pathLength="1" d="M10 3V21"/><path class="fl" d="M10 3V21"/><path class="hd" d="M5.5 17 10 25 14.5 17"/></svg>
       </div>
       <a class="node" id="n-allreduce" href="allreduce.html" style="grid-column:3;grid-row:7">
@@ -136,7 +136,7 @@
       </a>
 
       <!-- ── 右列续 ── -->
-      <div class="conn conn-v" data-k="allreduce" style="grid-column:3;grid-row:8;--d:0.850s" aria-hidden="true">
+      <div class="conn conn-v" data-k="allreduce" data-from="n-allreduce" style="grid-column:3;grid-row:8;--d:0.850s" aria-hidden="true">
         <svg viewBox="0 0 20 34" width="20" height="34"><path class="ln" pathLength="1" d="M10 3V21"/><path class="fl" d="M10 3V21"/><path class="hd" d="M5.5 17 10 25 14.5 17"/></svg>
       </div>
       <a class="node" id="n-reducescatter" href="reducescatter.html" style="grid-column:3;grid-row:9">
@@ -149,7 +149,7 @@
           <span class="node-dir">N → N</span>
         </span>
       </a>
-      <div class="conn conn-v" data-k="reducescatter" style="grid-column:3;grid-row:10;--d:0.925s" aria-hidden="true">
+      <div class="conn conn-v" data-k="reducescatter" data-from="n-reducescatter" style="grid-column:3;grid-row:10;--d:0.925s" aria-hidden="true">
         <svg viewBox="0 0 20 34" width="20" height="34"><path class="ln" pathLength="1" d="M10 3V21"/><path class="fl" d="M10 3V21"/><path class="hd" d="M5.5 17 10 25 14.5 17"/></svg>
       </div>
       <a class="node" id="n-alltoall" href="alltoall.html" style="grid-column:3;grid-row:11">

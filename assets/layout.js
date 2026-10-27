@@ -50,23 +50,23 @@
 
   /* ── 八个原语 ──
      pre / post 里每一项对应一张卡，顺序恒为 rank0→rank3
-     字段：c 数据格数组 / flag 右侧小字 / empty 空缓冲 / hot 结果卡 / dim 未变化 */
+     字段：c 数据格数组 / flag 右侧小字（只留有区分度的说明）/ empty 空缓冲 / hot 结果卡 / dim 未变化 */
   var PRIMS = [
     {
       key: 'gather', en: 'Gather', cn: '收集', tag: 'N → 1',
       act: '拼接',
       note: '四片拼成一片，结果变长；只有 rank0 拿到',
       pre: [
-        { c: ['A'], flag: '只有 1 片' },
-        { c: ['B'], flag: '只有 1 片' },
-        { c: ['C'], flag: '只有 1 片' },
-        { c: ['D'], flag: '只有 1 片' }
+        { c: ['A'] },
+        { c: ['B'] },
+        { c: ['C'] },
+        { c: ['D'] }
       ],
       post: [
         { c: WHOLE, flag: '拼成 4 段', hot: true },
-        { c: ['B'], flag: '原样不动', dim: true },
-        { c: ['C'], flag: '原样不动', dim: true },
-        { c: ['D'], flag: '原样不动', dim: true }
+        { c: ['B'], dim: true },
+        { c: ['C'], dim: true },
+        { c: ['D'], dim: true }
       ]
     },
 
@@ -82,9 +82,9 @@
       ],
       post: [
         { c: ['A'], flag: '留下第 1 段' },
-        { c: ['B'], flag: '各得 1 段' },
-        { c: ['C'], flag: '各得 1 段' },
-        { c: ['D'], flag: '各得 1 段' }
+        { c: ['B'] },
+        { c: ['C'] },
+        { c: ['D'] }
       ]
     },
 
@@ -99,10 +99,10 @@
         { empty: true, flag: '空' }
       ],
       post: [
-        { c: WHOLE, flag: '本来就是整份', dim: true },
-        { c: WHOLE, flag: '整份副本' },
-        { c: WHOLE, flag: '整份副本' },
-        { c: WHOLE, flag: '整份副本' }
+        { c: WHOLE, dim: true },
+        { c: WHOLE },
+        { c: WHOLE },
+        { c: WHOLE }
       ]
     },
 
@@ -118,9 +118,9 @@
       ],
       post: [
         { c: SUM4, flag: '四段各自的和', hot: true },
-        { c: WHOLE, flag: '原样不动', dim: true },
-        { c: WHOLE, flag: '原样不动', dim: true },
-        { c: WHOLE, flag: '原样不动', dim: true }
+        { c: WHOLE, dim: true },
+        { c: WHOLE, dim: true },
+        { c: WHOLE, dim: true }
       ]
     },
 
@@ -147,16 +147,16 @@
       act: '各自拼齐全份',
       note: '四片拼齐，四张卡都拿到完整一份',
       pre: [
-        { c: ['A'], flag: '只有 1 片' },
-        { c: ['B'], flag: '只有 1 片' },
-        { c: ['C'], flag: '只有 1 片' },
-        { c: ['D'], flag: '只有 1 片' }
+        { c: ['A'] },
+        { c: ['B'] },
+        { c: ['C'] },
+        { c: ['D'] }
       ],
       post: [
-        { c: WHOLE, flag: '集齐 4 段' },
-        { c: WHOLE, flag: '集齐 4 段' },
-        { c: WHOLE, flag: '集齐 4 段' },
-        { c: WHOLE, flag: '集齐 4 段' }
+        { c: WHOLE },
+        { c: WHOLE },
+        { c: WHOLE },
+        { c: WHOLE }
       ]
     },
 
@@ -171,10 +171,10 @@
         { c: WHOLE, flag: '第 4 份' }
       ],
       post: [
-        { c: SUM4, flag: '同一份和' },
-        { c: SUM4, flag: '同一份和' },
-        { c: SUM4, flag: '同一份和' },
-        { c: SUM4, flag: '同一份和' }
+        { c: SUM4 },
+        { c: SUM4 },
+        { c: SUM4 },
+        { c: SUM4 }
       ]
     },
 
@@ -183,10 +183,10 @@
       act: '各切四片互换',
       note: '每张卡把自己的那份切成四片，第 k 片发给 rank k；回来后手上是四张卡的第 k 片',
       pre: [
-        { c: ['A:0', 'A:1', 'A:2', 'A:3'], flag: '切成 4 片' },
-        { c: ['B:0', 'B:1', 'B:2', 'B:3'], flag: '切成 4 片' },
-        { c: ['C:0', 'C:1', 'C:2', 'C:3'], flag: '切成 4 片' },
-        { c: ['D:0', 'D:1', 'D:2', 'D:3'], flag: '切成 4 片' }
+        { c: ['A:0', 'A:1', 'A:2', 'A:3'] },
+        { c: ['B:0', 'B:1', 'B:2', 'B:3'] },
+        { c: ['C:0', 'C:1', 'C:2', 'C:3'] },
+        { c: ['D:0', 'D:1', 'D:2', 'D:3'] },
       ],
       post: [
         { c: ['A:0', 'B:0', 'C:0', 'D:0'], flag: '四卡的第 0 片' },
@@ -221,9 +221,8 @@
            '</div>';
   }
 
-  function side(cap, list) {
+  function side(list) {
     return '<div class="side">' +
-             '<div class="cap">' + cap + '</div>' +
              '<div class="rows">' +
                list.map(function (r, i) { return row(RANKS[i], r); }).join('') +
              '</div>' +
@@ -239,18 +238,44 @@
                '<p class="note">' + p.note + '</p>' +
              '</div>' +
              '<div class="pair">' +
-               side('通信前', p.pre) +
+               side(p.pre) +
                '<div class="flow"><span class="act">' + p.act + '</span>' + ARR_H + ARR_V + '</div>' +
-               side('通信后', p.post) +
+               side(p.post) +
              '</div>' +
            '</section>';
   }
 
   document.getElementById('app').innerHTML =
-    '<nav class="jump" aria-label="原语索引">' +
+    '<nav class="rail" aria-label="原语索引">' +
+      '<p class="rail-hd">八个原语</p>' +
       PRIMS.map(function (p) {
         return '<a href="#' + p.key + '">' + p.en + '</a>';
       }).join('') +
     '</nav>' +
     PRIMS.map(block).join('');
+
+  /* ── 左侧悬浮导航：滚动时高亮当前读到哪一块 ──
+     判定线取视口 30% 高度处，最后一个越过它的区块即为当前区块 */
+  var links = [].slice.call(document.querySelectorAll('.rail a'));
+  var secs = PRIMS.map(function (p) { return document.getElementById(p.key); });
+  var ticking = false;
+
+  function spy() {
+    var line = window.innerHeight * 0.3;
+    var cur = secs[0];
+    for (var i = 0; i < secs.length; i++) {
+      if (secs[i].getBoundingClientRect().top - line <= 0) cur = secs[i];
+    }
+    links.forEach(function (a) {
+      a.classList.toggle('is-on', a.getAttribute('href') === '#' + cur.id);
+    });
+  }
+
+  window.addEventListener('scroll', function () {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () { spy(); ticking = false; });
+  }, { passive: true });
+  window.addEventListener('resize', spy);
+  spy();
 })();

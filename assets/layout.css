@@ -23,6 +23,8 @@
 
 * { box-sizing: border-box; }
 
+html { scroll-behavior: smooth; }
+
 body {
   margin: 0;
   font-family: var(--sans);
@@ -58,6 +60,7 @@ body {
   font-size: 27px; font-weight: 600; letter-spacing: -.2px;
 }
 
+/* 页头导语：layout 自己已不用，algorithms / anatomy 复用这条 */
 .lead {
   margin: 0;
   max-width: 560px;
@@ -81,22 +84,47 @@ body {
   opacity: .45;
 }
 
-/* ───────────── 原语索引 ───────────── */
+/* ───────────── 左侧悬浮导航 ─────────────
+   宽屏：固定在左边、垂直居中，不随页面滚动；点击跳到对应原语
+   窄屏（<1180）：退回正文顶部的横向 chip 条 */
 
-.jump {
-  display: flex; flex-wrap: wrap; gap: 8px;
-  margin-bottom: 6px;
-}
-.jump a {
-  padding: 4px 12px;
-  background: var(--panel);
+.rail {
+  position: fixed;
+  left: 26px; top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  display: flex; flex-direction: column; gap: 1px;
+  width: max-content; min-width: 132px; padding: 10px;
+  background: rgba(255, 255, 255, .82);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--line);
-  border-radius: 999px;
-  font-family: var(--mono);
-  font-size: 11.5px; color: var(--tx-2); text-decoration: none;
-  transition: border-color .18s, color .18s;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px -14px rgba(22, 27, 46, .22), 0 1px 2px rgba(22, 27, 46, .04);
 }
-.jump a:hover { border-color: var(--accent-2); color: var(--accent); }
+
+.rail-hd {
+  margin: 0 0 6px; padding: 2px 10px;
+  font-size: 10.5px; color: var(--tx-3); letter-spacing: .08em;
+}
+
+.rail a {
+  display: block;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 12px; color: var(--tx-2); text-decoration: none;
+  white-space: nowrap;
+  transition: background .16s, color .16s, box-shadow .16s;
+}
+.rail a:hover { background: #f5f2ff; color: var(--accent); }
+
+/* 当前区块：紫字 + 淡紫底 + 细描边，和截图里的选中态一致 */
+.rail a.is-on {
+  background: #f5f2ff;
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(124, 58, 237, .3);
+}
 
 /* ───────────── 原语区块 ───────────── */
 
@@ -105,8 +133,8 @@ body {
   border-top: 1px solid var(--line);
   scroll-margin-top: 24px;
 }
-/* 索引条之后的第一块不再画分隔线 */
-.jump + .prim { border-top: none; padding-top: 22px; }
+/* 第一块紧接页头，不再画分隔线 */
+.prim:first-of-type { border-top: none; padding-top: 22px; }
 
 .prim-hd {
   display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px;
@@ -141,11 +169,6 @@ body {
 }
 
 .side { min-width: 0; }
-
-.cap {
-  margin-bottom: 9px;
-  font-size: 11.5px; color: var(--tx-3); letter-spacing: .04em;
-}
 
 .rows { display: flex; flex-direction: column; gap: 9px; }
 
@@ -222,8 +245,6 @@ body {
 
 .flow {
   display: flex; flex-direction: column; align-items: center; gap: 7px;
-  /* 补偿两侧 .cap 的高度，让箭头对准四行卡片的中间 */
-  padding-top: 27px;
 }
 .act {
   font-size: 12px; color: var(--tx-2); white-space: nowrap;
@@ -241,6 +262,32 @@ body {
   flex-wrap: wrap;
 }
 .ft p { margin: 0; font-size: 12.5px; color: var(--tx-3); }
+
+/* ───────────── 窄屏：导航退回正文顶部 ─────────────
+   正文 940 居中，窗口 ≤1319 时左侧放不下 164px 的悬浮窗（会贴到甚至压到正文），
+   直接改回横向 chip 条 —— DOM 不变，只改流向 */
+
+@media (max-width: 1319px) {
+  .rail {
+    position: static;
+    transform: none;
+    flex-direction: row; flex-wrap: wrap; gap: 8px;
+    width: auto; padding: 0; margin: 0 0 20px;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border: 0; box-shadow: none;
+  }
+  .rail-hd { display: none; }
+  .rail a {
+    padding: 4px 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 11.5px;
+  }
+  .rail a.is-on { border-color: var(--accent-2); }
+}
 
 /* ───────────── 窄屏 ───────────── */
 

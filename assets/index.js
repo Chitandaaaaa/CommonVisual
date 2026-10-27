@@ -1,7 +1,8 @@
 /* ============================================================
    CommonVisual · 首页交互
    ------------------------------------------------------------
-   1) 悬停某个节点 → 高亮它参与的那几条关系线（线会「流动」）
+   1) 悬停某个节点 → 只高亮「从该节点射出」的关系线（向右 / 向下的出边），
+      不点亮射入它的上 / 左箭头（每条线在 HTML 里用 data-from 标明源头）
    2) 点击「待实现」的节点 → 温和提示，不跳转
    3) 键盘可达：Tab 走节点，Enter/Space 触发
    ============================================================ */
@@ -18,26 +19,14 @@
   var conns = $$('.conn', tree);
 
   /* ───────────── 1. 悬停高亮关系线 ───────────── */
-  /* 节点 id → 它参与的关系 key（与 conn 的 data-k 对应） */
-  var REL = {
-    'n-broadcast':     ['broadcast'],
-    'n-scatter':       ['scatter'],
-    'n-gather':        ['gather'],
-    'n-allgather':     ['gather', 'allgather'],
-    'n-reduce':        ['reduce'],
-    'n-allreduce':     ['reduce', 'allreduce'],
-    'n-reducescatter': ['allreduce', 'reducescatter'],
-    'n-alltoall':      ['reducescatter']
-  };
-
+  /* 每条连线在 HTML 上都用 data-from 标明了「源头节点」，
+     只有从该节点射出的线（向右 / 向下）才高亮；射入它的上 / 左箭头不动。 */
   function highlight(id) {
-    var keys = REL[id] || [];
     nodes.forEach(function (n) {
       n.classList.toggle('is-lit', n.id === id);
     });
     conns.forEach(function (c) {
-      var k = c.getAttribute('data-k');
-      c.classList.toggle('is-lit', keys.indexOf(k) >= 0);
+      c.classList.toggle('is-lit', c.getAttribute('data-from') === id);
     });
   }
 
