@@ -164,8 +164,8 @@
       areaPad: 12,      /* 内容区上下留白 */
       rowGap: 12,       /* 第一排 → 第二排 */
       calcGap: 10,      /* 第二排 → 计算方框 */
-      calc: { w: 56, h: 22, fs: 11.5, tipW: 140, tipFs: 10.5, tipText: 'sum · avg · max · min' },
-      title: 15, badge: 10.5
+      calc: { w: 56, h: 22, fs: 11.5, tipFs: 10.5, tipText: 'sum · avg · max · min' },
+      title: 15, badge: 10
     },
     narrow: {
       view: { w: 380, h: 720 },
@@ -178,8 +178,8 @@
       areaPad: 9,
       rowGap: 8,
       calcGap: 7,
-      calc: { w: 40, h: 16, fs: 9, tipW: 88, tipFs: 8, tipText: 'sum · avg' },
-      title: 12.5, badge: 9
+      calc: { w: 40, h: 16, fs: 9, tipFs: 8, tipText: 'sum · avg' },
+      title: 12.5, badge: 8.5
     }
   };
 
@@ -238,41 +238,10 @@
     s.cy = y + s.h / 2;
   }
 
-  /* ---------- 计算方框：一枚小方牌 + 悬停说明 ----------
-     整体用局部坐标绘制（方牌以原点为中心），每帧用 transform 摆到位置上 ——
-     因为目标卡会随时间轴长高，标签要跟着走 */
+  /* ---------- 计算方框：实现在 cv/kit.js（规范页要 1:1 复用同一份） ----------
+     这里只负责选层：方框属于标注层，永远压在卡片与数据包上面 */
   function drawCalc(o) {
-    var g = el('g', { class: 'calc-wrap', 'data-on': '0' }, layer.labels);
-    g.style.transition = 'none';   /* 显隐由 JS 逐帧给，别让 CSS 过渡插一脚 */
-
-    var chip = el('g', { class: 'calc-chip' }, g);
-    el('rect', {
-      class: 'calc-chip-bg',
-      x: -o.w / 2, y: 0, width: o.w, height: o.h,
-      rx: Math.round(o.h * 0.30),
-      fill: '#fbfaff', stroke: '#d7d2ea', 'stroke-width': 1.2
-    }, chip);
-    el('text', {
-      class: 'calc-tx', x: 0, y: o.h / 2,
-      'text-anchor': 'middle', 'dominant-baseline': 'central',
-      'font-size': o.fs, fill: '#6a5f8a'
-    }, chip).textContent = '计算';
-
-    /* 悬停提示：贴在方牌下沿，深色气泡 —— 白底加白卡会糊在一起 */
-    var tip = el('g', { class: 'calc-tip' }, g);
-    var th = o.h + 6, ty = o.h + 8;
-    el('rect', {
-      x: -o.tipW / 2, y: ty, width: o.tipW, height: th,
-      rx: Math.round(th * 0.34),
-      fill: '#363b4e', 'fill-opacity': .96, filter: 'url(#fGlow)'
-    }, tip);
-    el('text', {
-      x: 0, y: ty + th / 2,
-      'text-anchor': 'middle', 'dominant-baseline': 'central',
-      'font-size': o.tipFs, fill: '#fff', 'font-family': 'var(--mono)'
-    }, tip).textContent = o.tipText;
-
-    return { wrap: g, chip: chip, tip: tip, w: o.w, h: o.h };
+    return CV.drawCalc(layer.labels, o);
   }
 
   function buildStage() {
@@ -385,10 +354,10 @@
       pkts[f.from] = CV.drawPacketBatch(layer.fx, L.slot, DATA);
     });
 
-    /* 计算方框 */
+    /* 计算方框：气泡宽度由 kit 按文案实测算（左右各留 12），这里不再写死 */
     calc = drawCalc({
       w: L.calc.w, h: L.calc.h,
-      fs: L.calc.fs, tipW: L.calc.tipW, tipFs: L.calc.tipFs, tipText: L.calc.tipText
+      fs: L.calc.fs, tipFs: L.calc.tipFs, tipText: L.calc.tipText
     });
 
     focus.refresh();
@@ -442,15 +411,21 @@
         mergeP = (sec - f.growEnd) / T.merge;
         cur = f;
       } else {
-        var s = (sec - f.mergeEnd) / T.shrink;
-        growCal = 1 - CV.easeInOutQuad(clamp(s / 0.85, 0, 1));
-        chipA = 1 - clamp(s / 0.45, 0, 1);
+        /* 回收分两步（规范页 07 的节奏）：方框先灭，卡还在 h3 上站一会儿；
+           方框彻底没了再收空间 —— 同步收窄会让方框瞬间掉到卡外，露在外面很难看 */
+        var s = clamp((sec - f.mergeEnd) / T.shrink, 0, 1);
+        var FADE = 0.45;                                   /* 前 45% 只做「方框灭」 */
+        chipA = 1 - clamp(s / FADE, 0, 1);
+        growCal = 1 - CV.easeInOutQuad(clamp((s - FADE) / (1 - FADE), 0, 1));
       }
     });
 
-    /* —— 卡片几何：中心固定，长高时上下同时扩 —— */
+    /* —— 卡片几何 ——
+       预留阶段：绕中心上下同时扩，两排才能在内容区里保持上下居中；
+       计算阶段：改成**只往下长**，顶边钉死 —— 长出来的那 28 就是方框的位置。
+       （对齐规范页 07 的「卡片在下方长高，两排位置不动」） */
     var h = CH.h1 + (CH.h2 - CH.h1) * growPre + (CH.h3 - CH.h2) * growCal;
-    var cardTop = L.target.cy - h / 2;
+    var cardTop = L.target.cy - h / 2 + (CH.h3 - CH.h2) * growCal / 2;
     CV.resizeCard(cards[ROUTE.target], {
       x: L.target.x, y: cardTop, w: L.card.w, h: h
     });
@@ -464,7 +439,10 @@
     var pT = padTop() + (padTop2(CH) - padTop()) * growPre;
     var rowY = topNow + L.hdr + pT;            /* 第一排（累加器） */
     var rowY2 = rowY + rowStep;                /* 第二排（刚到的整份） */
-    var calcY = rowY2 + c0.sh + L.calcGap;     /* 计算方框 */
+    /* 计算方框：在「第二排底 → 当前卡底」这段空白里上下居中。
+       卡长高时它跟着下移一点点，永远不贴边；calcGap 只当最小间距兜底。 */
+    var blankTop = rowY2 + c0.sh;
+    var calcY = blankTop + Math.max(L.calcGap, (cardTop + h - blankTop - L.calc.h) / 2);
 
     chips[ROUTE.target].forEach(function (s) { moveSlot(s, rowY); });
 
@@ -580,8 +558,8 @@
       });
     }
 
-    /* —— 计算方框：贴在第二排下面，方牌局部坐标已居中，
-       所以平移到卡片水平中心即可 —— */
+    /* —— 计算方框：在第二排以下的空白里上下居中（calcY 已按当前卡高算好），
+       方牌局部坐标已居中，所以平移到卡片水平中心即可 —— */
     if (calc) {
       calc.wrap.setAttribute('transform',
         'translate(' + (tGeo.x + tGeo.w / 2) + ' ' + calcY + ')');

@@ -232,8 +232,10 @@ body {
 
 /* ───────────── SVG 内部 ───────────── */
 .gpu-card { transition: opacity .3s ease; }
+/* 字号一律由绘制函数按 GEO 写在属性上（标题 15/12.5、徽章 10/8.5、块内字母 .33 × 块高）。
+   CSS 只负责字体族与字重 —— 这里再写 font-size 会盖掉属性，窄屏就会顶着桌面的字号。 */
 .gpu-title {
-  font-family: var(--sans); font-size: 18px; font-weight: 700; fill: var(--tx);
+  font-family: var(--sans); font-weight: 700; fill: var(--tx);
 }
 .slot-g { transition: opacity .32s ease; }
 .slot-bg { transition: fill .3s ease, stroke .3s ease; }
@@ -302,11 +304,11 @@ body {
 .gpu-card[data-dim="1"] .card-base { stroke: #eef1f8 !important; }
 
 .slot-tx {
-  font-family: var(--mono); font-size: 15px; font-weight: 700;
+  font-family: var(--mono); font-weight: 700;
   transition: fill .3s ease;
 }
 .dst-badge {
-  font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  font-family: var(--mono); font-weight: 700; letter-spacing: .06em;
 }
 .ann {
   font-family: var(--sans); font-size: 12.5px; font-weight: 600;

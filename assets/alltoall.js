@@ -111,8 +111,8 @@
       card: { w: 300, h: 170 },
       grid: { x: 175, y: 136, dx: 480, dy: 330 },
       legendY: 17,
-      slot: { sw: 44, sh: 44, gap: 10 },
-      rowGap: 8,
+      slot: { sw: 46, sh: 46, gap: 12 },
+      rowGap: 12,
       hdr: 36,
       title: 15, badge: 10
     },
@@ -122,7 +122,7 @@
       grid: { x: 8, y: 185, dx: 218, dy: 300 },
       legendY: 113,
       slot: { sw: 25, sh: 25, gap: 5 },
-      rowGap: 5,
+      rowGap: 8,
       hdr: 28,
       title: 12.5, badge: 8.5
     }
