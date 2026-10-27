@@ -25,7 +25,7 @@
 | [`allreduce.html`](allreduce.html) | 全归约 —— 2×2 网格互换并累加两轮，四张卡拿到同一份结果 |
 | [`reducescatter.html`](reducescatter.html) | 归约分散 —— 递归减半两轮，段数 4→2→1，每卡只留自己那段的和 |
 | [`alltoall.html`](alltoall.html) | 全互换 —— 上排待发、下排已收，按目的地分四步，12 条直连消息 |
-| [`layout.html`](layout.html) | **前后对照表** —— 八个原语各自「通信前 / 通信后」每张卡的缓冲区，没变化的行置灰 |
+| [`layout.html`](layout.html) | **前后对照表** —— 八个原语各自「通信前 / 通信后」每张卡的缓冲区，没变化的行置灰；左侧常驻悬浮索引，滚动时高亮当前读到哪个原语 |
 | [`algorithms.html`](algorithms.html) | **实现方式** —— 原语 × 六类算法骨架矩阵、八种骨架、All-Reduce 的三条路线、NCCL 选型 |
 
 每个原语页左上角有一块**关系导航**：横向是同族的全体版，纵向是同列的上/下一个，点原语名回首页。八个原语现在都有动画页，导航里不再有虚线灰片。
@@ -91,6 +91,8 @@ CommonVisual/
 **新增一个原语只改四块。** 每个 `assets/*.js` 里都按 ① DATA ② ROUTE ③ STEPS ④ GEO 分区，其余全部复用 `assets/cv/` 公共层和 `assets/stage.css`。
 
 **GEO 必须逐项抄齐。** SVG 用 `preserveAspectRatio="xMidYMid meet"` 等比缩放，**viewBox 越小 → 缩放倍率越大 → 整页内容都变大**。所以新增页面时 `view / card / slot / hdr / title / badge` 一个都不能自己定，改完用 `getBoundingClientRect()` 量一遍渲染像素。
+
+**字号写在属性上，CSS 只留字体族。** 标题（15 / 12.5）、徽章（10 / 8.5）、数据块字母（0.33 × 块高 → 15 / 8）都由 `drawCard` / `drawSlot` / `drawLegend` 按参数写在 `font-size` 属性里。CSS 里再写一条 `font-size` 会**盖掉属性**（class 选择器优先于呈现属性），窄屏就会顶着桌面字号 —— 曾经 `.gpu-title` 写死 18px、`.slot-tx` 写死 15px，25 的小块里塞着 15 的字，全是这个原因。
 
 **时间轴用「秒」写。** 归一化进度容易让人算错实际间隔，所以每个原语的 `T` 对象都是秒。
 

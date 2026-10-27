@@ -118,7 +118,9 @@
     var text = el('text', {
       class: 'slot-tx', x: x + w / 2, y: y + h / 2, 'text-anchor': 'middle',
       'dominant-baseline': 'central',
-      'font-size': Math.round(h * 0.34), fill: '#b9c0d2'
+      /* 字母 = 0.33 × 块高 —— 46 → 15 / 25 → 8。请勿在 CSS 里再钉字号：
+         .slot-tx 一旦写死 font-size 就会盖掉这条属性，窄屏 25 的块里会顶着 15 的字 */
+      'font-size': Math.round(h * 0.33), fill: '#b9c0d2'
     }, g);
     return { g: g, rect: rect, text: text, x: x, y: y, w: w, h: h, cx: x + w / 2, cy: y + h / 2 };
   };
@@ -295,11 +297,62 @@
       el('rect', { x: bx, y: by, width: c.sw, height: c.sh, rx: 8, fill: o.items[i].color }, seg);
       el('text', {
         class: 'slot-tx', x: bx + c.sw / 2, y: by + c.sh / 2,
+        /* 与 drawSlot 同一条规则：字母随块高，别让 CSS 决定 */
+        'font-size': Math.round(c.sh * 0.33),
         'text-anchor': 'middle', 'dominant-baseline': 'central', fill: '#fff'
       }, seg).textContent = o.items[i].letter;
       blocks.push(seg);
     }
     return { g: g, blocks: blocks, box: { x: o.x, y: o.y, w: bw, h: bh } };
+  };
+
+  /* ---------- 计算方框：一枚小方牌 + 悬停说明 ----------
+     reduce 的目标卡在归约时会临时往下长高，方框卡在第二排下面。
+     整体用局部坐标绘制（方牌以原点为中心、上沿 y=0），
+     每帧只改外层 transform —— 卡片长高时方牌要跟着走。 */
+  CV.drawCalc = function (parent, o) {
+    var g = el('g', { class: 'calc-wrap', 'data-on': '0' }, parent);
+    g.style.transition = 'none';   /* 显隐由 JS 逐帧写，别让 CSS 过渡插一脚 */
+
+    var chip = el('g', { class: 'calc-chip' }, g);
+    el('rect', {
+      class: 'calc-chip-bg',
+      x: -o.w / 2, y: 0, width: o.w, height: o.h,
+      rx: Math.round(o.h * 0.30),
+      fill: '#fbfaff', stroke: '#d7d2ea', 'stroke-width': 1.2
+    }, chip);
+    el('text', {
+      class: 'calc-tx', x: 0, y: o.h / 2,
+      'text-anchor': 'middle', 'dominant-baseline': 'central',
+      'font-size': o.fs, fill: '#6a5f8a'
+    }, chip).textContent = '计算';
+
+    /* 悬停提示：贴在方牌下沿的深色气泡 —— 白底配白卡会糊在一起。
+       宽度不写死：按文案实测长度 + 左右各 tipPad，字号或文案改了也不会挤到边。
+       先摆 rect 再摆 text 保证 z 序，尺寸量完再回填到 rect 上。 */
+    var tip = el('g', { class: 'calc-tip' }, g);
+    var th = o.h + 6, ty = o.h + 8;
+    var trect = el('rect', {
+      x: 0, y: ty, width: 0, height: th,
+      rx: Math.round(th * 0.34),
+      fill: '#363b4e', 'fill-opacity': .96, filter: 'url(#fGlow)'
+    }, tip);
+    var ttx = el('text', {
+      x: 0, y: ty + th / 2,
+      'text-anchor': 'middle', 'dominant-baseline': 'central',
+      'font-size': o.tipFs, fill: '#fff', 'font-family': 'var(--mono)'
+    }, tip);
+    ttx.textContent = o.tipText;
+
+    var pad = o.tipPad == null ? 12 : o.tipPad;
+    var len = 0;
+    try { len = ttx.getComputedTextLength(); } catch (e) { len = 0; }
+    if (!len) len = (o.tipText || '').length * o.tipFs * 0.6;   /* 还没上屏时的兜底 */
+    var tw = o.tipW || Math.round(len + pad * 2);
+    trect.setAttribute('x', -tw / 2);
+    trect.setAttribute('width', tw);
+
+    return { wrap: g, chip: chip, tip: tip, w: o.w, h: o.h, tipW: tw, tipH: th };
   };
 
   /* ---------- 落位脉冲：色块弹跳（涟漪环可选） ---------- */
@@ -321,6 +374,132 @@
     setTimeout(function () {
       if (ring.parentNode) ring.parentNode.removeChild(ring);
     }, 1100);
+  };
+
+  /* ---------- 融合：下排的块被上排「吸」走 ----------
+     和落位弹跳（.slot-pop）是两件相反的事，别混用：
+       落位 = 无 → 有，靠 scale(.35) → 1.16 → 1 的**过冲**给手感；
+       融合 = 有 → 无，位移向上、缩放变小、不透明度变低，三个量**全单调**，
+              一次回头都没有；目标块自己一点不缩放，只被一道白光扫过。
+
+     o = { x, y0, y1, size, data, target, to }
+       x      列中心
+       y0     源块中心（下排）      y1  目标块中心（上排）
+       data   源块数据 { letter, color }
+       target CV.drawSlot 返回的目标块句柄（白光盖在它上面）
+       to     融合后目标的数据 { letter: 'Σ', color: 更深的色 }
+     返回 { apply(p), reset(), g }，p ∈ [0,1] 由调用方的时间轴推。 */
+  var mergeSeq = 0;
+  CV.createMerge = function (parent, o) {
+    var id = 'fGloss' + (++mergeSeq);
+    var size = o.size, half = size / 2, x = o.x, y0 = o.y0, y1 = o.y1;
+    var base = o.data.color, tg = o.target;
+
+    var svg = parent.ownerSVGElement || parent;
+    var defs = svg.querySelector('defs');
+    if (!defs) defs = el('defs', {}, svg);
+
+    /* 白光：三停渐变，靠 gradientTransform 平移扫过。
+       不用 clipPath —— 两端全透明，天然不会扫出块外。 */
+    var grad = el('linearGradient', { id: id, x1: '0', y1: '0', x2: '1', y2: '0' }, defs);
+    el('stop', { offset: '.15', 'stop-color': '#fff', 'stop-opacity': '0' }, grad);
+    el('stop', { offset: '.5', 'stop-color': '#fff', 'stop-opacity': '.70' }, grad);
+    el('stop', { offset: '.85', 'stop-color': '#fff', 'stop-opacity': '0' }, grad);
+
+    var root = el('g', { class: 'fuse' }, parent);
+
+    /* 轨道线：被吸上去的这一路，亮一下就走 */
+    var guide = el('line', {
+      x1: x, y1: y1 + half, x2: x, y2: y0 - half,
+      stroke: '#c9b6f7', 'stroke-width': 1.2, 'stroke-dasharray': '3 4'
+    }, root);
+    guide.style.opacity = '0';
+
+    /* 两块残影：跟在后面（下方），缩放 .8 / .6 —— 与飞行数据包同一套语言，
+       读起来才像「被吸走」，而不是「跳了一下」 */
+    function ghost() {
+      var g = el('g', {}, root);
+      el('rect', {
+        x: 0, y: 0, width: size, height: size, rx: 8,
+        fill: base, filter: 'url(#fTrail)'
+      }, g);
+      g.setAttribute('opacity', '0');
+      return g;
+    }
+    var t2 = ghost(), t1 = ghost();
+
+    var src = CV.drawSlot(root, 0, 0, size, size);
+    CV.setSlot(src, o.data, {});
+    /* 舞台样式里 .slot-g 带 opacity 过渡，逐帧写会拖尾，这里关掉；
+       它还带 transform-box: fill-box / transform-origin: center ——
+       transform 属性会改成绕「块自身中心」生效，平移整体偏 (half − half·s)，
+       块会歪到目标格的右下角。这里要的是绕画布原点，必须显式盖回来。 */
+    [src.g, t1, t2].forEach(function (g) {
+      g.style.transition = 'none';
+      g.style.transformBox = 'view-box';
+      g.style.transformOrigin = '0 0';
+    });
+
+    /* 白光画在最后 = 压在目标块上面 */
+    var gloss = el('rect', {
+      x: tg.x, y: tg.y, width: tg.w, height: tg.h, rx: 8,
+      fill: 'url(#' + id + ')', 'pointer-events': 'none'
+    }, parent);
+    gloss.setAttribute('opacity', '0');
+
+    function put(node, cx, cy, s) {
+      node.setAttribute('transform',
+        'translate(' + (cx - half * s).toFixed(2) + ' ' + (cy - half * s).toFixed(2) +
+        ') scale(' + s.toFixed(3) + ')');
+    }
+    function cl(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
+    var merged = false;
+    function apply(p) {
+      p = cl(p);
+      var wake = cl(p / .16);                                    /* ① 唤醒 */
+      var rise = CV.easeInOutQuad(cl((p - .16) / .56));          /* ② 上浮 */
+      var op   = 1 - CV.easeInOutQuad(cl((p - .45) / .35));
+      var s    = 1 - .64 * rise;                                 /* 1 → .36，单调 */
+      var cy   = y0 + (y1 - y0) * rise;
+
+      /* ① 唤醒：只改颜色与描边，块一步都不挪 */
+      var lit = CV.mix(base, '#ffffff', .30 * wake);
+      src.rect.setAttribute('fill', lit);
+      src.rect.setAttribute('stroke', wake > .02 ? lit : '#d5dae8');
+      src.rect.setAttribute('stroke-dasharray', wake > .02 ? 'none' : '4 3');
+
+      /* ② 上浮 ＋ 缩小 ＋ 淡出：三个量一起单调，没有任何回弹 */
+      put(src.g, x, cy, s);
+      src.g.setAttribute('opacity', op.toFixed(3));
+
+      /* 拖尾：等块真的动起来才出现（跟着 rise 开门，不是跟着 p），
+         快贴到目标时先退场 —— 静止时挂在块底下像一块多余的影子，定格帧里更像脏点 */
+      var gate = cl((rise - .05) / .12) * (1 - cl((p - .42) / .20));
+      var to = op * (1 - rise * .5) * gate;
+      put(t1, x, cy + 18, s * .8);
+      t1.setAttribute('opacity', (to * .40).toFixed(3));
+      put(t2, x, cy + 30, s * .6);
+      t2.setAttribute('opacity', (to * .20).toFixed(3));
+
+      guide.style.opacity = (cl(p / .18) * (1 - cl((p - .60) / .30)) * .9).toFixed(3);
+
+      /* ③ 注入：白光 .55 → 1 扫过，.78 那一刻目标换 Σ 并加深 */
+      var gp = cl((p - .55) / .45);
+      gloss.setAttribute('opacity', (Math.sin(Math.PI * gp) * .9).toFixed(3));
+      grad.setAttribute('gradientTransform', 'translate(' + (-1 + 2 * gp).toFixed(3) + ' 0)');
+
+      if (p >= .78 && !merged) { merged = true; CV.setSlot(tg, o.to, {}); }
+    }
+
+    function reset() {
+      merged = false;
+      CV.setSlot(tg, o.data, {});
+      apply(0);
+    }
+
+    apply(0);
+    return { g: root, apply: apply, reset: reset, gloss: gloss };
   };
 
   /* ---------- 背景网格 ---------- */

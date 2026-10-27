@@ -15,11 +15,25 @@
    * @param {Array}  o.steps      [{ t: 0~1, text: html }]
    * @param {Number} o.duration   一轮播放时长（ms）
    * @param {Function} o.onFrame  时间变化时回调，用来重绘舞台
+   * @param {Element} o.root      可选：组件所在容器。不传就是整页（真页面一直这么用）；
+   *                              传了就只在这块里找 play / prev / next / scrub / segs / cap-text，
+   *                              也不注册全局键盘 —— 规范页的演示实例就是这么来的。
    */
   CV.createControls = function (o) {
     var steps = o.steps;
     var duration = o.duration || 9000;
     var onFrame = o.onFrame || function () {};
+    var root = o.root || document;
+    var isPage = root === document;
+
+    /* 页面里是 id，容器里用类名 —— 同一套组件的两种挂法 */
+    function q(sel, cls) { return root.querySelector(sel) || (cls && root.querySelector(cls)); }
+    var elPlay = q('#play', '.play');
+    var elPrev = q('#prev', '.prev');
+    var elNext = q('#next', '.next');
+    var elScrub = q('#scrub', '.scrub');
+    var elSegs = q('#segs', '.segs');
+    var elCap = q('#capText', '.cap-text');
 
     var t = 0, playing = false, rafId = null, lastTs = 0;
     var segFills = [];
@@ -44,7 +58,7 @@
     }
 
     function buildSegs() {
-      var box = $('#segs');
+      var box = elSegs;
       if (!box) return;
       box.innerHTML = '';
       segFills = steps.map(function () { return h('i', '', h('div', 'seg', box)); });
@@ -52,7 +66,7 @@
 
     /* 进度条填充 + 字幕 */
     function paintChrome(v) {
-      var sc = $('#scrub');
+      var sc = elScrub;
       if (sc && document.activeElement !== sc) sc.value = String(Math.round(tToV(v) * 1000));
 
       steps.forEach(function (s, i) {
@@ -65,7 +79,7 @@
 
       var si = 0;
       for (var i = 0; i < steps.length; i++) if (v >= steps[i].t) si = i;
-      var cap = $('#capText');
+      var cap = elCap;
       if (cap) {
         var st = steps[si];
         /* 窄屏一行放不下长句（All-Reduce 那种要塞四个 rank 胶囊的），
@@ -77,7 +91,7 @@
 
     function setPlaying(v) {
       playing = v;
-      var btn = $('#play');
+      var btn = elPlay;
       if (btn) {
         btn.innerHTML = v ? ICON_PAUSE : ICON_PLAY;
         btn.setAttribute('aria-label', v ? '暂停' : '播放');
@@ -105,7 +119,7 @@
     }
 
     function bind() {
-      var play = $('#play'), prev = $('#prev'), next = $('#next'), scrub = $('#scrub');
+      var play = elPlay, prev = elPrev, next = elNext, scrub = elScrub;
 
       if (play) play.addEventListener('click', function () { setPlaying(!playing); });
 
@@ -130,6 +144,8 @@
         seek(vToT(e.target.value / 1000));
       });
 
+      /* 全局快捷键只属于「整页那一份」；容器实例（规范页演示）绑了会抢走整页的 Space / 方向键 */
+      if (!isPage) return;
       document.addEventListener('keydown', function (e) {
         if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
         if (e.code === 'Space') { e.preventDefault(); setPlaying(!playing); }
@@ -151,7 +167,9 @@
       t: function () { return t; },
       tToV: tToV,
       vToT: vToT,
-      paintChrome: paintChrome
+      paintChrome: paintChrome,
+      /* 容器实例销毁：停掉 rAF，否则切 tab 换掉 DOM 后旧循环还在跑 */
+      destroy: function () { setPlaying(false); }
     };
   };
 })(window.CV = window.CV || {});
