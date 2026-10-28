@@ -7,6 +7,128 @@
   'use strict';
   var el = CV.el;
 
+  /* ---------- 参数注册表：把关键动效参数从字面量变成可实时调 / 锁 / 跨页的配置 ----------
+     结构：SCHEMA[section].keys[key] = { label, unit, def, min, max, step }
+     加载顺序（后者覆盖前者）：
+       ① 代码内置 def（本处 SCHEMA）
+       ② tokens.js 的 window.CV_PARAM_DEFAULTS（可提交、固化基线，kit 之前加载）
+       ③ localStorage 的运行时调试覆盖（调试时实时生效，清缓存即恢复基线）
+     面板（paramEditor.js，仅规范页）改的是 ③；「保存到代码」把当前值写进 ② 固化。
+     各章节的 draw 函数通过 CV.params.get(section, key) 取值，从而支持实时重画与跨页生效。
+     后续新增参数只需在此 SCHEMA 加一项；原语页重构后统一消费此处键值。 */
+  CV.params = (function () {
+    var LS_KEY = 'cv.params.v1';
+
+    var SCHEMA = {
+      /* 数据包组件规范：规范页 05 定的数，所有页面照这个实现（唯一来源）
+         groups 只负责「面板上怎么分组」（按定义顺序），keys 仍是扁平索引，get/set 路径不变。
+         耗时 = 这个组件自己要花掉多少时间；特效 = 不改时长、只改观感的量。 */
+      '05-packet': {
+        label: '数据包·动态',
+        groups: [
+          { label: '耗时', keys: ['packDur', 'packFade'] },
+          { label: '特效', keys: ['packLead', 'trailDist', 'trailScale'] }
+        ],
+        keys: {
+          packDur:    { label: '飞行时长', unit: 's',  def: 1.5, min: 0.3, max: 4,   step: 0.1 },
+          /* 包飞到终点后原地淡掉 —— 这段既是「淡出」也是「停留」，
+             不再单列一个「落点停留」：停留不是额外等一段，就是淡出的过程。 */
+          packFade:   { label: '送达淡出', unit: 's',  def: 0.6, min: 0,   max: 3,   step: 0.05 },
+          packLead:   { label: '起步让出', unit: '',   def: 0.16, min: 0,  max: 0.5, step: 0.01 },
+          trailDist:  { label: '拖尾退后', unit: 'px', def: 24,  min: 8,   max: 60,  step: 1 },
+          trailScale: { label: '拖尾浓度', unit: '×',  def: 1,   min: 0,   max: 2,   step: 0.05 }
+        }
+      },
+      /* 落位组件规范：只有「弹跳多久」是规范约定（08 那一节的 .slot-pop）。
+         到达终点到开始弹跳之间的「落位延迟」**不是规范值** ——
+         它是每页自己排的节奏，所以在页面齿轮里直接填秒，不走倍数。 */
+      '08-seat': {
+        label: '落位弹跳',
+        keys: {
+          popDur: { label: '弹跳时长', unit: 's', def: 0.55, min: 0.1, max: 1.5, step: 0.05 }
+        }
+      },
+      /* 全局播放：不改变任何组件规范，只改「同一套时间轴播多快」 */
+      global: {
+        label: '全局播放',
+        keys: {
+          pageSpeed: { label: '播放速度', unit: '×', def: 1, min: 0.3, max: 2.5, step: 0.1 }
+        }
+      }
+    };
+
+    var listeners = [];
+    var values = {};
+
+    function seed() {
+      var tok = (typeof window !== 'undefined' && window.CV_PARAM_DEFAULTS) || {};
+      Object.keys(SCHEMA).forEach(function (sec) {
+        values[sec] = {};
+        Object.keys(SCHEMA[sec].keys).forEach(function (k) {
+          var def = SCHEMA[sec].keys[k].def;
+          if (tok[sec] && tok[sec][k] !== undefined) def = tok[sec][k];
+          values[sec][k] = def;
+        });
+      });
+      try {
+        var raw = localStorage.getItem(LS_KEY);
+        if (raw) {
+          var over = JSON.parse(raw);
+          Object.keys(over).forEach(function (sec) {
+            if (values[sec]) Object.keys(over[sec]).forEach(function (k) {
+              if (values[sec][k] !== undefined) values[sec][k] = over[sec][k];
+            });
+          });
+        }
+      } catch (e) {}
+    }
+
+    function persist() {
+      try { localStorage.setItem(LS_KEY, JSON.stringify(values)); } catch (e) {}
+    }
+
+    function emit(ch) { listeners.forEach(function (fn) { try { fn(ch); } catch (e) {} }); }
+
+    function get(sec, k) {
+      return values[sec] && values[sec][k] !== undefined ? values[sec][k] : undefined;
+    }
+    function set(sec, k, v) {
+      if (!(values[sec] && values[sec][k] !== undefined)) return;
+      var from = values[sec][k];
+      values[sec][k] = v;
+      persist();
+      emit({ section: sec, key: k, from: from, to: v });
+    }
+    /* 重置：单参 / 单节 / 全部（全部先清 localStorage 再 seed，回到 tokens 基线） */
+    function reset(sec, k) {
+      if (sec && k) {
+        if (values[sec] && values[sec][k] !== undefined) {
+          var from = values[sec][k];
+          values[sec][k] = SCHEMA[sec].keys[k].def;
+          persist();
+          emit({ section: sec, key: k, from: from, to: values[sec][k] });
+        }
+      } else if (sec) {
+        Object.keys(SCHEMA[sec].keys).forEach(function (kk) { reset(sec, kk); });
+      } else {
+        try { localStorage.removeItem(LS_KEY); } catch (e) {}
+        seed();
+        persist();
+        emit({ section: '*', key: '*', from: null, to: null });
+      }
+    }
+    function onChange(fn) { if (typeof fn === 'function') listeners.push(fn); }
+    function schema() { return SCHEMA; }
+    function raw() { return values; }
+    function exportTokens() {
+      return 'window.CV_PARAM_DEFAULTS = ' + JSON.stringify(values, null, 2) + ';\n';
+    }
+
+    seed();
+    return { get: get, set: set, reset: reset, onChange: onChange,
+             schema: schema, raw: raw, exportTokens: exportTokens };
+  })();
+
   /* ---------- 徽章几何：drawCard 与 resizeCard 共用 ----------
      「src」三个字母挤在 22×14 的小框里，文字几乎贴着边框。
      这里把框放大到 28×18，并让文字的垂直位置按新框高重算。
@@ -186,12 +308,19 @@
     return { path: p, len: p.getTotalLength() };
   };
 
+  /* 拖尾浓度倍数：规范 05 的 trailScale（默认 1 = 原有 .55/.28 与 .48/.24） */
+  function trailK() {
+    var s = CV.params && CV.params.get('05-packet', 'trailScale');
+    return (typeof s === 'number') ? s : 1;
+  }
+
   /* ---------- 飞行中的数据包：主体 + 两段拖尾 ---------- */
   CV.drawPacket = function (parent, o) {
+    var k = trailK();
     var g = el('g', { class: 'pkt', 'data-l': o.letter, opacity: 0 }, parent);
-    var t2 = el('g', { opacity: .28 }, g);
+    var t2 = el('g', { opacity: .28 * k }, g);
     el('rect', { x: -8, y: -8, width: 16, height: 16, rx: 4.5, fill: o.color, filter: 'url(#fTrail)' }, t2);
-    var t1 = el('g', { opacity: .55 }, g);
+    var t1 = el('g', { opacity: .55 * k }, g);
     el('rect', { x: -10, y: -10, width: 20, height: 20, rx: 5.5, fill: o.color, filter: 'url(#fTrail)' }, t1);
     var head = el('g', {}, g);
     el('rect', { x: -12, y: -12, width: 24, height: 24, rx: 6.5, fill: o.color, filter: 'url(#fGlow)' }, head);
@@ -235,8 +364,9 @@
     }
 
     /* 拖尾：只画色块，不画底板，否则白色底板叠在一起会糊成一片 */
-    var t2 = el('g', { opacity: .24 }, g);
-    var t1 = el('g', { opacity: .48 }, g);
+    var k = trailK();
+    var t2 = el('g', { opacity: .24 * k }, g);
+    var t1 = el('g', { opacity: .48 * k }, g);
     blocks(t2, 'url(#fTrail)');
     blocks(t1, 'url(#fTrail)');
 
@@ -262,14 +392,37 @@
     var pt = wire.path.getPointAtLength(at);
     pkt.g.setAttribute('opacity', '1');
     pkt.head.setAttribute('transform', 'translate(' + pt.x + ' ' + pt.y + ')');
-    /* 拖尾永远在「来路」上，所以反向走时要往后加而不是减 */
+    /* 拖尾永远在「来路」上，所以反向走时要往后加而不是减。
+       拖尾退后距离 = 参数 trailDist（默认 24），远端按原比例 46/24 跟随；默认即原值，不改任何页面观感。 */
     var step = rev ? 1 : -1;
-    var a = wire.path.getPointAtLength(Math.max(0, Math.min(Lp, at + step * 24)));
-    var b = wire.path.getPointAtLength(Math.max(0, Math.min(Lp, at + step * 46)));
+    var near = (CV.params && CV.params.get('05-packet', 'trailDist')) || 24;
+    var far = near * (46 / 24);
+    var a = wire.path.getPointAtLength(Math.max(0, Math.min(Lp, at + step * near)));
+    var b = wire.path.getPointAtLength(Math.max(0, Math.min(Lp, at + step * far)));
     pkt.t1.setAttribute('transform', 'translate(' + a.x + ' ' + a.y + ') scale(.8)');
     pkt.t2.setAttribute('transform', 'translate(' + b.x + ' ' + b.y + ') scale(.6)');
     /* 拖尾随行进方向略微拉长，速度感更足 */
     wire.path.setAttribute('stroke-dashoffset', String(-e * 110));
+  };
+
+  /* 送达后淡出：包停在终点，透明度按「已过秒数 / 淡出时长」线性降到 0。
+     默认时长取规范 05 的 packFade（飞 1.5s 之后淡 .6s —— 这一段同时就是「停留」，
+     包原地消失，没有额外的停留段）。packFade = 0 时等价于一步隐藏。
+
+     durSec 可选：页面把「数据包」当成一整段（飞 + 淡）给了倍数时，
+     淡出也得跟着那个倍数走，此时传入自己算好的墙钟秒数，就不再乘 pageSpeed
+     （传进来的已经是最终秒）。不传则按规范 packFade / pageSpeed。 */
+  CV.pktFadeOut = function (pkt, elapsedSec, durSec) {
+    var d;
+    if (typeof durSec === 'number') {
+      d = durSec;
+    } else {
+      var sp = (CV.params && CV.params.get('global', 'pageSpeed')) || 1;
+      d = ((CV.params && CV.params.get('05-packet', 'packFade')) || 0) / (sp > 0 ? sp : 1);
+    }
+    if (!(d > 0)) { pkt.g.setAttribute('opacity', '0'); return; }
+    var o = 1 - elapsedSec / d;
+    pkt.g.setAttribute('opacity', o <= 0 ? '0' : String(Math.round(o * 100) / 100));
   };
 
   /* ---------- 图例：一整份数据 = 若干个数据块拼成 ---------- */
@@ -358,7 +511,12 @@
   /* ---------- 落位脉冲：色块弹跳（涟漪环可选） ---------- */
   CV.SHOW_RING = false;      /* 涟漪扩散环开关，置 true 可恢复 */
 
-  CV.spawnPulse = function (popLayer, slot, color) {
+  CV.spawnPulse = function (popLayer, slot, color, durSec) {
+    /* 弹跳时长取规范 08 的 popDur（默认 .55 = 改造前 CSS 里的值）。
+       页面若按自己的倍数改过，就把算好的秒数传进来，两边保持同一个数。 */
+    var d = (typeof durSec === 'number' && durSec >= 0) ? durSec
+                                                        : ((CV.params && CV.params.get('08-seat', 'popDur')) || 0.55);
+    slot.g.style.animationDuration = d + 's';
     slot.g.classList.remove('slot-pop');
     /* SVG 元素没有 offsetWidth，必须用 getBoundingClientRect 强制回流，
        否则第二次起「删-加 class」被合并，动画不会重播 */

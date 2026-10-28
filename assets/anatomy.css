@@ -396,3 +396,121 @@
   .todo { grid-template-columns: 1fr; }
   .demo { padding: 10px 10px 8px; }
 }
+
+/* ───────────── 参数调试台（paramEditor.js，仅规范页） ─────────────
+   把 CV.params 注册表变成可见 / 可调 / 可锁 / 可记录的浮动面板。
+   纯调试工具，不进生产观感，固定右下角。 */
+/* ───────────── 参数调试台：右侧抽屉 + 收起按钮 ─────────────
+   固定浮层，整高靠右；收起后只剩右下角 ⚙，不挡正文。
+   宽屏默认开，<1280px 默认收起（display 由 paramEditor.js 控制）。 */
+.param-fab {
+  position: fixed; right: 16px; bottom: 16px; z-index: 60;
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--line); background: #fff;
+  box-shadow: 0 6px 18px rgba(20, 26, 46, .18);
+  cursor: pointer; font-size: 18px; line-height: 1; color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+}
+.param-fab:hover { background: #faf9ff; }
+
+.param-dock {
+  position: fixed; top: 0; right: 0; z-index: 60;
+  width: min(340px, 90vw); height: 100vh;
+  display: flex; flex-direction: column;
+  background: #fff; border-left: 1px solid var(--line);
+  box-shadow: -8px 0 28px rgba(20, 26, 46, .10);
+  font-family: var(--sans); font-size: 12px; color: var(--tx);
+}
+.pd-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, #faf9ff, #f4f2fe);
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.pd-title { font-weight: 600; font-size: 13px; color: var(--accent); }
+.pd-close {
+  border: 0; background: none; cursor: pointer; color: var(--tx-3);
+  font-size: 14px; line-height: 1; padding: 2px 6px; border-radius: 6px;
+}
+.pd-close:hover { background: #e7eaf3; color: var(--tx-2); }
+.pd-body { flex: 1; position: relative; overflow-y: auto; padding: 10px 12px 4px; }
+.pd-foot {
+  display: flex; align-items: center; gap: 8px; flex: none;
+  padding: 9px 12px; border-top: 1px solid var(--line);
+  background: #fafbfe;
+}
+.pd-logcount { font-family: var(--mono); font-size: 10px; color: var(--tx-3); margin-right: auto; }
+.pd-foot button {
+  border: 0; cursor: pointer; font-family: var(--sans); font-size: 11px; font-weight: 600;
+  padding: 6px 9px; border-radius: 8px;
+}
+.pd-reset-all { background: #eef0f6; color: var(--tx-2); }
+.pd-reset-all:hover { background: #e3e6ef; }
+.pd-save { background: var(--accent); color: #fff; }
+.pd-save:hover { filter: brightness(1.06); }
+.pd-export { background: #eef0f6; color: var(--tx-2); }
+.pd-export:hover { background: #e3e6ef; }
+
+/* 手风琴分组：每章一组，滚到哪节哪节自动展开 */
+.pp-group { margin-bottom: 8px; }
+.pp-group-head {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 9px 10px; background: #f7f8fc;
+  border: 1px solid var(--line); border-radius: 10px;
+  cursor: pointer; text-align: left;
+  font-family: var(--sans); color: var(--tx);
+}
+.pp-group.open .pp-group-head { border-radius: 10px 10px 0 0; }
+.pp-group-title { font-size: 12.5px; font-weight: 600; color: var(--tx); }
+.pp-locate {
+  font-size: 11px; color: var(--accent); margin-left: auto;
+  cursor: pointer; white-space: nowrap;
+}
+.pp-locate:hover { text-decoration: underline; }
+.pp-tag {
+  font-size: 9.5px; letter-spacing: .06em; color: var(--tx-3);
+  margin-left: auto; padding: 1px 6px; border-radius: 999px;
+  background: #eef0f6; border: 1px solid var(--line);
+}
+.pp-chev { font-size: 11px; color: var(--tx-3); width: 12px; text-align: center; }
+.pp-group-body {
+  display: none; padding: 6px 10px 8px;
+  border: 1px solid var(--line); border-top: none;
+  border-radius: 0 0 10px 10px;
+}
+.pp-group.open .pp-group-body { display: block; }
+
+/* 组内子分组：同一个组件规范按「耗时 / 特效」分开看，一眼知道哪些改时长、哪些只改观感 */
+.pp-sub + .pp-sub { margin-top: 8px; padding-top: 7px; border-top: 1px dashed var(--line); }
+.pp-sub-hd {
+  font-size: 10px; letter-spacing: .08em; color: var(--tx-3);
+  margin-bottom: 2px;
+}
+
+.pp-row {
+  display: grid;
+  grid-template-columns: 1fr 96px 46px 16px 22px;
+  align-items: center; gap: 6px;
+  padding: 4px 0;
+}
+.pp-label {
+  font-size: 11.5px; color: var(--tx-2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pp-range { width: 96px; }
+.pp-num {
+  width: 46px; padding: 2px 4px; font-family: var(--mono); font-size: 11px;
+  border: 1px solid var(--line); border-radius: 6px; color: var(--tx);
+  text-align: right; background: #fff;
+}
+/* 去掉数字输入框的上下箭头：它占掉宽度，把「0.16」这种四位数的最后一位挤掉 */
+.pp-num::-webkit-inner-spin-button,
+.pp-num::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.pp-num { appearance: textfield; -moz-appearance: textfield; }
+.pp-unit { font-family: var(--mono); font-size: 9.5px; color: var(--tx-3); text-align: center; }
+.pp-reset {
+  border: 0; background: #f1f3f9; color: var(--tx-3); cursor: pointer;
+  border-radius: 6px; font-size: 12px; line-height: 1; padding: 4px 0;
+}
+.pp-reset:hover { background: #e7eaf3; color: var(--tx-2); }

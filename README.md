@@ -83,12 +83,38 @@ CommonVisual/
         │                   / drawPacket / resizeCard / drawLegend
         ├── controls.js     分段进度条 + 播放步进 + 键盘
         ├── focus.js        悬停聚焦 + 点击钉住
+        ├── primitive.js    8 个原语页公用骨架：舞台/布局切换/resize/控件启动
+        │                   + CV.PALETTE(数据色) + CV.GEO_BASE(公共尺寸)
+        │                   + CV.choreo(显式时序表)
+        ├── gear.js         原语页右上角「时序配置」齿轮（每步耗时的唯一入口：
+        │                   编号对进度条；有规范值调倍数，无规范值直接填秒）
+        ├── paramEditor.js  规范页「参数调试台」右侧抽屉（仅 anatomy 加载）
+        ├── tokens.js       参数代码基线 window.CV_PARAM_DEFAULTS（kit 前加载）
         └── relmap.js       原语页左上角的关系导航
 ```
 
 ## 几个设计决策
 
-**新增一个原语只改四块。** 每个 `assets/*.js` 里都按 ① DATA ② ROUTE ③ STEPS ④ GEO 分区，其余全部复用 `assets/cv/` 公共层和 `assets/stage.css`。
+**8 个原语页共用一套骨架（primitive.js）。** 页面只声明 `data / geo / steps / duration / keepCards / build / paint`，`CV.primitive()` 统一接管舞台取节点、清层、viewBox、860 断点两套几何、resize 防抖、`createControls` 启动与 focus 刷新。`data` 默认 `CV.PALETTE`，`geo` 用 `CV.geo({desktop:{...}, narrow:{...}})` 只写位置差异，公共尺寸来自 `CV.GEO_BASE`。文案用 `CV.primText(data)` 取 `rk/seg/whole`。
+
+**规范是唯一来源，页面按规范实现。** `kit.js` 的 `CV.params` 只描述**组件规范**：`05-packet` 是数据包组件的全部动作 —— **耗时**组 `packDur`（飞 1.5s）+ `packFade`（送达淡出 .6s，包原地淡掉，「停留」就是这段，没有独立的停留参数）、**特效**组 `packLead` / `trailDist` / `trailScale`；`08-seat` 只有 `popDur`（弹跳 .55s）—— **「落位延迟」和「两趟之间隔多久」不进规范**，那是每页自己排的节奏，没有通用标准。`global.pageSpeed` 只管整页播多快，不改任何组件规范。取值顺序 ① 代码内置默认 ② `tokens.js` 的 `window.CV_PARAM_DEFAULTS` ③ localStorage 运行时覆盖；规范页右侧「参数调试台」改的是 ③，点「保存到代码」导出 `tokens.js` 覆盖进仓库即固化。
+
+**每一步干什么，写成显式时序表（`CV.choreo`）。** 页面不再写比例、也不写 `FLY + HOLD` 这种算式，只列步骤，并要求每一步声明**取值方式**，只有两种：
+
+| 写法 | 什么情况下用 | 该段秒数 |
+|---|---|---|
+| `{ of:'packDur', k }` | 规范里约定了这一步 | **规范值 × 倍数**，规范页一改全站跟着变 |
+| `{ sec }` | 规范里没这个概念（说明 / 预留缓冲 / 落位延迟 / 两趟间隔 / 收尾） | 页面自己填的秒数 |
+
+`kind:'transfer'` 自动展开成四段 —— **传递(规范·数据包整段) → 落位延迟(自定秒) → 落位弹跳(规范) → 间隔(自定秒)**。「传递」= 数据包组件自己的所有耗时（`packDur` 飞 + `packFade` 淡），共用一个倍数；淡出**不和弹跳并行**：包淡完了才轮到落位，四段严格串行、不重叠。只有组件自身的行为（包飞多久+淡多久、弹多久 `popDur`）能走规范，编排节奏一律填秒。
+
+**每页右上角有齿轮（`gear.js`）。** 打开是本页的时序表：**行首编号就是进度条第几段**（`transfer` 多趟共用一组，编号显示成 `3–5`），有规范值的行显示「规范键 规范值 → 倍数 → 秒数」，没规范值的行显示「自定义 → 直接填秒」。改完立刻重排控件与舞台（`controls.retime` + `api.reload`），配置存 `localStorage: cv.page.<page>.v1`。由此 `duration`、`STEPS.t`、进度条段宽全部由「规范值×倍数 / 自定秒」算出来，页面里没有一处写死的时长。
+
+由此**进度条每段宽度 = 该段真实秒数**（`controls.js` 按 `Δt` 分配 flex-grow，视觉位置与时间等价，`vToT/tToV` 退化为恒等），不会再出现「一段长 0.2s 和一段长 2.2s 画得一样宽」。
+
+唯一允许不同的是**滑行时长随线长**：规范给的是基准线长下的 `packDur`，线更长就飞更久（速度恒定）。`CV.packFly(len, refLen)` 就是这个换算 —— 虚线长短不同，滑行时间当然不同。
+
+**新增一个原语只改四块。** 每个 `assets/*.js` 里都按 ① DATA ② ROUTE ③ STEPS ④ GEO 分区，`build(S)` 画图例/卡/槽/线/包，`paint(S,t)` 决定每帧状态；其余全部复用 `assets/cv/` 公共层和 `assets/stage.css`。
 
 **GEO 必须逐项抄齐。** SVG 用 `preserveAspectRatio="xMidYMid meet"` 等比缩放，**viewBox 越小 → 缩放倍率越大 → 整页内容都变大**。所以新增页面时 `view / card / slot / hdr / title / badge` 一个都不能自己定，改完用 `getBoundingClientRect()` 量一遍渲染像素。
 

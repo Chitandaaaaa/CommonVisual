@@ -18,6 +18,8 @@
    * @param {Element} o.root      可选：组件所在容器。不传就是整页（真页面一直这么用）；
    *                              传了就只在这块里找 play / prev / next / scrub / segs / cap-text，
    *                              也不注册全局键盘 —— 规范页的演示实例就是这么来的。
+   * @param {Boolean} o.autoplay  可选：进来就播。不传时**整页实例默认播、容器实例默认不播** ——
+   *                              原语页打开即动，规范页的 demo 由 tab 自己决定要不要动。
    */
   CV.createControls = function (o) {
     var steps = o.steps;
@@ -40,28 +42,23 @@
 
     function stepEnd(i) { return i + 1 < steps.length ? steps[i + 1].t : 1; }
 
-    /* 分段条是等宽的，但各步时长不等 —— 在「视觉位置」与「时间」之间做互逆换算，
-       这样点击位置、填充位置、滑块位置三者一致 */
-    function tToV(v) {
-      var n = steps.length, k = 0;
-      for (var i = 0; i < n; i++) if (v >= steps[i].t) k = i;
-      var s = steps[k].t, e = stepEnd(k);
-      var r = e > s ? clamp((v - s) / (e - s), 0, 1) : 1;
-      return (k + r) / n;
-    }
-    function vToT(x) {
-      var n = steps.length;
-      var k = clamp(Math.floor(x * n), 0, n - 1);
-      var r = clamp(x * n - k, 0, 1);
-      var s = steps[k].t, e = stepEnd(k);
-      return s + r * (e - s);
-    }
+    /* 分段条宽度 = 该段真实时长。
+       steps[i].t 本身就是「规范时间」的比例（页面按秒拼出时间轴再归一化），
+       所以这里按 (下一段 t − 本段 t) 分配宽度，进度条才不会撒谎；
+       视觉位置与时间因此等价，vToT / tToV 退化成恒等 —— 滑块拖到哪，时间就是哪。 */
+    function tToV(v) { return clamp(v, 0, 1); }
+    function vToT(x) { return clamp(x, 0, 1); }
 
     function buildSegs() {
       var box = elSegs;
       if (!box) return;
       box.innerHTML = '';
-      segFills = steps.map(function () { return h('i', '', h('div', 'seg', box)); });
+      segFills = steps.map(function (s, i) {
+        var fill = h('i', '', h('div', 'seg', box));
+        var span = stepEnd(i) - s.t;
+        box.lastChild.style.flexGrow = String(Math.max(span, 0.001));
+        return fill;
+      });
     }
 
     /* 进度条填充 + 字幕 */
@@ -118,6 +115,18 @@
       paintChrome(t);
     }
 
+    /* 时序改了就重排：步骤与总时长都可能变（原语页齿轮调倍数后走这里）。
+       保留的是「播到第几毫秒」，不是比例 —— 改了某段时长，位置才有物理意义。 */
+    function retime(newSteps, newDur) {
+      var ms = t * duration;
+      steps = newSteps;
+      duration = newDur || duration;
+      t = clamp(duration ? ms / duration : 0, 0, 1);
+      buildSegs();
+      onFrame(t);
+      paintChrome(t);
+    }
+
     function bind() {
       var play = elPlay, prev = elPrev, next = elNext, scrub = elScrub;
 
@@ -158,13 +167,18 @@
     buildSegs();
     bind();
     paintChrome(0);
+    /* 进页面就动起来：首帧已经画好了 t=0，这里只负责踩油门 —— 按钮图标也一并切成「暂停」 */
+    if (o.autoplay != null ? o.autoplay : isPage) setPlaying(true);
 
     return {
       seek: seek,
+      retime: retime,
       setPlaying: setPlaying,
       toggle: function () { setPlaying(!playing); },
       isPlaying: function () { return playing; },
       t: function () { return t; },
+      /* 取当前值（retime 会改它），不要缓存成固定数字 */
+      get duration() { return duration; },
       tToV: tToV,
       vToT: vToT,
       paintChrome: paintChrome,

@@ -842,11 +842,23 @@
     h('h3', null, subFly).textContent = '动态 · 数据包怎么飞';
     var flyBody = h('div', 'sub-body', s);
     var stopFly = null;
+    var flyMode = 0;
 
     addTabs(subFly, ['单个', '两个', '四个', '曲线'], function (mode) {
+      flyMode = mode;
       if (stopFly) { stopFly(); stopFly = null; }   /* 先停旧的 rAF，否则切几次 tab 就多几条循环 */
       flyBody.innerHTML = '';
       stopFly = drawFly(flyBody, mode);
+    });
+
+    /* 参数调试台改了「数据包·动态」任意键（或重置全部）→ 停掉旧 rAF、重建 demo，实时生效。
+       守纪律：切 tab / 重画前必 cancelAnimationFrame，否则多几条循环叠着跑。 */
+    CV.params.onChange(function (ch) {
+      if ((ch.section === '05-packet' || ch.section === '*') && stopFly) {
+        stopFly(); stopFly = null;
+        flyBody.innerHTML = '';
+        stopFly = drawFly(flyBody, flyMode);
+      }
     });
 
     function drawFly(host, mode) {
@@ -932,10 +944,15 @@
         }
       }
 
-      var DUR = 1.5, FADE = .6, HOLD = .7;
-      var CYCLE = DUR + FADE + HOLD;
-      /* 起步让出一小段：整份包的左缘本来就贴着线起点，几乎不用让 */
-      var lead = batch ? 0.015 : Math.min(0.16, 18 / w.len);
+      /* 时间轴与拖尾全部走参数注册表（CV.params），由调试台实时调 / 锁：
+         packDur 飞行 / packFade 送达淡出（同时就是「停留」）/ packLead 起步让出。
+         一轮 = 飞 + 淡，没有额外的停留段 —— 包淡完，这一趟就结束了，立刻下一轮。 */
+      var P = function (k) { return CV.params.get('05-packet', k); };
+      var DUR = P('packDur'), FADE = P('packFade');
+      var CYCLE = DUR + FADE;
+      /* 起步让出一小段：整份包的左缘本来就贴着线起点，几乎不用让；
+         单色 / 曲线包按 packLead 取让出量（封顶 18/路径长），整份包维持原微小让出 */
+      var lead = batch ? 0.015 : Math.min(P('packLead'), 18 / w.len);
       var t0 = performance.now(), raf = 0;
 
       /* 到终点只有一个动作：慢慢淡掉。
@@ -950,17 +967,15 @@
           CV.placePacket(pkt, w, e);
           setWire('fly');
           if (batch) src.g.setAttribute('opacity', '0');
-        } else if (sec < DUR + FADE) {                   /* 落到箭头尖上，缓慢消失 */
+        } else {                                         /* 落到箭头尖上，淡掉 = 这一趟结束 */
           CV.placePacket(pkt, w, 1);
-          pkt.g.setAttribute('opacity', (1 - (sec - DUR) / FADE).toFixed(3));
+          var f = FADE > 0 ? (sec - DUR) / FADE : 1;
+          pkt.g.setAttribute('opacity', f >= 1 ? '0' : (1 - f).toFixed(3));
           setWire('done');
           /* setWire 会把 dashoffset 归零，虚线在落点处回跳一下很难看 —— 停在落点那一刻 */
           w.path.setAttribute('stroke-dashoffset', '-110');
-          if (batch) src.g.setAttribute('opacity', '0');
-        } else {                                         /* 空一会儿再从头飞 */
-          pkt.g.setAttribute('opacity', '0');
-          setWire('done');
-          if (batch) src.g.setAttribute('opacity', '1');
+          /* 包已在终点淡，源端那份重新长出来（待发状态常驻，循环里没有空歇） */
+          if (batch) src.g.setAttribute('opacity', f > 0.2 ? '1' : '0');
         }
         raf = requestAnimationFrame(frame);
       }
@@ -968,15 +983,15 @@
 
       /* 说明文字跟着模式换 —— 每种模式想讲的其实是同一件事的不同侧面 */
       var tips = [
-        '一个 .pkt = 主体 24×24 + 两段拖尾，按弧长取点前进（easeInOutQuad，单程 1.5s）',
+        '一个 .pkt = 主体 24×24 + 两段拖尾，按弧长取点前进（easeInOutQuad，单程 ' + DUR + 's）',
         '一份数据 2 块：白底板把它们收成『一个』包，整份一起走 —— 不是两块各飞一条线',
         '一份数据 4 块：底板宽 = 4×20 + 3×3 + 两侧 6 = 101，块越多包越长，仍然只走一条线',
         '路径随便弯：位置与拖尾都按弧长在路径上取点，包身本身不旋转，拖尾自然拐弯'
       ];
       subTx(A, 26, 186, tips[mode], '#5f6780', 10, 'start');
       subTx(A, 26, 204, batch
-        ? '终点不放框：包中心正好落在箭头尖上，停下后淡出（.6s）· 不落位、不弹跳 · 连线按「一份数据」保持中性灰'
-        : '终点不放框：包中心正好落在箭头尖上，停下后淡出（.6s）· 不落位、不弹跳 · 飞行中连线染成包的颜色，落下后转 .45 淡色',
+        ? '终点不放框：包中心正好落在箭头尖上，原地淡出（' + FADE + 's）· 淡完这一趟就结束 · 连线按「一份数据」保持中性灰'
+        : '终点不放框：包中心正好落在箭头尖上，原地淡出（' + FADE + 's）· 淡完这一趟就结束 · 飞行中连线染成包的颜色，落下后转 .45 淡色',
         '#939bb2', 9.5, 'start');
 
       return function () { cancelAnimationFrame(raf); };

@@ -34,9 +34,13 @@
 
 <!-- 通用层：DOM 工具 + 绘制原语 + 播放控制（demo 直接复用真实函数 / 真实组件） -->
 <script src="assets/cv/dom.js"></script>
+<!-- 参数默认值（可提交基线）：必须在 kit.js 之前，kit 读 window.CV_PARAM_DEFAULTS 覆盖内置默认 -->
+<script src="assets/cv/tokens.js"></script>
 <script src="assets/cv/kit.js"></script>
 <script src="assets/cv/controls.js"></script>
 <script src="assets/cv/focus.js"></script>
 <script src="assets/anatomy.js"></script>
+<!-- 参数调试台（仅规范页）：把 CV.params 变成可见 / 可调 / 可锁 / 可记录的面板 -->
+<script src="assets/cv/paramEditor.js"></script>
 </body>
 </html>

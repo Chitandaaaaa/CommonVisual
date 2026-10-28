@@ -469,10 +469,158 @@ body {
   stroke: none;
 }
 
+/* ───────────── 时序配置齿轮（右上角） ─────────────
+   每个原语页都能打开自己这一页的「每一步耗时」。
+   视觉沿用关系导航的中性文字 + 白卡，不引入新色系；
+   只有倍数的结果数字用 accent，提示「这是可调的量」。 */
+.gear-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid transparent; background: none; cursor: pointer;
+  padding: 6px 9px 6px 7px; border-radius: 10px;
+  color: rgba(22, 27, 46, .46);
+  font-family: var(--sans); font-size: 12.5px; font-weight: 500;
+  transition: color .2s ease, background .2s ease, border-color .2s ease;
+}
+.gear-btn:hover, .gear-btn.on {
+  color: var(--accent);
+  background: #fff;
+  border-color: var(--line);
+}
+.gear-btn svg { display: block; }
+.gear-btn.on svg { transform: rotate(38deg); }
+.gear-btn svg { transition: transform .35s cubic-bezier(.2,.9,.3,1.2); }
+
+.gear-pop {
+  position: fixed; z-index: 40;
+  width: 372px; max-width: calc(100vw - 24px);
+  max-height: min(74vh, 620px);
+  display: flex; flex-direction: column;
+  background: #fff; border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 18px 44px rgba(22, 27, 46, .16), 0 2px 6px rgba(22, 27, 46, .06);
+  font-family: var(--sans); font-size: 12px; color: var(--tx);
+  overflow: hidden;
+}
+.gear-pop[hidden] { display: none; }
+
+.gear-hd {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 11px 12px 10px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, #fbfaff, #f6f4fe);
+}
+.gear-title { font-size: 13px; font-weight: 650; letter-spacing: -.01em; }
+.gear-sub {
+  font-family: var(--mono); font-size: 9.5px; color: var(--tx-3);
+  letter-spacing: .01em;
+}
+.gear-x {
+  margin-left: auto; border: 0; background: none; cursor: pointer;
+  color: var(--tx-3); font-size: 14px; line-height: 1;
+  padding: 0 2px; align-self: center;
+}
+.gear-x:hover { color: var(--tx); }
+
+.gear-body { padding: 6px 10px 8px; overflow-y: auto; }
+
+/* 规则只在顶部讲一次：编号对进度条、两种取值方式 */
+.gear-tip {
+  padding: 6px 12px 7px;
+  font-size: 9.5px; color: #b3b9cb; letter-spacing: .01em;
+  background: #fafbfe; border-bottom: 1px solid #f2f4f9;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.gear-row {
+  display: grid;
+  grid-template-columns: 24px 64px minmax(0, 1fr) 66px 42px 18px;
+  align-items: center; gap: 6px;
+  padding: 5px 2px;
+}
+.gear-row + .gear-row { border-top: 1px dashed #f0f2f8; }
+/* 无规范值的行：输入框本身就是秒，占掉「秒数」那一列，不重复显示 */
+.gear-row.abs .gear-ipt { grid-column: 4 / span 2; }
+.gear-row.abs .gear-rs { grid-column: 6; }
+
+/* 步骤号：与进度条第几段严格对应 */
+.gear-no {
+  font-family: var(--mono); font-size: 9.5px; font-weight: 600; line-height: 1;
+  color: var(--tx-3); text-align: center; letter-spacing: -.02em;
+  background: #f1f3f9; border-radius: 5px; padding: 3px 0;
+}
+.gear-no-grp { font-size: 9px; padding: 3px 2px; }
+
+.gear-lb {
+  font-size: 11.5px; color: var(--tx-2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gear-spec {
+  font-family: var(--mono); font-size: 9.5px; color: var(--tx-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gear-spec i { font-style: normal; color: #a6adc2; }
+/* 自定义：告诉人「这一步规范里没有」，不是漏了 */
+.gear-row.abs .gear-spec { color: #b3b9cb; font-family: var(--sans); font-size: 10px; }
+
+.gear-ipt { display: flex; align-items: center; gap: 2px; }
+.gear-k {
+  width: 42px; padding: 3px 4px;
+  font-family: var(--mono); font-size: 11px; text-align: right;
+  color: var(--tx); background: #fff;
+  border: 1px solid var(--line-2); border-radius: 7px;
+  -moz-appearance: textfield;
+}
+.gear-k::-webkit-outer-spin-button,
+.gear-k::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.gear-k:focus { outline: none; border-color: var(--accent-2); box-shadow: 0 0 0 3px var(--accent-soft); }
+.gear-unit {
+  font-family: var(--mono); font-size: 9px; color: #b3b9cb; width: 8px;
+}
+.gear-sec {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  color: var(--accent); text-align: right;
+}
+.gear-rs {
+  border: 0; background: #f2f4f9; color: var(--tx-3); cursor: pointer;
+  width: 18px; height: 18px; border-radius: 6px;
+  font-size: 10px; line-height: 1; padding: 0;
+}
+.gear-rs:hover { background: #e7eaf3; color: var(--tx-2); }
+
+.gear-grp { margin: 4px 0 2px; }
+.gear-grp-hd {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 2px 3px;
+}
+.gear-grp-lb {
+  font-size: 10px; font-weight: 650; letter-spacing: .08em;
+  color: var(--tx-3);
+}
+.gear-grp-note { margin-left: auto; font-size: 9.5px; color: #b3b9cb; white-space: nowrap; }
+
+.gear-ft {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 11px; border-top: 1px solid var(--line);
+  background: #fafbfe;
+}
+.gear-total { font-size: 11px; color: var(--tx-3); margin-right: auto; }
+.gear-total b { font-family: var(--mono); font-size: 11.5px; color: var(--tx-2); }
+.gear-btn-sm {
+  border: 0; cursor: pointer; font-family: var(--sans);
+  font-size: 11px; font-weight: 600; padding: 6px 9px; border-radius: 8px;
+  background: var(--accent); color: #fff;
+}
+.gear-btn-sm:hover { filter: brightness(1.06); }
+.gear-btn-ghost { background: #eef0f6; color: var(--tx-2); }
+.gear-btn-ghost:hover { background: #e3e6ef; filter: none; }
+
 /* ───────────── 响应式 ───────────── */
 @media (max-width: 860px) {
   .hd { padding: 15px 18px; }
   .hd h1 { font-size: 24px; }
+  .gear-btn { font-size: 11.5px; padding: 5px 7px; }
+  .gear-txt { display: none; }
+  .gear-pop { width: 100%; max-width: calc(100vw - 24px); max-height: 68vh; }
   /* 窄屏：关系导航跟着缩一档（h1 24px → chip 17px，同样小三档），
      避免把标题和右上角按钮挤到一起 */
   .relmap { column-gap: 8px; }
