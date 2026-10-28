@@ -86,12 +86,20 @@ body {
 
 /* ───────────── 左侧悬浮导航 ─────────────
    宽屏：固定在左边、垂直居中，不随页面滚动；点击跳到对应原语
-   窄屏（<1180）：退回正文顶部的横向 chip 条 */
+   窄屏（<1320）：退回正文顶部的横向 chip 条
+
+   水平位置与 anatomy 页的目录同一套算法：正文 940 居中，
+   左留白宽度 = (100% - 940) / 2，中线 = (100% - 940) / 4；
+   left 先贴到中线，translateX(-50%) 再把自身一半收回去，
+   于是导航自身中心正好压在留白中线上。
+   写死 left: 26px 的话，大屏上它会贴死在屏幕最左边，
+   和居中的正文隔着一条几百像素的空白，看着像脱队。 */
 
 .rail {
   position: fixed;
-  left: 26px; top: 50%;
-  transform: translateY(-50%);
+  left: calc((100% - 940px) / 4);
+  top: 50%;
+  transform: translate(-50%, -50%);
   z-index: 20;
   display: flex; flex-direction: column; gap: 1px;
   width: max-content; min-width: 132px; padding: 10px;

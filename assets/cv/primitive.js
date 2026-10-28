@@ -241,23 +241,38 @@
      所以一律填秒（「停留」已经并进送达淡出，不再是独立的一段）。
 
      每个 step 的序号就是进度条第几段 —— 齿轮面板里标的「第 N 步」与进度条一一对应。
-     页面倍数/自定秒都存在 localStorage 的 cv.page.<page>.v1。
+     取值优先级：pages.js 的 CV_PAGE_DEFAULTS（代码基线，进仓库）
+              ← localStorage 的 cv.page.<page>.v1（齿轮里的临时改动，只在本机）。
      ══════════════════════════════════════════════════════════ */
   var SEAT_PARTS = [
     /* 「传递」= 数据包组件自己干完的整段：飞行 + 送达淡出。
        淡出不是在旁边并行的另一件事 —— 包飞到箭头尖、原地淡掉，
        淡完这一趟的「包」就结束了，接下来才轮到落位（串行，不重叠）。 */
     { key: 'travel', label: '传递',     of: ['packDur', 'packFade'], specLabel: '数据包' },
-    { key: 'delay',  label: '落位延迟', sec: 0 },
+    /* 包停在箭头尖 → 弹跳开始之间留的呼吸（不带规范锚点，页面自己定）。
+       默认 0.5s：0 会让「消失」和「弹一下」挤在同一帧，看着像卡了一下。 */
+    { key: 'delay',  label: '落位延迟', sec: 0.5 },
     { key: 'pop',    label: '落位弹跳', of: 'popDur' },
     /* 页面自己的编排节奏：这一趟结束后到下一趟开始之间停多久（不是组件规范） */
     { key: 'hold',   label: '间隔',     sec: 1 }
   ];
 
   var PAGE_LS = 'cv.page.';
-  CV.pageOvRead = function (page) {
+  /* 只有浏览器里的临时改动（齿轮面板写的就是这一层） */
+  CV.pageOvRaw = function (page) {
     try { return JSON.parse(localStorage.getItem(PAGE_LS + page + '.v1')) || {}; }
     catch (e) { return {}; }
+  };
+  /* 实际生效的值 = 代码基线（pages.js 的 CV_PAGE_DEFAULTS）← 临时改动覆盖。
+     基线进仓库、跟着代码走；localStorage 只在这一台机器上有效，
+     所以「调好了要用到别人机器上」必须点齿轮里的「保存到代码」。 */
+  CV.pageOvRead = function (page) {
+    var out = {};
+    var base = (window.CV_PAGE_DEFAULTS || {})[page];
+    if (base) Object.keys(base).forEach(function (k) { out[k] = base[k]; });
+    var raw = CV.pageOvRaw(page);
+    Object.keys(raw).forEach(function (k) { out[k] = raw[k]; });
+    return out;
   };
   CV.pageOvSave = function (page, ov) {
     try { localStorage.setItem(PAGE_LS + page + '.v1', JSON.stringify(ov)); } catch (e) {}

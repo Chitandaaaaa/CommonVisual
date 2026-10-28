@@ -15,7 +15,7 @@
 <main class="stagewrap">
   <div class="stagebox">
     <svg id="stage" viewBox="0 0 1200 640" preserveAspectRatio="xMidYMid meet"
-         role="img" aria-label="All-Reduce 通信过程动画：四张卡排成 2×2 网格，每张卡最初只持有自己的一段；第一轮左右两两交换并累加，第二轮上下两两交换并累加，两轮之后四张卡都拿到同一份完整的归约结果">
+         role="img" aria-label="All-Reduce 通信过程动画：四张卡排成 2×2 网格，每张卡最初都持有一整份四段数据；第一轮左右两两互换整份并逐段累加，第二轮上下两两互换整份并逐段累加，两轮之后四张卡都拿到四段各自的和">
       <defs>
         <pattern id="gGrid" width="40" height="40" patternUnits="userSpaceOnUse">
           <path d="M40 0H0v40" fill="none" stroke="#8b93aa" stroke-opacity=".1" stroke-width="1"/>
@@ -70,6 +70,7 @@
 
 <!-- 通用层：DOM 工具 / 绘制原语 / 播放控制 / 悬停聚焦 -->
 <script src="assets/cv/dom.js"></script>
+<script src="assets/cv/tokens.js"></script>
 <script src="assets/cv/kit.js"></script>
 <script src="assets/cv/controls.js"></script>
 <script src="assets/cv/focus.js"></script>

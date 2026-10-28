@@ -183,18 +183,21 @@
       var layer = S.layers, cards = S.cards, chips = S.chips, wires = S.wires, pkts = S.pkts;
       var sec = t * TOTAL;
 
-      /* 卡 r 第 i 段此刻几份：0=已交出，1/2/4=在手上（送出是消耗语义） */
+      /* 卡 r 第 i 段此刻几份：0=已交出，1/2/4=在手上（送出是消耗语义）
+         升到 2 份 / 4 份那一刻，第 i 段比第 i−1 段晚 seatGap（规范 08） ——
+         四段依次到位并依次弹一下，不是一齐跳。 */
       function segParts(r, i) {
         var keep1 = ((i >> 1) === (r >> 1));
         var keep2 = (i === r);
+        var at2 = CV.seatAt(i, R[0].arrive), at4 = CV.seatAt(i, R[1].arrive);
         if (!keep1) return sec >= R[0].start ? 0 : 1;
         if (!keep2) {
           if (sec >= R[1].start) return 0;
-          if (sec >= R[0].arrive) return 2;
+          if (sec >= at2) return 2;
           return 1;
         }
-        if (sec >= R[1].arrive) return PARTS;
-        if (sec >= R[0].arrive) return 2;
+        if (sec >= at4) return PARTS;
+        if (sec >= at2) return 2;
         return 1;
       }
 
@@ -212,10 +215,11 @@
           }
           if (n > 0) left++;
 
+          /* 退回 1 份也要清标记 —— 否则拖回开头再播，这一段再也不弹了 */
           var key = 'p' + r + i;
           if (n > 1) {
             if (seen[key] !== n) { seen[key] = n; CV.spawnPulse(layer.fx, s); }
-          } else if (n === 0) {
+          } else {
             delete seen[key];
           }
         });

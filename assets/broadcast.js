@@ -12,33 +12,54 @@
   var DATA = CV.PALETTE;
   var RANKS = [0, 1, 2, 3];
 
-  /* ── ② 路由：源卡把整份依次复制给其余三张 ── */
-  var ROUTE = {
-    source: 0,
-    readyAt: 0.10,
-    flows: [
-      { to: 1, start: 0.20, end: 0.38 },
-      { to: 2, start: 0.38, end: 0.56 },
-      { to: 3, start: 0.56, end: 0.74 }
-    ]
-  };
-
-  function flowOf(to) {
-    return ROUTE.flows.filter(function (f) { return f.to === to; })[0];
-  }
-
   /* ── ③ 文案 ── */
   var T = CV.primText(DATA);
-  var rk = T.rk, seg = T.seg, whole = T.whole;
+  var rk = T.rk, whole = T.whole;
 
-  var STEPS = [
-    { t: 0.00, text: rk(0) + ' 持有整份 ' + whole() },
-    { t: 0.10, text: rk(1) + rk(2) + rk(3) + ' 接收位就绪' },
-    { t: 0.20, text: rk(0) + ' 广播整份给 ' + rk(1) },
-    { t: 0.38, text: rk(0) + ' 广播整份给 ' + rk(2) },
-    { t: 0.56, text: rk(0) + ' 广播整份给 ' + rk(3) },
-    { t: 0.74, text: '四张卡各持整份 ' + whole() }
-  ];
+  /* ── ① 时序：逐步写清楚「这一步干什么」──
+     取值方式与 gather 完全一致：有规范约定的走 of + 倍数，没有的直接填秒。
+     transfer 自动展开成 传递 → 落位延迟 → 落位弹跳 → 间隔 四段，
+     三趟广播（给 rank1/2/3）共用同一组倍数，齿轮里只出一组。
+     接收位就绪（empty 槽显形）挂在「就绪」这一步的起点，与 gather 的预留缓冲同理。 */
+  function buildTime() {
+    var CH = CV.choreo('broadcast', [
+      { id: 'intro', kind: 'wait', label: '说明', sec: 0.6,
+        text: rk(0) + ' 持有整份 ' + whole() },
+
+      { id: 'ready', kind: 'wait', label: '接收位就绪', sec: 0.6,
+        text: rk(1) + rk(2) + rk(3) + ' 接收位就绪' },
+
+      { id: 'send1', kind: 'transfer', label: '广播给 B',
+        text: rk(0) + ' 广播整份给 ' + rk(1) },
+      { id: 'send2', kind: 'transfer', label: '广播给 C',
+        text: rk(0) + ' 广播整份给 ' + rk(2) },
+      { id: 'send3', kind: 'transfer', label: '广播给 D',
+        text: rk(0) + ' 广播整份给 ' + rk(3) },
+
+      { id: 'tail', kind: 'wait', label: '收尾', sec: 2,
+        text: '四张卡各持整份 ' + whole() }
+    ]);
+
+    var W = CH.win;
+    return {
+      CH: CH,
+      ROUTE: {
+        source: 0,
+        readyAt: W.ready.s,        /* 就绪这一步开始时，接收方的空槽才显形 */
+        flows: [
+          { to: 1, w: W.send1 },
+          { to: 2, w: W.send2 },
+          { to: 3, w: W.send3 }
+        ]
+      }
+    };
+  }
+
+  var TM = buildTime();
+
+  function flowOf(to) {
+    return TM.ROUTE.flows.filter(function (f) { return f.to === to; })[0];
+  }
 
   /* ── ④ 几何：四张卡同构，每张都装得下整份 ── */
   var GEO = CV.geo({
@@ -48,11 +69,17 @@
 
   var popSeen = {};
 
-  CV.primitive({
+  var mount = CV.primitive({
     data: DATA,
     geo: GEO,
-    steps: STEPS,
-    duration: 9000,
+    steps: TM.CH.steps,
+    duration: TM.CH.total * 1000,
+
+    /* 齿轮改了倍数 → 重算时序，返回新的 steps / 时长给控件重排 */
+    retime: function () {
+      TM = buildTime();
+      return { steps: TM.CH.steps, duration: TM.CH.total * 1000 };
+    },
 
     /* 每张卡最终都持有全部四段 —— 悬停任何一段四张卡都相关 */
     keepCards: function () { return RANKS; },
@@ -62,6 +89,7 @@
     build: function (S) {
       var L = S.L, layer = S.layers, cards = S.cards, chips = S.chips, wires = S.wires, pkts = S.pkts;
       var defs = S.defs;
+      var ROUTE = TM.ROUTE;
 
       /* 图例：一份数据由四段拼成 */
       CV.drawLegend(layer.bg, { x: L.source.x + 7, y: L.legendY + 7, slot: L.slot, items: DATA });
@@ -135,37 +163,42 @@
 
     paint: function (S, t) {
       var layer = S.layers, chips = S.chips, wires = S.wires, pkts = S.pkts;
+      var ROUTE = TM.ROUTE;
+      /* 全部按「墙钟秒」判断：到达、淡出、落位各自是独立的一段，不再靠比例猜 */
+      var sec = t * S.durSec;
 
       /* —— 源卡：原件一直留着 —— */
       chips[ROUTE.source].forEach(function (s, i) {
         CV.setSlot(s, DATA[i], {});
       });
 
-      /* —— 目标卡：就绪前隐藏 → 传输中占位 → 到达后整份填满 —— */
+      /* —— 目标卡：就绪前隐藏 → 传输中占位 → 落位后整份填满 —— */
       RANKS.forEach(function (r) {
         if (r === ROUTE.source) return;
-        var f = flowOf(r);
-        var inFlight = t >= f.start && t < f.end;
-        var got = t >= f.end;
+        var w = flowOf(r).w;
+        var inFlight = sec >= w.s && sec < w.seatStart;
+        var got = sec >= w.seatStart;
         chips[r].forEach(function (s, i) {
           CV.setSlot(s, got ? DATA[i] : null, {
             active: inFlight,
-            hidden: t < ROUTE.readyAt
+            hidden: sec < ROUTE.readyAt
           });
         });
       });
 
-      /* —— 连线 & 数据包 —— */
+      /* —— 连线 & 数据包 ——
+         四段严格串行：飞 → 淡（送达淡出，包原地消失）→ 等（落位延迟）→ 落位（弹跳）。 */
       ROUTE.flows.forEach(function (f) {
-        var w = wires[f.to], p = pkts[f.to];
+        var w = wires[f.to], p = pkts[f.to], fw = f.w;
         var color = w.color;
-        var active = t >= f.start && t < f.end;
-        var done = t >= f.end;
+        var flying = sec >= fw.s && sec < fw.travelEnd;
+        var fading = sec >= fw.travelEnd && sec < fw.fadeEnd;
+        var parked = sec >= fw.fadeEnd;
 
-        if (active) {
+        if (flying) {
           /* 整份包很宽，起步先走出一小段，避免左半压住源卡数据块 */
           var lead = Math.min(0.32, p.half / w.len);
-          var e = CV.easeInOutQuad((t - f.start) / (f.end - f.start));
+          var e = CV.easeInOutQuad((sec - fw.s) / (fw.travelEnd - fw.s));
           e = lead + e * (1 - lead);
           CV.placePacket(p, w, e);
           w.path.setAttribute('stroke', color);
@@ -173,8 +206,19 @@
           w.path.setAttribute('stroke-dasharray', '9 7');
           w.path.setAttribute('opacity', '1');
           w.marker.setAttribute('fill', color);
-        } else if (done) {
-          CV.pktFadeOut(p, (t - f.end) * S.durSec);
+        } else if (fading) {
+          /* 已经到达箭头尖：不动了，原地把自己淡掉 */
+          CV.placePacket(p, w, 1);
+          CV.pktFadeOut(p, sec - fw.travelEnd, fw.fadeSec);
+          w.path.setAttribute('stroke', color);
+          w.path.setAttribute('stroke-width', '1.8');
+          w.path.setAttribute('stroke-dasharray', '8 7');
+          w.path.setAttribute('stroke-dashoffset', '0');
+          w.path.setAttribute('opacity', '.4');
+          w.marker.setAttribute('fill', color);
+        } else if (parked) {
+          /* 包上一段已经淡没了：这一步只有槽位在动 */
+          p.g.setAttribute('opacity', '0');
           w.path.setAttribute('stroke', color);
           w.path.setAttribute('stroke-width', '1.8');
           w.path.setAttribute('stroke-dasharray', '8 7');
@@ -192,18 +236,31 @@
         }
       });
 
-      /* —— 落位脉冲：整组 4 格一起弹一下 —— */
+      /* —— 落位脉冲：整组 4 格一起弹一下（在「落位」这一段开始时触发） —— */
       ROUTE.flows.forEach(function (f) {
         var key = 'p' + f.to;
-        if (t >= f.end && !popSeen[key]) {
+        if (sec >= f.w.seatStart && !popSeen[key]) {
           popSeen[key] = 1;
           chips[f.to].forEach(function (s, i) {
-            CV.spawnPulse(layer.fx, s, DATA[i].color);
+            CV.spawnPulse(layer.fx, s, DATA[i].color, f.w.popSec);
           });
-        } else if (t < f.end && popSeen[key]) {
+        } else if (sec < f.w.seatStart && popSeen[key]) {
           delete popSeen[key];
         }
       });
     }
   });
+
+  /* 调试 / 探针钩子：取本页当前真实的时间轴（改过倍数之后也是最新的） */
+  mount.getCh = function () { return TM.CH; };
+
+  /* 右上角齿轮：本页每一步的耗时（有规范值的调倍数，没规范值的直接填秒） */
+  if (CV.gear) {
+    CV.gear({
+      page: 'broadcast',
+      name: 'Broadcast 时序',
+      getCh: mount.getCh,
+      onChange: function () { mount.reload(); }
+    });
+  }
 })();

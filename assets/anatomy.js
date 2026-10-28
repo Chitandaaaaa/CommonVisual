@@ -1561,18 +1561,42 @@
       subTx(A, xt(tt), 316, tt.toFixed(2) + 's', '#939bb2', 10);
     });
 
+    /* 说明里的数字跟着滑杆走：写死「.55s / .17s」，改完参数文档就成了假的 */
+    function seatDur() {
+      var v = CV.params.get('08-seat', 'popDur');
+      return typeof v === 'number' ? v : .55;
+    }
+    function seatGap() {
+      var v = CV.params.get('08-seat', 'seatGap');
+      return typeof v === 'number' ? v : .5;
+    }
+    function nx2(v) { return v.toFixed(2).replace(/^0\./, '.'); }
+
     var sp = h('p', 'specs', s);
-    sp.innerHTML =
-      '<b>关键帧</b> <code>0%</code> scale(.35) opacity 0 → <code>55%</code> scale(1.16) opacity 1 → ' +
-        '<code>100%</code> scale(1) · 时长 .55s · 每段都吃同一条缓动<br>' +
+    function specHTML() {
+      return '<b>关键帧</b> <code>0%</code> scale(.35) opacity 0 → <code>55%</code> scale(1.16) opacity 1 → ' +
+        '<code>100%</code> scale(1) · 时长 <code>' + nx2(seatDur()) + 's</code> · 每段都吃同一条缓动<br>' +
+      '<b>多块错峰</b> 一批里有多个块时，第 k 个比第 k−1 个晚 <code>' + nx2(seatGap()) + 's</code> 起跳 ' +
+        '（规范 08 · <code>seatGap</code>）—— 齐刷刷一起弹读不出「一个一个落」。' +
+        '页面用 <code>CV.seatAt(i, base)</code> 算每个块的时刻，<b>不是</b> setTimeout：' +
+        '进度条要能来回拖，定时器拖不回来<br>' +
+      '<b>不属于规范的间隔</b> 到达终点到开始弹跳之间的「落位延迟」、两趟传递之间停多久，' +
+        '都是每页自己排的节奏 —— 在原语页右侧齿轮里直接填秒<br>' +
       '<b>为什么要 1.45</b> 这个缓动的 y 控制点大于 1，中途会冲过头：1.29× 出现在 0.18s，' +
         '回落成 55% 的 1.16×，再下探到 0.97×，最后停在 1 —— 手感的「弹」就是这两下<br>' +
       '<b>重播</b> 删 <code>class</code> → <code>getBoundingClientRect()</code> 强制回流 → 再加回，' +
         '否则第二次起浏览器把「删-加」合并、动画不重播（SVG 没有 <code>offsetWidth</code>）<br>' +
       '<b>涟漪</b> <code>.ring</code> / <code>ringOut</code> 1.05s 代码还在，但 <code>CV.SHOW_RING = false</code>，定稿不显示';
+    }
+    sp.innerHTML = specHTML();
 
     /* 下半：真动画，每 2.2s 重播一次 —— 上面那五个静态帧就是从这里采出来的 */
-    h('h3', null, s).textContent = '实时 · 三个块依次落位，每 2.2s 重播';
+    var liveHd = h('h3', null, s);
+    function liveTx() {
+      /* 标题给读者看，别用 .50 这种代码腔 —— 小数点太容易漏 */
+      liveHd.textContent = '实时 · 三个块依次落位，错峰 ' + seatGap().toFixed(2) + 's，每 2.2s 重播';
+    }
+    liveTx();
     var B = demo(s, 460, 120, '三个数据块依次落位弹跳，真实 CSS 动画');
     var live = DATA.slice(0, 3).map(function (d2, k) {
       var sl = CV.drawSlot(B, 76 + k * 132, 36, sw, sw);
@@ -1580,12 +1604,19 @@
       return sl;
     });
     function cycle() {
+      var g = seatGap() * 1000;
       live.forEach(function (sl, k) {
-        setTimeout(function () { CV.spawnPulse(B, sl, DATA[k].color); }, k * 170);
+        setTimeout(function () { CV.spawnPulse(B, sl, DATA[k].color); }, k * g);
       });
     }
     setTimeout(cycle, 500);
     setInterval(cycle, 2200);
+
+    CV.params.onChange(function (ch) {
+      if (ch.section !== '08-seat' && ch.section !== '*') return;
+      sp.innerHTML = specHTML();
+      liveTx();
+    });
   })();
 
   /* ══════════════════════════════════════════════════════════
@@ -1664,9 +1695,21 @@
       '目标块自己不缩放，只被一道白光扫过（扫完才换成 Σ）',
       '#939bb2', 10, 'start');
 
-    var HOLD0 = .55, STEP = .40, DUR = .42, CYCLE = 3.2, fresh = false;
+    var HOLD0 = .55, CYCLE = 3.2, fresh = false;
+    /* 单次融合多久（fuseDur）与多列之间错开多久（mergeGap）**都走规范** ——
+       这一节只是把规范值拿来示范，不另定一套节奏；reduce 页读的是同一个数。
+       HOLD0（开头先亮着不动）才是这一节的编排，不进规范。 */
+    function fuseDur() {
+      var v = CV.params.get('09-merge', 'fuseDur');
+      return typeof v === 'number' ? v : .42;
+    }
+    function fuseGap() {
+      var v = CV.params.get('09-merge', 'mergeGap');
+      return typeof v === 'number' ? v : .5;
+    }
 
     anim(CYCLE * 1000, function (T) {
+      var DUR = fuseDur(), GAP = fuseGap();
       if (T < .06 && !fresh) {
         fresh = true;
         merges.forEach(function (m) { m.reset(); });
@@ -1676,8 +1719,8 @@
 
       var done = 0;
       merges.forEach(function (m, k) {
-        var p = seg(T, HOLD0 + k * STEP, HOLD0 + k * STEP + DUR);
-        if (T >= HOLD0 + k * STEP + DUR) done++;
+        var p = seg(T, HOLD0 + k * GAP, HOLD0 + k * GAP + DUR);
+        if (T >= HOLD0 + k * GAP + DUR) done++;
         m.apply(p);
       });
 
@@ -1692,6 +1735,7 @@
 
     capTx(B, 24, 24, '同一个列：p 是这一列融合的进度，0 → 1');
     var ty = 44, by = 132;
+    var framesB = [];
     [[100, .10, '① 唤醒 · p .10', '描边收实、提亮一档'],
      [270, .35, '② 上浮 · p .35', '缩到 .85，还在下方'],
      [440, .62, '③ 消散 · p .62', '缩到 .40、淡到一半'],
@@ -1700,29 +1744,55 @@
       var tg = CV.drawSlot(B, c - Q.sw / 2, ty, Q.sw, Q.sw);
       CV.setSlot(tg, DATA[0], {});
       CV.setSlot(CV.drawSlot(B, c - Q.sw / 2, by, Q.sw, Q.sw), null, {});
-      CV.createMerge(B, {
+      var m = CV.createMerge(B, {
         x: c, y0: by + Q.sw / 2, y1: ty + Q.sw / 2, size: Q.sw,
         data: DATA[0], target: tg,
         to: { letter: 'Σ', color: CV.mix(DATA[0].color, SIGMA, 1 / 3) }
-      }).apply(f[1]);
+      });
+      m.apply(f[1]);
+      framesB.push({ m: m, p: f[1] });          /* 参数一改要重新 apply 这四个定格 */
       subTx(B, c, 192, f[2], '#5f6780', 10);
       subTx(B, c, 206, f[3], '#b6bdcd', 9);
     });
 
     var sp = h('p', 'specs', s);
-    sp.innerHTML =
-      '<b>和落位弹跳的区别</b> 那个是「无 → 有」，块从 <code>.35</code> 弹到 <code>1.29</code> 再落回 ' +
+
+    /* 说明里的数字必须跟着滑杆走 —— 写死一份「.16–.72」，改了参数就变成假文档 */
+    function nx(v) { return String(Math.round(v * 100) / 100).replace(/^0\./, '.'); }
+
+    function specHTML() {
+      function v(k) { return CV.params.get('09-merge', k); }
+      var wake = v('fuseWake'), rise = v('fuseRise'), fade = v('fuseFade'), swap = v('fuseSwap');
+      var shrink = v('fuseShrink'), trail = v('fuseTrail'), gloss = v('fuseGloss');
+      var gs = Math.max(fade, swap - .23), ge = Math.min(1, swap + .22);
+      return '<b>和落位弹跳的区别</b> 那个是「无 → 有」，块从 <code>.35</code> 弹到 <code>1.29</code> 再落回 ' +
         '<code>1</code>，靠<b>过冲</b>给手感；融合是「有 → 无」，三个量全单调，目标块自己也<b>不缩放</b> —— ' +
         '所以两者不能共用一套关键帧<br>' +
-      '<b>三段</b> ① 唤醒 <code>0–.16</code> 只改颜色与描边（块一步都不挪）· ' +
-        '② 上浮 <code>.16–.72</code> 走 y₀→y₁ 并缩到 <code>.36</code>，过半后开始淡出 · ' +
-        '③ 注入 <code>.55–1</code> 白光扫过，<code>.78</code> 那一刻目标换成 Σ 并加深<br>' +
+      '<b>三段</b> ① 唤醒 <code>0–' + nx(wake) + '</code> 只改颜色与描边（块一步都不挪）· ' +
+        '② 上浮 <code>' + nx(wake) + '–' + nx(rise) + '</code> 走 y₀→y₁ 并缩到 <code>' + nx(shrink) + '</code>，' +
+        '到 <code>' + nx(fade) + '</code> 开始淡出 · ' +
+        '③ 注入 <code>' + nx(gs) + '–' + nx(ge) + '</code> 白光扫过（峰值 <code>' + nx(gloss) + '</code>），' +
+        '<code>' + nx(swap) + '</code> 那一刻目标换成 Σ 并加深<br>' +
       '<b>白光怎么扫</b> 一块和块等大的 <code>rect</code> + 三停渐变（两端全透明），' +
         '只改 <code>gradientTransform</code> 的 <code>translate</code>：<code>−1 → 1</code> 就是一个块宽。' +
         '不用 <code>clipPath</code>，也不会扫出块外<br>' +
-      '<b>拖尾</b> 两块残影跟在下方 18 / 30、缩放 .8 / .6，和飞行数据包同一套语言 —— ' +
+      '<b>拖尾</b> 两块残影跟在下方 ' + Math.round(trail) + ' / ' + Math.round(trail * 1.67) +
+        '、缩放 .8 / .6，和飞行数据包同一套语言 —— ' +
         '读起来是「被吸走」，不是「跳一下」；静止时它不出现（否则像块底下挂了道影子）<br>' +
-      '<b>颜色</b> 一份是字母，两份起才是 Σ：<code>CV.mix(原色, DEEP, (份数−1)/3)</code>，1 份 → 2 份混 1/3';
+      '<b>颜色</b> 一份是字母，两份起才是 Σ：<code>CV.mix(原色, DEEP, (份数−1)/3)</code>，1 份 → 2 份混 1/3<br>' +
+      '<b>全程时长</b> 单次融合 <code>' + nx(v('fuseDur')) + 's</code>、多列错峰 <code>' + nx(v('mergeGap')) +
+        's</code>（规范 · 所有页面共用，和落位弹跳的 seatGap 同一层级）；' +
+        '合起来 = 一列接一列折进去的节奏，页面不该另写一份<br>' +
+      '<b>不属于规范的间隔</b> 这一趟折完到下一趟开始之间停多久是页面编排，在原语页齿轮里填秒';
+    }
+    sp.innerHTML = specHTML();
+
+    CV.params.onChange(function (ch) {
+      if (ch.section !== '09-merge' && ch.section !== '*') return;
+      /* A 那组是 rAF 常驻，下一帧自己就读到新参数；B 是四个定格，必须重新 apply */
+      framesB.forEach(function (f) { f.m.reset(); f.m.apply(f.p); });
+      sp.innerHTML = specHTML();
+    });
   })();
 
   /* ══════════════════════════════════════════════════════════

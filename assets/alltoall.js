@@ -183,9 +183,10 @@
         });
 
         /* 下排：只有轮到自己当接收方的第 r 步才一次填满 */
-        var filled = sec >= R[r].arrive;
+        /* 一次收到整份 = 同批四块，但要一块一块落：第 i 块在 R[r].arrive + i×seatGap */
         downRow[r].forEach(function (s, i) {
-          if (!filled) {
+          var at = CV.seatAt(i, R[r].arrive);
+          if (sec < at) {
             CV.setSlot(s, null, sec >= R[r].start ? { active: true } : {});
             delete seen['d' + r + i];
           } else {

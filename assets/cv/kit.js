@@ -39,13 +39,55 @@
           trailScale: { label: '拖尾浓度', unit: '×',  def: 1,   min: 0,   max: 2,   step: 0.05 }
         }
       },
-      /* 落位组件规范：只有「弹跳多久」是规范约定（08 那一节的 .slot-pop）。
+      /* 落位组件规范（08 那一节的 .slot-pop）。
+         属于规范的只有两件「这个组件自己的事」：一次弹多久、一批里多个块怎么错开。
+         · popDur   一次弹跳的时长
+         · seatGap  同一批多个块依次落位时，相邻两块错开多久（0 = 齐刷刷一起弹）
          到达终点到开始弹跳之间的「落位延迟」**不是规范值** ——
-         它是每页自己排的节奏，所以在页面齿轮里直接填秒，不走倍数。 */
+         那是每页自己排的节奏，在页面齿轮里直接填秒，不走这里。 */
       '08-seat': {
         label: '落位弹跳',
+        groups: [
+          { label: '耗时', keys: ['popDur'] },
+          { label: '节奏', keys: ['seatGap'] }
+        ],
         keys: {
-          popDur: { label: '弹跳时长', unit: 's', def: 0.55, min: 0.1, max: 1.5, step: 0.05 }
+          popDur:  { label: '弹跳时长', unit: 's', def: 0.55, min: 0.1, max: 1.5, step: 0.05 },
+          /* 一批块「一个一个落」的错峰量。它不是「两趟传递之间停多久」——
+             那个是页面编排，在齿轮里填秒；这里管的是同一批内部的先后。
+             默认 .5s：四块一批就是 1.5s 的先后，读得出「一个接一个」而不拖沓。 */
+          seatGap: { label: '多块错峰', unit: 's', def: 0.5,  min: 0,    max: 0.8, step: 0.01 }
+        }
+      },
+      /* 融合组件规范：09 那一节的 createMerge。
+         一次融合 = 唤醒 → 上浮 → 注入，位移↑ / 缩放↓ / 透明度↓ 三个量全单调；
+         和「落位弹跳」相反（那个是 无→有，靠过冲），所以参数不能共用。
+
+         只有「一次融合多长时间」是组件耗时，多列依次融合时错开多久也是组件自己的节奏
+         （mergeGap，和 08 的 seatGap 同一层级）；「这一趟折完到下一趟开始」才是页面编排。
+         关键帧是归一化进度（0~1），改它等于改这条曲线的形状，不是改时长。 */
+      '09-merge': {
+        label: '融合·动态',
+        groups: [
+          { label: '耗时', keys: ['fuseDur'] },
+          { label: '节奏', keys: ['mergeGap'] },
+          { label: '关键帧', keys: ['fuseWake', 'fuseRise', 'fuseFade', 'fuseSwap'] },
+          { label: '特效', keys: ['fuseShrink', 'fuseGloss', 'fuseTrail'] }
+        ],
+        keys: {
+          fuseDur:    { label: '单次融合',   unit: 's',  def: 0.42, min: 0.15, max: 1.2, step: 0.01 },
+          /* 多列（多段）依次融合时，相邻两列错开多久。
+             0 = 四列一齐折进去；给个小数才读得出「一列一列来」。
+             默认 .5s ≥ fuseDur(.42)，所以是严格串行：一列折完才轮到下一列，
+             不会两列同时在飞（同时飞就读不出「逐段折进累加器」了）。 */
+          mergeGap:   { label: '多列错峰',   unit: 's',  def: 0.5,  min: 0,    max: 1.2, step: 0.05 },
+          fuseWake:   { label: '唤醒结束',   unit: '',   def: 0.16, min: 0.02, max: 0.5, step: 0.01 },
+          fuseRise:   { label: '上浮结束',   unit: '',   def: 0.72, min: 0.3,  max: 0.98, step: 0.01 },
+          fuseFade:   { label: '淡出起点',   unit: '',   def: 0.45, min: 0.1,  max: 0.9, step: 0.01 },
+          fuseSwap:   { label: '换 Σ 时刻',  unit: '',   def: 0.78, min: 0.4,  max: 1,   step: 0.01 },
+          fuseShrink: { label: '终了缩放',   unit: '×',  def: 0.36, min: 0.05, max: 1,   step: 0.01 },
+          fuseGloss:  { label: '白光强度',   unit: '',   def: 0.9,  min: 0,    max: 1.5, step: 0.05 },
+          fuseTrail:  { label: '拖尾退后',   unit: 'px', def: 18,   min: 0,    max: 40,  step: 1 }
         }
       },
       /* 全局播放：不改变任何组件规范，只改「同一套时间轴播多快」 */
@@ -59,15 +101,18 @@
 
     var listeners = [];
     var values = {};
+    var baseline = {};      /* 代码基线（tokens.js 覆盖后的值）—— ↺ 回的是这里，不是内置 def */
 
     function seed() {
       var tok = (typeof window !== 'undefined' && window.CV_PARAM_DEFAULTS) || {};
       Object.keys(SCHEMA).forEach(function (sec) {
         values[sec] = {};
+        baseline[sec] = {};
         Object.keys(SCHEMA[sec].keys).forEach(function (k) {
           var def = SCHEMA[sec].keys[k].def;
           if (tok[sec] && tok[sec][k] !== undefined) def = tok[sec][k];
           values[sec][k] = def;
+          baseline[sec][k] = def;
         });
       });
       try {
@@ -104,7 +149,8 @@
       if (sec && k) {
         if (values[sec] && values[sec][k] !== undefined) {
           var from = values[sec][k];
-          values[sec][k] = SCHEMA[sec].keys[k].def;
+          values[sec][k] = (baseline[sec] && baseline[sec][k] !== undefined)
+            ? baseline[sec][k] : SCHEMA[sec].keys[k].def;
           persist();
           emit({ section: sec, key: k, from: from, to: values[sec][k] });
         }
@@ -113,7 +159,9 @@
       } else {
         try { localStorage.removeItem(LS_KEY); } catch (e) {}
         seed();
-        persist();
+        /* 这里不要再 persist：values 现在就是代码基线本身，
+           写回 localStorage 等于把基线复制成一份「临时改动」，
+           下次改 tokens.js 反而被这份旧副本盖住。 */
         emit({ section: '*', key: '*', from: null, to: null });
       }
     }
@@ -128,6 +176,41 @@
     return { get: get, set: set, reset: reset, onChange: onChange,
              schema: schema, raw: raw, exportTokens: exportTokens };
   })();
+
+  /* ---------- 保存基线文件：优先直写磁盘 ----------
+     浏览器自己不能改文件。以前「保存到代码」只能下载一份 pages.js，
+     还得手动挪回 assets/cv/ —— 点了没反应、多出一个下载文件，像失败了。
+
+     本地服务（tools/serve.mjs）开了写盘端点，这里先走它：文件当场被覆盖，
+     刷新别人也能看到。用 python -m http.server / 双击 html 打开时没有这个端点，
+     才退回下载，并把原因说清楚（别默默丢一个文件进「下载」文件夹）。 */
+  CV.saveFile = function (file, text, done) {
+    done = done || function () {};
+
+    function download(reason) {
+      var blob = new Blob([text], { type: 'text/javascript;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = file.split('/').pop();
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      done(false, reason);
+    }
+
+    if (!/^https?:$/.test(location.protocol)) { download('file'); return; }
+
+    fetch('/__cv/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file: file, content: text })
+    }).then(function (r) {
+      return r.json().catch(function () { return null; }).then(function (j) {
+        if (r.ok && j && j.ok) done(true, 'ok');
+        else download('endpoint');       /* 静态服务没有写盘能力（501/404） */
+      });
+    }).catch(function () { download('network'); });
+  };
 
   /* ---------- 徽章几何：drawCard 与 resizeCard 共用 ----------
      「src」三个字母挤在 22×14 的小框里，文字几乎贴着边框。
@@ -390,7 +473,11 @@
     var pos = rev ? 1 - e : e;
     var at = pos * Lp;
     var pt = wire.path.getPointAtLength(at);
-    pkt.g.setAttribute('opacity', '1');
+    /* 入场渐显：前 8% 行程把 opacity 从 0 推到 1。
+       注意 e 是**缓动后**的进度，起步慢 —— 1.5s 的飞行里这段约 0.3s，不是 0.12s。
+       必须写在 JS 里：交给 CSS transition 会和「到达后逐帧淡出」抢同一个属性，
+       淡出那段就被过渡拖成「先停住、最后突然消失」。 */
+    pkt.g.setAttribute('opacity', String(e <= 0 ? 0 : Math.min(1, e / 0.08)));
     pkt.head.setAttribute('transform', 'translate(' + pt.x + ' ' + pt.y + ')');
     /* 拖尾永远在「来路」上，所以反向走时要往后加而不是减。
        拖尾退后距离 = 参数 trailDist（默认 24），远端按原比例 46/24 跟随；默认即原值，不改任何页面观感。 */
@@ -534,6 +621,15 @@
     }, 1100);
   };
 
+  /* 一批块依次落位：第 i 个的时刻 = base + i × 规范 seatGap。
+     页面用它逐帧比 sec，**不要**用 setTimeout 排 —— 进度条能来回拖，定时器拖不回来。
+     返回秒；调用方记住「第 i 个已经弹过没有」，退回去时删掉标记就会重播。 */
+  CV.seatAt = function (i, base) {
+    var g = CV.params ? CV.params.get('08-seat', 'seatGap') : undefined;
+    if (typeof g !== 'number') g = 0.5;
+    return base + i * Math.max(0, g);
+  };
+
   /* ---------- 融合：下排的块被上排「吸」走 ----------
      和落位弹跳（.slot-pop）是两件相反的事，别混用：
        落位 = 无 → 有，靠 scale(.35) → 1.16 → 1 的**过冲**给手感；
@@ -613,12 +709,34 @@
     function cl(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
 
     var merged = false;
+
+    /* 规范值每帧现取：规范页拖滑杆时，这条曲线要立刻变形，不必重建整节。
+       参数之间有先后关系，先夹一次 —— 否则把「上浮结束」拖到「唤醒结束」前面，
+       除出来的分母是 0 或负数，块会瞬间跳位。 */
+    function knobs() {
+      function g(k, d) {
+        var v = CV.params ? CV.params.get('09-merge', k) : undefined;
+        return typeof v === 'number' ? v : d;
+      }
+      var wake = Math.max(.02, g('fuseWake', .16));
+      var rise = Math.min(.98, Math.max(wake + .04, g('fuseRise', .72)));
+      var swap = Math.min(1, Math.max(wake + .08, g('fuseSwap', .78)));
+      var fade = Math.min(swap - .03, Math.max(0, g('fuseFade', .45)));
+      return {
+        wake: wake, rise: rise, swap: swap, fade: fade,
+        shrink: Math.min(1, Math.max(0, g('fuseShrink', .36))),
+        gloss:  Math.max(0, g('fuseGloss', .9)),
+        trail:  Math.max(0, g('fuseTrail', 18))
+      };
+    }
+
     function apply(p) {
       p = cl(p);
-      var wake = cl(p / .16);                                    /* ① 唤醒 */
-      var rise = CV.easeInOutQuad(cl((p - .16) / .56));          /* ② 上浮 */
-      var op   = 1 - CV.easeInOutQuad(cl((p - .45) / .35));
-      var s    = 1 - .64 * rise;                                 /* 1 → .36，单调 */
+      var K = knobs();
+      var wake = cl(p / K.wake);                                            /* ① 唤醒 */
+      var rise = CV.easeInOutQuad(cl((p - K.wake) / (K.rise - K.wake)));    /* ② 上浮 */
+      var op   = 1 - CV.easeInOutQuad(cl((p - K.fade) / Math.max(.02, K.swap - K.fade)));
+      var s    = 1 - (1 - K.shrink) * rise;                                 /* 1 → 终了缩放，单调 */
       var cy   = y0 + (y1 - y0) * rise;
 
       /* ① 唤醒：只改颜色与描边，块一步都不挪 */
@@ -633,21 +751,23 @@
 
       /* 拖尾：等块真的动起来才出现（跟着 rise 开门，不是跟着 p），
          快贴到目标时先退场 —— 静止时挂在块底下像一块多余的影子，定格帧里更像脏点 */
-      var gate = cl((rise - .05) / .12) * (1 - cl((p - .42) / .20));
+      var gate = cl((rise - .05) / .12) * (1 - cl((p - Math.max(.1, K.fade - .03)) / .20));
       var to = op * (1 - rise * .5) * gate;
-      put(t1, x, cy + 18, s * .8);
+      put(t1, x, cy + K.trail, s * .8);
       t1.setAttribute('opacity', (to * .40).toFixed(3));
-      put(t2, x, cy + 30, s * .6);
+      put(t2, x, cy + K.trail * 1.67, s * .6);
       t2.setAttribute('opacity', (to * .20).toFixed(3));
 
       guide.style.opacity = (cl(p / .18) * (1 - cl((p - .60) / .30)) * .9).toFixed(3);
 
-      /* ③ 注入：白光 .55 → 1 扫过，.78 那一刻目标换 Σ 并加深 */
-      var gp = cl((p - .55) / .45);
-      gloss.setAttribute('opacity', (Math.sin(Math.PI * gp) * .9).toFixed(3));
+      /* ③ 注入：白光在淡出开始后扫过，换 Σ 那一刻达到峰值 */
+      var gs = Math.max(K.fade, K.swap - .23);
+      var ge = Math.min(1, K.swap + .22);
+      var gp = cl((p - gs) / Math.max(.02, ge - gs));
+      gloss.setAttribute('opacity', Math.min(1, Math.sin(Math.PI * gp) * K.gloss).toFixed(3));
       grad.setAttribute('gradientTransform', 'translate(' + (-1 + 2 * gp).toFixed(3) + ' 0)');
 
-      if (p >= .78 && !merged) { merged = true; CV.setSlot(tg, o.to, {}); }
+      if (p >= K.swap && !merged) { merged = true; CV.setSlot(tg, o.to, {}); }
     }
 
     function reset() {

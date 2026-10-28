@@ -8,7 +8,7 @@
      · 改值 → CV.params.set → 触发各章节 onChange 实时重画
      · 重置全部 → 回到 tokens 基线
      · 导出日志 → 下载 JSON 变更记录
-     · 保存到代码 → 下载 tokens.js，固化当前值为代码基线
+     · 保存到代码 → 写入 tokens.js（本地服务下直接落盘），固化当前值为代码基线
    纯运行时工具，不动任何页面行为；默认值仍来自代码。
    ============================================================ */
 (function (CV) {
@@ -177,8 +177,13 @@
   /* ── 日志计数 ── */
   function bumpLog() { logCount.textContent = log.length + ' 条变更'; }
 
-  /* ── 开 / 收起 ── */
-  var open = window.innerWidth >= 1280;     /* 窄屏默认收起 */
+  /* ── 开 / 收起 ──
+     默认开不取决于「屏够不够宽」，而取决于「抽屉会不会压到正文」：
+     正文 940 居中，右边缘在 (W + 940) / 2；抽屉 340 贴右边，左边缘在 W - 340。
+     不重叠要 W ≥ 1620 —— 低于这个数就默认收起，只留右下角齿轮。
+     （原来写的 1280 会让 1280~1620 之间的窗口把每节的「桌面/窄屏」开关压在抽屉底下。） */
+  var DOCK_FIT = 1620;
+  var open = window.innerWidth >= DOCK_FIT;
   function apply() {
     dock.style.display = open ? 'flex' : 'none';
     fab.style.display = open ? 'none' : 'flex';
@@ -209,7 +214,7 @@
     if (!ticking) { ticking = true; requestAnimationFrame(function () { ticking = false; sync(); }); }
   }, { passive: true });
   window.addEventListener('resize', function () {
-    if (window.innerWidth < 1280) open = false;                /* 变窄就收起，避免压住正文 */
+    if (window.innerWidth < DOCK_FIT) open = false;            /* 变窄就收起，避免压住正文 */
     apply();
   });
 
@@ -227,14 +232,25 @@
     download(blob, 'cv-params-log.json');
   });
 
-  /* ── 保存到代码（生成 tokens.js） ── */
-  dock.querySelector('.pd-save').addEventListener('click', function () {
+  /* ── 保存到代码（生成 tokens.js → 直接写回 assets/cv/tokens.js） ── */
+  var saveBtn = dock.querySelector('.pd-save');
+  saveBtn.addEventListener('click', function () {
     var txt = '/* CommonVisual · 参数默认值（可提交）\n' +
-      '   由规范页「保存到代码」生成：把当前（含运行时调过的）参数固化为代码基线。\n' +
+      '   由规范页「保存到代码」写入：把当前（含运行时调过的）参数固化为代码基线。\n' +
       '   必须在 kit.js 之前加载，kit.js 会读 window.CV_PARAM_DEFAULTS 覆盖内置默认值。 */\n' +
       P.exportTokens();
-    var blob = new Blob([txt], { type: 'application/javascript' });
-    download(blob, 'tokens.js');
+    saveBtn.disabled = true;
+    saveBtn.textContent = '写入中…';
+    CV.saveFile('assets/cv/tokens.js', txt, function (ok, why) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = ok ? '已写入' : '已下载';
+      saveBtn.title = ok
+        ? '已写入 assets/cv/tokens.js'
+        : (why === 'file'
+            ? '双击打开时浏览器不能写盘，已下载到「下载」文件夹；用 node tools/serve.mjs 启动可直写'
+            : '当前服务不支持写盘（python -m http.server 没有 POST），已下载；用 node tools/serve.mjs 启动可直写');
+      setTimeout(function () { saveBtn.textContent = '保存到代码'; }, 1800);
+    });
   });
 
   function download(blob, name) {

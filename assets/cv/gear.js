@@ -15,8 +15,17 @@
    「我比规范慢多少」，不能自己另写一套秒数，否则规范页一改就悄悄对不上。
    而规范没约定的动作本来就没有锚点，硬给倍数只会得到「0 × 倍数 = 永远 0」。
 
-   改完立刻重排（控件 / 字幕 / 舞台），值存在
-   localStorage 的 cv.page.<page>.v1；↺ 回到规范值或页面默认秒。
+   改完立刻重排（控件 / 字幕 / 舞台），并当场写进 localStorage 的
+   cv.page.<page>.v1 —— 所以刷新、关页都不会丢，改完的数字会亮一下「已存本机」。
+
+   但 localStorage 只活在这一台浏览器里。要进仓库、要让别人也看到，
+   点「保存到代码」写入 assets/cv/pages.js（assets/cv/ 里的代码基线文件；
+   用 node tools/serve.mjs 打开时直接覆盖，静态服务下才退回下载）。
+   读取优先级：pages.js 基线 ← localStorage 临时改动。
+   ↺ 回到基线（有规范值的回 ×1，自定秒回页面默认）。
+
+   两层编号：大步 = 进度条的一段（组头标「3–5」这种范围）；
+   组内小步共用这一段，不再复读编号，只用虚线挂在组下面。
    ============================================================ */
 (function (CV) {
   'use strict';
@@ -71,17 +80,30 @@
     hd.appendChild(btn);
     document.body.appendChild(pop);
 
-    var rowsBox, totalEl;
+    var rowsBox, totalEl, savedEl;
 
-    function ov() { return CV.pageOvRead(page); }
+    function ovRaw() { return CV.pageOvRaw(page); }
+    function ovAll() { return CV.pageOvRead(page); }
 
     /* 改一行：写 localStorage → 页面重算时间轴 → 只刷新秒数列（不重建 DOM，否则失焦） */
     function apply(store, val) {
-      var v = ov();
+      var v = ovRaw();
       if (val == null) delete v[store]; else v[store] = val;
       CV.pageOvSave(page, v);
       onChange();
       syncSecs();
+      flash(val == null ? '已恢复' : '已存本机');
+    }
+
+    /* 存下来这件事必须看得见：不然改完不知道有没有生效，
+       以为「没保存」，转头就去点复制（还得自己找地方贴） */
+    var flashTimer = null;
+    function flash(txt) {
+      if (!savedEl) return;
+      savedEl.textContent = txt;
+      savedEl.classList.add('on');
+      clearTimeout(flashTimer);
+      flashTimer = setTimeout(function () { savedEl.classList.remove('on'); }, 1500);
     }
 
     /* 把每段的结果秒数从当前时间轴取回来（两种模式统一读这里） */
@@ -109,14 +131,16 @@
       if (totalEl) totalEl.textContent = fmt(getCh().total);
     }
 
-    function rowEl(r, noTxt) {
+    function rowEl(r, noTxt, isSub) {
       var isSpec = r.mode === 'spec';
-      var row = el('div', 'gear-row' + (isSpec ? ' is-spec' : ' abs'));
+      var row = el('div', 'gear-row' + (isSpec ? ' is-spec' : ' abs') + (isSub ? ' sub' : ''));
       row.setAttribute('data-key', r.key);
       row.setAttribute('data-mode', r.mode);
 
-      /* ① 步骤号：与进度条第几段一一对应 */
-      row.appendChild(el('span', 'gear-no', noTxt));
+      /* ① 步骤号：与进度条第几段一一对应。
+         组内的小步共用同一段（标在组头上），这里只占位留对齐，不复读「3–5」。 */
+      var no = el('span', 'gear-no' + (isSub ? ' gear-no-sub' : ''), isSub ? '' : noTxt);
+      row.appendChild(no);
 
       /* ② 动作名 */
       row.appendChild(el('span', 'gear-lb', r.label));
@@ -199,10 +223,15 @@
 
       /* 规则只讲一次，不在每行重复 */
       pop.appendChild(el('div', 'gear-tip',
-        '编号＝进度条第几段 · 有规范值调倍数 · 自定义填秒'));
+        '编号＝进度条第几段 · 有规范值调倍数 · 自定义填秒 · 改完自动存到本机'));
 
+      /* 两层结构：
+         大步（gear-step）= 进度条上的一段，段与段之间留白 + 实线；
+         小步（gear-grp-body 里的行）= 同一段内部的四件事，虚线分隔并挂在竖线上。
+         两者视觉必须不同 —— 否则「3–5 传递 / 落位延迟 / …」读起来像五段并列的步骤。 */
       rowsBox = el('div', 'gear-body');
       (ch.rows || []).forEach(function (r) {
+        var step = el('div', 'gear-step' + (r.type === 'group' ? ' is-grp' : ''));
         if (r.type === 'group') {
           var g = el('div', 'gear-grp');
           var gh = el('div', 'gear-grp-hd');
@@ -210,11 +239,14 @@
           gh.appendChild(el('span', 'gear-grp-lb', r.label));
           gh.appendChild(el('span', 'gear-grp-note', r.note));
           g.appendChild(gh);
-          r.rows.forEach(function (rr) { g.appendChild(rowEl(rr, r.noTxt)); });
-          rowsBox.appendChild(g);
+          var gb = el('div', 'gear-grp-body');
+          r.rows.forEach(function (rr) { gb.appendChild(rowEl(rr, '', true)); });
+          g.appendChild(gb);
+          step.appendChild(g);
         } else {
-          rowsBox.appendChild(rowEl(r, String(r.no)));
+          step.appendChild(rowEl(r, String(r.no), false));
         }
+        rowsBox.appendChild(step);
       });
       pop.appendChild(rowsBox);
 
@@ -223,32 +255,63 @@
       t.appendChild(document.createTextNode('一轮 '));
       totalEl = el('b', null, fmt(ch.total));
       t.appendChild(totalEl);
+      savedEl = el('span', 'gear-saved');
+      t.appendChild(savedEl);
       ft.appendChild(t);
 
-      var reset = el('button', 'gear-btn-sm', '全部重置');
+      /* 主按钮是「保存到代码」：localStorage 只在这台机器上有效，
+         要让改动进仓库（别人也能看到、换浏览器也不丢），只能走代码基线。
+         重置是破坏性动作，退成次要样式。 */
+      var reset = el('button', 'gear-btn-sm gear-btn-ghost', '全部重置');
       reset.type = 'button';
-      reset.addEventListener('click', function () {
+      reset.title = '清掉本机的全部改动，回到代码基线';
+      reset.addEventListener('click', function (e) {
+        /* 必须拦住冒泡：render() 会把这个按钮本身换掉，
+           等事件走到 document 时它已经脱离 DOM，contains 判定为「点在外面」→ 面板自己关掉 */
+        e.stopPropagation();
         CV.pageOvClear(page);
         onChange();
         render();
       });
       ft.appendChild(reset);
 
-      var copy = el('button', 'gear-btn-sm gear-btn-ghost', '复制配置');
-      copy.type = 'button';
-      copy.title = '把当前倍数 / 自定秒复制成 JSON';
-      copy.addEventListener('click', function () {
-        var txt = JSON.stringify(ov(), null, 2);
-        try {
-          navigator.clipboard.writeText(txt);
-          copy.textContent = '已复制';
-          setTimeout(function () { copy.textContent = '复制配置'; }, 1200);
-        } catch (e) {
-          window.prompt('复制下面的配置：', txt);
-        }
+      var save = el('button', 'gear-btn-sm', '保存到代码');
+      save.type = 'button';
+      save.title = '写入 assets/cv/pages.js：把这一页当前的值固化成代码基线';
+      save.addEventListener('click', function () {
+        save.disabled = true;
+        save.textContent = '写入中…';
+        exportPage(function (ok) {
+          save.disabled = false;
+          save.textContent = ok ? '已写入' : '已下载';
+          setTimeout(function () { save.textContent = '保存到代码'; }, 1600);
+        });
       });
-      ft.appendChild(copy);
+      ft.appendChild(save);
       pop.appendChild(ft);
+    }
+
+    /* 生成 pages.js：保留其它页已有的基线，只替换本页 */
+    function exportPage(cb) {
+      var all = {};
+      var src = window.CV_PAGE_DEFAULTS || {};
+      Object.keys(src).forEach(function (k) { all[k] = src[k]; });
+      all[page] = ovAll();
+      var txt = '/* CommonVisual · 每页时序基线（可提交）\n' +
+        '   ------------------------------------------------------------\n' +
+        '   由原语页右上角「时序」面板的「保存到代码」写入：把调好的倍数 / 自定秒固化成基线。\n' +
+        '   primitive.js 的 CV.pageOvRead 先读这里，再叠浏览器里的临时改动（localStorage）。\n' +
+        '   必须在 primitive.js / 各页脚本之前加载。 */\n' +
+        'window.CV_PAGE_DEFAULTS = ' + JSON.stringify(all, null, 2) + ';\n';
+
+      CV.saveFile('assets/cv/pages.js', txt, function (ok, why) {
+        if (ok) {
+          flash('已写入 pages.js');
+        } else {
+          flash(why === 'file' ? '本机文件不能写盘 · 已下载' : '服务不支持写盘 · 已下载');
+        }
+        if (cb) cb(ok);
+      });
     }
 
     function place() {

@@ -34,7 +34,7 @@
       { id: 'send3', kind: 'transfer', label: 'D 传递',
         text: rk(3) + ' 发送 ' + seg(3) },
 
-      { id: 'tail', kind: 'wait', label: '收尾', sec: 1,
+      { id: 'tail', kind: 'wait', label: '收尾', sec: 2,
         text: rk(0) + ' 集齐 ' + seg(0) + ' ' + seg(1) + ' ' + seg(2) + ' ' + seg(3) }
     ]);
 

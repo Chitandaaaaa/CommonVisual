@@ -285,15 +285,19 @@
 .focus-demo[data-focus="D"] [data-l]:not([data-l="D"]) text { fill: #b7becc !important; }
 
 /* ───────────── 左侧悬浮目录 ─────────────
-   固定定位 + top:50% + translateY(-50%)：它不在文档流里，
-   所以点击跳转前后都停在左侧正中，位置一模一样。
-   只有当左侧真放得下时才出现（内容 940 宽，两侧各留 620 起算），
-   窄屏直接藏掉，免得压住正文。 */
+   固定定位 + top:50% + translate(-50%,-50%)：
+   它不在文档流里，所以点击跳转前后都停在原位，位置一模一样。
+   水平方向摆在「正文左侧留白的中线」上 —— 留白宽度 = (100% - 940) / 2，
+   中线就是 (100% - 940) / 4；先用 left 把左边贴到这条中线，再用
+   translateX(-50%) 收回自身一半宽度，于是它自身中心压在中线上。
+   不要写死 left: 26px 或 calc(50% - 620px)—— 前者在大屏上贴屏幕边、
+   后者永远黏着正文，2560 的屏上左边留着 660px 空白，看着像跑偏了。
+   只有当左侧真放得下时才出现，窄屏直接藏掉，免得压住正文。 */
 .toc {
   position: fixed;
   top: 50%;
-  left: max(16px, calc(50% - 620px));
-  transform: translateY(-50%);
+  left: calc((100% - 940px) / 4);
+  transform: translate(-50%, -50%);
   z-index: 40;
   width: 152px;
   max-height: calc(100vh - 32px);   /* 章节再多也不会顶出视口，仍然居中 */
@@ -402,7 +406,8 @@
    纯调试工具，不进生产观感，固定右下角。 */
 /* ───────────── 参数调试台：右侧抽屉 + 收起按钮 ─────────────
    固定浮层，整高靠右；收起后只剩右下角 ⚙，不挡正文。
-   宽屏默认开，<1280px 默认收起（display 由 paramEditor.js 控制）。 */
+   宽屏默认开，<1620px 默认收起（display 由 paramEditor.js 控制）——
+   1620 是 340 宽抽屉不再压到 940 正文的门槛。 */
 .param-fab {
   position: fixed; right: 16px; bottom: 16px; z-index: 60;
   width: 44px; height: 44px; border-radius: 50%;
@@ -451,6 +456,32 @@
 .pd-save:hover { filter: brightness(1.06); }
 .pd-export { background: #eef0f6; color: var(--tx-2); }
 .pd-export:hover { background: #e3e6ef; }
+
+/* ───────────── 大屏：参数台也摆到右侧留白的中线上 ─────────────
+   1760 = 940 正文 + 两侧各 410 留白；再窄，340 宽的抽屉横不进留白。
+   原来它贴死在屏幕右边缘，正文却居中 —— 2560 的屏上左边留白 810、
+   右边被抽屉吃掉 340，整页重心明显偏右。
+   现在左目录 / 右参数台各占一条留白的中线，重心回到中轴。
+   贴边时靠 border-left + 外阴影装成抽屉，浮起来就得四面框 + 圆角 +
+   overflow:hidden（否则渐变表头会顶出圆角）。 */
+@media (min-width: 1760px) {
+  .param-dock {
+    /* 高度随内容，靠 top:50% + translateY(-50%) 上下居中：
+       写 top/bottom 双锚点会把它拉成整屏高，可手风琴默认只展开
+       第一组，下面全是空白，浮窗看着像块没写完的白板。 */
+    top: 50%; bottom: auto;
+    height: auto; max-height: calc(100vh - 32px);
+    transform: translateY(-50%);
+    right: calc((100% - 940px) / 4 - 170px);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 12px 34px -16px rgba(20, 26, 46, .26),
+                0 1px 2px rgba(20, 26, 46, .05);
+  }
+  /* 收起态的小齿轮同理，圆心压在右侧留白的中线上 */
+  .param-fab { right: calc((100% - 940px) / 4 - 22px); }
+}
 
 /* 手风琴分组：每章一组，滚到哪节哪节自动展开 */
 .pp-group { margin-bottom: 8px; }

@@ -23,13 +23,18 @@
   var RANKS = [0, 1, 2, 3];
   var PARTS = DATA.length;
 
+  /* 融合节奏全走规范 09：单段 SEG = fuseDur（一段折多久）、段间 GAP = mergeGap
+     （多段依次折时相邻两段错开多久）。两个都在规范页右侧调试台改，本页不另存一份 ——
+     否则规范页把融合调快了，这一页还是原速。
+     不属于规范的只有「这一趟折完到下一趟开始停多久」（TM.fly 那些编排秒）。 */
+  var SEG = CV.specVal('fuseDur') || 0.55;
+  var GAP = CV.specVal('mergeGap') || 0.5;
+
   /* ── ② 时间轴（秒）── */
   var TM = {
-    init: 0.6, prealloc: 0.7, fly: 1.7, pop: 0.6, grow: 0.4, merge: 1.3, shrink: 0.4
+    init: 0.6, prealloc: 0.7, fly: 1.7, pop: 0.6, grow: 0.4,
+    merge: SEG + 3 * GAP, shrink: 0.4
   };
-
-  /* 融合节奏：单段 SEG 秒，段间 GAP 秒 */
-  var SEG = 0.55, GAP = 0.25;
 
   var CYCLE = TM.fly + TM.pop + TM.grow + TM.merge + TM.shrink;
   var TOTAL = TM.init + TM.prealloc + CYCLE * 3 + 0.5;

@@ -15,20 +15,20 @@
   var DATA = CV.PALETTE;
   var RANKS = [0, 1, 2, 3];
   var PARTS = DATA.length;
-
-  /* ── ② 时间轴（秒）+ 环路由 ── */
-  var TM = { init: 0.9, fly: 1.2, pop: 0.6, gap: 0.5 };
   var ROUNDS = 3;
-  var CYCLE = TM.fly + TM.pop + TM.gap;
-  var TOTAL = TM.init + CYCLE * ROUNDS - TM.gap + 0.6;
-  function N(sec) { return sec / TOTAL; }
 
-  /* 顺时针环：左上 → 右上 → 右下 → 左下 */
-  var RING = [0, 1, 3, 2];
+  /* ── ③ 文案 ── */
+  var X = CV.primText(DATA);
+  var rk = X.rk, whole = X.whole;
 
-  var ROUTE = { rounds: [] };
-  (function () {
+  /* ── ② 环路由：谁在第几轮把哪一段发给谁 ──
+     这里只定「发什么」（与时间无关），秒数全在 buildTime 里 ——
+     改时序只动时间轴，路由不用跟着重算。 */
+  var RING = [0, 1, 3, 2];   /* 顺时针环：左上 → 右上 → 右下 → 左下 */
+
+  var ROUNDS_FLOWS = (function () {
     var carried = [0, 1, 2, 3];
+    var out = [];
     for (var r = 0; r < ROUNDS; r++) {
       var list = [];
       for (var k = 0; k < 4; k++) {
@@ -38,14 +38,43 @@
       var nxt = carried.slice();
       list.forEach(function (f) { nxt[f.to] = f.letter; });
       carried = nxt;
-      ROUTE.rounds.push(list);
+      out.push(list);
     }
+    return out;
   })();
 
-  ROUTE.rounds.forEach(function (list, r) {
-    var s = TM.init + r * CYCLE;
-    list.forEach(function (f) { f.start = s; f.arrive = s + TM.fly; f.popEnd = s + TM.fly + TM.pop; });
-  });
+  /* ── ① 时序：一轮 = 一个 transfer ──
+     每轮四条边**同时**发（各发各的那段），所以一轮就是时间轴上的一个 transfer 段，
+     自动展开成 传递 → 落位延迟 → 落位弹跳 → 间隔 四段；三轮共用同一组倍数。
+     收尾给 0.6s，让「集齐」这一句停得住。 */
+  function buildTime() {
+    var segs = [
+      { id: 'init', kind: 'wait', label: '说明', sec: 0.9,
+        text: rk(0) + rk(1) + rk(2) + rk(3) + ' 各持一段 ' + whole() }
+    ];
+    for (var q = 0; q < ROUNDS; q++) {
+      segs.push({
+        id: 'r' + q, kind: 'transfer', label: '第 ' + (q + 1) + ' 轮',
+        text: '第 ' + (q + 1) + ' 轮：顺时针各发一份'
+      });
+    }
+    segs.push({ id: 'tail', kind: 'wait', label: '收尾', sec: 0.6,
+                text: '四张卡都集齐 ' + whole() });
+
+    var CH = CV.choreo('allgather', segs);
+    var W = CH.win;
+
+    /* 把窗口挂回流对象：同一轮的四条边共用同一个窗口对象（f.w）。
+       f.w 每次 retime 都会被换掉，所以 paint 一律现读 f.w，不缓存秒数。 */
+    ROUNDS_FLOWS.forEach(function (list, q) {
+      var w = W['r' + q];
+      list.forEach(function (f) { f.w = w; });
+    });
+
+    return { CH: CH, win: W };
+  }
+
+  var TM = buildTime();
 
   /* 环上 4 条边是固定的：每轮复用同一条线，只是携带的字母不同。
      —— 所以「边」才是画线的单位，不是「某一轮的某条流」。
@@ -54,7 +83,7 @@
   var EDGES = RING.map(function (from, k) {
     var to = RING[(k + 1) % 4];
     var runs = [];
-    ROUTE.rounds.forEach(function (list) {
+    ROUNDS_FLOWS.forEach(function (list) {
       list.forEach(function (f) { if (f.from === from && f.to === to) runs.push(f); });
     });
     return { from: from, to: to, runs: runs };
@@ -62,23 +91,11 @@
   var EIDX = {};
   EDGES.forEach(function (ed, i) { EIDX[ed.from + '_' + ed.to] = i; });
 
-  /* IN[r][q] = rank r 第 q 轮收到的那段及时间点 */
+  /* IN[r][q] = rank r 第 q 轮收到的**那条流**（段号 = f.letter） */
   var IN = [[], [], [], []];
-  ROUTE.rounds.forEach(function (list, q) {
-    list.forEach(function (f) {
-      IN[f.to][q] = { letter: f.letter, start: f.start, arrive: f.arrive, popEnd: f.popEnd };
-    });
+  ROUNDS_FLOWS.forEach(function (list, q) {
+    list.forEach(function (f) { IN[f.to][q] = f; });
   });
-
-  /* ── ③ 文案 ── */
-  var X = CV.primText(DATA);
-  var rk = X.rk, whole = X.whole;
-
-  var STEPS = [{ t: 0, text: rk(0) + rk(1) + rk(2) + rk(3) + ' 各持一段 ' + whole() }];
-  ROUTE.rounds.forEach(function (list, q) {
-    STEPS.push({ t: N(list[0].start), text: '第 ' + (q + 1) + ' 轮：顺时针各发一份' });
-  });
-  STEPS.push({ t: N(TOTAL - 0.6), text: '四张卡都集齐 ' + whole() });
 
   /* ── ④ 几何：2×2 网格（列=r&1，行=r>>1）── */
   var GEO = CV.geo({
@@ -112,11 +129,17 @@
                  e.tx + ' ' + e.ty;
   }
 
-  CV.primitive({
+  var mount = CV.primitive({
     data: DATA,
     geo: GEO,
-    steps: STEPS,
-    duration: TOTAL * 1000,
+    steps: TM.CH.steps,
+    duration: TM.CH.total * 1000,
+
+    /* 齿轮改了倍数 → 重算时序，返回新的 steps / 时长给控件重排 */
+    retime: function () {
+      TM = buildTime();
+      return { steps: TM.CH.steps, duration: TM.CH.total * 1000 };
+    },
 
     keepCards: function () { return RANKS; },
 
@@ -168,7 +191,7 @@
       });
 
       /* 数据包：每条流一个（不能按段共用） */
-      ROUTE.rounds.forEach(function (list, q) {
+      ROUNDS_FLOWS.forEach(function (list, q) {
         list.forEach(function (f) {
           pkts[q + '_' + f.from] = CV.drawPacket(layer.fx, {
             letter: DATA[f.letter].letter, color: DATA[f.letter].color
@@ -179,16 +202,17 @@
 
     paint: function (S, t) {
       var layer = S.layers, cards = S.cards, chips = S.chips, wires = S.wires, pkts = S.pkts;
-      var sec = t * TOTAL;
+      var sec = t * S.durSec;
 
-      /* 槽位状态：own 自己那份 / done 已收到 / waiting 在路上 / empty 空着 */
+      /* 槽位状态：own 自己那份 / done 已收到 / waiting 在路上 / empty 空着
+         到达 ≠ 落位：数据在「落位」这一段的起点（seatStart）才真正进槽。 */
       function slotState(r, i) {
         if (i === r) return 'own';
         for (var q = 0; q < ROUNDS; q++) {
-          var e = IN[r][q];
-          if (!e || e.letter !== i) continue;
-          if (sec >= e.popEnd) return 'done';
-          if (sec >= e.start) return 'waiting';
+          var f = IN[r][q];
+          if (!f || f.letter !== i) continue;
+          if (sec >= f.w.seatStart) return 'done';
+          if (sec >= f.w.s) return 'waiting';
           return 'empty';
         }
         return 'empty';
@@ -204,19 +228,12 @@
           } else {
             CV.setSlot(s, null, {});
           }
-
-          var key = 'p' + r + i;
-          if (st === 'done') {
-            if (!seen[key]) { seen[key] = 1; CV.spawnPulse(layer.fx, s); }
-          } else if (st !== 'own') {
-            delete seen[key];
-          }
         });
       });
 
       /* 徽章：已收到几段 */
       var got = 1;
-      ROUTE.rounds.forEach(function (list) { if (sec >= list[0].popEnd) got++; });
+      ROUNDS_FLOWS.forEach(function (list) { if (sec >= list[0].w.seatStart) got++; });
       var bt = got + '/' + PARTS;
       RANKS.forEach(function (r) {
         if (cards[r].badgeTx.textContent !== bt) cards[r].badgeTx.textContent = bt;
@@ -227,7 +244,7 @@
          取「最后一个已经开始的那轮」就是它此刻的状态。 */
       EDGES.forEach(function (ed, i) {
         var w = wires['e' + i], cur = null;
-        ed.runs.forEach(function (f) { if (sec >= f.start) cur = f; });
+        ed.runs.forEach(function (f) { if (sec >= f.w.s) cur = f; });
 
         if (!cur) {
           w.path.setAttribute('stroke', '#c3cadb');
@@ -239,7 +256,7 @@
         }
 
         var color = DATA[cur.letter].color;
-        var flying = sec < cur.arrive;
+        var flying = sec < cur.w.travelEnd;
         w.path.setAttribute('stroke', color);
         w.path.setAttribute('stroke-width', flying ? '2.6' : '1.8');
         w.path.setAttribute('stroke-dasharray', flying ? '9 7' : '8 7');
@@ -249,22 +266,53 @@
 
       /* —— 数据包：每条流各一个（不能跨轮次共用一个对象，包的字母和颜色
          是画出来的时候定死的，一条边每轮带的东西不一样） —— */
-      ROUTE.rounds.forEach(function (list, q) {
+      ROUNDS_FLOWS.forEach(function (list, q) {
         list.forEach(function (f) {
           var w = wires['e' + EIDX[f.from + '_' + f.to]];
           var p = pkts[q + '_' + f.from];
+          var fw = f.w;
 
-          if (sec >= f.start && sec < f.arrive) {
-            var e = CV.easeInOutQuad((sec - f.start) / (f.arrive - f.start));
+          if (sec >= fw.s && sec < fw.travelEnd) {
+            var e = CV.easeInOutQuad((sec - fw.s) / (fw.travelEnd - fw.s));
             CV.placePacket(p, w, e);
-          } else if (sec >= f.arrive) {
+          } else if (sec >= fw.travelEnd && sec < fw.fadeEnd) {
+            /* 到达箭头尖：原地淡掉（这一段同时就是「停留」） */
             CV.placePacket(p, w, 1);
-            CV.pktFadeOut(p, sec - f.arrive);
+            CV.pktFadeOut(p, sec - fw.travelEnd, fw.fadeSec);
           } else {
             p.g.setAttribute('opacity', '0');
           }
         });
       });
+
+      /* —— 落位弹跳：一轮四块是**同时**到的，但落位要一块一块弹 ——
+         第 gi 块的时刻 = seatStart + gi×seatGap（规范 08），本轮第一块不延后。
+         用「时刻」比 sec 而不是 setTimeout 排队：进度条能来回拖。 */
+      ROUNDS_FLOWS.forEach(function (list, q) {
+        list.forEach(function (f, gi) {
+          var key = 'q' + q + '_' + f.from;
+          var at = CV.seatAt(gi, f.w.seatStart);
+          if (sec >= at && !seen[key]) {
+            seen[key] = 1;
+            CV.spawnPulse(layer.fx, chips[f.to][f.letter], DATA[f.letter].color, f.w.popSec);
+          } else if (sec < at && seen[key]) {
+            delete seen[key];
+          }
+        });
+      });
     }
   });
+
+  /* 调试 / 探针钩子：取本页当前真实的时间轴（改过倍数之后也是最新的） */
+  mount.getCh = function () { return TM.CH; };
+
+  /* 右上角齿轮：本页每一步的耗时（有规范值的调倍数，没规范值的直接填秒） */
+  if (CV.gear) {
+    CV.gear({
+      page: 'allgather',
+      name: 'All-Gather 时序',
+      getCh: mount.getCh,
+      onChange: function () { mount.reload(); }
+    });
+  }
 })();

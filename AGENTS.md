@@ -18,10 +18,15 @@
 这些都能用 `getBoundingClientRect()` / `getComputedStyle()` 一次量出来，十几秒。
 靠截图猜要 3 轮，每轮 40–60 秒。
 
-```js
-// /tmp/probe.mjs 用法：第二个参数是一段返回对象的表达式
-node /tmp/probe.mjs http://127.0.0.1:PORT/page.html "(()=>{ ... return {...} })()"
+```bash
+# 仓库自带的探针（同进程起 server + 无头 Chrome，跑完自己退出）
+node .workbuddy/tools/cdp.mjs probe page=index.html w=2560 h=1440 "(()=>{ ... return {...} })()"
+node .workbuddy/tools/cdp.mjs shot  page=index.html w=2560 h=1440 out=x.png   # 加 x/y/cw/ch 可 1:1 裁切
 ```
+
+`probe` 会一并回显 `problems`（`Runtime.exceptionThrown` + `Log` 的 error 级），
+所以「页面有没有报错」不用另开工具。习惯 `/tmp/probe.mjs` 的话也一样用，
+但这个脚本在仓库里、不依赖本机装了什么。
 
 典型探针：`relmap.gridTemplateRows`、`h1.getComputedStyle().fontSize`、
 `wire.getAttribute('d')`、两元素 `rect` 的中心距、`.rel-arrow` 的 `w/h`。
@@ -61,13 +66,22 @@ Bash 结束会回收后台进程，所以每次调用都得重新冷启动 Chrom
 - 截图脚本应回显 `location.href` 和 `document.title`，一眼看出是不是打到了目标页
 - **两张图字节数完全相同 = 一定是废帧**（同一画面），立刻查
 
-**③ 有 CSS 过渡的帧 `@delay` ≥ 800ms。**
+**③ `scrub` 是进度条刻度（0–1000），`controls.seek()` 要 0–1。**
+工具里已经除了 1000，别在手写的探针里再把刻度直接喂给 `seek` ——
+`clamp(125, 0, 1) = 1`，任何中间值都会变成**终态**，而命令照样报成功。
+判断依据：截的是「飞行中段」，字幕却是收尾那句。
+
+**④ 有 CSS 过渡的帧 `@delay` ≥ 800ms。**
 `scrub` 跳步后立刻截，会截到 `fill` / `opacity` 的过渡中间态 —— 看起来像 bug，其实只是半透明。
 终态尤其要给足（`@1200`）。
 
-**④ `Runtime.evaluate` 必须传 `returnByValue: true`**，否则拿不到 `result.value`。
+**⑤ `Runtime.evaluate` 必须传 `returnByValue: true`**，否则拿不到 `result.value`。
 
-**⑤ `curl` 要 `--noproxy '*'`**（环境里有系统代理，localhost 之外的请求会被拦）。
+**⑥ `curl` 要 `--noproxy '*'`**（环境里有系统代理，localhost 之外的请求会被拦）。
+
+**⑦ 连续跑多页 probe 要给每个进程不同的 `port=`。**
+Chrome 的 `--remote-debugging-port=9333` 是写死的，上一个实例没退干净时
+下一个会卡在「chrome devtools 未就绪」（15s 后抛错）。**一次 Bash 调一页**，别 for 循环。
 
 ---
 

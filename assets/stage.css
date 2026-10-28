@@ -102,6 +102,8 @@ body {
 .cap-text .cB { background: #0891b2; }
 .cap-text .cC { background: #059669; }
 .cap-text .cD { background: #d97706; }
+/* 归约结果 Σ：和画面里「合了 4 份」那块同一个深紫 */
+.cap-text .sig { background: #4c1d95; }
 /* rank 编号与它持有的那段数据同色，一眼对上 */
 .cap-text .r0 { background: #7c3aed; }
 .cap-text .r1 { background: #0891b2; }
@@ -314,7 +316,11 @@ body {
   font-family: var(--sans); font-size: 12.5px; font-weight: 600;
 }
 .wire { transition: stroke .3s ease, opacity .3s ease; }
-.pkt { transition: opacity .25s ease; }
+/* 数据包的 opacity 完全由 JS 逐帧写（出现 0→1、到达后 1→0 都是算出来的秒数）。
+   这里绝不能加 transition：每帧一次写入都会把过渡重新计时，目标值永远追不上当前值，
+   表现就是「飞到箭头尖停住 → 一直满不透明 → 淡出段结束时才突然消失」。
+   入场的那点柔化交给 placePacket（前 8% 行程渐显），两件事分开管。 */
+.pkt { transition: none; }
 .pkt-tx { font-family: var(--mono); font-size: 13px; font-weight: 700; fill: #fff; }
 
 /* ───────── 计算标签（reduce 专用）：只在归约过程中出现 ─────────
@@ -533,11 +539,18 @@ body {
 
 .gear-row {
   display: grid;
-  grid-template-columns: 24px 64px minmax(0, 1fr) 66px 42px 18px;
+  grid-template-columns: 30px 64px minmax(0, 1fr) 66px 42px 18px;
   align-items: center; gap: 6px;
   padding: 5px 2px;
 }
-.gear-row + .gear-row { border-top: 1px dashed #f0f2f8; }
+/* 两层分隔，视觉必须不一样：
+   大步之间 = 留白 + 实线（换了一段）；
+   小步之间 = 紧贴 + 虚线（同一段里的四个动作，挂在一条竖线上）。 */
+.gear-step + .gear-step {
+  margin-top: 9px; padding-top: 9px;
+  border-top: 1px solid #e3e7f1;
+}
+.gear-grp-body .gear-row + .gear-row { border-top: 1px dashed #eef1f8; }
 /* 无规范值的行：输入框本身就是秒，占掉「秒数」那一列，不重复显示 */
 .gear-row.abs .gear-ipt { grid-column: 4 / span 2; }
 .gear-row.abs .gear-rs { grid-column: 6; }
@@ -549,6 +562,8 @@ body {
   background: #f1f3f9; border-radius: 5px; padding: 3px 0;
 }
 .gear-no-grp { font-size: 9px; padding: 3px 2px; }
+/* 组内小步不编号（共用组头那一段），只留占位保持列对齐 */
+.gear-no-sub { background: none; padding: 0; }
 
 .gear-lb {
   font-size: 11.5px; color: var(--tx-2);
@@ -587,16 +602,21 @@ body {
 }
 .gear-rs:hover { background: #e7eaf3; color: var(--tx-2); }
 
-.gear-grp { margin: 4px 0 2px; }
+.gear-grp { margin: 0; }
 .gear-grp-hd {
   display: flex; align-items: center; gap: 6px;
-  padding: 6px 2px 3px;
+  padding: 2px 2px 4px;
 }
 .gear-grp-lb {
   font-size: 10px; font-weight: 650; letter-spacing: .08em;
   color: var(--tx-3);
 }
 .gear-grp-note { margin-left: auto; font-size: 9.5px; color: #b3b9cb; white-space: nowrap; }
+/* 小步挂在一条竖虚线上，跟上面的大步一眼分开 */
+.gear-grp-body {
+  margin-left: 8px; padding-left: 10px;
+  border-left: 1px dashed #e3e7f1;
+}
 
 .gear-ft {
   display: flex; align-items: center; gap: 7px;
@@ -605,6 +625,12 @@ body {
 }
 .gear-total { font-size: 11px; color: var(--tx-3); margin-right: auto; }
 .gear-total b { font-family: var(--mono); font-size: 11.5px; color: var(--tx-2); }
+/* 存下来的回执：改一个数就亮一下，省得「不知道有没有生效」 */
+.gear-saved {
+  margin-left: 7px; font-size: 9.5px; color: #059669;
+  opacity: 0; transition: opacity .18s ease;
+}
+.gear-saved.on { opacity: 1; }
 .gear-btn-sm {
   border: 0; cursor: pointer; font-family: var(--sans);
   font-size: 11px; font-weight: 600; padding: 6px 9px; border-radius: 8px;
