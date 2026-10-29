@@ -21,19 +21,32 @@
 
   var DEEP = '#4c1d95';
 
-  /* 双向交换法向错开量（px）：第 1 轮两段并排的缩略条宽约 54px */
-  var HUMP = 34;
+  /* 法向错开量（px）：横向（左右）传的一对线摆在卡片正文的垂直中线上（见 edgeEnds）。
+     线上骑着的包高约 32px，两线间距若只跟包高相当（24/32px），两个包会「相切」
+     粘成一坨，所以取 HUMP_H=22 → 相距 44px，包间留 12px 空隙；
+     整对 76px，卡片正文 135px，上下各余 30px。
+     纵向（上下）传的包是横向排开的整批，宽可达 ~55px，需较大错开（HUMP_V=40）。 */
+  var HUMP_H = 22, HUMP_V = 40;
 
   function colorFor(seg, n) {
     return CV.mix(DATA[seg].color, DEEP, (n - 1) / (PARTS - 1));
   }
 
-  /* ── ② 时间轴（秒）+ 路由 ── */
-  var TM = { init: 0.9, fly: 1.2, pop: 0.6, gap: 0.5 };
+  /* ── ② 时间轴（秒）+ 路由 ──
+     关键：每一轮必须「整轮做完（含段位错峰落位）」才进下一轮。
+     否则第 2 轮的数据包已经发出，第 1 轮最后一段还在落位弹跳，
+     视觉上就是「上一步没执行完下一步就开始」。 */
+  var TM = { init: 0.9, fly: 1.2, gap: 0.5 };
   var ROUNDS = 2;
-  var CYCLE = TM.fly + TM.pop + TM.gap;
-  var TOTAL = TM.init + CYCLE * ROUNDS - TM.gap + 0.6;
-  function N(sec) { return sec / TOTAL; }
+  /* 段位错峰尾：最后一段比第一段晚 (段数−1)×seatGap 落位（规范 08，默认 .5）。
+     这一尾必须算进「本轮做完」。 */
+  var SEAT = (CV.params && CV.params.get('08-seat', 'seatGap')) || 0.5;
+  var STAG = (PARTS - 1) * SEAT;
+  /* 落位弹跳本身也要算进去（规范 08 的 popDur，默认 .55）：
+     块「落位」的那一刻动画才刚开始，还要再弹 0.55s 才停。
+     只算落位不算弹跳，下一轮会在上一轮还在弹的时候就起飞 —— 用户看到的
+     「上一步还在落位弹跳，下一步已经开始」就是这么来的。 */
+  var POP = (CV.params && CV.params.get('08-seat', 'popDur')) || 0.55;
 
   var EMIT = [
     [[2, 3], [2, 3], [0, 1], [0, 1]],
@@ -47,10 +60,14 @@
   var R = [];
   (function () {
     for (var q = 0; q < ROUNDS; q++) {
-      var s = TM.init + q * CYCLE;
-      R.push({ q: q, start: s, arrive: s + TM.fly, popEnd: s + TM.fly + TM.pop });
+      var start = (q === 0) ? TM.init : (R[q - 1].done + TM.gap);
+      var arrive = start + TM.fly;
+      var done = arrive + STAG + POP;           /* 最后一段落位并弹完 = 本轮真正做完 */
+      R.push({ q: q, start: start, arrive: arrive, done: done });
     }
   })();
+  var TOTAL = R[ROUNDS - 1].done + 0.6;
+  function N(sec) { return sec / TOTAL; }
 
   /* ── ③ 文案 ── */
   var X = CV.primText(DATA);
@@ -84,13 +101,18 @@
   }
 
   /* 两卡连线端点：横向相邻走左右边，纵向相邻走上下边 */
-  function edgeEnds(a, b) {
+  function edgeEnds(a, b, L) {
     var ac = { x: a.x + a.w / 2, y: a.y + a.h / 2 };
     var bc = { x: b.x + b.w / 2, y: b.y + b.h / 2 };
     var dx = bc.x - ac.x, dy = bc.y - ac.y;
     if (Math.abs(dx) >= Math.abs(dy)) {
+      /* 横向相邻：一对虚线放在「卡片正文（标题条以下）的垂直中线」上。
+         为什么不是「数据条下方那条空白带的中点」——那条带只有 52px 高，
+         线上还骑着一包高约 30px 的数据块，两包摞起来 60px+ 根本放不下：
+         摆中间就整对溢出到卡片底边之外，看着像贴在卡片下沿。 */
+      var cy = a.y + L.hdr + (L.card.h - L.hdr) / 2;
       var s = dx < 0 ? -1 : 1;
-      return { sx: ac.x + s * a.w / 2, sy: ac.y, tx: bc.x - s * b.w / 2, ty: bc.y };
+      return { sx: ac.x + s * a.w / 2, sy: cy, tx: bc.x - s * b.w / 2, ty: cy };
     }
     var t = dy < 0 ? -1 : 1;
     return { sx: ac.x, sy: ac.y + t * a.h / 2, tx: bc.x, ty: bc.y - t * b.h / 2 };
@@ -162,10 +184,12 @@
       R.forEach(function (rd) {
         RANKS.forEach(function (r) {
           var to = PARTNER[rd.q][r];
-          var e = edgeEnds(cards[r].geo, cards[to].geo);
+          var e = edgeEnds(cards[r].geo, cards[to].geo, L);
+          var isHoriz = ((r >> 1) === (to >> 1));   /* 同行 = 横向 */
+          var hump = isHoriz ? HUMP_H : HUMP_V;
           var k = rd.q + '_' + r;
-          var w = CV.drawWire(layer.wires, { d: wirePath(e, HUMP), markerId: 'ars' + rd.q + '_' + r });
-          var se = shiftEnds(e, HUMP);
+          var w = CV.drawWire(layer.wires, { d: wirePath(e, hump), markerId: 'ars' + rd.q + '_' + r });
+          var se = shiftEnds(e, hump);
           wires[k] = {
             path: w.path, len: w.len,
             marker: defs.querySelector('#ars' + rd.q + '_' + r + ' path'),
@@ -245,8 +269,12 @@
             w.path.setAttribute('opacity', '1');
             w.marker.setAttribute('fill', col);
           } else if (sec >= rd.arrive) {
-            var allDone = sec >= R[ROUNDS - 1].popEnd;
+            var allDone = sec >= R[ROUNDS - 1].done;
             var strokeCol = allDone ? DEEP : col;
+            /* 先把包摆到终点再淡出：拖进度条直接跳到「已到达」的帧时，
+               这一轮的飞行帧从没跑过，placePacket 没被调用过，
+               包会停在 SVG 原点（左上角），淡出时露出一颗游离的数据块。 */
+            CV.placePacket(p, w, 1);
             CV.pktFadeOut(p, sec - rd.arrive);
             w.path.setAttribute('stroke', strokeCol);
             w.path.setAttribute('stroke-width', '1.8');

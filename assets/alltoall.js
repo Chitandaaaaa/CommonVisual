@@ -20,20 +20,32 @@
   var RANKS = [0, 1, 2, 3];
   var PARTS = DATA.length;
 
-  /* ── ② 时间轴（秒）+ 路由 ── */
-  var TM = { init: 0.9, fly: 0.95, pop: 0.5, gap: 0.4 };
+  /* ── ② 时间轴（秒）+ 路由 ──
+     关键：每一步必须「整步做完（含块位错峰落位）」才进下一步。
+     否则下一步的数据包已经发出，上一步最后一块还在逐个落位弹跳，
+     视觉上就是「上一步没执行完下一步就开始」。 */
+  var TM = { init: 0.9, fly: 0.95, gap: 0.4 };
   var STEPS_N = 4;
-  var CYCLE = TM.fly + TM.pop + TM.gap;
-  var TOTAL = TM.init + CYCLE * STEPS_N - TM.gap + 0.6;
-  function N(sec) { return sec / TOTAL; }
+  /* 块位错峰尾：最后一块比第一块晚 (段数−1)×seatGap 落位（规范 08，默认 .5）。
+     这一尾必须算进「本步做完」。 */
+  var SEAT = (CV.params && CV.params.get('08-seat', 'seatGap')) || 0.5;
+  var STAG = (PARTS - 1) * SEAT;
+  /* 落位弹跳本身也要算进去（规范 08 的 popDur，默认 .55）：
+     块「落位」的那一刻动画才刚开始，还要再弹 0.55s 才停。
+     只算落位不算弹跳，下一步会在上一步还在弹的时候就起飞。 */
+  var POP = (CV.params && CV.params.get('08-seat', 'popDur')) || 0.55;
 
   var R = [];
   (function () {
     for (var q = 0; q < STEPS_N; q++) {
-      var s = TM.init + q * CYCLE;
-      R.push({ q: q, start: s, arrive: s + TM.fly, popEnd: s + TM.fly + TM.pop });
+      var start = (q === 0) ? TM.init : (R[q - 1].done + TM.gap);
+      var arrive = start + TM.fly;
+      var done = arrive + STAG + POP;           /* 最后一块落位并弹完 = 本步真正做完 */
+      R.push({ q: q, start: start, arrive: arrive, done: done });
     }
   })();
+  var TOTAL = R[STEPS_N - 1].done + 0.6;
+  function N(sec) { return sec / TOTAL; }
 
   /* FLOWS[q] = 第 q 步在飞的三个包 */
   var FLOWS = R.map(function (rd) {
@@ -83,8 +95,9 @@
     return { x: L.grid.x + (r & 1) * L.grid.dx, y: L.grid.y + (r >> 1) * L.grid.dy, w: L.card.w, h: L.card.h };
   }
 
-  /* 卡片中心朝对方中心发射，取与矩形边界交点 —— 正交边与对角线共用 */
-  function edgeEnds(a, b) {
+  /* 卡片中心朝对方中心发射，取与矩形边界交点 —— 正交边与对角线共用。
+     wireY：横向（左右）边落在「上排缓冲与下排缓冲之间的空白带」居中处，避开数据块 */
+  function edgeEnds(a, b, wireY) {
     var ac = { x: a.x + a.w / 2, y: a.y + a.h / 2 };
     var bc = { x: b.x + b.w / 2, y: b.y + b.h / 2 };
     var dx = bc.x - ac.x, dy = bc.y - ac.y;
@@ -98,6 +111,9 @@
     }
     var s = hit(ac, ux, uy, a.w, a.h);
     var t2 = hit(bc, -ux, -uy, b.w, b.h);
+    if (Math.abs(dy) < 1) {          /* 横向相邻：用两排缓冲之间的空白带居中 y */
+      s.y = wireY; t2.y = wireY;
+    }
     return { sx: s.x, sy: s.y, tx: t2.x, ty: t2.y };
   }
 
@@ -147,9 +163,13 @@
         upRow[r] = up; downRow[r] = dn;
       });
 
-      /* 六条无箭头连线 */
+      /* 六条无箭头连线。wireY 必须按「这一条边所在的那一行」算 ——
+         横向边有两组（0↔1 在上排、2↔3 在下排），共用 cards[0] 的 Y
+         会把下排那条线拉到上排的高度。 */
       EDGES.forEach(function (ed) {
-        var e = edgeEnds(cards[ed.a].geo, cards[ed.b].geo);
+        var ga = cards[ed.a].geo;
+        var wireY = ga.y + areaY + padTop + c0.sh + L.rowGap / 2;
+        var e = edgeEnds(ga, cards[ed.b].geo, wireY);
         var w = CV.drawWire(layer.wires, { d: linePath(e) });
         wires[ed.a + '_' + ed.b] = { path: w.path, len: w.len, sx: e.sx, sy: e.sy, tx: e.tx, ty: e.ty };
       });
@@ -200,19 +220,21 @@
       /* —— 连线 & 数据包 —— */
       Object.keys(pkts).forEach(function (k) { pkts[k].g.setAttribute('opacity', '0'); });
 
-      FLOWS.forEach(function (list, q) {
-        /* 先全部退灰，再把本步三条点亮 */
-        EDGES.forEach(function (ed) {
-          var w = wires[ed.a + '_' + ed.b];
-          w.path.setAttribute('stroke', '#c3cadb');
-          w.path.setAttribute('stroke-width', '1.4');
-          w.path.setAttribute('stroke-dasharray', '6 6');
-          w.path.setAttribute('opacity', '.9');
-        });
+      /* 退灰只做一次，且必须在遍历各步之前 ——
+         放进循环里的话，每一步都会把上一步刚点亮的线重新抹掉，
+         结果只有最后一步（第 4 步）的三条线是亮的，前三步飞包时线上没有高亮。 */
+      EDGES.forEach(function (ed) {
+        var w = wires[ed.a + '_' + ed.b];
+        w.path.setAttribute('stroke', '#c3cadb');
+        w.path.setAttribute('stroke-width', '1.4');
+        w.path.setAttribute('stroke-dasharray', '6 6');
+        w.path.setAttribute('opacity', '.9');
+      });
 
+      FLOWS.forEach(function (list, q) {
         var rd = R[q];
         var active = sec >= rd.start && sec < rd.arrive;
-        var done = sec >= rd.popEnd;
+        var arrived = sec >= rd.arrive;
 
         list.forEach(function (f) {
           var w = wires[Math.min(f.from, f.to) + '_' + Math.max(f.from, f.to)];
@@ -227,7 +249,15 @@
             w.path.setAttribute('stroke-width', '2.6');
             w.path.setAttribute('stroke-dasharray', '9 7');
             w.path.setAttribute('opacity', '1');
-          } else if (done) {
+          } else if (arrived) {
+            /* 包一到就停在终点并原地淡出（packFade）——这一步是「落位」的起点，
+               不是本步结束：本步的块还要按 seatGap 一个个落位、一个个弹跳，
+               那段尾（rd.done）只用来决定「下一步什么时候能开始」。
+
+               先 placePacket(e=1) 把包摆到终点：拖进度条直接跳到「已到达」的帧时，
+               这一步的飞行帧从没跑过，placePacket 没被调用过，包会停在 SVG 原点
+               （左上角），淡出时露出一颗游离的数据块。 */
+            CV.placePacket(p, w, 1, rev);
             CV.pktFadeOut(p, sec - rd.arrive);
             w.path.setAttribute('stroke', col);
             w.path.setAttribute('stroke-width', '1.6');
