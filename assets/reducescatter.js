@@ -131,16 +131,23 @@
 
   /* ── ③ 几何：2×2 网格（与 All-Gather / All-Reduce 同尺寸）──
      preWiden：长出第二排时先挤掉多少留白，卡片就不会突然胖一圈；
-     与 reduce 同一套数字，两页的「长高」看起来才是同一个动作。 */
+     与 reduce 同一套数字，两页的「长高」看起来才是同一个动作。
+
+     hump 按方向分开取值（两条对向车道在法向各偏 hump，间距 = 2×hump）：
+       · 横向（左右）—— 线上骑着的包高约 32px，间距一旦小于包高，两个包就
+         边缘相切、糊成一坨，看着"挤"。桌面取 22（相距 44px，包间留 12px）；
+         窄屏卡片本身就窄，取 18（viewBox 36，屏幕上约 39px）。
+       · 纵向（上下）—— 包是横排的整批（第 1 轮两段宽约 104），必须靠法向
+         让开，取 40（相距 80px）。横向的紧凑规则不能照搬到这里。 */
   var GEO = CV.geo({
     desktop: {
       grid: { x: 175, y: 136, dx: 480, dy: 330 }, legendY: 17,
-      hump: 34, areaPad: 12, rowGap: 12, calcGap: 10, preWiden: 25,
+      humpH: 22, humpV: 40, areaPad: 12, rowGap: 12, calcGap: 10, preWiden: 25,
       calc: { w: 56, h: 22, fs: 11.5, tipFs: 10.5, tipText: 'sum · avg · max · min' }
     },
     narrow: {
       grid: { x: 8, y: 185, dx: 218, dy: 300 }, legendY: 113,
-      hump: 18, areaPad: 11, rowGap: 8, calcGap: 7, preWiden: 13,
+      humpH: 18, humpV: 40, areaPad: 11, rowGap: 8, calcGap: 7, preWiden: 13,
       calc: { w: 40, h: 16, fs: 9, tipFs: 8, tipText: 'sum · avg' }
     }
   });
@@ -203,17 +210,23 @@
     return { k: 1.16 + (1 - 1.16) * e2, o: 1 };
   }
 
-  /* 两卡连线端点：横向相邻走左右边，纵向相邻走上下边 */
+  /* 两卡连线端点：横向相邻走左右边，纵向相邻走上下边。
+     返回值带 horiz 标志，调用处据此选 humpH / humpV。 */
   function edgeEnds(a, b) {
     var ac = { x: a.x + a.w / 2, y: a.y + a.h / 2 };
     var bc = { x: b.x + b.w / 2, y: b.y + b.h / 2 };
     var dx = bc.x - ac.x, dy = bc.y - ac.y;
     if (Math.abs(dx) >= Math.abs(dy)) {
+      /* 横向相邻：一对虚线放在「卡片正文（标题条以下）」的垂直中线上，
+         不是整张卡的中线 —— 卡片标题条是实色，线压在标题条上看着像穿过去。
+         又因为卡片是「中心固定、上下对称长高」的，这条中线恒等于
+         卡中心 + hdr/2，与高度无关：长高 / 收窄过程中线不会上下跳。 */
+      var cy = a.y + L.hdr + (a.h - L.hdr) / 2;
       var s = dx < 0 ? -1 : 1;
-      return { sx: ac.x + s * a.w / 2, sy: ac.y, tx: bc.x - s * b.w / 2, ty: bc.y };
+      return { sx: ac.x + s * a.w / 2, sy: cy, tx: bc.x - s * b.w / 2, ty: cy, horiz: true };
     }
     var t = dy < 0 ? -1 : 1;
-    return { sx: ac.x, sy: ac.y + t * a.h / 2, tx: bc.x, ty: bc.y - t * b.h / 2 };
+    return { sx: ac.x, sy: ac.y + t * a.h / 2, tx: bc.x, ty: bc.y - t * b.h / 2, horiz: false };
   }
 
   /* 法向偏移：两个方向各偏 +hump（方向本身已相反，不要再补符号） */
@@ -482,9 +495,9 @@
           var w = wires[k2], p = pkts[k2];
           var col = colorFor(EMIT[q][r][0], q + 1);
 
-          /* 卡片在长高 / 收窄，端点每帧重算 */
+          /* 卡片在长高 / 收窄，端点每帧重算；hump 按这条边的方向取 */
           var e3 = edgeEnds(R[r], R[PARTNER[q][r]]);
-          w.path.setAttribute('d', wirePath(e3, L.hump));
+          w.path.setAttribute('d', wirePath(e3, e3.horiz ? L.humpH : L.humpV));
           w.len = w.path.getTotalLength();
 
           var flying = sec >= fw.s && sec < fw.e;
