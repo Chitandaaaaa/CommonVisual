@@ -365,9 +365,7 @@
   (function () {
     var s = sec('card', '03', 'rank 卡片', 'card');
     var mainBox = h('div', null, s);
-    var sub = h('h3', null, s);
-    sub.textContent = '徽章 badge · 标题条右上角';
-    var badgeBox = h('div', null, s);
+    var cp = function (k) { return CV.params.get('03-card', k); };   /* 卡片动态参数：卡片伸缩 / 单块时长 / 块间隔 */
 
     /* 徽章几何，与 CV.drawCard 里的 badgeGeo 同一套规则 */
     function badgeW(role, text, size) {
@@ -509,119 +507,195 @@
       subTx(g, x1, 232, '窄屏一张卡只放一个块：四个块要 115px，内容区只有 114px', '#939bb2', 9, 'start');
     }
 
-    /* ── 动态：基本卡片下面加一行空数据块，卡片随之长高 ──
-       数字全部来自 G.desktop 与 reduce.js 的同一组公式：
-       h2 = h1 + 一格 + 行距 − 25（收掉源卡底部那 16 的富余）。
-       宽度 300 是常量，长大只发生在高度方向 —— 上下各让 16.5，中心不动。 */
-    function drawGrow(host) {
+    /* ── 动态拆成两个场景：一排变两排 / 两排变一排 ──
+       两场景共用同一组几何（与桌面结构、reduce.js 完全一致）：
+       h1 = 170（单排）→ h2 = 203（两排），绕中心上下各让 16.5，宽度 300 不变。
+       尺寸标注只在一排变两排那一场景画全套，两排变一排不再重复（标注一次就够了）。 */
+    function growGeom() {
       var cw = G.desktop.card.w, hdr = G.desktop.hdr;
       var sw = G.desktop.slot.sw, gap = G.desktop.slot.gap, rowGap = 12;
-      var h1 = G.desktop.card.h, h2 = h1 + sw + rowGap - 25;
+      var h1 = G.desktop.card.h, h2 = h1 + sw + rowGap - 25;      /* 203 */
       var x = 200, top2 = 104, mid = top2 + h2 / 2;
-      var off1 = hdr + (h1 - hdr - 16 - sw) / 2;            /* 单排居中：72 */
-      var off2 = hdr + (h2 - hdr - 2 * sw - rowGap) / 2;     /* 两排第一排：67.5 */
+      var off1 = hdr + (h1 - hdr - 16 - sw) / 2;                  /* 单排居中：72 */
+      var off2 = hdr + (h2 - hdr - 2 * sw - rowGap) / 2;           /* 两排第一排：67.5 */
       var rowW = 4 * sw + 3 * gap, rowX = x + (cw - rowW) / 2;
+      return { cw: cw, hdr: hdr, sw: sw, gap: gap, rowGap: rowGap,
+               h1: h1, h2: h2, x: x, top2: top2, mid: mid,
+               off1: off1, off2: off2, rowX: rowX };
+    }
 
-      var A = demo(host, 660, 372,
-        '卡片下面增加一行空数据块时的动态长高：宽 300 不变，上下各让 16.5，中心线全程不动');
-
-      capTx(A, 30, 26, (h1 + ' → ' + h2) + '：加了下面一排空槽，卡片就长高 ' + (h2 - h1));
-
-      /* 中心线：只在卡片外面那两截 —— 穿进卡里会横切数据块 */
-      [[30, x], [x + cw, 570]].forEach(function (r) {
-        el('line', {
-          x1: r[0], y1: mid, x2: r[1], y2: mid,
-          stroke: '#dfe4ef', 'stroke-width': 1, 'stroke-dasharray': '6 5'
-        }, A);
-      });
-      subTx(A, 30, mid - 7, '中心线（全程不动）', '#b9c0d2', 9.5, 'start');
-
+    /* 起手式：卡片 + 两排（上排实数据，下排空槽预备），返回要动的部件。
+       annotate=true 才画尺寸标注全套（只在一排变两排用，避免两场景重复标）。 */
+    function growStage(A, G2, annotate) {
       var card = CV.drawCard(A, {
-        key: 0, geo: { x: x, y: top2, w: cw, h: h2 }, color: DATA[0].color,
+        key: 0, geo: { x: G2.x, y: G2.top2, w: G2.cw, h: G2.h2 }, color: DATA[0].color,
         title: 'rank 0', role: 'dst', target: true,
-        hdr: hdr, titleSize: G.desktop.title, badgeSize: G.desktop.badge
+        hdr: G2.hdr, titleSize: G.desktop.title, badgeSize: G.desktop.badge
       });
-
       var row1 = [], row2 = [];
       for (var i = 0; i < 4; i++) {
-        var s1 = CV.drawSlot(A, rowX + i * (sw + gap), top2 + off2, sw, sw);
+        var s1 = CV.drawSlot(A, G2.rowX + i * (G2.sw + G2.gap), G2.top2 + G2.off2, G2.sw, G2.sw);
         CV.setSlot(s1, DATA[i], {});
         row1.push(s1);
-        var s2 = CV.drawSlot(A, rowX + i * (sw + gap), top2 + off2 + sw + rowGap, sw, sw);
-        CV.setSlot(s2, null, { active: true });
+        var s2 = CV.drawSlot(A, G2.rowX + i * (G2.sw + G2.gap), G2.top2 + G2.off2 + G2.sw + G2.rowGap, G2.sw, G2.sw);
+        CV.setSlot(s2, null, {});   /* 空数据块：灰底虚线空槽，不是传输中占位 */
         s2.g.style.opacity = '0';
         row2.push(s2);
       }
+      if (annotate) {
+        capTx(A, 30, 26, G2.h1 + ' → ' + G2.h2 + '：加第二排空槽，卡片长高 ' + (G2.h2 - G2.h1) +
+          '（上下各 ' + (G2.h2 - G2.h1) / 2 + '，中心不动）');
+        /* 中心线：只在卡片外面那两截 —— 穿进卡里会横切数据块 */
+        [[30, G2.x], [G2.x + G2.cw, 570]].forEach(function (r) {
+          el('line', { x1: r[0], y1: G2.mid, x2: r[1], y2: G2.mid, stroke: '#dfe4ef', 'stroke-width': 1, 'stroke-dasharray': '6 5' }, A);
+        });
+        subTx(A, 30, G2.mid - 7, '中心线（全程不动）', '#b9c0d2', 9.5, 'start');
+        /* 起止两态的卡边：上边 −16.5、下边 +16.5，箭头画在卡片左侧空白 */
+        var top1 = G2.mid - G2.h1 / 2, bot1 = G2.mid + G2.h1 / 2, bot2 = G2.mid + G2.h2 / 2;
+        [G2.top2, top1, bot1, bot2].forEach(function (yy) {
+          el('line', { x1: 178, y1: yy, x2: G2.x, y2: yy, stroke: '#d7c7fb', 'stroke-width': 1, 'stroke-dasharray': '2 2' }, A);
+        });
+        [[G2.top2, top1, '-' + (G2.h2 - G2.h1) / 2], [bot1, bot2, '+' + (G2.h2 - G2.h1) / 2]].forEach(function (r) {
+          var y1 = Math.min(r[0], r[1]), y2 = Math.max(r[0], r[1]), ax = 174, C = '#6d28d9';
+          el('line', { x1: ax, y1: y1 + 3.5, x2: ax, y2: y2 - 3.5, stroke: C, 'stroke-width': 1.2 }, A);
+          el('path', { d: 'M ' + ax + ' ' + y1 + ' L ' + (ax - 2.6) + ' ' + (y1 + 4) + ' L ' + (ax + 2.6) + ' ' + (y1 + 4) + ' Z', fill: C }, A);
+          el('path', { d: 'M ' + ax + ' ' + y2 + ' L ' + (ax - 2.6) + ' ' + (y2 - 4) + ' L ' + (ax + 2.6) + ' ' + (y2 - 4) + ' Z', fill: C }, A);
+          subTx(A, 166, (y1 + y2) / 2 + 3.5, r[2], C, 10.5, 'end');
+        });
+      } else {
+        capTx(A, 30, 26, '反过来：先逐块撤掉第二排空槽（空数据块），再收回卡片 —— 高度数字见「一排变两排」');
+      }
+      return { card: card, row1: row1, row2: row2 };
+    }
 
-      /* 起止两态的卡边：上边 −16.5、下边 +16.5，箭头画在卡片左侧的空白里。
-         箭头只有 16.5 长，两端再用淡虚线接到卡片，才知道它在量哪两条边。 */
-      var top1 = mid - h1 / 2, bot1 = mid + h1 / 2;
-      var bot2 = mid + h2 / 2;
-      [top2, top1, bot1, bot2].forEach(function (yy) {
-        el('line', {
-          x1: 178, y1: yy, x2: x, y2: yy,
-          stroke: '#d7c7fb', 'stroke-width': 1, 'stroke-dasharray': '2 2'
-        }, A);
-      });
-      [[top2, top1, '-' + (h2 - h1) / 2], [bot1, bot2, '+' + (h2 - h1) / 2]].forEach(function (r) {
-        var y1 = Math.min(r[0], r[1]), y2 = Math.max(r[0], r[1]), ax = 174, C = '#6d28d9';
-        el('line', { x1: ax, y1: y1 + 3.5, x2: ax, y2: y2 - 3.5, stroke: C, 'stroke-width': 1.2 }, A);
-        el('path', { d: 'M ' + ax + ' ' + y1 + ' L ' + (ax - 2.6) + ' ' + (y1 + 4) + ' L ' + (ax + 2.6) + ' ' + (y1 + 4) + ' Z', fill: C }, A);
-        el('path', { d: 'M ' + ax + ' ' + y2 + ' L ' + (ax - 2.6) + ' ' + (y2 - 4) + ' L ' + (ax + 2.6) + ' ' + (y2 - 4) + ' Z', fill: C }, A);
-        subTx(A, 166, (y1 + y2) / 2 + 3.5, r[2], C, 10.5, 'end');
-      });
+    /* 场景一：一排变两排。
+       串行两步：① 卡片先上下变宽（中心不动）；② 再让第二排空槽逐块出现。
+       两块之间留间隔，绝不边宽边加。下排空槽 = 空数据块（不带数据色）。
+       时序全部走 03-card 参数注册表（卡片伸缩 / 单块时长 / 块间隔），由调试台实时调。 */
+    function drawSplit(host) {
+      var G2 = growGeom();
+      var A = demo(host, 660, 372,
+        '一排变两排：卡片先上下变宽，再让第二排的空数据块逐块出现，块间留间隔');
+      var st = growStage(A, G2, true);
+      var card = st.card, row1 = st.row1, row2 = st.row2;
+      var step = el('text', { class: 'dim-tx', x: 30, y: 346, 'text-anchor': 'start', fill: '#5f6780', 'font-size': 10.5 }, A);
 
-      var read = el('text', {
-        class: 'dim-tx', x: 30, y: 344, 'text-anchor': 'start',
-        fill: '#5f6780', 'font-size': 10.5
-      }, A);
-      subTx(A, 30, 360, '宽 300 是常量 —— 加的是一排，所以只长高；下排先显形为紫色空槽（···），等到数据才填色',
-        '#939bb2', 9.5, 'start');
+      var cardDur = cp('cardDur'), blockDur = cp('blockDur'), blockGap = cp('blockGap');
+      var bStep = blockDur + blockGap;
+      var bStart = cardDur + 0.3;                 /* ① 长够后再开始放块（衔接 0.3s，页面编排，不进调试台） */
+      var lastEnd = bStart + 3 * bStep + blockDur;
+      return anim(5000, function (T) {
+        var g2 = T < cardDur ? easeIO(seg(T, 0, cardDur)) : 1;  /* ① 卡片上下变宽 */
+        var h = G2.h1 + (G2.h2 - G2.h1) * g2;
+        var top = G2.mid - h / 2;
+        CV.resizeCard(card, { x: G2.x, y: top, w: G2.cw, h: h });
 
-      return anim(4400, function (T) {
-        var e = T < 0.9 ? 0
-          : T < 1.7 ? easeIO(seg(T, .9, 1.7))
-          : T < 3.4 ? 1
-          : 1 - easeIO(seg(T, 3.4, 4.2));
-        var h = h1 + (h2 - h1) * e;
-        var top = mid - h / 2;
-        CV.resizeCard(card, { x: x, y: top, w: cw, h: h });
-
-        var r1y = top + off1 + (off2 - off1) * e;
-        var r2y = r1y + sw + rowGap;
+        var r1y = top + G2.off1 + (G2.off2 - G2.off1) * g2;
+        var r2y = r1y + G2.sw + G2.rowGap;
         row1.forEach(function (sl) { moveSlotY(sl, r1y); });
-        /* 下排从卡片底边「露出来」：位置一直跟着第一排，靠不透明度现身，
-           否则它会在卡片还没长够时先跑到卡外 */
-        var op = seg(e, .35, .85);
-        row2.forEach(function (sl) {
+
+        /* ② 第二排空槽逐块出现（串行：卡片长够后才开始）。空数据块只靠透明度现身 */
+        row2.forEach(function (sl, k) {
+          var p = easeIO(seg(T, bStart + k * bStep, bStart + k * bStep + blockDur));
           moveSlotY(sl, r2y);
-          sl.g.style.opacity = op.toFixed(3);
+          sl.g.style.opacity = p.toFixed(3);
         });
 
-        read.textContent = 'h = ' + h.toFixed(1) +
-          ' · 第一排 y = ' + (r1y - top).toFixed(1) + '（距卡顶）';
+        var label;
+        if (T < cardDur) label = '① 卡片上下变宽（中心不动，上下各 ' + (G2.h2 - G2.h1) / 2 + '）';
+        else if (T < bStart) label = '① 空间到位 · h2 = ' + G2.h2 + '，第二排还是空槽';
+        else if (T < lastEnd) label = '② 第二排空槽逐块出现（空数据块，块间留间隔）';
+        else label = '② 两排就位 · h2 = ' + G2.h2 + '（上下各 ' + (G2.h2 - G2.h1) / 2 + '）';
+        step.textContent = label;
+      });
+    }
+
+    /* 场景二：两排变一排（场景一的倒放）。
+       串行两步：① 第二排空槽先逐块消失（从右往左）；② 卡片再收回单排。
+       尺寸标注已在场景一给过，这里不重复。时序同样走 03-card 参数注册表。 */
+    function drawMerge(host) {
+      var G2 = growGeom();
+      var A = demo(host, 660, 372,
+        '两排变一排：第二排空槽先逐块消失，卡片再收回单排（高度见上一场景）');
+      var st = growStage(A, G2, false);
+      var card = st.card, row1 = st.row1, row2 = st.row2;
+      var step = el('text', { class: 'dim-tx', x: 30, y: 346, 'text-anchor': 'start', fill: '#5f6780', 'font-size': 10.5 }, A);
+
+      var cardDur = cp('cardDur'), blockDur = cp('blockDur'), blockGap = cp('blockGap');
+      var bStep = blockDur + blockGap;
+      var bStart = 0.3;                            /* ① 先撤块（衔接 0.3s） */
+      var goneAt = bStart + 3 * bStep + blockDur;   /* 4 块全撤完的时刻 */
+      var shrinkAt = goneAt + 0.25;                 /* ② 块撤完再收卡（衔接 0.25s） */
+      function vis(k, T) {
+        var s0 = bStart + (3 - k) * bStep;          /* 从右往左：k=3 先走 */
+        return T < s0 ? 1 : (T >= s0 + blockDur ? 0 : 1 - easeIO(seg(T, s0, s0 + blockDur)));
+      }
+      return anim(5000, function (T) {
+        /* ② 卡片收回：等空槽全撤完再开始（串行，不重叠） */
+        var g2 = T < shrinkAt ? 1 : (T >= shrinkAt + cardDur ? 0 : 1 - easeIO(seg(T, shrinkAt, shrinkAt + cardDur)));
+        var h = G2.h1 + (G2.h2 - G2.h1) * g2;
+        var top = G2.mid - h / 2;
+        CV.resizeCard(card, { x: G2.x, y: top, w: G2.cw, h: h });
+
+        var r1y = top + G2.off1 + (G2.off2 - G2.off1) * g2;
+        var r2y = r1y + G2.sw + G2.rowGap;
+        row1.forEach(function (sl) { moveSlotY(sl, r1y); });
+        row2.forEach(function (sl, k) {
+          var v = vis(k, T);
+          moveSlotY(sl, r2y);
+          sl.g.style.opacity = v.toFixed(3);
+        });
+
+        var label;
+        if (T < goneAt - 0.01) label = '① 第二排空槽逐块消失（空数据块）';
+        else if (T < shrinkAt) label = '① 空槽已撤完，卡片还停在两排';
+        else if (T < shrinkAt + cardDur) label = '② 卡片收回，变回单排';
+        else label = '② 单排就位（高度见上一场景）';
+        step.textContent = label;
       });
     }
 
     var curStop = null;
 
-    function render(i) {
+    /* 结构：桌面 / 窄屏（静态，不带动画） */
+    function renderStr(i) {
       if (curStop) { curStop(); curStop = null; }
       var nr = i === 1;
       mainBox.innerHTML = '';
-      badgeBox.innerHTML = '';
-      if (i === 2) {
-        curStop = drawGrow(mainBox);
-      } else if (nr) {
-        drawNarrow(demo(mainBox, 500, 250, '窄屏 rank 卡片：146×126，一张卡只放一个数据块'));
-      } else {
-        drawDesk(demo(mainBox, 838, 560, 'rank 卡片结构：dst 目标卡与 src 源卡，以及装四个数据块时的块间距与留白'));
-      }
-      /* 动态只换主图，徽章那块与时间无关，照桌面画 */
-      drawBadges(demo(badgeBox, 520, nr ? 118 : 126, '角色徽章与进度徽章的尺寸'), nr);
+      if (nr) drawNarrow(demo(mainBox, 500, 250, '窄屏 rank 卡片：146×126，一张卡只放一个数据块'));
+      else drawDesk(demo(mainBox, 838, 560, 'rank 卡片结构：dst 目标卡与 src 源卡，以及装四个数据块时的块间距与留白'));
     }
+    addTabs(s, ['桌面', '窄屏'], renderStr);
 
-    addTabs(s, ['桌面', '窄屏', '动态'], render);
+    /* 徽章 badge：与时间无关，按桌面画一次 */
+    var sub = h('h3', null, s);
+    sub.textContent = '徽章 badge · 标题条右上角';
+    var badgeBox = h('div', null, s);
+    drawBadges(demo(badgeBox, 520, 126, '角色徽章与进度徽章的尺寸'), false);
+
+    /* 动态：拆成两个场景，各自独立播放 */
+    var dynSub = h('div', 'sub-hd', s);
+    h('h3', null, dynSub).textContent = '动态 · 卡片长高与数据块增减';
+    var dynBox = h('div', null, s);
+    var stopDyn = null, dynMode = 0;
+    function renderDyn(i) {
+      dynMode = i;
+      if (stopDyn) { stopDyn(); stopDyn = null; }
+      dynBox.innerHTML = '';
+      if (i === 0) stopDyn = drawSplit(dynBox);
+      else stopDyn = drawMerge(dynBox);
+    }
+    addTabs(dynSub, ['一排变两排', '两排变一排'], renderDyn);
+
+    /* 参数调试台改了「卡片动态」任意键（或重置全部）→ 停掉旧 rAF、重建 demo，实时生效。
+       守纪律：重画前必 cancelAnimationFrame，否则多几条循环叠着跑。 */
+    CV.params.onChange(function (ch) {
+      if ((ch.section === '03-card' || ch.section === '*') && stopDyn) {
+        stopDyn(); stopDyn = null;
+        dynBox.innerHTML = '';
+        stopDyn = dynMode === 0 ? drawSplit(dynBox) : drawMerge(dynBox);
+      }
+    });
   })();
 
   /* ══════════════════════════════════════════════════════════
@@ -1593,8 +1667,11 @@
     /* 下半：真动画，每 2.2s 重播一次 —— 上面那五个静态帧就是从这里采出来的 */
     var liveHd = h('h3', null, s);
     function liveTx() {
-      /* 标题给读者看，别用 .50 这种代码腔 —— 小数点太容易漏 */
-      liveHd.textContent = '实时 · 三个块依次落位，错峰 ' + seatGap().toFixed(2) + 's，每 2.2s 重播';
+      /* 标题给读者看，别用 .50 这种代码腔 —— 小数点太容易漏。
+         用 .sub-tx 包裹文字，给二级标题编号（.sub-no）留位置，
+         否则 resize 重算时 textContent 会把编号一起清掉。 */
+      var sp = liveHd.querySelector('.sub-tx') || h('span', 'sub-tx', liveHd);
+      sp.textContent = '实时 · 三个块依次落位，错峰 ' + seatGap().toFixed(2) + 's，每 2.2s 重播';
     }
     liveTx();
     var B = demo(s, 460, 120, '三个数据块依次落位弹跳，真实 CSS 动画');
@@ -2057,23 +2134,15 @@
 
     var links = secs.map(function (s2) {
       var a = h('a', null, nav);
-      a.href = '#' + s2.id;
+      var secNo = (s2.querySelector('.sec-no') || {}).textContent || s2.id;
+      a.href = '#sec-' + secNo;
       a.title = s2.getAttribute('data-title') || s2.id;
       var no = s2.querySelector('.sec-no');
       h('i', null, a).textContent = no ? no.textContent : '';
       h('span', null, a).textContent = s2.getAttribute('data-title') || s2.id;
       a.onclick = function (e) {
         e.preventDefault();
-        /* 用 scrollTo 而不是改 hash：hash 跳转会把锚点顶到视口最上沿，
-           这里留 12px 让标题不贴边；固定定位的目录不受影响，仍在正中 */
-        var top = s2.getBoundingClientRect().top + window.pageYOffset - 12;
-        window.scrollTo({ top: top, behavior: 'smooth' });
-        history.replaceState(null, '', '#' + s2.id);
-        /* 点谁就亮谁：平滑滚动的每一帧都会触发 scroll → spy，
-           不锁住的话「刚点亮的那项」会被中途算出的当前节顶掉，
-           到底之后更是永远留给倒数第二节（最后一节顶边够不到判定线）。 */
-        lockA = a;
-        setOn(a);
+        showSection(secNo);          /* 单章视图：点目录 = 切到那一节 */
       };
       return a;
     });
@@ -2083,32 +2152,178 @@
       links.forEach(function (x, k) { x.className = x === a ? 'on' : ''; });
     }
 
-    /* 点击后锁定高亮，直到用户真的手动滚动（滚轮 / 触摸 / 键盘 / 拖滚动条外的手势）。
-       不用 timeout：平滑滚动时长不定，定时器一放就露馅。 */
+    /* 点击后锁定高亮，直到用户真的手动滚动（滚轮 / 触摸 / 键盘）。 */
     var lockA = null;
     ['wheel', 'touchstart', 'keydown'].forEach(function (t) {
       window.addEventListener(t, function () { lockA = null; }, { passive: true });
     });
 
-    var ticking = false;
-    function spy() {
-      ticking = false;
-      if (lockA) return;                     /* 还在「点击锁定」状态，别抢高亮 */
-      var y = window.pageYOffset + window.innerHeight * 0.32;
-      var cur = 0;
+    /* 单章视图：同一时刻只显示一节，其余 display:none。
+       左侧目录 / 右侧二级导航 / 参数台「定位」都走这里切换章节。 */
+    function showSection(no) {
+      var idx = -1;
       secs.forEach(function (s2, k) {
-        if (s2.getBoundingClientRect().top + window.pageYOffset <= y) cur = k;
+        var n = (s2.querySelector('.sec-no') || {}).textContent || '';
+        var on = (n === no);
+        s2.style.display = on ? '' : 'none';
+        s2.classList.toggle('is-active', on);
+        if (on) idx = k;
       });
-      /* 到底了就别按判定线算：末节往往矮到顶边永远够不着 32% 那条线
-         （本节实测：滚到极限时顶边仍在线上方 4px），只能靠这条兜底。 */
-      var max = document.documentElement.scrollHeight - window.innerHeight;
-      if (window.pageYOffset >= max - 2) cur = secs.length - 1;
-      setOn(links[cur]);
+      window.scrollTo(0, 0);
+      if (idx >= 0) { lockA = links[idx]; setOn(links[idx]); }
+      history.replaceState(null, '', '#sec-' + no);
+      if (window.CV && window.CV._sectionChanged) window.CV._sectionChanged(no);
     }
-    window.addEventListener('scroll', function () {
-      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
-    }, { passive: true });
+
+    window.CV = window.CV || {};
+    window.CV.showSection = showSection;
+  })();
+
+  /* ══════════════════════════════════════════════════════════
+     二级导航（右侧悬浮）：列出「当前一节」下面的所有二级标题
+     —— 与左侧章节目录互补：左 = 01~13 节，右 = 当前节的子标题。
+     点按平滑滚动到该子标题；滚动时高亮「当前读到的子标题」。
+     无子标题的节（01/02/04/12）右侧导航自动隐藏。
+     ══════════════════════════════════════════════════════════ */
+  (function () {
+    var secs = [].slice.call(app.querySelectorAll('.sec'));
+    if (!secs.length) return;
+
+    /* ── 第一步：给每个二级标题编号 + 锚点 id ── */
+    function subText(h3) {
+      var t = '';
+      h3.childNodes.forEach(function (n) {
+        if (n.nodeType === 3) t += n.textContent;                       /* 普通文本节点 */
+        else if (n.classList && !n.classList.contains('sub-no')) t += n.textContent;
+      });
+      return t.trim();
+    }
+    var subMap = {};                       /* secNo -> [{ id, no, text }] */
+    secs.forEach(function (s) {
+      var no = (s.querySelector('.sec-no') || {}).textContent || '';
+      var hs = [].slice.call(s.querySelectorAll('h3'));
+      var list = [];
+      hs.forEach(function (h3, i) {
+        var idx = i + 1;
+        var id = 'sub-' + no + '-' + idx;
+        h3.id = id;
+        var badge = document.createElement('span');
+        badge.className = 'sub-no';
+        badge.textContent = no + '.' + idx;
+        h3.insertBefore(badge, h3.firstChild);
+        list.push({ id: id, no: no + '.' + idx, text: subText(h3) });
+      });
+      if (list.length) subMap[no] = list;
+    });
+
+    /* ── 第二步：构建右侧浮动导航 ── */
+    var nav = document.createElement('nav');
+    nav.className = 'rtoc';
+    nav.setAttribute('aria-label', '分节导航');
+    var title = document.createElement('div');
+    title.className = 'rtoc-t';
+    title.textContent = '本节水目录';
+    nav.appendChild(title);
+    var navBody = document.createElement('div');
+    navBody.className = 'rtoc-body';
+    nav.appendChild(navBody);
+    document.body.appendChild(nav);
+
+    var links = [];
+    var lockA = null;
+    var hasSubs = false;
+    var dockOpen = false;
+    function setOn(a) { links.forEach(function (x) { x.className = x === a ? 'on' : ''; }); }
+    function applyVis() {
+      nav.style.display = (window.innerWidth >= 1280 && hasSubs && !dockOpen) ? 'block' : 'none';
+    }
+    function build(no) {
+      navBody.innerHTML = '';
+      links = [];
+      var items = subMap[no] || [];
+      hasSubs = !!items.length;
+      items.forEach(function (it) {
+        var a = document.createElement('a');
+        a.href = '#' + it.id;
+        a.title = it.text;
+        var i = document.createElement('i'); i.textContent = it.no;
+        var sp = document.createElement('span'); sp.textContent = it.text;
+        a.appendChild(i); a.appendChild(sp);
+        a.onclick = function (e) {
+          e.preventDefault();
+          var el = document.getElementById(it.id);
+          if (!el) return;
+          var top = el.getBoundingClientRect().top + window.pageYOffset - 12;
+          window.scrollTo({ top: top, behavior: 'smooth' });
+          history.replaceState(null, '', '#' + it.id);
+          lockA = a; setOn(a);
+        };
+        navBody.appendChild(a);
+        links.push(a);
+      });
+      applyVis();
+    }
+
+    var shownNo = null;
+    /* 右侧二级导航只在本节内部高亮「当前读到的子标题」；
+       切节由 showSection（左侧目录 / 定位）统一驱动，不在这里按滚动切。 */
+    function spy() {
+      if (!links.length) return;
+      var y = window.pageYOffset + window.innerHeight * 0.32;
+      var cu = 0;
+      links.forEach(function (a, k) {
+        var el = document.getElementById(a.getAttribute('href').slice(1));
+        if (el && el.getBoundingClientRect().top + window.pageYOffset <= y) cu = k;
+      });
+      if (!lockA) setOn(links[cu]);
+    }
+    /* 单章视图：左侧目录 / 参数台「定位」切节时，由这里重建右导航 */
+    window.CV = window.CV || {};
+    window.CV._sectionChanged = function (no) {
+      shownNo = no;
+      build(no);
+      lockA = null;
+    };
+    ['wheel', 'touchstart', 'keydown'].forEach(function (t) {
+      window.addEventListener(t, function () { lockA = null; }, { passive: true });
+    });
+    /* 滚动停下后再判当前节：html 设了 scroll-behavior:smooth，
+       用 rAF 节流只会抓到滚动起点（pageYOffset 还没到位），
+       所以改成「滚动停止 ~120ms 后」再跑，保证读到落定后的位置。
+       spy 很轻量（只读十几个标题的 rect），且只在切节时重建导航。 */
+    var navTo = null;
+    function onScroll() { if (navTo) clearTimeout(navTo); navTo = setTimeout(spy, 120); }
+    window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', spy);
     spy();
+
+    /* 参数台打开时，右侧导航让位（避免压在一起）。
+       paramEditor.js 在本文件之后才加载，所以它创建的 .param-dock 此刻可能还不存在；
+       轮询等它出现后再挂观察器，并记得每次开/关都要重算显隐。 */
+    var dock = null;
+    function syncDock() {
+      dockOpen = !!(dock && getComputedStyle(dock).display !== 'none');
+      applyVis();
+    }
+    (function setupDockWatch() {
+      dock = document.querySelector('.param-dock');
+      if (!dock) { setTimeout(setupDockWatch, 50); return; }
+      new MutationObserver(syncDock).observe(dock, { attributes: true, attributeFilter: ['style'] });
+      syncDock();
+    })();
+    window.addEventListener('scroll', syncDock, { passive: true });
+    window.addEventListener('resize', syncDock);
+
+    /* 单章视图：初始只显示某一节（URL 锚点优先，否则 01） */
+    (function initSection() {
+      var no = '01';
+      var hsh = location.hash.replace(/^#/, '');
+      if (hsh) {
+        if (hsh.indexOf('sec-') === 0) no = hsh.slice(4);
+        else if (hsh.indexOf('sub-') === 0) no = hsh.split('-')[1] || no;
+      }
+      if (window.CV && window.CV.showSection) window.CV.showSection(no);
+      spy();                                /* 初始高亮本节首个子标题 */
+    })();
   })();
 })();

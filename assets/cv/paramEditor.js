@@ -151,11 +151,15 @@
       state.touched = true;
       setOpen(!state.open);
     });
-    /* 定位 ↗：滚回正文对应章节（沿用 TOC 的 -12 偏移） */
+    /* 定位 ↗：优先滚到该组对应的「二级标题」（SCHEMA.anchor），
+       没有 anchor 才回退到整节（沿用 TOC 的 -12 偏移） */
     var locate = head.querySelector('.pp-locate');
     if (locate) locate.addEventListener('click', function (e) {
       e.stopPropagation();
-      var el = sectionOf(sec);
+      var secNo = sec.slice(0, 2);
+      if (window.CV && window.CV.showSection) window.CV.showSection(secNo);  /* 先切到该节，让锚点可见 */
+      var anchorId = SCHEMA[sec] && SCHEMA[sec].anchor;
+      var el = anchorId ? document.getElementById(anchorId) : sectionOf(sec);
       if (el) {
         var top = el.getBoundingClientRect().top + window.pageYOffset - 12;
         window.scrollTo({ top: top, behavior: 'smooth' });
@@ -183,7 +187,9 @@
      不重叠要 W ≥ 1620 —— 低于这个数就默认收起，只留右下角齿轮。
      （原来写的 1280 会让 1280~1620 之间的窗口把每节的「桌面/窄屏」开关压在抽屉底下。） */
   var DOCK_FIT = 1620;
-  var open = window.innerWidth >= DOCK_FIT;
+  /* 默认收起：让右侧的「二级导航」作为默认右栏可见；
+     需要调参时再点 ⚙ 打开（打开时右侧导航自动让位）。 */
+  var open = false;
   function apply() {
     dock.style.display = open ? 'flex' : 'none';
     fab.style.display = open ? 'none' : 'flex';

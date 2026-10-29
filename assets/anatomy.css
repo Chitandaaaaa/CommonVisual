@@ -18,6 +18,8 @@
 }
 /* 首节不画分隔线 */
 #app > .sec:first-child { border-top: none; padding-top: 0; }
+/* 单章视图：当前显示的那一节（不一定是 DOM 首节）也不画顶部分隔线 */
+#app > .sec.is-active { border-top: none; }
 
 .sec-hd {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -62,6 +64,7 @@
 .sec h3 {
   margin: 26px 0 0;
   font-size: 12.5px; font-weight: 600; color: var(--tx);
+  display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap;
 }
 
 /* 子标题行：同一节里再分块时，让这块也挂自己的 tab */
@@ -341,6 +344,66 @@
   .toc { display: none; }
 }
 
+/* ───────────── 二级导航（右侧悬浮，只列「当前一节」的子标题） ─────────────
+   与左 .toc 对称：左 = 01~13 节，右 = 当前节的子标题。
+   位置在右侧留白的中线上（与左 .toc 同公式，只是用 right 镜像）。
+   默认隐藏，由 anatomy.js 按「有子标题 + 屏够宽(≥1280) + 参数台未开」显隐。 */
+.rtoc {
+  position: fixed;
+  top: 50%;
+  right: calc((100% - 940px) / 4);
+  transform: translate(50%, -50%);
+  z-index: 40;
+  width: 168px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 11px 9px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .82);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 28px rgba(20, 26, 46, .07);
+  display: none;
+}
+.rtoc-t {
+  padding: 0 7px 7px;
+  font-size: 10px; letter-spacing: .16em;
+  color: var(--tx-3);
+}
+.rtoc a {
+  display: flex; align-items: center; gap: 7px;
+  padding: 4px 7px; border-radius: 7px;
+  font-size: 11.5px; line-height: 1.4; color: var(--tx-2);
+  text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.rtoc a i {
+  flex: none; width: 30px;
+  font-family: var(--mono); font-size: 9.5px; font-style: normal;
+  color: #b6bdcd;
+  transition: color .15s;
+}
+.rtoc a span {
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.rtoc a:hover { background: #f4f2fe; color: var(--tx); }
+.rtoc a.on { background: #f3eeff; color: var(--accent); }
+.rtoc a.on i { color: var(--accent); }
+
+/* 二级标题序号徽标（写在 h3 里，紧跟标题文字） */
+.sub-no {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 9.5px; font-weight: 600; font-style: normal;
+  color: var(--accent);
+  background: #f1ecfe;
+  border: 1px solid #e2d9fb;
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
 /* SVG 标注 */
 .dim line, .dim path { stroke: #aab2c8; stroke-width: 1; }
 .dim-tx {
@@ -479,8 +542,6 @@
     box-shadow: 0 12px 34px -16px rgba(20, 26, 46, .26),
                 0 1px 2px rgba(20, 26, 46, .05);
   }
-  /* 收起态的小齿轮同理，圆心压在右侧留白的中线上 */
-  .param-fab { right: calc((100% - 940px) / 4 - 22px); }
 }
 
 /* 手风琴分组：每章一组，滚到哪节哪节自动展开 */

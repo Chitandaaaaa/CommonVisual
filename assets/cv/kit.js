@@ -20,11 +20,32 @@
     var LS_KEY = 'cv.params.v1';
 
     var SCHEMA = {
+      /* 卡片动态组件规范（03 那一节的 rank 卡片长高 / 数据块增减）。
+         属于规范的只有「这个组件自己要花掉的时间」和「块之间的节奏」：
+         · cardDur  卡片上下变宽（与收回）一次花多少时间
+         · blockDur 单个数据块出现 / 消失的时长
+         · blockGap 相邻两块之间的间隔（块间留白，读出「一个一个来」而不挤在一起）
+         更细的「长够之后再放块 / 撤完之后再收卡」那段衔接是页面编排，
+         不在规范里、不进调试台（固定 0.3 / 0.25 秒）。 */
+      '03-card': {
+        label: '卡片动态',
+        anchor: 'sub-03-2',
+        groups: [
+          { label: '耗时', keys: ['cardDur', 'blockDur'] },
+          { label: '节奏', keys: ['blockGap'] }
+        ],
+        keys: {
+          cardDur:  { label: '卡片伸缩', unit: 's', def: 1.3,  min: 0.3, max: 3,   step: 0.05 },
+          blockDur: { label: '单块时长', unit: 's', def: 0.55, min: 0.1, max: 1.5, step: 0.05 },
+          blockGap: { label: '块间隔',   unit: 's', def: 0.15, min: 0,   max: 0.6, step: 0.01 }
+        }
+      },
       /* 数据包组件规范：规范页 05 定的数，所有页面照这个实现（唯一来源）
          groups 只负责「面板上怎么分组」（按定义顺序），keys 仍是扁平索引，get/set 路径不变。
          耗时 = 这个组件自己要花掉多少时间；特效 = 不改时长、只改观感的量。 */
       '05-packet': {
         label: '数据包·动态',
+        anchor: 'sub-05-3',
         groups: [
           { label: '耗时', keys: ['packDur', 'packFade'] },
           { label: '特效', keys: ['packLead', 'trailDist', 'trailScale'] }
@@ -47,6 +68,7 @@
          那是每页自己排的节奏，在页面齿轮里直接填秒，不走这里。 */
       '08-seat': {
         label: '落位弹跳',
+        anchor: 'sub-08-1',
         groups: [
           { label: '耗时', keys: ['popDur'] },
           { label: '节奏', keys: ['seatGap'] }
@@ -68,6 +90,7 @@
          关键帧是归一化进度（0~1），改它等于改这条曲线的形状，不是改时长。 */
       '09-merge': {
         label: '融合·动态',
+        anchor: 'sub-09-1',
         groups: [
           { label: '耗时', keys: ['fuseDur'] },
           { label: '节奏', keys: ['mergeGap'] },
