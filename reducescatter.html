@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Reduce-Scatter · 动态演示</title>
-<meta name="description" content="Reduce-Scatter 动态演示：四张卡各持一整份数据，沿环形逐轮送出并累加，三轮后每张卡只剩一段的和。">
+<meta name="description" content="Reduce-Scatter 动态演示：四张卡各持一整份数据，先各自长出第二排接收位与计算框，再按递归减半两轮互换 —— 收下的段依次落位、逐段折进上排累加，段数 4→2→1，两轮后每卡只剩自己编号那一段的和。">
 <link rel="stylesheet" href="assets/stage.css">
 </head>
 <body data-rel="reducescatter">
@@ -16,7 +16,7 @@
 <main class="stagewrap">
   <div class="stagebox">
     <svg id="stage" viewBox="0 0 1200 640" preserveAspectRatio="xMidYMid meet"
-         role="img" aria-label="Reduce-Scatter 通信过程动画：四张卡各持一整份四段数据，数据沿 2×2 网格四边顺时针传递，每轮每张卡交出一段、收下一段并累加，三轮之后每张卡只剩一段四份相加的结果">
+         role="img" aria-label="Reduce-Scatter 通信过程动画：四张卡各持一整份四段数据，先同时长出第二排接收位、计算框亮起；第 1 轮同列互换（rank0 与 rank2、rank1 与 rank3），收下的两段依次落位到第二排、再逐段折进上排累加器，这两段各加到 2 份；第 2 轮同行互换（rank0 与 rank1、rank2 与 rank3），只换最后一段，折进后该段 4 份相加变 Σ；最后卡片收窄，每张卡只留自己编号那一段的和">
       <defs>
         <pattern id="gGrid" width="40" height="40" patternUnits="userSpaceOnUse">
           <path d="M40 0H0v40" fill="none" stroke="#8b93aa" stroke-opacity=".1" stroke-width="1"/>
