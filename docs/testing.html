@@ -7,13 +7,13 @@
 <style>
   :root{
     --bg:#f5f6f8;--panel:#fff;--ink:#1c2130;--ink2:#4b5364;--muted:#7a8296;
-    --line:#e4e7ee;--accent:#7c3aed;--ok:#059669;--okbg:#e7f6f0;
+    --line:#e4e7ee;--accent:#7c3aed;--ok:#059669;--okbg:#e7f6f0;--okline:#c8e9dc;
     --warn:#d97706;--warnbg:#fdf3e3;--bad:#dc2626;--badbg:#fdeceb;--cyan:#0891b2;
     --shadow:0 1px 2px rgba(20,25,40,.06),0 8px 24px rgba(20,25,40,.05);
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1180px;margin:0 auto;padding:30px 26px 80px}
+  .wrap{max-width:1280px;margin:0 auto;padding:30px 24px 80px}
   h1{font-size:25px;margin:0 0 6px;letter-spacing:-.3px}
   .sub{color:var(--muted);font-size:13px;margin-bottom:6px}
   .rule-top{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--accent);background:#f1ecfe;border:1px solid #ddd4fb;padding:4px 10px;border-radius:20px;margin-top:8px}
@@ -37,24 +37,31 @@
   .sechead .meta{font-size:11.5px;color:var(--muted)}
   .role{color:var(--muted);font-size:12.5px;margin:2px 0 0}
 
-  /* 分组列表 */
-  table.spec{margin-top:12px}
-  table.spec th.c-no,table.spec td.c-no{width:52px}
-  table.spec th.c-t,table.spec td.c-t{width:150px}
-  table.spec th.c-s,table.spec td.c-s{width:186px}
-  table.spec th.c-r,table.spec td.c-r{width:280px}
+  /* ===== 分组表：6 列 ===== */
+  table.spec{margin-top:12px;table-layout:fixed}
+  table.spec th.c-v{background:#eef8f3;color:var(--ok)}
+  table.spec td.c-v{background:#f8fcfa;color:#1f5c46;border-left:1px solid var(--okline);font-size:12px}
+  tbody tr:hover td.c-v{background:#f2faf6}
+  table.spec td.c-v b{color:#0d5c43}
   table.spec td.c-no{white-space:nowrap}
   table.spec .n{display:inline-block;font:600 11.5px/1 ui-monospace,Menlo,monospace;color:var(--accent);background:#f3efff;border:1px solid #e5dcfd;padding:4px 6px;border-radius:6px;letter-spacing:.3px}
   table.spec .t{font-weight:600;font-size:12.8px;color:var(--ink)}
   table.spec td.c-d{color:var(--ink2)}
-  table.spec td.c-d code{background:#f1f2f7;padding:1px 5px;border-radius:5px;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:#3f4658}
+  table.spec td.c-d code,table.spec td.c-r code,table.spec td.c-v code{background:#eceef4;padding:1px 5px;border-radius:5px;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#3f4658;word-break:break-word}
   table.spec td.c-s{color:var(--muted);font-size:11.5px}
   table.spec td.c-s .f{display:block;font-family:ui-monospace,Menlo,monospace;color:#5a4a8f;background:#f7f5ff;border:1px solid #eae4fb;border-radius:5px;padding:1px 5px;margin-bottom:3px;word-break:break-all}
+  table.spec td.c-s .none{color:#c2c7d3;font-size:11px}
   table.spec td.c-r{color:#6b6f7e;font-size:12px}
-  table.spec td.c-r.empty,table.spec td.c-s.empty{color:#c2c7d3}
   table.spec .tags{margin-top:5px;display:flex;gap:5px;flex-wrap:wrap}
 
-  .caveat{margin-top:10px;background:#fffafa;border:1px dashed #f0c9c5;border-radius:10px;padding:11px 14px;font-size:12.5px;color:#8a3530}
+  /* 组尾边界说明（不编号） */
+  .boundary{margin-top:10px;background:#f7f9fc;border:1px dashed #cfd8e6;border-radius:10px;padding:11px 14px;font-size:12.5px;color:#4a5568}
+  .boundary .bt{font-weight:600;color:#33415c;margin-bottom:3px}
+  .boundary ol{margin:0;padding-left:18px}
+  .boundary li{margin:2px 0}
+  .boundary code{background:#e8ecf3;padding:1px 5px;border-radius:5px;font-size:11px}
+
+  .caveat{margin-top:12px;background:#fffafa;border:1px dashed #f0c9c5;border-radius:10px;padding:11px 14px;font-size:12.5px;color:#8a3530}
   .caveat b{color:#6f241f}
   .foot{margin-top:40px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:11.5px;line-height:1.9}
   .foot code{background:#ececf3;padding:1px 5px;border-radius:5px;color:var(--ink2)}
@@ -64,18 +71,19 @@
   .rel .b .s{color:var(--muted);font-size:11.5px}
   .rel .b.hl{border-color:#c9b8f8;background:#f8f5ff}
 
-  @media(max-width:900px){
+  @media(max-width:1000px){
+    table.spec{table-layout:auto}
     table.spec thead{display:none}
     table.spec,table.spec tbody,table.spec tr,table.spec td{display:block;width:auto}
     table.spec tr{border-bottom:1px solid var(--line);padding:10px 13px}
     table.spec tr:last-child{border-bottom:none}
     table.spec td{border:none;padding:2px 0}
-    table.spec td.c-r{width:auto}
-    table.spec td[data-l]:not(.c-no):not(.c-t)::before{content:attr(data-l);display:block;font-size:10.5px;color:var(--muted);margin-top:4px}
-    table.spec td.c-t{width:auto}
+    table.spec td.c-v{border-left:none;margin-top:6px;border-radius:8px;padding:7px 9px}
+    table.spec td[data-l]:not(.c-no):not(.c-t)::before{content:attr(data-l);display:block;font-size:10.5px;color:var(--muted);margin-top:5px}
+    table.spec td.c-v[data-l]::before{color:var(--ok)}
     .rel{grid-template-columns:repeat(2,1fr)}
     .ov-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
-    table.ov{min-width:620px}
+    table.ov{min-width:640px}
   }
 </style>
 </head>
@@ -86,7 +94,7 @@
   <div class="sub">四种方式逐项拆分，编号固定。本页是验证方式的唯一来源，后续以此为准。</div>
   <div class="rule-top">以本页为准 · 改本页需同步 AGENTS.md 一 与 MEMORY.md</div>
 
-  <div class="lead">四种方式职责不同：<b>只有第 3 种（页面断言）会判对错</b>，其余三种都不判。先看总览，再看每组逐条。</div>
+  <div class="lead">共 <b>26 条编号项</b>，每条只讲三件事：<b>描述</b>＝具体做了什么，<b>原因</b>＝为什么这么做，<b>验收通过标准</b>＝什么情况才算这一步成功（绿色那列）。编号项都是可执行的动作；每组末尾的「边界」不编号，只说明「哪些情况不算失败」。</div>
 
   <div class="ov-wrap">
   <table class="ov">
@@ -101,7 +109,7 @@
       </tr>
       <tr>
         <td class="mono">2</td><td><b>单点探针</b><div class="mono" style="color:var(--muted)">probe.mjs</div></td>
-        <td class="mono">node tools/probe.mjs &lt;page&gt; 刻度:"JS"</td>
+        <td class="mono">node tools/probe.mjs &lt;page&gt; 刻度:"表达式"</td>
         <td>某一刻的某一个数值</td>
         <td>数字 / JSON</td>
         <td><span class="pill neutral">不判，自比对</span></td>
@@ -124,261 +132,294 @@
   </table>
   </div>
 
-  <div class="kicker"><b>一句话分工：</b>全量回归管「有没有坏」，页面断言管「对不对」，单点探针是写页面断言前先量一下的临时尺子，截图管「好不好看」。</div>
+  <div class="kicker"><b>一句话分工：</b>全量回归管「有没有坏」，页面断言管「对不对」，单点探针是写断言前先量一下的临时尺子，截图管「好不好看」。</div>
 
+  <!-- ===================== 01 ===================== -->
   <section>
-    <div class="sechead"><span class="no">01</span><h2>全量回归 · verify.mjs</h2><span class="meta">9 条 · 一次浏览器启动逐页跑完</span></div>
-    <div class="role">作用：体检。回答「页面能不能打开、有没有报错、挂载成功没有、有没有断言失败」。</div>
+    <div class="sechead"><span class="no">01</span><h2>全量回归 · verify.mjs</h2><span class="meta">8 条 · 一次浏览器启动逐页跑完</span></div>
+    <div class="role">作用：体检。回答「页面能不能打开、有没有报错、挂载成功没有、页面断言过没过」。</div>
     <table class="spec">
-      <thead><tr><th class="c-no">序号</th><th class="c-t">标题</th><th>描述</th><th class="c-s">脚本</th><th class="c-r">原因</th></tr></thead>
+      <colgroup><col style="width:5.5%"><col style="width:12%"><col style="width:26%"><col style="width:13%"><col style="width:21.5%"><col style="width:22%"></colgroup>
+      <thead><tr><th class="c-no">序号</th><th>标题</th><th>描述（做了什么）</th><th>脚本</th><th>原因（为什么这么做）</th><th class="c-v">验收通过标准</th></tr></thead>
       <tbody>
         <tr>
           <td class="c-no"><span class="n">1.1</span></td>
-          <td class="c-t"><span class="t">起本地服务 + 无头浏览器</span></td>
-          <td class="c-d" data-l="描述">先在本机起一个只监听自己的静态服务器（根目录就是仓库根），再用系统装的 Chrome 无头打开。端口在 9100 到 9189 之间随便挑一个，缩放强制为 1。</td>
+          <td><span class="t">起本地服务 + 无头浏览器</span></td>
+          <td class="c-d" data-l="描述">在本机内网地址起一个静态服务器，根目录就是仓库根；端口从 9100–9189 里随机挑一个。然后用系统安装的 Chrome 无头打开，并把页面缩放强制设成 1。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">页面是模块化加载的，直接双击文件打不开；端口随机是为了多窗口同时跑不撞车；缩放锁死为 1 才能让量出来的像素有意义。</td>
+          <td class="c-r" data-l="原因">页面用的是模块化脚本和相对路径，直接双击本地文件打不开，必须有 http 服务。端口随机是为了几个窗口同时跑不撞车。缩放锁成 1，量出来的坐标和截出来的图才和设计稿对得上。</td>
+          <td class="c-v" data-l="验收通过标准">每个页面能打印出自己的地址行 <code>=== &lt;page&gt;.html ===  http://127.0.0.1:&lt;port&gt;/…</code>；若端口被占或 Chrome 起不来，命令直接报错退出，不会假装通过。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">1.2</span></td>
-          <td class="c-t"><span class="t">每页打开并等挂载</span></td>
-          <td class="c-d" data-l="描述">每页开一个干净窗口，宽 1440 高 900。等到页面自己报告「控件已就绪」才算打开成功，最多等 8 秒；等不到也不判失败，只是后面的内容可能读不到。</td>
+          <td><span class="t">打开每页并等挂载</span></td>
+          <td class="c-d" data-l="描述">每页开一个独立的干净窗口（1440×900）。打开后最多等 8 秒，等页面把「控件已就绪」这个标记挂上；挂上之后再等 150 毫秒，才开始后面的收集、判定与截图。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">动画页是异步搭建的，不等就截图会截到空白页；固定窗口尺寸才能和之前的图对比。</td>
+          <td class="c-r" data-l="原因">动画是异步搭建的，控件没挂上就去截图或读状态，只会拿到空值，报出来的错还会误导人。每页单独一个窗口，是为了不让上一页的状态串到下一页。150 毫秒留给首帧绘制。</td>
+          <td class="c-v" data-l="验收通过标准">该页头部行里 <code>dur=</code> 后面是数字而不是 <code>null</code>。若是 <code>null</code>，说明这页其实没挂载成功，后面的「通过」不可信。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">1.3</span></td>
-          <td class="c-t"><span class="t">收集报错</span></td>
-          <td class="c-d" data-l="描述">全程监听两类异常：未捕获的脚本错误，以及控制台里的错误和警告。只有一条豁免：资源加载失败（比如网页图标缺失）不算错。</td>
+          <td><span class="t">收集报错</span></td>
+          <td class="c-d" data-l="描述">整场监听两类事件：未捕获的脚本错误，以及控制台里的错误和警告。只放过一种：文案里带「资源加载失败」的（通常就是网页图标缺失）。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">报错是最便宜、最确定「坏了」的信号；豁免一条是为了不让无关噪音把真问题埋掉。</td>
+          <td class="c-r" data-l="原因">报错是最便宜、最确定「真的坏了」的信号，不该靠人翻控制台。放过图标 404 是因为它天天出现，留着只会让人习惯性忽略结果。</td>
+          <td class="c-v" data-l="验收通过标准">该页打印 <code>errors=0</code>。若有报错，会多出一行 <code>PROBLEMS(n)</code> 并列出前 8 条原文，原文能定位到具体文件和行。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">1.4</span></td>
-          <td class="c-t"><span class="t">加载并执行页面断言</span></td>
-          <td class="c-d" data-l="描述">这一页如果备了「考卷」，就跑里面的一条条断言，逐条打印通过或失败；没备就跳过，不算失败。考卷自己写崩了也记失败，不许当没事发生。
-            <div class="tags"><span class="pill info">这一条只管调度，内容在 03 组</span></div></td>
-          <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span><span class="f">tools/probes/&lt;page&gt;.mjs</span></td>
-          <td class="c-r" data-l="原因">把「对不对」的判断从脑子里搬到文件里，才能每次自动跑、长期不漏；允许缺考卷是为了能一页一页补。</td>
+          <td><span class="t">调度页面断言（本条不判定）</span></td>
+          <td class="c-d" data-l="描述">本条<b>自己不做任何判断</b>，只做三件事：看这页有没有对应的考卷文件 → 有就载入并调用里面的检查函数 → 把返回的每条结果按 PASS/FAIL 打印出来。对错的判断全部发生在那个文件里。</td>
+          <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span>（调度）<span class="f">tools/probes/&lt;page&gt;.mjs</span>（内容）</td>
+          <td class="c-r" data-l="原因">把「这一页应该长什么样」从人脑搬进文件，才能每次自动跑、长期不漏。调度和内容分开，补断言时不用改工具，也不会因为改工具而波及别的页面。</td>
+          <td class="c-v" data-l="验收通过标准">有考卷的页面，输出里出现 <code>probe PASS/FAIL &lt;名字&gt;</code> 行，条数与文件里返回的条数相同。没考卷的页面不出现 probe 行，也不因此判失败。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">1.5</span></td>
-          <td class="c-t"><span class="t">截图集</span></td>
-          <td class="c-d" data-l="描述">不加「跳过截图」开关时，按给定的几个时间点各截一张：先暂停动画，跳到那个时间点，等画面稳定，再存图到临时目录。</td>
+          <td><span class="t">截图三个刻度</span></td>
+          <td class="c-d" data-l="描述">默认在进度条的 <b>0 / 500 / 1000</b> 三个刻度各截一张：先暂停播放，跳到该刻度，等画面稳定（结尾那帧等 1200 毫秒，其余 900 毫秒），存成 <code>&lt;page&gt;-&lt;刻度&gt;.png</code>。刻度可以用参数换掉，也支持「刻度@等待毫秒」的写法。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">观感只能看图，但只有固定时间点截出来的图才有可比性。</td>
+          <td class="c-r" data-l="原因">这三个数的含义是：<b>0 = 动画开头</b>、<b>1000 = 结尾</b>、<b>500 = 时间轴正中间</b>（总时长的一半）。选它们是因为开头和结尾是最确定的两个状态，能拿对照表逐项核对内容；中间那帧专门用来发现「跑到一半空白 / 卡住 / 元素没出现」。<br><b>注意：500 只是「一半」，并不是每页真正的飞行中点。</b>各页分段位置不同，要抓某一段飞行的中间，得先算 <code>(段序号 + 段内比例) ÷ 段数 × 1000</code>，再用参数传进去。</td>
+          <td class="c-v" data-l="验收通过标准">输出目录里出现 3 张图，文件名里的刻度与自己传入的一致，每张都打印了字节数；三张图字节数互不相同（相同就是可能截到了同一画面，见 1.7）。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">1.6</span></td>
-          <td class="c-t"><span class="t">窄屏截图</span></td>
-          <td class="c-d" data-l="描述">另开一个手机尺寸的窄窗口打开同一页，停在开头截一张。</td>
+          <td><span class="t">窄屏截图</span></td>
+          <td class="c-d" data-l="描述">把桌面窗口关掉，另开一个 420×820 的窄窗口重新打开同一页；同样等挂载，然后暂停播放、跳到刻度 0、等 900 毫秒，存成 <code>&lt;page&gt;-narrow.png</code>。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">本项目宽屏和窄屏是两套完全不同的排版参数，宽屏不溢出不代表窄屏也不溢出。</td>
+          <td class="c-r" data-l="原因">本项目宽屏与窄屏是两套完全不同的尺寸参数（窄屏卡片更小、槽位更少，断点 860），宽屏不溢出完全不代表窄屏不溢出。只看初始态就够，因为溢不溢出在静态骨架阶段就决定了，不必看动画。</td>
+          <td class="c-v" data-l="验收通过标准"><code>&lt;page&gt;-narrow.png</code> 存在且大小大于 0，并与桌面第一张图字节数不同（同为开头态但必须是不同画面）。人看这张图时：没有横向滚动、文字没有被切掉。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">1.7</span></td>
-          <td class="c-t"><span class="t">废帧检测</span></td>
-          <td class="c-d" data-l="描述">相邻两张图的文件大小如果一字不差，基本可以认定是同一画面，打印一条告警。
-            <div class="tags"><span class="pill soon">只提示，不判失败</span></div></td>
+          <td><span class="t">废帧告警</span></td>
+          <td class="c-d" data-l="描述">把这一页刚产出的 4 张图<b>按生成顺序两两比较</b>：第 1 张比第 2 张、第 2 张比第 3 张、第 3 张比窄屏那张。只要两张的<b>文件字节数完全相同</b>，就打印一行 <code>⚠ 废帧？</code> 并指出是哪两个文件。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">截图流程失效最常见的样子就是「每张都长得一样」，光看文件名发现不了；不判失败是因为偶尔真会巧合。</td>
+          <td class="c-r" data-l="原因">截图流程失效最常见的表现不是报错，而是「每张都长得一样」——比如地址打错截了错误页、跳转值被夹到结尾、动画本来就在那一刻静止。文件大小是最便宜的同画面判据，不用逐像素比对。只告警不判失败，因为极小概率真会撞巧。<br>已知局限：窄屏那张尺寸不同，几乎不可能与桌面图字节相同，所以实际起作用的是前三次比较。</td>
+          <td class="c-v" data-l="验收通过标准">正常情况下 4 张图字节数互不相同、输出里没有 <code>⚠ 废帧？</code> 行。一旦出现，必须人工确认那两张是不是同一画面，确认前不得把该页算作已验证。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">1.8</span></td>
-          <td class="c-t"><span class="t">判定与退出码</span></td>
-          <td class="c-d" data-l="描述">必须同时满足「零报错」和「零断言失败」才算通过；打印一行汇总；有任何一页有问题，进程就以失败状态退出。</td>
+          <td><span class="t">判定与退出码</span></td>
+          <td class="c-d" data-l="描述">把两个数拿来判：① 这一页累计的<b>报错条数</b>（就是 1.3 收集的那个清单的长度）；② 这一页考卷里<b>判失败的条数</b>（就是 1.4 打印的那些，没考卷时算 0）。两个都为 0 → 本页记 OK；全部页面跑完打印一行汇总；只要有任一页不 OK，进程以失败状态（退出码 1）结束。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">退出状态是让定时任务和流水线自动判断成败的唯一接口，靠人看输出迟早会漏。</td>
-        </tr>
-        <tr>
-          <td class="c-no"><span class="n">1.9</span></td>
-          <td class="c-t"><span class="t">不负责</span></td>
-          <td class="c-d" data-l="描述">好不好看、动画语义对不对，它都不管。没有考卷的页面，它的「通过」只说明能跑、不报错。</td>
-          <td class="c-s empty" data-l="脚本"></td>
-          <td class="c-r" data-l="原因">边界不说清，就会把「通过」误读成「画对了」——目前 11 页正是这种状态。</td>
+          <td class="c-r" data-l="原因">退出码是让定时任务和流水线自动判断成败的唯一接口，靠人盯输出一定会漏。两个数分开计数，是为了出问题时一眼看出是「页面坏了」还是「页面画错了」——前者查代码，后者查断言或实现。</td>
+          <td class="c-v" data-l="验收通过标准">全绿时最后一行是「通过 N，有问题 0」，紧接着 <code>echo $?</code> 得到 <b>0</b>。有任何一页红时，该页打印 <code>RESULT: ISSUES errors=X probeFail=Y</code>，汇总行为「有问题 ≥1」，退出码为 <b>1</b>。</td>
         </tr>
       </tbody>
     </table>
+    <div class="boundary">
+      <div class="bt">本组边界（不编号，只说明哪些情况不算失败）</div>
+      <ol>
+        <li>页面没有考卷文件 → 只判报错、跳过断言。此时它的 OK <b>只代表「能跑、不报错」，不代表内容被验收过</b>。目前 12 页里 11 页是这种状态。</li>
+        <li>挂载等待超过 8 秒 → 静默继续，不判失败。后果是可能截到半成品，此时头部行显示 <code>dur=null</code>，OK 属于假通过，必须人看这一行。</li>
+        <li>文案含「资源加载失败」的报错 → 视为图标 404，不计入 errors，也不算失败。</li>
+      </ol>
+    </div>
   </section>
 
+  <!-- ===================== 02 ===================== -->
   <section>
-    <div class="sechead"><span class="no">02</span><h2>单点探针 · probe.mjs</h2><span class="meta">7 条 · 临时量一个数</span></div>
+    <div class="sechead"><span class="no">02</span><h2>单点探针 · probe.mjs</h2><span class="meta">6 条 · 临时量一个数</span></div>
     <div class="role">作用：万用表。回答「此刻这个值是几」。不判对错，量完就走。</div>
     <table class="spec">
-      <thead><tr><th class="c-no">序号</th><th class="c-t">标题</th><th>描述</th><th class="c-s">脚本</th><th class="c-r">原因</th></tr></thead>
+      <colgroup><col style="width:5.5%"><col style="width:12%"><col style="width:26%"><col style="width:13%"><col style="width:21.5%"><col style="width:22%"></colgroup>
+      <thead><tr><th class="c-no">序号</th><th>标题</th><th>描述（做了什么）</th><th>脚本</th><th>原因（为什么这么做）</th><th class="c-v">验收通过标准</th></tr></thead>
       <tbody>
         <tr>
           <td class="c-no"><span class="n">2.1</span></td>
-          <td class="c-t"><span class="t">命令格式</span></td>
-          <td class="c-d" data-l="描述">一条命令里可以连问好几句：每句给一个时间点（0 是开头、1000 是结尾），再跟一句「要问页面什么」。</td>
+          <td><span class="t">命令怎么写</span></td>
+          <td class="c-d" data-l="描述">一条命令后面可以跟好几组「刻度:要问的问题」，刻度用 0–1000 表示动画从开头到结尾。按给的顺序一组组执行，每组打印一行。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/probe.mjs</span></td>
-          <td class="c-r" data-l="原因">一次启动浏览器能问多个问题，省掉反复开关窗口的时间。</td>
+          <td class="c-r" data-l="原因">一次浏览器启动就能连问好几个问题，省掉反复冷启动（每次约 4 秒）。问得越多越划算，所以设计成一次可传多组。</td>
+          <td class="c-v" data-l="验收通过标准">打印的行数等于传入的组数，每行都是「刻度 + 读数」，刻度与你写的一致。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">2.2</span></td>
-          <td class="c-t"><span class="t">启动与打开</span></td>
-          <td class="c-d" data-l="描述">和全量回归一样起服务、开浏览器，但端口另用一段（9200 起），窗口同样是 1440×900。</td>
+          <td><span class="t">起服务并打开页面</span></td>
+          <td class="c-d" data-l="描述">和全量回归一样起静态服务、开系统 Chrome，窗口 1440×900；端口取 9200–9289 之间，打开页面后等控件挂载（最多 8 秒）。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/probe.mjs</span></td>
-          <td class="c-r" data-l="原因">端口分段是为了让探针和全量回归能同时跑而不打架。</td>
+          <td class="c-r" data-l="原因">端口段故意和全量回归的 9100–9189 错开，这样探针可以与回归同时跑，不争同一个端口。</td>
+          <td class="c-v" data-l="验收通过标准">能正常打印读数（而不是 <code>EVAL ERROR</code>）；若页面本身有问题，末尾会出现 <code>PROBLEMS</code> 并列出报错。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">2.3</span></td>
-          <td class="c-t"><span class="t">怎么量</span></td>
-          <td class="c-d" data-l="描述">先把动画暂停，跳到指定时间点，等两帧画面刷新完，再执行你给的那句话，把结果转成文本打印。</td>
+          <td><span class="t">怎么量</span></td>
+          <td class="c-d" data-l="描述">先暂停播放 → 跳到指定刻度 → 等两帧画面刷新完 → 执行你写的那句表达式 → 把结果转成文本打印。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/probe.mjs</span></td>
-          <td class="c-r" data-l="原因">不等画面刷新就读，会读到上一帧的旧值，量出来的数不可信。</td>
+          <td class="c-r" data-l="原因">不等画面刷新就读，会读到上一帧的旧值。这类误差最阴，因为读出来的数字看着完全正常，只是属于前一个时刻。</td>
+          <td class="c-v" data-l="验收通过标准">同一刻度连跑两次，读数完全一致（说明读取稳定，不是在追动画）。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">2.4</span></td>
-          <td class="c-t"><span class="t">输出长什么样</span></td>
-          <td class="c-d" data-l="描述">一行一个「时间点 + 读数」；问不出来会明确写求值失败；最后如果页面有报错，附上前几条。</td>
+          <td><span class="t">输出怎么读</span></td>
+          <td class="c-d" data-l="描述">每次查询打一行「刻度 + 结果」。表达式写错时那一行变成 <code>EVAL ERROR …</code>；页面自身有报错，末尾补一段 <code>PROBLEMS</code>（最多 6 条）。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/probe.mjs</span></td>
-          <td class="c-r" data-l="原因">读数与报错分开呈现，才不会把「问题问错了」看成「值是零」。</td>
+          <td class="c-r" data-l="原因">读数与报错分开呈现，才不会把「问题问错了」误读成「这个值是 0」。只列 6 条是为了不刷屏，前几条通常已足够定位。</td>
+          <td class="c-v" data-l="验收通过标准">正常查询时既不出现 <code>EVAL ERROR</code>，也不出现 <code>PROBLEMS</code>。出现任何一个，先解决它再看读数。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">2.5</span></td>
-          <td class="c-t"><span class="t">怎么判读</span></td>
-          <td class="c-d" data-l="描述">它不给对错，只给读数。你心里得先有一个「应该是多少」，一样就过，不一样就查。
-            <div class="tags"><span class="pill neutral">不判对错</span><span class="pill soon">不进定时回归</span></div></td>
-          <td class="c-s empty" data-l="脚本"></td>
-          <td class="c-r" data-l="原因">工具只负责量，判据属于人的知识；一旦判据稳定下来，就该搬进第 3 组变成正式断言。</td>
+          <td><span class="t">读数怎么判定</span></td>
+          <td class="c-d" data-l="描述">工具不给对错，只有读数。之前先准备一个「应该是多少」——来自对照表、设计稿或上一次的测量结果；读数与它一致就算过，不一致就去查原因。</td>
+          <td class="c-s" data-l="脚本"><span class="f">tools/probe.mjs</span></td>
+          <td class="c-r" data-l="原因">判据属于人的知识，工具只负责量。硬把判据塞进工具会让它和页面断言重复；而一旦某个数要反复用，就该搬去 03 组写成正式断言，不再手量。</td>
+          <td class="c-v" data-l="验收通过标准">每次量完能明确写下一句「符合预期 / 不符合，差多少」。同一个数若已被量到第三次，说明它该升级成 03 组的断言了。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">2.6</span></td>
-          <td class="c-t"><span class="t">什么时候用</span></td>
-          <td class="c-d" data-l="描述">改完想知道现在到底多少；觉得不对时先量数再猜原因；给页面断言找正确值。</td>
+          <td><span class="t">什么时候用它</span></td>
+          <td class="c-d" data-l="描述">三种场合：刚改完想知道改动点现在是多少；怀疑哪里不对但说不清时先量数；给 03 组写断言前先找正确值。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/probe.mjs</span></td>
-          <td class="c-r" data-l="原因">先量数能省掉大量「猜着改」的反复，是这套流程里最省时间的一步。</td>
-        </tr>
-        <tr>
-          <td class="c-no"><span class="n">2.7</span></td>
-          <td class="c-t"><span class="t">不负责</span></td>
-          <td class="c-d" data-l="描述">不做多时间点的组合判断、不留档、不参与定时回归。</td>
-          <td class="c-s empty" data-l="脚本"></td>
-          <td class="c-r" data-l="原因">把临时工具的定位说清楚，才不会有人把它当成正式验收。</td>
+          <td class="c-r" data-l="原因">先量数再动手，能省掉大量「猜着改—再截图—再猜」的往返，这是整套流程里单次收益最高的一步。</td>
+          <td class="c-v" data-l="验收通过标准">定位一个问题所花的改动轮次不超过 2 轮。若已改到第 3 轮还没定位，说明缺了一次量数。</td>
         </tr>
       </tbody>
     </table>
+    <div class="boundary">
+      <div class="bt">本组边界（不编号）</div>
+      <ol>
+        <li>探针<b>不判对错、不留存历史、不参与定时回归</b>——它是一次性的尺子。</li>
+        <li>只捕获控制台里的错误，<b>不捕获警告</b>；警告类异常在这里看不到，需要靠全量回归 1.3。</li>
+        <li>端口段 9200–9289 与回归的 9100–9189 分开，因此两者可以同时运行。</li>
+      </ol>
+    </div>
   </section>
 
+  <!-- ===================== 03 ===================== -->
   <section>
-    <div class="sechead"><span class="no">03</span><h2>页面断言 · probes/&lt;page&gt;.mjs</h2><span class="meta">8 条 · 唯一会判对错的一种</span></div>
+    <div class="sechead"><span class="no">03</span><h2>页面断言 · probes/&lt;page&gt;.mjs</h2><span class="meta">7 条 · 唯一会判对错的一种</span></div>
     <div class="role">作用：考卷。把「这一页必须长成什么样」写成文件，由全量回归自动判。</div>
     <table class="spec">
-      <thead><tr><th class="c-no">序号</th><th class="c-t">标题</th><th>描述</th><th class="c-s">脚本</th><th class="c-r">原因</th></tr></thead>
+      <colgroup><col style="width:5.5%"><col style="width:12%"><col style="width:26%"><col style="width:13%"><col style="width:21.5%"><col style="width:22%"></colgroup>
+      <thead><tr><th class="c-no">序号</th><th>标题</th><th>描述（做了什么）</th><th>脚本</th><th>原因（为什么这么做）</th><th class="c-v">验收通过标准</th></tr></thead>
       <tbody>
         <tr>
           <td class="c-no"><span class="n">3.1</span></td>
-          <td class="c-t"><span class="t">文件位置</span></td>
-          <td class="c-d" data-l="描述">放在 probes 目录下，文件名必须和页面同名，这样系统才能自动对上号。</td>
+          <td><span class="t">文件放哪、怎么起名</span></td>
+          <td class="c-d" data-l="描述">放在 probes 目录下，文件名必须和页面同名：页面叫 <code>reduce.html</code>，文件就叫 <code>reduce.mjs</code>。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/probes/&lt;page&gt;.mjs</span></td>
-          <td class="c-r" data-l="原因">靠名字自动匹配，以后加页面、加断言都不用再改注册表。</td>
+          <td class="c-r" data-l="原因">按名字自动配对，以后加页面、加断言都不用改工具里的任何清单；少一处手抄，就少一处会忘记。</td>
+          <td class="c-v" data-l="验收通过标准">新建一个同名文件后，<b>不改任何工具代码</b>，跑回归就能看到它的结果。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">3.2</span></td>
-          <td class="c-t"><span class="t">文件里要写什么</span></td>
-          <td class="c-d" data-l="描述">导出一个异步函数，进页面做检查，返回一组结果；每条结果包含名字、是否通过、一句说明。</td>
+          <td><span class="t">文件里要写什么</span></td>
+          <td class="c-d" data-l="描述">导出一个异步检查函数，接收浏览器页面对象，按下若干个检查点，返回一组结果。每条包含三样：名字、是否通过、一句说明。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/probes/&lt;page&gt;.mjs</span></td>
-          <td class="c-r" data-l="原因">返回结构统一，汇总打印才能自动做；那句说明让失败时不必重跑才知道错在哪。</td>
+          <td class="c-r" data-l="原因">返回结构统一，汇总和打印才能自动完成；那句说明让失败时不用重跑就知道错在哪，也方便直接写进缺陷台账。</td>
+          <td class="c-v" data-l="验收通过标准">输出里每条都带名字和 PASS/FAIL；失败项能看到一句具体说明（例如「期望 4，实际 3」），而不是只有一个 false。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">3.3</span></td>
-          <td class="c-t"><span class="t">什么时候被加载</span></td>
-          <td class="c-d" data-l="描述">回归跑到这一页时先看有没有同名考卷，有就跑，没有就跳过，不影响这页的通过与否。</td>
+          <td><span class="t">什么时候被载入</span></td>
+          <td class="c-d" data-l="描述">回归跑到这一页时先看有没有同名文件：有就载入执行，没有就跳过。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">允许逐步补齐，先补的页面不会被还没补的拖住。</td>
+          <td class="c-r" data-l="原因">允许一页一页慢慢补。若要求「一次补齐所有页」才能跑，补齐之前这套机制等于不存在。</td>
+          <td class="c-v" data-l="验收通过标准">没有考卷的页面输出里没有 probe 行且仍可能是 OK；有考卷的页面一定出现 probe 行。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">3.4</span></td>
-          <td class="c-t"><span class="t">什么该写进断言</span></td>
-          <td class="c-d" data-l="描述">只写「结构上一定成立」的事：几个东西、最后是什么、哪一段该出现或该消失。差几像素和配色不归它管。时间窗口很短的阶段要细密地扫，别迈大步。</td>
+          <td><span class="t">什么该写进断言</span></td>
+          <td class="c-d" data-l="描述">只写「结构上一定成立」的事：某类元素有几个、终态内容是什么、某一段该出现或该消失。可以跳到多个刻度组合判断。对持续很短的阶段要小步长细扫（现有样例每步 40）。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/probes/&lt;page&gt;.mjs</span></td>
-          <td class="c-r" data-l="原因">结构断言稳定，不会因为视觉微调就失效；窗口小的阶段用大步长会整段跨过去，这是已经踩过的坑。</td>
+          <td class="c-r" data-l="原因">结构断言稳定，不会因为配色、间距微调就失效；像素级断言一动就红，久了没人信。窗口小的阶段用大步长会整段跨过去——这个坑已经踩过，计算框只在合并那一小段出现。</td>
+          <td class="c-v" data-l="验收通过标准">只改颜色或间距时这条断言不变红；把被测元素删掉或改错内容时它一定变红。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">3.5</span></td>
-          <td class="c-t"><span class="t">现有的 5 条</span></td>
-          <td class="c-d" data-l="描述">目前只有 reducescatter 有考卷：四张卡存在；开头有 32 个槽位标签；第一张卡顶排顺序对；中段出现过计算框；终态计算框全部隐藏。
-            <div class="tags"><span class="pill yes">11 页仍为空考卷</span></div></td>
+          <td><span class="t">现在已经有的 5 条</span></td>
+          <td class="c-d" data-l="描述">目前只有 reducescatter 备了考卷，5 条：四张卡都存在；开头有 32 个槽位标签；第一张卡顶排顺序是 A B C D；合并段出现过计算框；终态计算框全部隐藏。
+            <div class="tags"><span class="pill yes">其余 11 页仍是空考卷</span></div></td>
           <td class="c-s" data-l="脚本"><span class="f">tools/probes/reducescatter.mjs</span></td>
-          <td class="c-r" data-l="原因">这 5 条是「草稿变考卷」的样板，其余页面照这个格式补即可。</td>
+          <td class="c-r" data-l="原因">这 5 条是「先用探针量、再固化成断言」的样板，其余 11 页照这个格式补，不用重新设计结构。</td>
+          <td class="c-v" data-l="验收通过标准">跑 reducescatter 时这 5 条全 PASS。为证明它们真的在判，可临时把任意一条的期望值改错，它必须变 FAIL —— 若改错了还 PASS，说明这条断言是假的。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">3.6</span></td>
-          <td class="c-t"><span class="t">考卷自己崩了怎么办</span></td>
-          <td class="c-d" data-l="描述">断言写错导致执行崩溃，记为失败并报出来，不许吞掉。</td>
+          <td><span class="t">考卷自己崩了</span></td>
+          <td class="c-d" data-l="描述">检查函数抛异常时，捕获并记成一条名为「断言异常」的失败，把错误信息放进说明里。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">静默吞异常会让考卷坏了却一直显示通过，比没有考卷更危险。</td>
+          <td class="c-r" data-l="原因">静默吞异常会让考卷坏了却一直显示通过，这比没有考卷更危险——你会以为这一页有人守着。</td>
+          <td class="c-v" data-l="验收通过标准">故意在检查函数里写一句抛错，输出出现 <code>probe FAIL probe-throw</code>，并且该页不 OK、退出码为 1。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">3.7</span></td>
-          <td class="c-t"><span class="t">怎么算通过</span></td>
-          <td class="c-d" data-l="描述">一组断言里只要有一条没过，这一页就算有问题。</td>
+          <td><span class="t">怎么算这一页通过</span></td>
+          <td class="c-d" data-l="描述">返回的一组结果里只要有一条失败，这一页就记一次断言失败，最终结果为「有问题」。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">验收是全过，不是平均分，否则一条长期红的断言会被无视。</td>
-        </tr>
-        <tr>
-          <td class="c-no"><span class="n">3.8</span></td>
-          <td class="c-t"><span class="t">不负责</span></td>
-          <td class="c-d" data-l="描述">颜色、层次、节奏这类观感。</td>
-          <td class="c-s empty" data-l="脚本"></td>
-          <td class="c-r" data-l="原因">观感没法用数字稳定判定，硬写成断言只会天天误报，反而让人不信断言。</td>
+          <td class="c-r" data-l="原因">验收是全过，不是平均分。允许「大部分通过」的话，一条长期红的断言会被自动无视。</td>
+          <td class="c-v" data-l="验收通过标准">5 条里改坏 1 条 → 该页 <code>probeFail=1</code>、结果为「有问题」、退出码 1；5 条全对 → <code>probeFail=0</code>。</td>
         </tr>
       </tbody>
     </table>
+    <div class="boundary">
+      <div class="bt">本组边界（不编号）</div>
+      <ol>
+        <li>观感（颜色、层次、节奏）<b>不写进断言</b>：没法用数字稳定判定，硬写只会天天误报。</li>
+        <li>没有考卷文件的页面直接跳过，<b>不产生失败</b>，也不会提醒「你还没补」。</li>
+        <li>断言里不要依赖固定像素值；量尺寸请用 02 组，不要固化进考卷。</li>
+      </ol>
+    </div>
   </section>
 
+  <!-- ===================== 04 ===================== -->
   <section>
-    <div class="sechead"><span class="no">04</span><h2>人工截图</h2><span class="meta">6 条 · 看气色</span></div>
+    <div class="sechead"><span class="no">04</span><h2>人工截图</h2><span class="meta">5 条 · 看气色</span></div>
     <div class="role">作用：唯一用眼睛的部分。回答「看起来正不正常」。</div>
     <table class="spec">
-      <thead><tr><th class="c-no">序号</th><th class="c-t">标题</th><th>描述</th><th class="c-s">脚本</th><th class="c-r">原因</th></tr></thead>
+      <colgroup><col style="width:5.5%"><col style="width:12%"><col style="width:26%"><col style="width:13%"><col style="width:21.5%"><col style="width:22%"></colgroup>
+      <thead><tr><th class="c-no">序号</th><th>标题</th><th>描述（做了什么）</th><th>脚本</th><th>原因（为什么这么做）</th><th class="c-v">验收通过标准</th></tr></thead>
       <tbody>
         <tr>
           <td class="c-no"><span class="n">4.1</span></td>
-          <td class="c-t"><span class="t">怎么触发</span></td>
-          <td class="c-d" data-l="描述">跑全量回归时不要加「跳过截图」的开关，图会自动产出，存到指定目录。</td>
+          <td><span class="t">怎么触发、图存哪</span></td>
+          <td class="c-d" data-l="描述">跑全量回归时不要加「跳过截图」的开关，图会自动产出；存放目录可用参数指定，默认在系统临时目录下。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">默认出图，避免「忘了加参数所以没图」这种低级遗漏。</td>
+          <td class="c-r" data-l="原因">默认就出图，避免「忘了加参数所以没有图」这种低级遗漏——它不会报错，只会让你以为验过了。</td>
+          <td class="c-v" data-l="验收通过标准">命令输出里每页都有 <code>shot</code> 行，且对应目录下确实存在这些 png 文件（不是只有日志）。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">4.2</span></td>
-          <td class="c-t"><span class="t">固定四张</span></td>
-          <td class="c-d" data-l="描述">开头、飞行途中、结尾、手机窄屏各一张。途中那张取的是某一段的边界，不是整条时间轴的中点。</td>
+          <td><span class="t">为什么是这四张</span></td>
+          <td class="c-d" data-l="描述">四张：桌面开头（刻度 0）、桌面正中（刻度 500）、桌面结尾（刻度 1000）、窄屏开头（刻度 0、420×820）。想看某一段飞行的中间，用参数换成算出来的刻度。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">这四个点正好覆盖静止、运动、终态、窄屏四类问题，一次动画的风险面都在里面。</td>
+          <td class="c-r" data-l="原因">开头与结尾是最确定的两个状态，能和对照表逐项核对内容；中间一帧负责发现「跑到一半空掉 / 卡住 / 元素没出现」；窄屏那张负责排版溢出。四点刚好覆盖静止、运动、终态、窄屏四类问题，不必把整段动画都截下来。</td>
+          <td class="c-v" data-l="验收通过标准">四张图各自能回答一个问题：开头对不对、中途有没有断、结尾对不对、窄屏有没有溢出。有一张答不出问题，说明这张该换成别的刻度。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">4.3</span></td>
-          <td class="c-t"><span class="t">图长得一样怎么办</span></td>
-          <td class="c-d" data-l="描述">相邻两张图字节一致就是同一画面，立刻回头查：常见是端口写错、时间点没换算、跳转被夹到了结尾。</td>
+          <td><span class="t">图长得一样怎么查</span></td>
+          <td class="c-d" data-l="描述">收到 1.7 的废帧告警后，按顺序排查：地址或端口是否打错（截到错误页）、跳转刻度是否被夹到结尾、这一刻动画是否本来就在静止、是否把同一张图重复保存了。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">这三种错都会让每次跳转落到同一画面，是截图环节最常见的假象。</td>
+          <td class="c-r" data-l="原因">这四种是实际踩过的成因，而且都表现成「每次跳转都落到同一画面」，光看图看不出差别。</td>
+          <td class="c-v" data-l="验收通过标准">修好后四张图字节数互不相同，并且中间那张的文字内容与开头那张不同（不是同一句字幕）。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">4.4</span></td>
-          <td class="c-t"><span class="t">只看这些</span></td>
-          <td class="c-d" data-l="描述">颜色对不对、层次清不清楚、节奏舒不舒服、窄屏文字有没有被切掉。
-            <div class="tags"><span class="pill info">观感</span></div></td>
-          <td class="c-s empty" data-l="脚本"></td>
-          <td class="c-r" data-l="原因">这几项恰好是数字量不出来、人一眼就能看出来的部分，是截图唯一的价值所在。</td>
+          <td><span class="t">从图上看什么</span></td>
+          <td class="c-d" data-l="描述">只看四件事：颜色对不对、层次清不清楚、节奏舒不舒服、窄屏文字有没有被切掉或溢出。</td>
+          <td class="c-s" data-l="脚本"><span class="none">人眼，无脚本</span></td>
+          <td class="c-r" data-l="原因">这四项恰好是数字量不出来、人一眼能看出来的，也是截图唯一不可替代的价值。差几像素和数值对错不要在图上看——前者用 02 量，后者用 03 判。</td>
+          <td class="c-v" data-l="验收通过标准">每张图都能写出一句结论：「正常」或「具体哪里不对」。写不出结论，说明这张图不该截。</td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">4.5</span></td>
-          <td class="c-t"><span class="t">不看这些</span></td>
-          <td class="c-d" data-l="描述">差几像素、数值对不对，这两类别在图上看。</td>
-          <td class="c-s empty" data-l="脚本"></td>
-          <td class="c-r" data-l="原因">用肉眼判像素必然出错且不可复现，该类判断已有 2、3 组负责。</td>
-        </tr>
-        <tr>
-          <td class="c-no"><span class="n">4.6</span></td>
-          <td class="c-t"><span class="t">纪律</span></td>
-          <td class="c-d" data-l="描述">截之前先写清这张图要判断什么；判断不了就别截。</td>
-          <td class="c-s empty" data-l="脚本"></td>
-          <td class="c-r" data-l="原因">没目的的截图会不断追加，是任务拖长的主要来源之一。</td>
+          <td><span class="t">截图纪律</span></td>
+          <td class="c-d" data-l="描述">截之前先写清这张图要判断什么；判断不了就不截。一次只截最可能出问题的那一帧。</td>
+          <td class="c-s" data-l="脚本"><span class="none">人眼，无脚本</span></td>
+          <td class="c-r" data-l="原因">没目的的截图会不断追加，是任务拖长的主要来源——有过 34 张图只定位 6 个问题的记录，平均 5.7 张换 1 个问题。</td>
+          <td class="c-v" data-l="验收通过标准">截图数量与「待验证的断言」数量一一对应，没有多余帧；每张图都能追溯到一条待验证的判断。</td>
         </tr>
       </tbody>
     </table>
+    <div class="boundary">
+      <div class="bt">本组边界（不编号）</div>
+      <ol>
+        <li>不用图判断「差几像素」或「数值对不对」——这两类靠人工看图必然出错且不可复现。</li>
+        <li>本轮截图只给人看，<b>不进任何自动判定</b>（废帧告警除外，它由 1.7 负责）。</li>
+      </ol>
+    </div>
   </section>
 
   <section>
