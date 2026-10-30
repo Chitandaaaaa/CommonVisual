@@ -29,6 +29,7 @@
   .yes{background:#e7f6f0;color:var(--ok)}
   .neutral{background:#eef0f5;color:var(--muted)}
   .todo{background:#fdf3e3;color:var(--warn)}
+  .pend{background:#f1ecfe;color:var(--accent)}
   section{margin:32px 0 0}
   .sechead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:3px}
   .sechead .no{font:600 12px/1 ui-monospace,Menlo,monospace;color:#fff;background:var(--accent);padding:6px 9px;border-radius:7px;letter-spacing:.5px}
@@ -50,6 +51,7 @@
   table.spec tr.grp .gs{color:#7a72a0;font-size:11.5px;font-weight:400;margin-left:8px}
   table.spec tr.fix td.c-no{box-shadow:inset 3px 0 0 #dc2626}
   table.spec tr.new td.c-no{box-shadow:inset 3px 0 0 #d97706}
+  table.spec tr.pending td.c-no{box-shadow:inset 3px 0 0 #7c3aed}
 
   .boundary{margin-top:8px;background:#f7f9fc;border:1px dashed #cfd8e6;border-radius:9px;padding:9px 13px;font-size:12px;color:#4a5568}
   .boundary b{color:#33415c}
@@ -76,7 +78,7 @@
     table.spec td[data-l]:not(.c-no)::before{content:attr(data-l);display:block;font-size:10.5px;color:var(--muted);margin-top:4px}
     table.spec td.c-v[data-l]::before{color:var(--ok)}
     table.spec tr.grp{padding:6px 12px}
-    table.spec tr.fix td.c-no,table.spec tr.new td.c-no{box-shadow:none}
+    table.spec tr.fix td.c-no,table.spec tr.new td.c-no,table.spec tr.pending td.c-no{box-shadow:none}
     .ov-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
     table.ov{min-width:560px}
     .appendix dl{grid-template-columns:1fr}
@@ -91,7 +93,11 @@
   <div class="sub">83 条：通用 3 ＋ 全站通用 15 ＋ 原语页 53 ＋ 静态页 12。已实现 83 条，待补 0 条（第 2/3/4 组在 <code>tools/probes/v2/</code>，随 verify.mjs 跑）。<b>结构断言每次改完都跑；截图与人工观感留到提交前和每日定时。</b></div>
   <div class="rule-top">以本页为准 · 改本页需同步 AGENTS.md 一 与 MEMORY.md</div>
 
-  <div class="lead">本页只列<b>用例</b>——能判「过或不过」的验证动作，每条写明<b>作用在哪个页面</b>与<b>通过标准</b>。本轮重排：新增 02 组「播放器与交互」，原 2.x（原语页）顺延为 3.x、原 3.x（静态页）顺延为 4.x。<b>左侧红条</b>＝口径已按实现对齐的条目（3.2 / 3.3 / 3.39 / 3.47 / 3.49 / 3.50 / 3.52 为 b1c2da0 修正；3.30 / 3.35 / 3.37 / 4.1 / 4.5 / 4.7 / 4.12 为 2026-10-30 实现探针时按旧页实测修正），补断言以红条文案为准；<b>橙条</b>＝本轮新补的缺口（其中 3.45 本轮已按实现重写）。</div>
+  <div class="lead">本页只列<b>用例</b>——能判「过或不过」的验证动作，每条写明<b>作用在哪个页面</b>与<b>通过标准</b>。本轮重排：新增 02 组「播放器与交互」，原 2.x（原语页）顺延为 3.x、原 3.x（静态页）顺延为 4.x。<b>左侧红条</b>＝口径已按实现对齐的条目（3.2 / 3.3 / 3.39 / 3.47 / 3.49 / 3.50 / 3.52 为 b1c2da0 修正；3.30 / 3.35 / 3.37 / 4.1 / 4.5 / 4.7 / 4.12 为 2026-10-30 实现探针时按旧页实测修正），补断言以红条文案为准；<b>橙条</b>＝本轮新补的缺口（其中 3.45 本轮已按实现重写）；<b>紫条</b>＝2026-10-31 登记的待处理条目（v2 标定迁移，清单见下）。</div>
+    <div class="boundary warn"><b>待处理（2026-10-31 登记）—— 当前 v2 12 页门禁仅这 7 条红，全部是探针按旧页标定、非页面缺陷。</b><br>
+      ① <b>一条用例捆绑多个验证（待拆分，5 条）</b>：3.23 reduce（Σ² 折进 + 源卡清空 + 「every 扫全部槽」隐含「卡上无其他块」——v2 常设预留空槽非缺陷）· 3.25 reduce（every 扫到收场后隐藏空槽：v2 置透明不删节点，旧页删节点）· 3.37 allreduce（红因是采样点：字幕第 0 段「逐段待相加」被合并段正则误匹配，采到开场帧；改用 <code>win.r0merge</code> 现算）· 3.38 allreduce（同 3.37 锚点问题）· 3.45 reducescatter（一条含两验证：①全程扫描不变式 v2 已过 ②结束帧 −20 刻度提前量采到 Σʙ² 折算中——恰是「边换段边折算」的正常相；拆两条，②采样用 <code>win.merge1.e</code> 不减提前量）。<br>
+      ② <b>旧页口径待逐条确认（2 条）</b>：3.21 reduce「初始态各 1 块」—— v2 每卡整份 4 块，与 3.35（allreduce 同款、已改口径）对齐与否待确认 · V4「空槽底色 #f7f8fc」（_common.mjs 共享层视觉契约，随 2.x 每页跑，未占用例编号）—— 期望 t0 有 <code>4 3</code> 虚线空槽，v2 空槽随「预留缓冲」显形（preAt 机制，同 3.3），采样时机待确认。
+    </div>
 
   <div class="ov-wrap">
   <table class="ov" style="margin-top:14px">
@@ -202,11 +208,11 @@
 
         <tr class="grp"><td colspan="5"><span class="gp">reduce</span><span class="gs">相加：上排唯一累加器，来一份折一份</span></td></tr>
         <tr><td class="c-no"><span class="n">3.20</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">挂载四张卡</span></td><td class="c-v" data-l="断言"><code>cards=4</code>。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
-        <tr><td class="c-no"><span class="n">3.21</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">初始态四卡各一段</span></td><td class="c-v" data-l="断言">刻度 0：四张卡各 1 块。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
+        <tr class="pending"><td class="c-no"><span class="n">3.21</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">初始态四卡各一段</span></td><td class="c-v" data-l="断言">刻度 0：四张卡各 1 块。<b>〔2026-10-31 待定口径〕</b>v2 每卡整份 4 块（reduce 每人持全量，与 3.35 同款），旧页口径「各 1 块」沿用与否待确认。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="pill pend">待定口径</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
         <tr><td class="c-no"><span class="n">3.22</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">累加器始终只有一块</span></td><td class="c-v" data-l="断言">合并段逐帧：累加器块数恒为 1（不是攒成一堆再算）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
-        <tr class="new"><td class="c-no"><span class="n">3.23</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">每份到达就折进 Σ</span></td><td class="c-v" data-l="断言">每一份落位后的下一帧：累加器文字已变成 Σ，对应源卡那格同时清空 —— 不是等三份全到才算。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
+        <tr class="new pending"><td class="c-no"><span class="n">3.23</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">每份到达就折进 Σ</span></td><td class="c-v" data-l="断言">每一份落位后的下一帧：累加器文字已变成 Σ，对应源卡那格同时清空 —— 不是等三份全到才算。<b>〔2026-10-31 待拆分〕</b>一条捆绑三个验证（折进 / 源卡清空 / 「every 扫全部槽」隐含「卡上无其他块」）；v2 红因是 every 扫到常设预留空槽，非页面缺陷——拆开后断言只扫带字母的槽。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="pill pend">待拆分</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
         <tr><td class="c-no"><span class="n">3.24</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">中段出现计算框</span></td><td class="c-v" data-l="断言">细扫合并段：计算框不透明度最大值 &gt; 0.5（个数与位置在补断言时实测）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
-        <tr><td class="c-no"><span class="n">3.25</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">终态累加器是 Σ</span></td><td class="c-v" data-l="断言">刻度 1000：累加器 1 块，文字为 Σ。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
+        <tr class="pending"><td class="c-no"><span class="n">3.25</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">终态累加器是 Σ</span></td><td class="c-v" data-l="断言">刻度 1000：累加器 1 块，文字为 Σ。<b>〔2026-10-31 待拆分〕</b>v2 红因：every 扫到收场后隐藏空槽（v2 置透明不删节点，旧页删节点），改为只扫带字母的槽；且「1 块」为旧页形态（v2 终态 4 块 ΣAx4），期望值一并确认。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="pill pend">待拆分</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
         <tr><td class="c-no"><span class="n">3.26</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">终态源卡清空</span></td><td class="c-v" data-l="断言">刻度 1000：卡 1/2/3 为 0 块（被消耗）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
 
         <tr class="grp"><td colspan="5"><span class="gp">allgather</span><span class="gs">集齐：环状 3 轮，人人拿到全集</span></td></tr>
@@ -222,8 +228,8 @@
         <tr><td class="c-no"><span class="n">3.34</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">挂载四张卡</span></td><td class="c-v" data-l="断言"><code>cards=4</code>。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
         <tr class="fix"><td class="c-no"><span class="n">3.35</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">初始态四卡各一整份</span></td><td class="c-v" data-l="断言">刻度 0：四张卡各持整份 A B C D（allreduce 的起点是整份；「各 1 块」是 allgather 的起点）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
         <tr><td class="c-no"><span class="n">3.36</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">横向配对先于纵向</span></td><td class="c-v" data-l="断言">第一轮动的是 0-1 与 2-3，第二轮才是 0-2 与 1-3，顺序不能反。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
-        <tr class="fix"><td class="c-no"><span class="n">3.37</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">横向轮后每卡四块全是 Σᴀ²</span></td><td class="c-v" data-l="断言">第一轮合并结束那一帧：四张卡上排各 <b>4 块</b>、全部是 2 份的 Σᴀ²（下标列字母、上标 2）—— 不是 1 份原始块，也还不是终态的 4 份。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
-        <tr><td class="c-no"><span class="n">3.38</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">中段出现计算框</span></td><td class="c-v" data-l="断言">两轮的合并段各扫一遍：计算框不透明度最大值 &gt; 0.5（个数与位置在补断言时实测）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
+        <tr class="fix pending"><td class="c-no"><span class="n">3.37</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">横向轮后每卡四块全是 Σᴀ²</span></td><td class="c-v" data-l="断言">第一轮合并结束那一帧：四张卡上排各 <b>4 块</b>、全部是 2 份的 Σᴀ²（下标列字母、上标 2）—— 不是 1 份原始块，也还不是终态的 4 份。<b>〔2026-10-31 待拆分〕</b>v2 红因是采样点：字幕第 0 段「逐段待相加」被合并段正则误匹配、采到开场帧；改用 <code>win.r0merge</code> 现算。v2 画面符合本条语义。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="pill pend">待拆分</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
+        <tr class="pending"><td class="c-no"><span class="n">3.38</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">中段出现计算框</span></td><td class="c-v" data-l="断言">两轮的合并段各扫一遍：计算框不透明度最大值 &gt; 0.5（个数与位置在补断言时实测）。<b>〔2026-10-31 待拆分〕</b>同 3.37 的锚点误匹配（两轮中点被算到开场段）；窗口改用 win 现算。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="pill pend">待拆分</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
         <tr class="fix"><td class="c-no"><span class="n">3.39</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">终态每卡四块全是 Σ</span></td><td class="c-v" data-l="断言">刻度 1000：每张卡 <b>4 块</b>、全部为 Σ，合计 16 块（第 i 段 = 四卡第 i 段之和）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
         <tr><td class="c-no"><span class="n">3.40</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">终态没有残留原始块</span></td><td class="c-v" data-l="断言">刻度 1000：不再出现 A/B/C/D 原始块。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
 
@@ -232,7 +238,7 @@
         <tr><td class="c-no"><span class="n">3.42</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">初始态 32 个槽位标签</span></td><td class="c-v" data-l="断言">刻度 0：槽位文字共 32 个（每卡顶排 4 + 接收排 4）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
         <tr><td class="c-no"><span class="n">3.43</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">card0 顶排是 A B C D</span></td><td class="c-v" data-l="断言">刻度 0：前 4 个标签依次为 A、B、C、D。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
         <tr><td class="c-no"><span class="n">3.44</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">中段计算框会亮起</span></td><td class="c-v" data-l="断言">从 100 扫到 960、每 40 一跳：计算框最亮 &gt; 0.5。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
-        <tr class="new"><td class="c-no"><span class="n">3.45</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">全程无整份 Σ 中间态</span></td><td class="c-v" data-l="断言">第 1 轮合并结束的帧：上排被换出的列已空、留下的列是 2 份的 Σᴀ²（下标列字母、上标 2）—— 全程<b>不存在</b>「先合成整份 Σ 再切开」的中间态（递归减半是边换段边折算，这一点与 reduce 的「折完再收场」不同）。本条原写成「分拆前有整块 Σ」，与实现不符，已重写。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
+        <tr class="new pending"><td class="c-no"><span class="n">3.45</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">全程无整份 Σ 中间态</span></td><td class="c-v" data-l="断言">第 1 轮合并结束的帧：上排被换出的列已空、留下的列是 2 份的 Σᴀ²（下标列字母、上标 2）—— 全程<b>不存在</b>「先合成整份 Σ 再切开」的中间态（递归减半是边换段边折算，这一点与 reduce 的「折完再收场」不同）。本条原写成「分拆前有整块 Σ」，与实现不符，已重写。<b>〔2026-10-31 待拆分〕</b>一条含两个验证：①全程扫描不变式（v2 已过）②结束帧状态（−20 刻度提前量在 v2 采到 Σʙ² 折算中，恰是「边换段边折算」的正常相）——拆两条，②采样改 <code>win.merge1.e</code> 不减提前量。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="pill pend">待拆分</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
         <tr><td class="c-no"><span class="n">3.46</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">终态计算框全隐</span></td><td class="c-v" data-l="断言">刻度 1000：4 个计算框，最大不透明度 &lt; 0.05。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
         <tr class="fix"><td class="c-no"><span class="n">3.47</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">终态每卡一段、合起来是 Σ</span></td><td class="c-v" data-l="断言">刻度 1000：每张卡 1 块、四块互不相同；四块的来源标记合起来正好覆盖 A/B/C/D 全集。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/v2/gather.mjs</span></td></tr>
 
@@ -296,7 +302,8 @@
 
   <div class="foot">
     唯一来源。改本页后同步 <code>AGENTS.md</code> 一节与 <code>MEMORY.md</code> 的验证小节。<br>
-    红条 7 条（3.2 / 3.3 / 3.39 / 3.47 / 3.49 / 3.50 / 3.52）口径已按实现对齐（b1c2da0）；3.45 已按实现重写（全程无整份 Σ 中间态）。2026-10-30 实现探针轮：全部 83 条已实现（tools/probes/v2/），并按旧页实测再对齐 7 条口径 —— 3.30 / 3.35 / 3.37 / 4.1 / 4.5 / 4.7 / 4.12。
+    红条 7 条（3.2 / 3.3 / 3.39 / 3.47 / 3.49 / 3.50 / 3.52）口径已按实现对齐（b1c2da0）；3.45 已按实现重写（全程无整份 Σ 中间态）。2026-10-30 实现探针轮：全部 83 条已实现（tools/probes/v2/），并按旧页实测再对齐 7 条口径 —— 3.30 / 3.35 / 3.37 / 4.1 / 4.5 / 4.7 / 4.12。<br>
+    2026-10-31 v2 首跑：12 页仅 7 红（reduce 3.21 / 3.23 / 3.25 / V4、allreduce 3.37 / 3.38、reducescatter 3.45），全部为探针按旧页标定、非页面缺陷，紫条登记待处理（顶部清单）：5 条待拆分（一条用例捆绑多个验证）、2 条口径待逐条确认。
   </div>
 </div>
 </body>
