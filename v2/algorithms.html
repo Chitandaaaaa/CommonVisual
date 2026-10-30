@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CommonVisual · 实现方式与算法骨架</title>
+<meta name="description" content="八个集合通信原语的实现方式：环、树、递归加倍与减半、Bruck、全连接、分层与网内计算，以及 NCCL 如何自动选型。">
+<link rel="stylesheet" href="assets/theme/theme.css">
+<link rel="stylesheet" href="assets/pages/docs.css">
+<link rel="stylesheet" href="assets/pages/algorithms.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="hd" id="hd"></header>
+  <nav class="jump" id="jump" aria-label="章节索引"></nav>
+  <main id="app"></main>
+
+  <footer class="ft">
+    <p>语义与前后状态在 <a href="layout.html" style="color:inherit">前后对照表</a>，这里只讲怎么走。</p>
+    <a class="back" href="index.html">← 回到原语关系树</a>
+  </footer>
+
+</div>
+
+<script src="assets/prim/dom.js"></script>
+<script src="assets/theme/theme.js"></script>
+<script src="assets/registry.js"></script>
+<script src="assets/blocks/head.js"></script>
+<script src="assets/blocks/table.js"></script>
+<script src="assets/blocks/toc.js"></script>
+<script src="assets/boot.js"></script>
+<script>
+  CV.pages = CV.pages || {};
+  CV.pages.algorithms = function () {
+    document.getElementById('hd').appendChild(CV.blocks.head({
+      title: '实现方式 · 算法骨架',
+      lead: '原语定义「要什么结果」，算法决定「怎么走到」。同一个原语可以有好几种走法 —— 各原语页里的动画，只是其中一种的具体执行。'
+    }));
+    CV.blocks.algorithmsApp(document.getElementById('app'), document.getElementById('jump'));
+  };
+  CV.boot('algorithms');
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+/* ============================================================
+   CommonVisual v2 · L0 令牌（唯一 :root）
+   全站的色、尺寸、缓动从这里取。页面级 css 不许再开 :root。
+   ============================================================ */
+
+:root {
+  --bg:        #f4f6fb;
+  --panel:    #ffffff;
+  --line:     #e5e8f1;
+  --line-2:   #d3d8e6;
+  --tx:       #161b2e;
+  --tx-2:     #5f6780;
+  --tx-3:     #939bb2;
+
+  --accent:   #6d28d9;
+  --accent-2: #7c3aed;
+  --accent-soft: rgba(109, 40, 217, .08);
+
+  /* 控制条中性色：低存在感，白灰体系 */
+  --ctl-ink:   #6b7488;   /* 播放键 / 图标主体 */
+  --ctl-ink-2: #7d8699;   /* 悬停 */
+  --ctl-track: #e6e9f0;   /* 进度条轨道 */
+  --ctl-fill:  #8b93a6;   /* 进度条已播放段 */
+
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  /* ── 静态页族令牌（index 玻璃质感 / docs 深紫）── 全站唯一 :root 在此 */
+  --deep:     #4c1d95;
+  --ink:      #14151a;
+  --ink-2:    #4a4d57;
+  --ink-3:    #8b8e99;
+  --hair:     rgba(20, 21, 26, .09);
+  --hair-2:   rgba(20, 21, 26, .05);
+  --violet:   #6d28d9;
+  --violet-2: #8b5cf6;
+  --violet-3: #a78bfa;
+  --c0: #7c3aed;
+  --c1: #0891b2;
+  --c2: #059669;
+  --c3: #d97706;
+  --glass:    rgba(255, 255, 255, .72);
+  --ease:     cubic-bezier(.22, .8, .28, 1);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --s: 1;
+}
+
+@media (min-width: 1500px) { :root { --s: 1.06; } }
+@media (min-width: 1700px) { :root { --s: 1.14; } }
+@media (min-width: 1900px) { :root { --s: 1.22; } }
+@media (min-width: 2100px) { :root { --s: 1.30; } }
+@media (min-width: 2400px) { :root { --s: 1.36; } }

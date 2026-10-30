@@ -1,0 +1,509 @@
+/* CommonVisual v2 · 首页样式（令牌在 theme.css） */
+
+/* ============================================================
+   CommonVisual · 首页
+   极简 · 玻璃质感 · 全动画驱动
+   ============================================================ */
+
+
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ── 背景：柔光斑 + 网格纹理 ───────────────────────────── */
+.bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: .5;
+  will-change: transform;
+}
+.b1 {
+  width: 620px; height: 620px;
+  left: -180px; top: -220px;
+  background: radial-gradient(circle, rgba(124, 58, 237, .30), transparent 70%);
+  animation: float1 22s var(--ease) infinite alternate;
+}
+.b2 {
+  width: 560px; height: 560px;
+  right: -160px; top: 10%;
+  background: radial-gradient(circle, rgba(8, 145, 178, .22), transparent 70%);
+  animation: float2 26s var(--ease) infinite alternate;
+}
+.b3 {
+  width: 520px; height: 520px;
+  left: 38%; bottom: -240px;
+  background: radial-gradient(circle, rgba(167, 139, 250, .26), transparent 70%);
+  animation: float3 30s var(--ease) infinite alternate;
+}
+.mesh {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(20, 21, 26, .028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 21, 26, .028) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 120% 90% at 50% 40%, #000 30%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 120% 90% at 50% 40%, #000 30%, transparent 78%);
+}
+
+@keyframes float1 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(90px, 70px, 0) scale(1.14); }
+}
+@keyframes float2 {
+  from { transform: translate3d(0, 0, 0) scale(1.1); }
+  to   { transform: translate3d(-110px, 90px, 0) scale(.94); }
+}
+@keyframes float3 {
+  from { transform: translate3d(0, 0, 0) scale(.96); }
+  to   { transform: translate3d(70px, -90px, 0) scale(1.12); }
+}
+
+/* ── 布局 ───────────────────────────────────────────────── */
+.wrap {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr);
+  align-items: center;
+  gap: calc(clamp(40px, 6vw, 96px) * var(--s));
+  max-width: calc(1400px * var(--s));
+  margin: 0 auto;
+  padding: calc(clamp(48px, 7vh, 88px) * var(--s)) calc(clamp(28px, 5vw, 72px) * var(--s));
+}
+
+/* ── 左：标题 ───────────────────────────────────────────── */
+.hero { max-width: calc(500px * var(--s)); }
+
+.title {
+  margin: 0 0 calc(24px * var(--s));
+  /* 上限恒为 62px，再乘 --s：这样标题与卡片、箭头、间距是同一个倍率，
+     2560 上就是「笔记本那一版放大 1.36 倍」，比例关系一点没变。
+     试过把上限提到 70px（宽屏上 95px 更满），但那是另一个比例了 ——
+     标题会比原语树抢戏，等于在宽屏上重新做了一次版式决定。别这么干。 */
+  font-size: calc(clamp(38px, 4.6vw, 62px) * var(--s));
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -.035em;
+}
+.title .l {
+  display: block;
+  animation: fadeUp 1s var(--ease-out) both;
+}
+.title .l:nth-child(1) { animation-delay: .10s; }
+.title .l:nth-child(2) { animation-delay: .19s; }
+.title .l:nth-child(3) { animation-delay: .28s; }
+.title u {
+  color: var(--violet);
+  text-decoration: underline;
+  text-decoration-thickness: calc(4px * var(--s));
+  text-underline-offset: .12em;
+  text-decoration-color: rgba(109, 40, 217, .28);
+  transition: text-decoration-color .5s var(--ease);
+}
+.title:hover u { text-decoration-color: rgba(109, 40, 217, .7); }
+
+/* ── 画字：鼠标移上去，一道斜光从左下扫到右上 ──────────────
+   做法：把「紫底 + 中间一条白光」画成 45° 背景渐变，再用 background-clip:text
+   按字形裁切，所以光只出现在笔画上。
+   渐变图 = 元素宽高各 ×3，光带落在图正中，只有位移到中间区间才看得见；
+   关键帧 80% 20% → 20% 80% 让光带中心沿「左下角 → 右上角」走，
+   两端各留一点余量，起止时整片纯紫（光带在盒外），所以不会突兀地出现/消失。
+   光带用 8 个色标拉出晕开的边缘，避免一刀切的生硬白条。 */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .title u {
+    background-image: linear-gradient(45deg,
+        var(--violet) 0 46.8%,
+        #ddd6fe 47.9%,
+        #f0ebff 48.9%,
+        #fff 49.7%,
+        #fff 50.3%,
+        #f0ebff 51.1%,
+        #ddd6fe 52.1%,
+        var(--violet) 53.2% 100%);
+    background-size: 300% 300%;
+    background-repeat: no-repeat;
+    background-position: 100% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .title u:hover { animation: glyph-sweep .62s var(--ease) 1; }
+  @keyframes glyph-sweep {
+    from { background-position: 80% 20%; }
+    to   { background-position: 20% 80%; }
+  }
+}
+@keyframes swipe {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+.sub {
+  margin: 0 0 calc(34px * var(--s));
+  font-size: calc(15.5px * var(--s));
+  line-height: 1.75;
+  color: var(--ink-2);
+  max-width: calc(430px * var(--s));
+  animation: fadeUp 1s var(--ease-out) .38s both;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(10px * var(--s));
+  padding: calc(13px * var(--s)) calc(22px * var(--s));
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  text-decoration: none;
+  font-size: calc(14px * var(--s));
+  font-weight: 550;
+  letter-spacing: -.005em;
+  box-shadow: 0 1px 2px rgba(20, 21, 26, .16),
+              0 10px 26px -12px rgba(20, 21, 26, .55);
+  transition: transform .4s var(--ease-out), box-shadow .4s var(--ease-out),
+              background .4s var(--ease);
+  animation: fadeUp 1s var(--ease-out) .46s both;
+}
+/* 按钮里的箭头跟着 --s 放大（HTML 上是 15×15 的属性，这里覆盖） */
+.btn svg { width: calc(15px * var(--s)); height: calc(15px * var(--s)); }
+.btn .bl {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .4s var(--ease-out);
+}
+.btn:hover {
+  transform: translateY(-2px);
+  background: var(--violet);
+  box-shadow: 0 1px 2px rgba(109, 40, 217, .2),
+              0 18px 38px -14px rgba(109, 40, 217, .6);
+}
+.btn:hover .bl { transform: translateX(4px); }
+
+/* 主按钮下的次级入口：不抢主按钮的视觉重量 */
+.hero-alt {
+  margin: calc(18px * var(--s)) 0 0;
+  font-size: calc(13px * var(--s));
+  animation: fadeUp 1s var(--ease-out) .56s both;
+}
+.hero-alt a {
+  color: var(--ink-2, #5b5d69);
+  text-decoration: none;
+  border-bottom: 1px dashed currentColor;
+  padding-bottom: 2px;
+  transition: color .3s var(--ease);
+}
+.hero-alt a:hover { color: var(--violet); }
+/* 多条次级入口之间的分隔符 */
+.hero-alt .sep {
+  margin: 0 7px;
+  color: var(--ink-3, #9b9daa);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── 右：原语树 ─────────────────────────────────────────── */
+.tree-panel {
+  position: relative;
+  animation: panelIn 1.1s var(--ease-out) .12s both;
+}
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(22px) scale(.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+.tree {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) calc(64px * var(--s)) minmax(0, 1.14fr);
+  /* 11 行是交错的：节点行 1/3/5/7/9/11（auto），箭头行 2/4/6/8/10（34px）。
+     必须逐行写死 —— repeat(6,auto) repeat(5,34px) 会把后 5 行全压成 34px，
+     导致 row7 的节点卡片溢出、压到上一行的箭头上。
+     箭头行高必须与 .conn-v svg 的高度同步（都是 34 * --s）。 */
+  grid-template-rows: auto calc(34px * var(--s)) auto calc(34px * var(--s)) auto
+                      calc(34px * var(--s)) auto calc(34px * var(--s)) auto
+                      calc(34px * var(--s)) auto;
+  align-items: center;
+}
+/* 节点行高度统一：显式给 auto 行一个上限，防止相邻内容把行撑高 */
+.tree > .node { align-self: center; }
+.tree > .conn { align-self: center; }
+
+/* ── 节点卡 ─────────────────────────────────────────────── */
+.node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: calc(6px * var(--s));
+  padding: calc(11px * var(--s)) calc(14px * var(--s)) calc(12px * var(--s));
+  border-radius: calc(14px * var(--s));
+  background: rgba(255, 255, 255, .78);
+  border: 1px solid var(--hair);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(20, 21, 26, .04);
+  will-change: transform;
+  transition: transform .5s cubic-bezier(.25, .46, .45, .94),
+              box-shadow .5s cubic-bezier(.25, .46, .45, .94),
+              border-color .45s cubic-bezier(.25, .46, .45, .94),
+              background .45s cubic-bezier(.25, .46, .45, .94);
+  animation: nodeIn .85s var(--ease-out) backwards;
+}
+/* 逐个错开进场 */
+#n-broadcast       { animation-delay: .30s; }
+#n-scatter         { animation-delay: .38s; }
+#n-gather          { animation-delay: .46s; }
+#n-allgather       { animation-delay: .54s; }
+#n-reduce          { animation-delay: .62s; }
+#n-allreduce       { animation-delay: .70s; }
+#n-reducescatter   { animation-delay: .78s; }
+#n-alltoall        { animation-delay: .86s; }
+
+@keyframes nodeIn {
+  from { opacity: 0; transform: translateY(14px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+.node:hover {
+  transform: translateY(-4px) scale(1.015);
+  border-color: rgba(109, 40, 217, .28);
+  background: rgba(255, 255, 255, .98);
+  box-shadow: 0 1px 2px rgba(20, 21, 26, .05),
+              0 18px 40px -20px rgba(109, 40, 217, .5);
+}
+
+.node-top {
+  display: flex;
+  align-items: center;
+  gap: calc(9px * var(--s));
+  min-width: 0;
+  padding-right: calc(44px * var(--s));
+}
+.node-planned .node-top { padding-right: calc(52px * var(--s)); }
+.node-bot {
+  display: flex;
+  align-items: baseline;
+  gap: calc(9px * var(--s));
+}
+
+/* rank 小圆点 */
+.ranks { display: inline-flex; gap: calc(3px * var(--s)); flex-shrink: 0; }
+.ranks i {
+  width: calc(5px * var(--s)); height: calc(5px * var(--s));
+  border-radius: 50%;
+  background: rgba(20, 21, 26, .13);
+  transition: background .45s var(--ease), transform .45s cubic-bezier(.25, .46, .45, .94);
+}
+.ranks i.on { background: var(--c); }
+.ranks i.on { animation: dotOn .5s var(--ease-out) both; }
+.ranks i.on:nth-child(1) { animation-delay: .34s; }
+.ranks i.on:nth-child(2) { animation-delay: .40s; }
+.ranks i.on:nth-child(3) { animation-delay: .46s; }
+.ranks i.on:nth-child(4) { animation-delay: .52s; }
+@keyframes dotOn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.node:hover .ranks i.on { transform: scale(1.2); }
+
+.node-en {
+  font-family: var(--mono);
+  font-size: calc(13px * var(--s));
+  font-weight: 600;
+  letter-spacing: -.02em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.node-cn {
+  font-size: calc(13px * var(--s));
+  font-weight: 500;
+  color: var(--ink-2);
+  letter-spacing: -.005em;
+  white-space: nowrap;
+}
+.node-dir {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: calc(10px * var(--s));
+  letter-spacing: .01em;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.node-flag {
+  position: absolute;
+  top: 7px; right: 9px;
+  font-size: 9px;
+  letter-spacing: .05em;
+  color: var(--ink-3);
+  background: rgba(255, 255, 255, .8);
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  padding: 0 6px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* 未实现：虚线边、降饱和 */
+.node-planned {
+  background: rgba(255, 255, 255, .40);
+  border-style: dashed;
+  border-color: rgba(20, 21, 26, .13);
+  cursor: default;
+}
+.node-planned:hover {
+  transform: translateY(-3px) scale(1.01);
+  background: rgba(255, 255, 255, .74);
+  border-color: rgba(109, 40, 217, .22);
+}
+.node-planned .node-en,
+.node-planned .node-cn { color: var(--ink-2); }
+
+/* ── 连接线 ─────────────────────────────────────────────── */
+.conn {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.conn svg { overflow: visible; }
+/* 箭头尺寸跟着 --s 走（HTML 里是 20×34 / 76×20 的属性，这里覆盖）。
+   纵向高度必须等于 .tree 里 34px 那一档行高，否则箭头会被行盒压扁。 */
+.conn-v svg { width: calc(20px * var(--s)); height: calc(34px * var(--s)); }
+.conn-h svg { width: calc(76px * var(--s)); height: calc(20px * var(--s)); }
+.conn .ln {
+  fill: none;
+  stroke: rgba(20, 21, 26, .16);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw .85s var(--ease-out) forwards;
+}
+.conn .fl {
+  fill: none;
+  stroke: var(--violet);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-dasharray: 4 8;
+  opacity: 0;
+}
+.conn .hd {
+  fill: none;
+  stroke: rgba(20, 21, 26, .28);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  animation: fadeIn .45s var(--ease) forwards;
+}
+/* 各条线依次画出来：--d 是这条线的起始延时，--e 是箭头头部延后量 */
+.conn .ln { animation-delay: var(--d, .4s); }
+.conn .hd { animation-delay: calc(var(--d, .4s) + var(--e, .7s)); }
+
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes fadeIn { to { opacity: 1; } }
+
+/* 高亮态：相关的线亮起来并「流动」 */
+.conn.is-lit .ln { stroke: rgba(109, 40, 217, .45); stroke-width: 1.8; }
+.conn.is-lit .hd { stroke: var(--violet); stroke-width: 1.8; }
+.conn.is-lit .fl { opacity: 1; animation: flow 1.1s linear infinite; }
+@keyframes flow {
+  from { stroke-dashoffset: 24; }
+  to   { stroke-dashoffset: 0; }
+}
+
+.node.is-lit {
+  border-color: rgba(109, 40, 217, .34);
+  background: rgba(255, 255, 255, .95);
+  box-shadow: 0 1px 2px rgba(20, 21, 26, .05),
+              0 18px 40px -18px rgba(109, 40, 217, .5);
+}
+
+/* ── Toast ──────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 34px;
+  transform: translate(-50%, 16px);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(20, 21, 26, .92);
+  color: #fff;
+  font-size: 13px;
+  letter-spacing: -.005em;
+  box-shadow: 0 12px 34px -14px rgba(20, 21, 26, .8);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .34s var(--ease), transform .34s var(--ease-out);
+  z-index: 50;
+}
+.toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+
+/* ── 窄屏 ───────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .wrap {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+    padding: 40px 22px 56px;
+    align-items: start;
+  }
+  .hero { max-width: none; }
+  .title { font-size: clamp(32px, 8vw, 44px); }
+  .sub { font-size: 14.5px; }
+  .tree-panel { padding: 16px 14px; }
+  /* 窄屏：两列压成单列，节点全宽，英文名不再被截断 */
+  .tree {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-auto-flow: row;
+    grid-auto-rows: auto;
+  }
+  .tree > * { grid-column: 1 !important; grid-row: auto !important; }
+  .node { padding: 10px 12px 11px; gap: 5px; }
+  .node-en { font-size: 12px; }
+  .node-cn { font-size: 12px; }
+  .node-dir { font-size: 9px; }
+  .node-flag { display: none; }
+  .conn svg { transform: scale(.72); }
+  /* 横向箭头在单列下无意义，隐藏 */
+  .conn-h { display: none; }
+}
+
+/* 尊重「减少动效」偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

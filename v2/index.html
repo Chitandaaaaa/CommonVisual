@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CommonVisual · 分布式通信原语可视化</title>
+<meta name="description" content="NCCL / torch.distributed 的 8 个集合通信原语可视化：Broadcast、Scatter、Gather、Reduce、All-Gather、All-Reduce、Reduce-Scatter、All-to-All，每个都有数据流动的完整演绎。">
+<link rel="stylesheet" href="assets/theme/theme.css">
+<link rel="stylesheet" href="assets/pages/index.css">
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <span class="blob b1"></span>
+  <span class="blob b2"></span>
+  <span class="blob b3"></span>
+  <span class="mesh"></span>
+</div>
+
+<main class="wrap">
+
+  <!-- ══════════════ 左：标题 ══════════════ -->
+  <section class="hero">
+    <h1 class="title">
+      <span class="l">把集合通信</span>
+      <span class="l">画成看得懂的</span>
+      <span class="l">动<u>画</u></span>
+    </h1>
+
+    <p class="sub">
+      8 个通信原语，每个都有数据怎么流动的完整演绎 —— 谁发出、经过谁、最后落在哪，一段一段看得清。
+    </p>
+
+    <a class="btn" href="gather.html">
+      <span>看 Gather 跑一遍</span>
+      <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+        <path class="bl" d="M2 8h11M9 4l4 4-4 4"/>
+      </svg>
+    </a>
+
+    <p class="hero-alt">
+      <a href="layout.html">八个原语的前后对照表</a>
+      <span class="sep" aria-hidden="true">·</span>
+      <a href="algorithms.html">算法骨架与实现方式</a>
+      <span class="sep" aria-hidden="true">·</span>
+      <a href="anatomy.html">组件与动效规范</a>
+    </p>
+  </section>
+
+  <!-- ══════════════ 右：原语树（registry 的 rel[] 推出行列） ══════════════ -->
+  <section class="tree-panel">
+    <div class="tree" id="tree"></div>
+  </section>
+
+</main>
+
+<script src="assets/prim/dom.js"></script>
+<script src="assets/theme/theme.js"></script>
+<script src="assets/registry.js"></script>
+<script src="assets/nav/node.js"></script>
+<script src="assets/nav/edge.js"></script>
+<script src="assets/boot.js"></script>
+<script>
+  CV.pages = CV.pages || {};
+  CV.pages.index = function () {
+    CV.nav.tree(document.getElementById('tree'), CV.registry);
+  };
+  CV.boot('index');
+</script>
+</body>
+</html>
