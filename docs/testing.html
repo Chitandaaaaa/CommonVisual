@@ -8,7 +8,7 @@
   :root{
     --bg:#f5f6f8;--panel:#fff;--ink:#1c2130;--ink2:#4b5364;--muted:#7a8296;
     --line:#e4e7ee;--accent:#7c3aed;--ok:#059669;--okline:#c8e9dc;
-    --warn:#d97706;--warnbg:#fdf3e3;--bad:#dc2626;
+    --warn:#d97706;--bad:#dc2626;
     --shadow:0 1px 2px rgba(20,25,40,.06),0 8px 24px rgba(20,25,40,.05);
   }
   *{box-sizing:border-box}
@@ -20,7 +20,7 @@
   .lead{margin:16px 0 0;color:var(--ink2);font-size:13px}
   .lead b{color:var(--ink)}
   table{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);font-size:12.5px}
-  th,td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
   th{background:#fafbfd;color:var(--ink2);font-weight:600;font-size:11.5px;white-space:nowrap}
   tbody tr:last-child td{border-bottom:none}
   tbody tr:hover td{background:#fafbff}
@@ -29,7 +29,6 @@
   .yes{background:#e7f6f0;color:var(--ok)}
   .neutral{background:#eef0f5;color:var(--muted)}
   .todo{background:#fdf3e3;color:var(--warn)}
-  .need{background:#fdeceb;color:var(--bad)}
   section{margin:32px 0 0}
   .sechead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:3px}
   .sechead .no{font:600 12px/1 ui-monospace,Menlo,monospace;color:#fff;background:var(--accent);padding:6px 9px;border-radius:7px;letter-spacing:.5px}
@@ -42,16 +41,13 @@
   table.spec th.c-v{background:#eef8f3;color:var(--ok)}
   table.spec td.c-v{background:#f8fcfa;color:#1f5c46;border-left:1px solid var(--okline)}
   tbody tr:hover td.c-v{background:#f2faf6}
-  table.spec td.c-no{white-space:nowrap}
-  table.spec .n{display:inline-block;font:600 11.5px/1 ui-monospace,Menlo,monospace;color:var(--accent);background:#f3efff;border:1px solid #e5dcfd;padding:4px 6px;border-radius:6px}
-  table.spec .t{font-weight:600;font-size:12.8px}
-  table.spec td.c-d{color:var(--ink2)}
-  table.spec td.c-d b{color:var(--ink)}
+  table.spec .n{display:inline-block;font:600 11.5px/1 ui-monospace,Menlo,monospace;color:var(--accent);background:#f3efff;border:1px solid #e5dcfd;padding:3px 6px;border-radius:6px}
+  table.spec .t{font-weight:600;font-size:12.6px}
   table.spec td code{background:#eceef4;padding:0 4px;border-radius:4px;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#3f4658;word-break:break-word}
-  table.spec td.c-s{color:var(--muted);font-size:11.5px}
-  table.spec td.c-s .f{display:block;font-family:ui-monospace,Menlo,monospace;color:#5a4a8f;background:#f7f5ff;border:1px solid #eae4fb;border-radius:5px;padding:1px 5px;margin-bottom:3px;word-break:break-all}
-  table.spec td.c-s .none{color:#c2c7d3;font-size:11px}
-  table.spec td.c-r{color:#6b6f7e}
+  table.spec td.c-p{color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:11.5px}
+  table.spec tr.grp td{background:#f6f4ff;border-top:1px solid #e3dbfb;border-bottom:1px solid #e3dbfb;padding:6px 11px}
+  table.spec tr.grp .gp{font-weight:700;color:#5b3fbe;font-size:12.3px;font-family:ui-monospace,Menlo,monospace}
+  table.spec tr.grp .gs{color:#7a72a0;font-size:11.5px;font-weight:400;margin-left:8px}
 
   .boundary{margin-top:8px;background:#f7f9fc;border:1px dashed #cfd8e6;border-radius:9px;padding:9px 13px;font-size:12px;color:#4a5568}
   .boundary b{color:#33415c}
@@ -74,8 +70,9 @@
     table.spec tr:last-child{border-bottom:none}
     table.spec td{border:none;padding:2px 0}
     table.spec td.c-v{border-left:none;margin-top:6px;border-radius:7px;padding:6px 9px}
-    table.spec td[data-l]:not(.c-no):not(.c-t)::before{content:attr(data-l);display:block;font-size:10.5px;color:var(--muted);margin-top:4px}
+    table.spec td[data-l]:not(.c-no)::before{content:attr(data-l);display:block;font-size:10.5px;color:var(--muted);margin-top:4px}
     table.spec td.c-v[data-l]::before{color:var(--ok)}
+    table.spec tr.grp{padding:6px 12px}
     .ov-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
     table.ov{min-width:520px}
     .appendix dl{grid-template-columns:1fr}
@@ -87,134 +84,147 @@
 <div class="wrap">
 
   <h1>CommonVisual · 验证用例清单</h1>
-  <div class="sub">已实现 8 条（自动 6 · 人工 2）＋ 待补 11 条，合计 19 条。本页是验证用例的唯一来源。</div>
+  <div class="sub">55 条，按页面组织：通用 3 条（每页都跑）＋ 原语页 44 条 ＋ 静态页 8 条。已实现 8 条，待补 47 条。</div>
   <div class="rule-top">以本页为准 · 改本页需同步 AGENTS.md 一 与 MEMORY.md</div>
 
-  <div class="lead">本页只列<b>用例</b>——能判定「过或不过」的验证动作。工具怎么用、文件放哪、输出怎么读，不属于用例，统一放在页末「附：工具与跑法」。</div>
+  <div class="lead">本页只列<b>用例</b>——能判「过或不过」的验证动作，每条都写明<b>作用在哪个页面</b>。写「全部页」的是每页都跑；写页名的是该页专属，例如「计算框」只在 reduce / allreduce / reducescatter 三页存在，其余五页没有这一项。工具用法不属于用例，放在页末附注。</div>
 
   <div class="ov-wrap">
   <table class="ov" style="margin-top:14px">
-    <thead><tr><th style="width:30px">#</th><th style="width:170px">组</th><th>覆盖</th><th style="width:150px">状态</th></tr></thead>
+    <thead><tr><th style="width:30px">#</th><th style="width:180px">组</th><th>覆盖</th><th style="width:170px">状态</th></tr></thead>
     <tbody>
-      <tr><td class="mono">1</td><td><b>自动用例</b></td><td>1 条全站截图比对 + 5 条 reducescatter 断言</td><td><span class="pill yes">6 条已实现</span></td></tr>
-      <tr><td class="mono">2</td><td><b>人工用例</b></td><td>桌面四帧观感、窄屏排版（全站通用）</td><td><span class="pill yes">2 条已实现</span></td></tr>
-      <tr><td class="mono">3</td><td><b>待补用例</b></td><td>其余 11 页各一条结构基线</td><td><span class="pill todo">11 条待补</span></td></tr>
+      <tr><td class="mono">1</td><td><b>通用用例</b></td><td>每页都跑：截图比对、桌面观感、窄屏排版</td><td><span class="pill yes">3 条已实现</span></td></tr>
+      <tr><td class="mono">2</td><td><b>原语页用例</b></td><td>8 页，每页 5–6 条结构断言</td><td><span class="pill yes">5 已实现</span> <span class="pill todo">39 待补</span></td></tr>
+      <tr><td class="mono">3</td><td><b>静态页用例</b></td><td>index / layout / algorithms / anatomy 各 2 条</td><td><span class="pill todo">8 待补</span></td></tr>
     </tbody>
   </table>
   </div>
 
   <!-- ===================== 01 ===================== -->
   <section>
-    <div class="sechead"><span class="no">01</span><h2>自动用例 · 机器判对错</h2><span class="meta">6 条，全部已实现</span></div>
-    <div class="role">1.1 由全量回归执行；1.2–1.6 是 reducescatter 的考卷，随该页一起跑。</div>
+    <div class="sechead"><span class="no">01</span><h2>通用用例 · 每页都跑</h2><span class="meta">3 条，已实现</span></div>
+    <div class="role">与具体原语无关，12 页逐页执行。</div>
     <table class="spec">
-      <colgroup><col style="width:5.5%"><col style="width:15.5%"><col style="width:28.5%"><col style="width:14.5%"><col style="width:17%"><col style="width:19%"></colgroup>
-      <thead><tr><th class="c-no">序号</th><th>用例</th><th>做什么</th><th>脚本</th><th>为什么需要</th><th class="c-v">通过标准</th></tr></thead>
+      <colgroup><col style="width:6%"><col style="width:10%"><col style="width:16%"><col style="width:50%"><col style="width:18%"></colgroup>
+      <thead><tr><th class="c-no">序号</th><th>页面</th><th>用例</th><th class="c-v">断言什么 · 通过标准</th><th>状态 / 脚本</th></tr></thead>
       <tbody>
         <tr>
           <td class="c-no"><span class="n">1.1</span></td>
+          <td class="c-p" data-l="页面">全部页</td>
           <td><span class="t">四张截图互不相同</span></td>
-          <td class="c-d" data-l="做什么">每页在开头（0）、中间（500）、结尾（1000）、窄屏开头（0）各截一张，再两两比字节数。</td>
-          <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="为什么">画布失效最常见的表现不是报错，是每次跳转都落到同一画面。</td>
-          <td class="c-v" data-l="通过标准">四张字节互不相同、输出无「废帧」提示。</td>
+          <td class="c-v" data-l="断言">开头（0）、中间（500）、结尾（1000）、窄屏开头（0）各一张，两两比字节数 → 四张互不相同、无「废帧」提示。</td>
+          <td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">verify.mjs</span></td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">1.2</span></td>
-          <td><span class="t">挂载后有 4 张卡</span></td>
-          <td class="c-d" data-l="做什么">进页面取当前挂载状态，数卡片对象有几个。</td>
-          <td class="c-s" data-l="脚本"><span class="f">tools/probes/reducescatter.mjs</span></td>
-          <td class="c-r" data-l="为什么">卡片没建出来时，后面所有断言都会读空值而「碰巧通过」。</td>
-          <td class="c-v" data-l="通过标准">打印 <code>mount:4 cards cards=4</code> 且 PASS。</td>
+          <td class="c-p" data-l="页面">全部页</td>
+          <td><span class="t">桌面观感</span></td>
+          <td class="c-v" data-l="断言">看三张桌面图：配色对不对、层次清不清楚、节奏舒不舒服 → 每张能写出一句结论。</td>
+          <td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">人眼</span></td>
         </tr>
         <tr>
           <td class="c-no"><span class="n">1.3</span></td>
-          <td><span class="t">初始态 32 个槽位标签</span></td>
-          <td class="c-d" data-l="做什么">停在刻度 0，数场景里有几个槽位文字标签。</td>
-          <td class="c-s" data-l="脚本"><span class="f">tools/probes/reducescatter.mjs</span></td>
-          <td class="c-r" data-l="为什么">4 卡 × 顶排 4 + 接收排 4 = 32，少一个就说明数据块没铺满。</td>
-          <td class="c-v" data-l="通过标准">打印 <code>init: 32 slot labels n=32</code> 且 PASS。</td>
-        </tr>
-        <tr>
-          <td class="c-no"><span class="n">1.4</span></td>
-          <td><span class="t">card0 顶排是 A B C D</span></td>
-          <td class="c-d" data-l="做什么">刻度 0 时取前 4 个标签文字，与 A/B/C/D 逐位比较。</td>
-          <td class="c-s" data-l="脚本"><span class="f">tools/probes/reducescatter.mjs</span></td>
-          <td class="c-r" data-l="为什么">块数对了但顺序或内容错了，图上看着还是「满的」，只有比对内容能发现。</td>
-          <td class="c-v" data-l="通过标准">打印 <code>init: card0 = A B C D ABCD</code> 且 PASS。</td>
-        </tr>
-        <tr>
-          <td class="c-no"><span class="n">1.5</span></td>
-          <td><span class="t">中段计算框会亮起</span></td>
-          <td class="c-d" data-l="做什么">从刻度 100 扫到 960，每 40 一跳，记录计算框最亮时的不透明度。</td>
-          <td class="c-s" data-l="脚本"><span class="f">tools/probes/reducescatter.mjs</span></td>
-          <td class="c-r" data-l="为什么">合并段只占总时长一小段，粗采样会整段跨过去，所以必须细扫。</td>
-          <td class="c-v" data-l="通过标准">最亮值 <code>&gt; 0.5</code>，且结果里带上出现在哪个刻度。</td>
-        </tr>
-        <tr>
-          <td class="c-no"><span class="n">1.6</span></td>
-          <td><span class="t">终态计算框全隐</span></td>
-          <td class="c-d" data-l="做什么">跳到刻度 1000，数计算框个数并取最大不透明度。</td>
-          <td class="c-s" data-l="脚本"><span class="f">tools/probes/reducescatter.mjs</span></td>
-          <td class="c-r" data-l="为什么">计算框该收起来却留着，是最典型的「动画收尾没收干净」。</td>
-          <td class="c-v" data-l="通过标准">个数 = 4 且最大不透明度 <code>&lt; 0.05</code>。</td>
+          <td class="c-p" data-l="页面">全部页</td>
+          <td><span class="t">窄屏排版不溢出</span></td>
+          <td class="c-v" data-l="断言">看窄屏那张图 → 无横向滚动、无文字截断、卡片不重叠。</td>
+          <td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">人眼</span></td>
         </tr>
       </tbody>
     </table>
-    <div class="boundary"><b>边界：</b>这 6 条都不看颜色、间距、观感；<b>没有考卷的 11 页，只有 1.1 一条在用</b>，它的 OK 只说明「这页能跑且四张图不一样」，不代表内容对。</div>
   </section>
 
   <!-- ===================== 02 ===================== -->
   <section>
-    <div class="sechead"><span class="no">02</span><h2>人工用例 · 人眼判读</h2><span class="meta">2 条，全站通用</span></div>
-    <div class="role">没有脚本，判据在人眼里；数字能量的部分不放到这里。</div>
+    <div class="sechead"><span class="no">02</span><h2>原语页用例 · 一页一组</h2><span class="meta">44 条 · 已实现 5 / 待补 39</span></div>
+    <div class="role">同一页的断言共用一次挂载，按<b>时间顺序</b>排：挂载 → 初始态 → 过程中 → 终态。</div>
     <table class="spec">
-      <colgroup><col style="width:5.5%"><col style="width:15.5%"><col style="width:28.5%"><col style="width:14.5%"><col style="width:17%"><col style="width:19%"></colgroup>
-      <thead><tr><th class="c-no">序号</th><th>用例</th><th>做什么</th><th>脚本</th><th>为什么需要</th><th class="c-v">通过标准</th></tr></thead>
+      <colgroup><col style="width:6%"><col style="width:10%"><col style="width:16%"><col style="width:50%"><col style="width:18%"></colgroup>
+      <thead><tr><th class="c-no">序号</th><th>页面</th><th>用例</th><th class="c-v">断言什么 · 通过标准</th><th>状态 / 脚本</th></tr></thead>
       <tbody>
-        <tr>
-          <td class="c-no"><span class="n">2.1</span></td>
-          <td><span class="t">桌面四帧观感</span></td>
-          <td class="c-d" data-l="做什么">看 1.1 出的三张桌面图：颜色对不对、层次清不清楚、节奏舒不舒服。</td>
-          <td class="c-s" data-l="脚本"><span class="none">人眼，无脚本</span></td>
-          <td class="c-r" data-l="为什么">配色、层级、快慢量不出数字，但一眼就能看出别扭。</td>
-          <td class="c-v" data-l="通过标准">每张图能写出一句结论（「正常」或「哪不对」）；写不出说明这张不该截。</td>
-        </tr>
-        <tr>
-          <td class="c-no"><span class="n">2.2</span></td>
-          <td><span class="t">窄屏排版不溢出</span></td>
-          <td class="c-d" data-l="做什么">看窄屏那张图：有没有横向滚动条、文字有没有被切或叠。</td>
-          <td class="c-s" data-l="脚本"><span class="none">人眼，无脚本</span></td>
-          <td class="c-r" data-l="为什么">窄屏几何是另一套，桌面正常不代表窄屏装得下。</td>
-          <td class="c-v" data-l="通过标准">无横向滚动、无文字截断、卡片不重叠。</td>
-        </tr>
+
+        <tr class="grp"><td colspan="5"><span class="gp">gather</span><span class="gs">拼：三张源卡各送一段到目标卡，源卡保留</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.1</span></td><td class="c-p" data-l="页面">gather</td><td><span class="t">挂载四张卡</span></td><td class="c-v" data-l="断言">卡片对象刚好 4 个 → <code>cards=4</code>。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.2</span></td><td class="c-p" data-l="页面">gather</td><td><span class="t">初始态源卡各持一段</span></td><td class="c-v" data-l="断言">刻度 0：卡 1/2/3 各 1 块，目标卡 0 为 0 块。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.3</span></td><td class="c-p" data-l="页面">gather</td><td><span class="t">预留缓冲后出现 4 个空槽</span></td><td class="c-v" data-l="断言">预留段之后：目标卡槽位 4 个、都无文字（空槽）。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.4</span></td><td class="c-p" data-l="页面">gather</td><td><span class="t">同一时刻只有一个包在途</span></td><td class="c-v" data-l="断言">全时间轴扫描：在途包数量最大值 = 1（三次传递串行）。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.5</span></td><td class="c-p" data-l="页面">gather</td><td><span class="t">终态目标卡集齐四段</span></td><td class="c-v" data-l="断言">刻度 1000：卡 0 有 4 块，内容依次 A B C D。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.6</span></td><td class="c-p" data-l="页面">gather</td><td><span class="t">终态源卡保留</span></td><td class="c-v" data-l="断言">刻度 1000：卡 1/2/3 仍各 1 块（复制，不是消耗）。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+
+        <tr class="grp"><td colspan="5"><span class="gp">scatter</span><span class="gs">拆：卡 0 把自己四段分给四张卡</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.7</span></td><td class="c-p" data-l="页面">scatter</td><td><span class="t">挂载四张卡</span></td><td class="c-v" data-l="断言"><code>cards=4</code>。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.8</span></td><td class="c-p" data-l="页面">scatter</td><td><span class="t">初始态只有卡 0 有数据</span></td><td class="c-v" data-l="断言">刻度 0：卡 0 有 4 块，卡 1/2/3 为 0 块。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.9</span></td><td class="c-p" data-l="页面">scatter</td><td><span class="t">同一时刻只有一个包在途</span></td><td class="c-v" data-l="断言">全时间轴扫描：在途包最大值 = 1。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.10</span></td><td class="c-p" data-l="页面">scatter</td><td><span class="t">终态四卡各一段</span></td><td class="c-v" data-l="断言">刻度 1000：四张卡各 1 块，合计正好 4 块。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.11</span></td><td class="c-p" data-l="页面">scatter</td><td><span class="t">终态卡 0 只留自己那段</span></td><td class="c-v" data-l="断言">刻度 1000：卡 0 恰 1 块，是被分走后剩下的那段。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+
+        <tr class="grp"><td colspan="5"><span class="gp">broadcast</span><span class="gs">复制：卡 0 把整份数据发给其余三张</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.12</span></td><td class="c-p" data-l="页面">broadcast</td><td><span class="t">挂载四张卡</span></td><td class="c-v" data-l="断言"><code>cards=4</code>。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.13</span></td><td class="c-p" data-l="页面">broadcast</td><td><span class="t">初始态只有卡 0 有数据</span></td><td class="c-v" data-l="断言">刻度 0：卡 0 有 4 块，其余为 0 块。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.14</span></td><td class="c-p" data-l="页面">broadcast</td><td><span class="t">三次广播依次进行</span></td><td class="c-v" data-l="断言">全时间轴扫描：在途包最大值 = 1。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.15</span></td><td class="c-p" data-l="页面">broadcast</td><td><span class="t">终态四卡内容全同</span></td><td class="c-v" data-l="断言">刻度 1000：四张卡各 4 块，四卡内容逐位相同。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.16</span></td><td class="c-p" data-l="页面">broadcast</td><td><span class="t">终态发端不被清空</span></td><td class="c-v" data-l="断言">刻度 1000：卡 0 仍 4 块（复制，不是消耗）。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+
+        <tr class="grp"><td colspan="5"><span class="gp">reduce</span><span class="gs">相加：上排唯一累加器，来一份折一份</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.17</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">挂载四张卡</span></td><td class="c-v" data-l="断言"><code>cards=4</code>。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.18</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">初始态四卡各一段</span></td><td class="c-v" data-l="断言">刻度 0：四张卡各 1 块。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.19</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">累加器始终只有一块</span></td><td class="c-v" data-l="断言">合并段逐帧：累加器块数恒为 1（不是攒成一堆再算）。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.20</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">中段出现计算框</span></td><td class="c-v" data-l="断言">细扫中段：计算框不透明度最大值 &gt; 0.5。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.21</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">终态累加器是 Σ</span></td><td class="c-v" data-l="断言">刻度 1000：累加器 1 块，文字为 Σ。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.22</span></td><td class="c-p" data-l="页面">reduce</td><td><span class="t">终态源卡清空</span></td><td class="c-v" data-l="断言">刻度 1000：卡 1/2/3 为 0 块（被消耗）。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+
+        <tr class="grp"><td colspan="5"><span class="gp">allgather</span><span class="gs">集齐：环状 3 轮，人人拿到全集</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.23</span></td><td class="c-p" data-l="页面">allgather</td><td><span class="t">挂载四张卡</span></td><td class="c-v" data-l="断言"><code>cards=4</code>。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.24</span></td><td class="c-p" data-l="页面">allgather</td><td><span class="t">初始态四卡各一段</span></td><td class="c-v" data-l="断言">刻度 0：四张卡各 1 块。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.25</span></td><td class="c-p" data-l="页面">allgather</td><td><span class="t">轮次为 3 轮</span></td><td class="c-v" data-l="断言">步骤数 = N−1 = 3 轮，不多不少。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.26</span></td><td class="c-p" data-l="页面">allgather</td><td><span class="t">终态四卡各四块</span></td><td class="c-v" data-l="断言">刻度 1000：每张卡 4 块，合计 16 块。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.27</span></td><td class="c-p" data-l="页面">allgather</td><td><span class="t">终态四卡内容相同</span></td><td class="c-v" data-l="断言">四张卡的块内容逐位相同（都是全集）。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+
+        <tr class="grp"><td colspan="5"><span class="gp">allreduce</span><span class="gs">相加后每人一份：两路配对</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.28</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">挂载四张卡</span></td><td class="c-v" data-l="断言"><code>cards=4</code>。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.29</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">初始态四卡各一段</span></td><td class="c-v" data-l="断言">刻度 0：四张卡各 1 块。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.30</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">两路配对按序进行</span></td><td class="c-v" data-l="断言">先横向配对（0-1、2-3），再纵向配对（0-2、1-3），顺序不能反。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.31</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">中段出现计算框</span></td><td class="c-v" data-l="断言">细扫中段：计算框不透明度最大值 &gt; 0.5。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.32</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">终态四卡都是 Σ</span></td><td class="c-v" data-l="断言">刻度 1000：四张卡都含 Σ。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.33</span></td><td class="c-p" data-l="页面">allreduce</td><td><span class="t">终态没有残留原始块</span></td><td class="c-v" data-l="断言">刻度 1000：不再出现 A/B/C/D 原始块。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+
+        <tr class="grp"><td colspan="5"><span class="gp">reducescatter</span><span class="gs">分拆累加：算完把 Σ 切成段分给各卡</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.34</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">挂载四张卡</span></td><td class="c-v" data-l="断言"><code>cards=4</code>，输出 <code>mount:4 cards</code>。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/reducescatter.mjs</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.35</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">初始态 32 个槽位标签</span></td><td class="c-v" data-l="断言">刻度 0：槽位文字共 32 个（每卡顶排 4 + 接收排 4）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/reducescatter.mjs</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.36</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">card0 顶排是 A B C D</span></td><td class="c-v" data-l="断言">刻度 0：前 4 个标签依次为 A、B、C、D。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/reducescatter.mjs</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.37</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">中段计算框会亮起</span></td><td class="c-v" data-l="断言">从 100 扫到 960、每 40 一跳：计算框最亮 &gt; 0.5。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/reducescatter.mjs</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.38</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">终态计算框全隐</span></td><td class="c-v" data-l="断言">刻度 1000：4 个计算框，最大不透明度 &lt; 0.05。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/reducescatter.mjs</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.39</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">终态每卡只留自己那段 Σ</span></td><td class="c-v" data-l="断言">刻度 1000：每张卡 1 块，四块合起来是完整的 Σ。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+
+        <tr class="grp"><td colspan="5"><span class="gp">alltoall</span><span class="gs">每人发一段收一段：四卡各收四份</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.40</span></td><td class="c-p" data-l="页面">alltoall</td><td><span class="t">挂载四张卡</span></td><td class="c-v" data-l="断言"><code>cards=4</code>。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.41</span></td><td class="c-p" data-l="页面">alltoall</td><td><span class="t">初始态四卡各四块</span></td><td class="c-v" data-l="断言">刻度 0：每张卡 4 块。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.42</span></td><td class="c-p" data-l="页面">alltoall</td><td><span class="t">同一步最多一条对角线在动</span></td><td class="c-v" data-l="断言">逐帧：在途包最大值 = 1，两个包不会同时穿过中心。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.43</span></td><td class="c-p" data-l="页面">alltoall</td><td><span class="t">终态每卡四块</span></td><td class="c-v" data-l="断言">刻度 1000：每张卡 4 块，合计 16 块。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">2.44</span></td><td class="c-p" data-l="页面">alltoall</td><td><span class="t">终态四块来源互不相同</span></td><td class="c-v" data-l="断言">每卡 4 块分别来自 4 个不同 rank，没有两张卡内容完全相同。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+
       </tbody>
     </table>
-    <div class="boundary"><b>边界：</b>人工用例不判数值和像素差——「差几像素」用附注里的探针量，「该不该出现」用第 1 组的断言判。</div>
+    <div class="boundary"><b>边界：</b>「计算框」只存在于 reduce / allreduce / reducescatter 三页，gather / scatter / broadcast / allgather / alltoall 没有这一项，别照抄。表里期望值都要先用探针量 2–3 次确认一致，再写死。</div>
   </section>
 
   <!-- ===================== 03 ===================== -->
   <section>
-    <div class="sechead"><span class="no">03</span><h2>待补用例 · 防遗漏清单</h2><span class="meta">11 条，未实现</span></div>
-    <div class="role">其余 11 页目前等于<b>空考卷</b>，只有 1.1 在管。每页先补一条结构基线，值先用探针量准再写死。</div>
+    <div class="sechead"><span class="no">03</span><h2>静态页用例</h2><span class="meta">8 条，待补</span></div>
+    <div class="role">四张非动画页，只查结构与链接，不查时序。</div>
     <table class="spec">
-      <colgroup><col style="width:6%"><col style="width:13%"><col style="width:14%"><col style="width:44%"><col style="width:23%"></colgroup>
-      <thead><tr><th class="c-no">序号</th><th>页面</th><th>用例</th><th class="c-d">通过标准（要断言成什么）</th><th class="c-v">优先级 / 状态</th></tr></thead>
+      <colgroup><col style="width:6%"><col style="width:10%"><col style="width:16%"><col style="width:50%"><col style="width:18%"></colgroup>
+      <thead><tr><th class="c-no">序号</th><th>页面</th><th>用例</th><th class="c-v">断言什么 · 通过标准</th><th>状态 / 脚本</th></tr></thead>
       <tbody>
-        <tr><td class="c-no"><span class="n">3.1</span></td><td class="mono">gather</td><td><span class="t">终态集齐</span></td><td class="c-d" data-l="通过标准">目标卡终态 4 块齐全，三张源卡保留不变。</td><td class="c-v" data-l="状态"><span class="pill need">P0</span> <span class="pill todo">待补</span></td></tr>
-        <tr><td class="c-no"><span class="n">3.2</span></td><td class="mono">scatter</td><td><span class="t">终态分拆</span></td><td class="c-d" data-l="通过标准">四张目标卡各 1 块，来源卡清空。</td><td class="c-v" data-l="状态"><span class="pill need">P0</span> <span class="pill todo">待补</span></td></tr>
-        <tr><td class="c-no"><span class="n">3.3</span></td><td class="mono">broadcast</td><td><span class="t">终态四份全同</span></td><td class="c-d" data-l="通过标准">四张卡各 4 块，且四卡内容逐位相同。</td><td class="c-v" data-l="状态"><span class="pill need">P0</span> <span class="pill todo">待补</span></td></tr>
-        <tr><td class="c-no"><span class="n">3.4</span></td><td class="mono">reduce</td><td><span class="t">终态累加</span></td><td class="c-d" data-l="通过标准">上排唯一累加器为 Σ，三张源卡清空（消耗而非复制）。</td><td class="c-v" data-l="状态"><span class="pill need">P0</span> <span class="pill todo">待补</span></td></tr>
-        <tr><td class="c-no"><span class="n">3.5</span></td><td class="mono">allgather</td><td><span class="t">终态人人全集</span></td><td class="c-d" data-l="通过标准">四张卡各 4 块，内容都是全集。</td><td class="c-v" data-l="状态"><span class="pill need">P0</span> <span class="pill todo">待补</span></td></tr>
-        <tr><td class="c-no"><span class="n">3.6</span></td><td class="mono">allreduce</td><td><span class="t">终态人人 Σ</span></td><td class="c-d" data-l="通过标准">四张卡都含 Σ，且没有残留的原始块。</td><td class="c-v" data-l="状态"><span class="pill need">P0</span> <span class="pill todo">待补</span></td></tr>
-        <tr><td class="c-no"><span class="n">3.7</span></td><td class="mono">alltoall</td><td><span class="t">终态人手一份</span></td><td class="c-d" data-l="通过标准">每卡 4 块，来源互不相同（不能全是自己发的）。</td><td class="c-v" data-l="状态"><span class="pill need">P0</span> <span class="pill todo">待补</span></td></tr>
-        <tr><td class="c-no"><span class="n">3.8</span></td><td class="mono">index</td><td><span class="t">八个入口齐全</span></td><td class="c-d" data-l="通过标准">8 个原语节点存在，每个都能点到对应页面（链接不空）。</td><td class="c-v" data-l="状态"><span class="pill todo">P1</span> <span class="pill todo">待补</span></td></tr>
-        <tr><td class="c-no"><span class="n">3.9</span></td><td class="mono">layout</td><td><span class="t">对照表完整</span></td><td class="c-d" data-l="通过标准">8 行 × 8 列齐全，没有空格或 <code>undefined</code>。</td><td class="c-v" data-l="状态"><span class="pill todo">P1</span> <span class="pill todo">待补</span></td></tr>
-        <tr><td class="c-no"><span class="n">3.10</span></td><td class="mono">algorithms</td><td><span class="t">条目与对照表一致</span></td><td class="c-d" data-l="通过标准">出现的原语集合与 layout 的 8 个相同，不多不少。</td><td class="c-v" data-l="状态"><span class="pill todo">P1</span> <span class="pill todo">待补</span></td></tr>
-        <tr><td class="c-no"><span class="n">3.11</span></td><td class="mono">anatomy</td><td><span class="t">章节与示例齐全</span></td><td class="c-d" data-l="通过标准">13 个章节都在，每节示例的画布挂载成功（非空）。</td><td class="c-v" data-l="状态"><span class="pill todo">P1</span> <span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">3.1</span></td><td class="c-p" data-l="页面">index</td><td><span class="t">八个入口齐全</span></td><td class="c-v" data-l="断言">8 个原语节点都在，节点文字与原语名一致。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">3.2</span></td><td class="c-p" data-l="页面">index</td><td><span class="t">链接都指向存在的页面</span></td><td class="c-v" data-l="断言">8 个链接 href 非空，且目标文件在仓库里存在。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">3.3</span></td><td class="c-p" data-l="页面">layout</td><td><span class="t">对照表完整</span></td><td class="c-v" data-l="断言">8 行 × 8 列都在，没有空格或 <code>undefined</code>。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">3.4</span></td><td class="c-p" data-l="页面">layout</td><td><span class="t">标记写法统一</span></td><td class="c-v" data-l="断言">只出现 <code>A</code> / <code>A:0</code> / <code>-</code> 三种写法；Σ 不带下标。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">3.5</span></td><td class="c-p" data-l="页面">algorithms</td><td><span class="t">原语集合与对照表一致</span></td><td class="c-v" data-l="断言">出现的原语集合与 layout 的 8 个完全相同。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">3.6</span></td><td class="c-p" data-l="页面">algorithms</td><td><span class="t">每个原语都有内容</span></td><td class="c-v" data-l="断言">每个原语至少一条实现方式，没有空卡片。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">3.7</span></td><td class="c-p" data-l="页面">anatomy</td><td><span class="t">13 个章节齐全</span></td><td class="c-v" data-l="断言">13 个章节标题都在，编号连续。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
+        <tr><td class="c-no"><span class="n">3.8</span></td><td class="c-p" data-l="页面">anatomy</td><td><span class="t">每节示例都能挂载</span></td><td class="c-v" data-l="断言">每节示例画布非空，无挂载失败。</td><td data-l="状态"><span class="pill todo">待补</span></td></tr>
       </tbody>
     </table>
-    <div class="boundary"><b>边界：</b>待补用例的具体数值必须先量后写（探针量 2–3 次一致，才固化进断言），否则会把错的数当成标准。</div>
   </section>
 
   <!-- ===================== 附 ===================== -->
@@ -224,18 +234,18 @@
       <dt>跑自动用例</dt>
       <dd><code>node tools/verify.mjs &lt;页面…&gt; --no-shot</code> 只跑断言不截图；去掉 <code>--no-shot</code> 连 1.1 的四张图一起出。</dd>
       <dt>量真值</dt>
-      <dd><code>node tools/probe.mjs &lt;页面&gt; 0:"&lt;要量的表达式&gt;"</code>，刻度 0 是开头、1000 是结尾；它只报数，不判对错，是写新用例前的尺子。</dd>
-      <dt>断言文件</dt>
-      <dd><code>tools/probes/&lt;页面&gt;.mjs</code>，导出 <code>check(pg)</code> 返回 <code>{name, pass, detail}</code> 列表；文件名与页面同名即自动配对，不用改工具。</dd>
+      <dd><code>node tools/probe.mjs &lt;页面&gt; 0:"&lt;要量的表达式&gt;"</code>，刻度 0 是开头、1000 是结尾；它只报数、不判对错，是写新用例前的尺子。</dd>
+      <dt>断言写哪</dt>
+      <dd><code>tools/probes/&lt;页面&gt;.mjs</code>，导出 <code>check(pg)</code> 返回 <code>{name, pass, detail}</code>；文件名与页面同名即自动配对。</dd>
       <dt>报错收集</dt>
-      <dd>每打开一页挂一份监听（脚本崩溃 + 控制台报错/警告），换页换一份。它是「顺带行为」，不单独算用例。</dd>
+      <dd>每打开一页挂一份监听（脚本崩溃 + 控制台报错/警告），换页换一份。属顺带行为，不算用例。</dd>
       <dt>边界</dt>
       <dd>报错为 0 不等于内容验过；挂载超过 8 秒是静默的，此时头部行 <code>dur=null</code>，OK 属于假通过。</dd>
     </dl>
   </div>
 
   <div class="foot">
-    唯一来源。改本页后同步 <code>AGENTS.md</code> 一节与 <code>MEMORY.md</code> 的「验证（流程在 AGENTS，这里只记落点）」。<br>
+    唯一来源。改本页后同步 <code>AGENTS.md</code> 一节与 <code>MEMORY.md</code> 的验证小节。<br>
     定时全量回归每日 09:30 跑第 1 组，结果记 <code>docs/BUGS.md</code>。
   </div>
 </div>
