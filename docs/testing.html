@@ -75,7 +75,7 @@
 <div class="wrap">
 
   <h1>CommonVisual · 验证方式规范</h1>
-  <div class="sub">四种方式，17 条编号项。本页是验证方式的唯一来源。</div>
+  <div class="sub">四种方式，14 条编号项。本页是验证方式的唯一来源。</div>
   <div class="rule-top">以本页为准 · 改本页需同步 AGENTS.md 一 与 MEMORY.md</div>
 
   <div class="lead">每条三栏：<b>描述</b>＝做了什么，<b>原因</b>＝为什么，<b>验收通过标准</b>＝什么算成功（绿列）。「哪些情况不算失败」放每组末尾的边界块，不编号。</div>
@@ -84,7 +84,7 @@
   <table class="ov" style="margin-top:14px">
     <thead><tr><th style="width:26px">#</th><th style="width:150px">方式</th><th>一句话</th><th style="width:190px">判据</th></tr></thead>
     <tbody>
-      <tr><td class="mono">1</td><td><b>全量回归</b> <span class="mono" style="color:var(--muted)">verify.mjs</span></td><td>逐页做 4 件事：收报错 → 跑断言 → 截四张图比对 → 汇总判定</td><td><span class="pill yes">报错 0 且断言失败 0</span></td></tr>
+      <tr><td class="mono">1</td><td><b>全量回归</b> <span class="mono" style="color:var(--muted)">verify.mjs</span></td><td>逐页截四张图，并比对是否相同（报错/考卷/判定由脚本顺带做）</td><td><span class="pill yes">报错 0 且断言失败 0</span></td></tr>
       <tr><td class="mono">2</td><td><b>单点探针</b> <span class="mono" style="color:var(--muted)">probe.mjs</span></td><td>临时尺子，量某一刻的一个数</td><td><span class="pill neutral">不判，自己比</span></td></tr>
       <tr><td class="mono">3</td><td><b>页面断言</b> <span class="mono" style="color:var(--muted)">probes/</span></td><td>一页的考卷，唯一会判对错的一种</td><td><span class="pill yes">全部 pass</span></td></tr>
       <tr><td class="mono">4</td><td><b>人工截图</b></td><td>看颜色、层次、节奏</td><td><span class="pill neutral">人眼看</span></td></tr>
@@ -94,43 +94,19 @@
 
   <!-- ===================== 01 ===================== -->
   <section>
-    <div class="sechead"><span class="no">01</span><h2>全量回归 · verify.mjs</h2><span class="meta">4 条 · 逐页跑一遍</span></div>
-    <div class="role">一次启动，把每一页依次做 4 件事，就是这条流水线。<b>断言的内容在第 3 组，图怎么人看在第四组，量数的工具在第 2 组。</b>起服务、开浏览器是脚本自带的前置动作，不算验证项，所以不占编号。</div>
+    <div class="sechead"><span class="no">01</span><h2>全量回归 · verify.mjs</h2><span class="meta">1 条</span></div>
+    <div class="role">本组只有一条：<b>截图比对</b>。跑每一页时脚本还会顺带做三件事——收这一页的报错、跑这一页的考卷（第 3 组）、最后汇总判定——它们随每页执行自然完成，<b>不单独占用例编号</b>。</div>
     <table class="spec">
       <colgroup><col style="width:5.5%"><col style="width:15%"><col style="width:29%"><col style="width:14.5%"><col style="width:17%"><col style="width:19%"></colgroup>
       <thead><tr><th class="c-no">序号</th><th>标题</th><th>描述（做了什么）</th><th>脚本</th><th>原因（为什么）</th><th class="c-v">验收通过标准</th></tr></thead>
       <tbody>
         <tr>
           <td class="c-no"><span class="n">1.1</span></td>
-          <td><span class="t">收这一页的报错</span></td>
-          <td class="c-d" data-l="描述">打开某一页时，就为<b>这一页</b>开一份监听，从打开到关闭全程记录：脚本崩了、控制台报错、控制台警告。换页就换一份，各页互不影响。</td>
-          <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">报错是最确定的「坏了」信号，不该靠人翻控制台。一页一份监听，错误才不会串到下一页。</td>
-          <td class="c-v" data-l="验收通过标准">该页打印 <code>errors=0</code>；有错就列出前 8 条原文，原文能定位到文件和行。</td>
-        </tr>
-        <tr>
-          <td class="c-no"><span class="n">1.2</span></td>
-          <td><span class="t">跑这一页的考卷</span></td>
-          <td class="c-d" data-l="描述">这页若有同名考卷就载入并执行，把每条结果打成 PASS/FAIL；没有就跳过。<b>本条自己不做判定。</b></td>
-          <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span><span class="f">tools/probes/&lt;page&gt;.mjs</span></td>
-          <td class="c-r" data-l="原因">判断标准写进文件才能自动跑；调度与内容分开，补断言不用改工具。</td>
-          <td class="c-v" data-l="验收通过标准">有考卷的页出现 probe 行、条数与文件里一致；没考卷的页不出现，也不因此判失败。</td>
-        </tr>
-        <tr>
-          <td class="c-no"><span class="n">1.3</span></td>
           <td><span class="t">截四张图并查是否相同</span></td>
-          <td class="c-d" data-l="描述">四个位置各截一张：<b>开头（刻度 0）、中间（500）、结尾（1000）、窄屏开头（0）</b>；然后按顺序两两比文件字节数，相同就报「废帧」。</td>
+          <td class="c-d" data-l="描述">四个位置各截一张：<b>开头（刻度 0）、中间（500）、结尾（1000）、窄屏开头（0）</b>；再按顺序两两比文件字节数，相同就报「废帧」。</td>
           <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">截图失效最常见的样子不是报错，而是四张都一样。开头/结尾最确定能对内容，中间那帧查「跑一半空掉」，窄屏查排版溢出。</td>
+          <td class="c-r" data-l="原因">截图失效最常见的样子不是报错，而是四张都一样。开头/结尾最确定能对内容，中间查「跑一半空掉」，窄屏查排版溢出。</td>
           <td class="c-v" data-l="验收通过标准">四张字节互不相同、没有「废帧」提示；一旦出现提示，必须先人工确认，才能算这页验过。</td>
-        </tr>
-        <tr>
-          <td class="c-no"><span class="n">1.4</span></td>
-          <td><span class="t">汇总判定</span></td>
-          <td class="c-d" data-l="描述">把这一页的报错条数与断言失败条数相加，等于 0 记 OK；全部页跑完打印汇总，任一页不 OK 就以失败状态退出。</td>
-          <td class="c-s" data-l="脚本"><span class="f">tools/verify.mjs</span></td>
-          <td class="c-r" data-l="原因">退出码是给定时任务判断成败的唯一接口，靠人看输出一定会漏。</td>
-          <td class="c-v" data-l="验收通过标准">全绿时末行「有问题 0」且命令返回 0；有红页时返回 1。</td>
         </tr>
       </tbody>
     </table>
