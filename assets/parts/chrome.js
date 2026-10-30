@@ -501,7 +501,7 @@
       all[page] = ovAll();
       var txt = '/* CommonVisual v2 · 每页时序基线（可提交） */\n' +
         'window.CV_PAGE_DEFAULTS = ' + JSON.stringify(all, null, 2) + ';\n';
-      CV.saveFile('v2/assets/scenes/pages-base.js', txt, function (ok, why) {
+      CV.saveFile('assets/scenes/pages-base.js', txt, function (ok, why) {
         if (ok) {
           flash('已写入基线');
         } else {

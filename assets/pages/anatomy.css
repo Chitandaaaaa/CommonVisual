@@ -99,7 +99,7 @@
 }
 .specs b { color: var(--tx-2); font-weight: 600; }
 
-/* 舞台里借来的组件类：本页不加载 stage.css，
+/* 舞台里借来的组件类：本页不加载 theme/stage-page.css，
    按各原语页里「实际生效的值」补上，保证 demo 与真页面同尺寸 */
 .slot-tx {
   font-family: var(--mono); font-weight: 700;
@@ -115,7 +115,7 @@
 .pkt-tx {
   font-family: var(--mono); font-size: 13px; font-weight: 700; fill: #fff;
 }
-/* 计算方框：字形与显隐抄自 stage.css（本页不加载它，
+/* 计算方框：字形与显隐抄自 theme/stage-page.css（本页不加载它，
    气泡默认藏起来这条必须补上，否则静态图里气泡会一直浮着） */
 .calc-tx {
   font-family: var(--sans); font-weight: 600; letter-spacing: .04em;

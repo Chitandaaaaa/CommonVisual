@@ -3,6 +3,9 @@
 给在这个仓库干活的人（和 agent）的操作手册。**只写「怎么做才不会浪费时间」，不重复项目知识** ——
 页面清单、设计决策、尺寸常量、踩过的坑，全在 `.workbuddy/memory/MEMORY.md`，开工前先读那个。
 
+> 仓库现状（2026-10-31）：v1 页面整套已删除，v2 提为根目录。根目录 12 个 HTML 是唯一页面集，
+> 结构见 `README.md` 的目录树，边界见 `docs/arch-standard.md`，加新页流程见 `docs/blueprint.html`。
+
 ---
 
 ## 一、验证：先 probe，后截图
@@ -20,8 +23,8 @@
 
 ```bash
 # 仓库自带的验证工具（一次启动起 server + 无头 Chrome，跑完自己退出）
-node tools/verify.mjs index            # 报错检查 + 几何探针 + 最小截图集(初始/飞行中点/终态/窄屏) → pass/fail 表
-node tools/probe.mjs index 480:"(()=>{ ... return {...} })()"   # 随手查一个几何数，scrub 为进度条刻度(0–1000)
+node tools/verify.mjs gather          # 报错检查 + 几何探针 + 最小截图集(初始/飞行中点/终态/窄屏) → pass/fail 表
+node tools/probe.mjs gather 310:"(()=>{ ... return {...} })()"   # 随手查一个几何数，scrub 为进度条刻度(0–1000)
 ```
 
 `verify` 会一并回显 `problems`（`Runtime.exceptionThrown` + `Log` 的 error 级），
@@ -32,8 +35,9 @@ Chrome/Edge 常规安装位，特殊位置用 `CV_CHROME`、playwright-core 位�
 `CV_PLAYWRIGHT_CORE` 环境变量指定（装载逻辑在 `tools/browser.mjs`）。
 **不要用 `/tmp` 下的散落脚本**。
 
-典型探针：`relmap.gridTemplateRows`、`h1.getComputedStyle().fontSize`、
-`wire.getAttribute('d')`、两元素 `rect` 的中心距、`.rel-arrow` 的 `w/h`。
+典型探针：`document.querySelectorAll('#segs .seg').length`（段数 = 步骤数）、
+`[...document.querySelectorAll('#lChips .slot-tx')].map(t => t.textContent)`（槽位内容）、
+`.pkt` 的 `opacity` / `transform`、两元素 `rect` 的中心距、`#segs .seg` 的 `flexGrow`（段宽 = 秒数）。
 
 **② 每张截图必须对应一个「待验证的断言」。**
 截之前先想清楚：这张图我要判断什么？判断不了就别截。
@@ -53,10 +57,10 @@ Chrome/Edge 常规安装位，特殊位置用 `CV_CHROME`、playwright-core 位�
 | 单点几何（写断言前量真值） | 写完代码先量 | `node tools/probe.mjs <页> <刻度>:"<表达式>"` | 十几秒 |
 
 - **改哪页传哪页**，别无脑全量：一次改动通常只影响一页，全量是多余的等待。
-- **例外：改公共层**（`kit.js` / `controls.js` / `primitive.js` / `relmap.js` / `stage.css`）→ 一次影响 8 页，当次传 8 页 `--no-shot`（约 1 分钟，可接受），红了的当场修，不等定时。
+- **例外：改公共层**（`engine/` 的 compile / director / verbs、`parts/`、`prim/`、`theme/`）→ 一次影响 8 个原语页，当次传 8 页 `--no-shot`（约 1 分钟，可接受），红了的当场修，不等定时。
 - **写断言要共用一次扫描**：同一页的断言别各自 seek，先采样一轮记下读数再比对（探针里已按此实现：每页一次挂载、窗口刻度由 getCh 现算），否则「每次改完都跑」就守不住了。
 - **缺陷统一记在 `docs/BUGS.md`**：定时回归与人工验证都往那张表追加，别散落在聊天里。只记录，不改业务代码。
-- **验证用例清单以 `docs/testing.html` 为准**（**100 条，按页面组织**：① 通用 3 条＝截图比对 / 桌面观感 / 窄屏排版，每页都跑；② **全站通用 20 条**＝播放器（挂载/段数/段宽/字幕/播放切换/跳段/复位/循环回绕/残留）、参数（齿轮/持久化）、聚焦、时序连续、导航、共享层 API 契约（2.18–2.21），跨页且不属于任何单个原语；③ 原语页 60 条＝8 页各 6–9 条（挂载 → 初始态 → 过程中 → 终态）；④ 静态页 17 条。**100 条已全部实现**（2026-10-31 拆分重排：17 处「一条用例捆绑多个验证」就地拆开、编号顺延 83 → 100，旧编号映射见 testing.html 页末；探针在 `tools/probes/v2/`，文件名与页面同名即自动配对）。每条都标「页面」，避免把 reducescatter 专属的断言当成全站通用；标「改口径」的条目已按实现对齐（历史轮次 b1c2da0 / 2026-10-30 / 2026-10-31 口径定案 3.23 / 3.24 / 3.28 / V4），照红条文案即可；当前门禁仅 3 条紫（3.42 / 3.43 / 3.51 采样锚点，待时序标准定稿），另有一批审计发现登记在 testing.html 顶部待处理区③（只记录未排期）。工具用法、文件放哪、返回什么结构、输出怎么读**都不算用例**，统一放页末「附：工具与跑法」。**原则：只有能判「过或不过」的验证动作才算用例**——基础设施（起服务/开浏览器）、约定（文件路径/返回结构）、顺带行为（收报错/跑考卷/汇总判定）、纪律（截图前写目的）一律不占编号。改验证规则先改那一页，再同步本节。
+- **验证用例清单以 `docs/testing.html` 为准**（**100 条，按页面组织**：① 通用 3 条＝截图比对 / 桌面观感 / 窄屏排版，每页都跑；② **全站通用 20 条**＝播放器（挂载/段数/段宽/字幕/播放切换/跳段/复位/循环回绕/残留）、参数（齿轮/持久化）、聚焦、时序连续、导航、共享层 API 契约（2.18–2.21），跨页且不属于任何单个原语；③ 原语页 60 条＝8 页各 6–9 条（挂载 → 初始态 → 过程中 → 终态）；④ 静态页 17 条。**100 条已全部实现**（2026-10-31 拆分重排：17 处「一条用例捆绑多个验证」就地拆开、编号顺延 83 → 100，旧编号映射见 testing.html 页末；探针在 `tools/probes/`，文件名与页面同名即自动配对）。每条都标「页面」，避免把 reducescatter 专属的断言当成全站通用；标「改口径」的条目已按实现对齐（历史轮次 b1c2da0 / 2026-10-30 / 2026-10-31 口径定案 3.23 / 3.24 / 3.28 / V4），照红条文案即可；当前门禁仅 3 条紫（3.42 / 3.43 / 3.51 采样锚点，待时序标准定稿），另有一批审计发现登记在 testing.html 顶部待处理区③（只记录未排期）。工具用法、文件放哪、返回什么结构、输出怎么读**都不算用例**，统一放页末「附：工具与跑法」。**原则：只有能判「过或不过」的验证动作才算用例**——基础设施（起服务/开浏览器）、约定（文件路径/返回结构）、顺带行为（收报错/跑考卷/汇总判定）、纪律（截图前写目的）一律不占编号。改验证规则先改那一页，再同步本节。
 
 ### 每个新页面的最小截图集（3–4 张，不是 5 张）
 
@@ -67,8 +71,9 @@ Chrome/Edge 常规安装位，特殊位置用 `CV_CHROME`、playwright-core 位�
 | 终态 | `1000@1200` | 结果一致、徽章、连线收敛 |
 | 窄屏 | `0@900` @420×820 | 字幕不截断、不溢出 |
 
-**飞行中点的 scrub 值要算**：`scrub = (k + r) / n * 1000`，`k` = 段序号，`r` = 段内比例。
-段边界（如 `v250`）是动画起点，不是中点。想看第 1 段飞行中段用 `v≈310`。
+**飞行中点的 scrub 值不要手算**：页面挂 `getCh()`，所有窗口刻度现算
+（`CV.lastMount.getCh()`），探针 `_common.mjs` 里的 `sc(sec, total)` 就是换算。
+段边界（如 `v250`）是动画起点，不是中点。
 
 ---
 
@@ -131,20 +136,21 @@ All-to-All 的两条对角线端点改了两轮：
 
 ## 四、改公共层必须全量回归
 
-`assets/cv/kit.js`、`assets/cv/controls.js`、`assets/cv/relmap.js`、`assets/stage.css`
-被全部 8 个原语页共用。任何改动都要回归，而且**回归用 probe 不用全截图**：
+`assets/engine/`（compile / director / verbs）、`assets/parts/`、`assets/prim/`、`assets/theme/`
+被全部 8 个原语页共用；`boot.js` / `registry.js` 还影响 4 个文档页。任何改动都要回归，
+而且**回归用 probe 不用全截图**：
 
 ```bash
 # 共享层改动后，八页过一遍几何探针（用仓库工具，不用 /tmp 脚本）
 for p in gather scatter broadcast reduce allgather allreduce reducescatter alltoall; do
   echo -n "$p: "; node tools/probe.mjs "$p" \
-    "(()=>{const m=document.querySelector('.relmap');return getComputedStyle(m).gridTemplateRows})()"
+    0:"document.querySelectorAll('#segs .seg').length"
 done
 # 或直接：node tools/verify.mjs gather scatter ...   （一次启动跑完多页 + 截图）
 ```
 
-实例：给 `relmap` 加「上邻居」时把 `grid-template-rows` 从 `repeat(3,auto)` 改成
-`repeat(5,auto)`，All-to-All 的标题位置对了，但所有旧页面的行分配都得复查。
+实例：`verbs/sum.js` 的 HUMP（双车道法向偏移）一改，allreduce 与 reducescatter 的对向包
+分离度全变；`theme/stage-page.css` 改的是八页共用的舞台样式，12 页都得看一眼。
 
 ---
 
@@ -152,9 +158,9 @@ done
 
 | 任务 | 合理耗时 |
 |---|---|
-| 新建一个原语页（结构照抄现成页） | 20–25 分钟 |
-| 其中：读参考代码 | 5 |
-| 写 JS + HTML | 10 |
+| 新建一个原语页（剧本照抄现成页改数据） | 20–25 分钟 |
+| 其中：读参考剧本 + 蓝图 | 5 |
+| 写 scenes + 薄壳 HTML | 10 |
 | probe 全部几何 | 2 |
 | 截图 3 批 | 4–5 |
 | 改公共层 + 回归 | +10 |
@@ -172,13 +178,15 @@ done
 - 别给截图/验证命令加 `2>/dev/null`
 - 别一次截 5 帧然后逐张读 —— 先截最可能出问题的那 1 帧
 - 别改完公共层就直接交付，8 个页面都得过一遍 probe
+- 别解析动画终态当事实 —— 终态唯一来源是 `registry.js` 的 `post`，页面与探针都读它
 
 ---
 
 ## 七、收尾清单
 
-1. `probe` 回归全部页面（不截图）
+1. `probe` 回归（改哪页传哪页；公共层改了传 8 页 + 4 文档页）
 2. 更新 `README.md` 的页面表 / 目录树 / 设计决策
-3. 新原语要补：`index.html` 节点、`relmap.js` 的 `REL` + `HREF`、`layout.html` 的 `PRIMS`
+3. 新原语要补：薄壳 HTML（`CV.boot('<id>')`）+ `scenes/<id>.js` 剧本 + `registry.js` 登记
+   （`pre / post / rel / verbs`）—— 全流程见 `docs/blueprint.html`
 4. 追加 `.workbuddy/memory/YYYY-MM-DD.md`，长期约定写进 `MEMORY.md`
 5. 提交时把「为什么这么改」写进 commit message 正文，不只是标题

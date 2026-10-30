@@ -2,7 +2,9 @@
 
 **NCCL 集合通信原语的 Web 可视化** —— 把 gather / scatter / broadcast / reduce / all-gather / all-reduce / reduce-scatter / all-to-all 这八个抽象概念，画成看得懂的数据流动画。
 
-零框架、零依赖、零构建：手写内联 SVG + 原生 `requestAnimationFrame` + IIFE。所有页面双击就能在浏览器里打开，不需要 npm install，不需要打包。
+零框架、零依赖、零构建：手写内联 SVG + 原生 `requestAnimationFrame` + IIFE。所有页面双击就能在浏览器里打开；只有跑验证工具才需要 `npm i`（只为装 playwright-core，页面本身不依赖）。
+
+> 2026-10-31 起 v1 页面整套删除，v2 提为根目录 —— 本文档描述的就是 v2。
 
 ---
 
@@ -25,162 +27,140 @@
 | [`allreduce.html`](allreduce.html) | 全归约 —— 每卡先持一整份四段，开场长出第二排，2×2 网格整份互换两轮（每轮 传递→落位→计算→合并），四段各自累加到 4 份，收场收回单排，四卡都是 `[Σ Σ Σ Σ]` |
 | [`reducescatter.html`](reducescatter.html) | 归约分散 —— 递归减半两轮，每卡先长出第二排接收位，之后每轮「传递 → 落位 → 计算 → 合并」，段数 4→2→1 |
 | [`alltoall.html`](alltoall.html) | 全互换 —— 上排待发、下排已收，按目的地分四步，12 条直连消息 |
-| [`layout.html`](layout.html) | **前后对照表** —— 八个原语各自「通信前 / 通信后」每张卡的缓冲区，没变化的行置灰；左侧常驻悬浮索引，滚动时高亮当前读到哪个原语 |
+| [`layout.html`](layout.html) | **前后对照表** —— 八个原语各自「通信前 / 通信后」每张卡的缓冲区，没变化的行置灰；数据来自 `registry.js` 的 pre / post |
 | [`algorithms.html`](algorithms.html) | **实现方式** —— 原语 × 六类算法骨架矩阵、八种骨架、All-Reduce 的三条路线、NCCL 选型 |
+| [`anatomy.html`](anatomy.html) | **组件与动效规范** —— 一图一节、1:1 像素示例，右侧参数调试台实时改 |
 
-每个原语页左上角有一块**关系导航**：横向是同族的全体版，纵向是同列的上/下一个，点原语名回首页。八个原语现在都有动画页，导航里不再有虚线灰片。
+每个原语页页角有**关系导航**（`nav/`，数据来自 `registry.js` 的 `rel`）：横向是同族的全体版，纵向是同列的上/下一个，点原语名回首页。
 
 ## 本地运行
 
 ```bash
 # 方式一：本地开发服务（推荐）
 node tools/serve.mjs
-# 然后访问 http://localhost:8000/
-# 只有这种打开方式，页面里的「保存到代码」才能直接写回 assets/cv/*.js
+# 然后访问 http://127.0.0.1:8000/
+# 只有这种打开方式，「保存到代码」才能直接写回
+#   assets/theme/defaults.js（参数基线）/ assets/scenes/pages-base.js（时序基线）
 
 # 方式二：纯静态预览
 python3 -m http.server 8000
-# 「保存到代码」会退化成下载 pages.js / tokens.js（python 的服务不接受 POST）
+# 「保存到代码」退化为下载文件（python 的服务不接受 POST）
 
 # 方式三：直接双击 html 文件
-open index.html
+
+# 跑验证工具（verify / probe）之前：
+npm i        # 只装 playwright-core；浏览器自动探测 Chrome/Edge
 ```
+
+## 架构：三层（剧本 → 引擎 → 动词）
+
+页面是**薄壳**：原语页的 HTML 只做一行 `CV.boot('<id>')`，文档页多挂几个内容块。所有动态行为来自三层：
+
+```
+scenes/<id>.js     剧本 = 纯数据：节拍 + 流 + 文案（CV.scene 注册）
+      │
+engine/compile.js  剧本 → 时间轴。两条路径：
+      │              ① choreo（gather/scatter/broadcast/allgather）：
+      │                 节拍 wait/move/copy，move|copy 自动展开成
+      │                 传递 → 落位延迟 → 落位弹跳 → 间隔 四段；
+      │              ② family（reduce/allreduce/reducescatter/alltoall）：
+      │                 动词按规范值 + 编排秒算显式分段表
+      │              产物 { total, steps, win, rows, beats }
+      │
+engine/director.js 播放导演：seek / 播放 / 循环回绕，对外挂 CV.lastMount
+      │
+engine/verbs/      copy / move / sum / split 四个动词 —— 绘制与逐帧状态都在动词里
+```
+
+支撑层：
+
+- `parts/` 舞台部件 —— `cast`（rank 卡 / 槽 / 数据块）、`payload`（连线 / 箭头 / 数据包）、`beat`（落位脉冲 / 融合）、`chrome`（时序齿轮面板 / 悬停聚焦 / 保存到代码）、`stage`（舞台骨架与图层）
+- `prim/` 基础 —— `dom`（h/el/cubicBezier）、`geom`（几何常量）、`motion`（弹跳曲线 POP_EASE、`specVal`/`dur` 读规范值）
+- `registry.js` **终态唯一事实** —— 每页的 `pre / post / rel / verbs`，关系导航、对照表、规范页、探针都读它，不解析动画终态
+- `theme/defaults.js` 参数基线（规范页调试台「保存到代码」写入；读取顺序：代码基线 ← localStorage 临时改动）
+- `nav/` 页角关系导航；`blocks/` 文档页内容块（head / table / toc / legend / anatomy / paramEditor）
 
 ## 目录结构
 
 ```
 CommonVisual/
 ├── index.html              首页：原语关系树
-├── gather.html             精简版单屏演示
-├── scatter.html
-├── broadcast.html
-├── reduce.html
-├── allgather.html
-├── allreduce.html
-├── reducescatter.html
-├── alltoall.html
-├── layout.html             前后对照表（静态，八个原语一页看完）
-├── algorithms.html         实现方式（静态，骨架矩阵 + NCCL 选型）
-├── anatomy.html            组件与动效规范（一图一节，1:1 像素示例）
+├── gather.html … alltoall.html   8 个原语动画页（薄壳）
+├── layout.html             前后对照表
+├── algorithms.html         实现方式
+├── anatomy.html            组件与动效规范
 ├── 分布式通信原语详解.md    内容源
 ├── docs/
-│   ├── architecture.md      代码结构地图：改代码前找路径用
-│   ├── arch-standard.md     架构标准：当前/目标架构 + 组件清单 + 拆分判据
-│   ├── arch-standard.html   同上，看图版（少文字、多图：分层图/矩阵/判定树）
-│   ├── testing.html         验证用例清单（83 条：通用 3 / 全站 15 / 原语 53 / 静态 12）
-│   ├── BUGS.md              缺陷台账（每日定时回归写入）
-│   └── 待讨论-Ring与Tree.md
+│   ├── arch-standard.md / .html   架构标准：目标态词汇表 + 拆分判据
+│   ├── blueprint.html      新页蓝图：加一个原语要动哪些件
+│   ├── specs.html          规范清单与关系图
+│   ├── testing.html        验证用例清单（100 条，含旧编号映射）
+│   ├── BUGS.md             缺陷台账（回归与人工验证统一追加）
+│   └── narration.html      逐动作解说面板草案（待定稿）
 ├── tools/
-│   ├── serve.mjs          本地开发服务：静态文件 + 「保存到代码」的写盘端点
-│   │                      （POST /__cv/save，只允许写 cv/tokens.js 与 cv/pages.js）
-│   ├── verify.mjs         一次验证：报错检查 + 几何探针 + 最小截图集
-│   ├── probe.mjs          单点几何探针（查一个数，十几秒）
-│   ├── arch.mjs           依赖扫描：CV.* 定义/使用配对，出真实文件依赖边
-│   └── probes/<page>.mjs  每页断言，verify 自动加载执行
-└── assets/
-    ├── stage.css           精简版共用的全部样式
-    ├── layout.css          对照表样式
-    ├── algorithms.js       实现方式的数据（矩阵 / 骨架 / 配方）+ 渲染
-    ├── algorithms.css      实现方式的样式（依赖 layout.css 的变量）
-    ├── anatomy.css / .js   组件规范的样式与示例渲染（依赖 layout.css）
-    ├── index.css / .js     首页样式与交互
-    ├── gather.js           各原语的数据 / 时间轴 / 渲染规则
-    ├── scatter.js
-    ├── broadcast.js
-    ├── reduce.js
-    ├── allgather.js
-    ├── allreduce.js
-    ├── reducescatter.js
-    ├── alltoall.js
-    ├── layout.js           对照表数据（PRIMS）+ 渲染
-    └── cv/                 公共绘制层
-        ├── dom.js          $ / $$ / el / clamp / easeInOutQuad
-        │                   / mix(hex+rgb 都吃) / cubicBezier(复刻 CSS 曲线)
-        ├── kit.js          drawCard / drawSlot / setSlot / drawWire
-        │                   / drawPacket / resizeCard / drawLegend
-        ├── controls.js     分段进度条 + 播放步进 + 键盘
-        ├── focus.js        悬停聚焦 + 点击钉住
-        ├── primitive.js    8 个原语页公用骨架：舞台/布局切换/resize/控件启动
-        │                   + CV.PALETTE(数据色) + CV.GEO_BASE(公共尺寸)
-        │                   + CV.choreo(显式时序表)
-        ├── gear.js         原语页右上角「时序配置」齿轮（每步耗时的唯一入口：
-        │                   编号对进度条；有规范值调倍数，无规范值直接填秒）
-        ├── pages.js        每页时序的代码基线 window.CV_PAGE_DEFAULTS
-        │                   （齿轮「保存到代码」直接写入它，primitive 前加载）
-        ├── paramEditor.js  规范页「参数调试台」右侧抽屉（仅 anatomy 加载）
-        ├── tokens.js       参数代码基线 window.CV_PARAM_DEFAULTS（kit 前加载；
-        │                   规范页「保存到代码」直接写入）
-        └── relmap.js       原语页左上角的关系导航
+│   ├── serve.mjs           开发服务 + 「保存到代码」写盘端点（POST /__cv/save，白名单两个基线文件）
+│   ├── verify.mjs          页面验证：报错检查 + 几何探针 + 最小截图集
+│   ├── probe.mjs           单点几何探针（查一个数，十几秒）
+│   ├── browser.mjs         playwright-core / 浏览器装载（不写死任何机器的路径）
+│   ├── arch.mjs            依赖扫描：HTML 引用 / CV.* 配对 / CSS 变量归属
+│   └── probes/<页>.mjs     每页断言，与页面同名自动配对；_common.mjs 是全站通用 20 条 + V1–V8
+├── assets/
+│   ├── boot.js             CV.boot：建页壳 → 挂导航 → 导演挂剧本 → 需要时挂齿轮
+│   ├── registry.js         终态唯一事实（pre / post / rel / verbs）
+│   ├── scenes/             8 个原语页剧本（纯数据）
+│   ├── engine/
+│   │   ├── compile.js      剧本 → 时间轴（choreo / family 两条路径）
+│   │   ├── director.js     播放导演
+│   │   └── verbs/          copy / move / sum / split
+│   ├── parts/              cast / payload / beat / chrome / stage
+│   ├── prim/               dom / geom / motion
+│   ├── nav/                edge / node / mini
+│   ├── blocks/             head / table / toc / legend / anatomy / paramEditor
+│   ├── pages/              文档页样式（index / docs / anatomy / algorithms）
+│   └── theme/              theme.js/css + stage-page.css（舞台样式真源）
+│                           + defaults.js（参数基线）
+└── package.json            仅验证工具需要（playwright-core）
 ```
 
-## 几个设计决策
+## 验证
 
-**8 个原语页共用一套骨架（primitive.js）。** 页面只声明 `data / geo / steps / duration / keepCards / build / paint`，`CV.primitive()` 统一接管舞台取节点、清层、viewBox、860 断点两套几何、resize 防抖、`createControls` 启动与 focus 刷新。`data` 默认 `CV.PALETTE`，`geo` 用 `CV.geo({desktop:{...}, narrow:{...}})` 只写位置差异，公共尺寸来自 `CV.GEO_BASE`。文案用 `CV.primText(data)` 取 `rk/seg/whole`。
+验证纪律（先 probe 后截图、验收分频、CDP 坑）见 [`AGENTS.md`](AGENTS.md)；用例清单是 [`docs/testing.html`](docs/testing.html)（100 条：通用 3 + 全站通用 20 + 原语页 60 + 静态页 17，全部已实现）。一图流：
 
-**规范是唯一来源，页面按规范实现。** `kit.js` 的 `CV.params` 只描述**组件规范**：`03-card` 是 rank 卡片的**一排 ↔ 两排**（规范页 03 的两个场景）—— **耗时** `cardDur`（卡片上下变宽 / 收回一次 .8s）、`blockDur`（第二排单个空块出现 / 消失 .4s）+ **节奏** `blockGap`（相邻两块之间 .15s）；顺序是**串行的两步**：一排变两排 = ① 卡片先长够 → ② 第二排空块再**逐块**出现；两排变一排 = ① 空块先从右往左逐块撤走 → ② 卡片才收回。「长够之后再放块 / 撤完之后再收卡」这两段衔接是页面编排（.3 / .25s），不入参数表。reduce / all-reduce / reduce-scatter 三页统一走 `CV.rowSpan(n)` 取秒数、`CV.rowOpen(T,n)` / `CV.rowClose(T,n)` 取每帧的卡片高度进度 `g` 与每块可见度 `v[i]` —— 三页共用同一个组件，规范页一改三页同时变。`05-packet` 是数据包组件的全部动作 —— **耗时**组 `packDur`（飞 1.5s）+ `packFade`（送达淡出 .6s，包原地淡掉，「停留」就是这段，没有独立的停留参数）、**特效**组 `packLead` / `trailDist` / `trailScale`；`08-seat` 是落位弹跳 —— **耗时** `popDur`（弹跳 .55s）+ **节奏** `seatGap`（同一批多块依次落位时相邻两块错开 .5s）；`09-merge` 是一次融合的 `fuseDur` + **节奏** `mergeGap`（多列依次融合时相邻两列错开 .5s，≥ `fuseDur`，所以一列折完才轮到下一列）+ **关键帧**（唤醒结束 / 上浮结束 / 淡出起点 / 换 Σ 时刻）+ **特效**（终了缩放 / 白光强度 / 拖尾退后）+ **结果块标记**（换 Σ 起，块上写 Σ + 下标列字母 + 上标已折进份数 —— `setSlot` 的 `{ letter:'Σ', sub:'A', count:2 }`，份数随每次相加 +1）。`07-calc` 是**计算方框那一层**（卡片 h2 ↔ h3 的伸缩）—— **耗时**组 `growDur`（长出这一层 .75s）、`holdDur`（方框亮着 .95s）、`shrinkDur`（收回 .7s）；方框自己那 .35s 淡入 / 淡出是与伸缩**错开**的衔接（先长空间再填内容、先灭内容再收空间），不算组件耗时、不入表。reduce / all-reduce / reduce-scatter 三页都用 `CV.specVal` 取这组值（三页的「计算」那一拍取 `max(融合时长, holdDur)`：融合没折完就收卡会让方框先没了、Σ 还少一块），规范页 07.2 单独一节演这一段、右侧调试台三根滑杆实时改。**「落位延迟」「两趟传递之间隔多久」不进规范** —— 那是每页自己排的节奏，没有通用标准；但**同一批内部多个数据怎么错开属于组件自己的节奏**，所以进了规范（`seatGap` / `mergeGap`），页面用 `CV.seatAt(i, base)` 算第 i 个的时刻，**不要**用 `setTimeout` 排队（进度条要能来回拖，定时器拖不回来）。`global.pageSpeed` 只管整页播多快，不改任何组件规范。取值顺序 ① 代码内置默认 ② `tokens.js` 的 `window.CV_PARAM_DEFAULTS` ③ localStorage 运行时覆盖；规范页右侧「参数调试台」改的是 ③，点「保存到代码」把当前值写进 `tokens.js` 固化（`node tools/serve.mjs` 下直接落盘，不再下载）。
+```bash
+node tools/verify.mjs <页> --no-shot   # 结构断言，每次改完跑（改哪页传哪页）
+node tools/verify.mjs <页>             # + 最小截图集，提交前跑
+node tools/probe.mjs <页> <刻度>:"<表达式>"   # 单点几何，写断言前量真值
+```
 
-**每一步干什么，写成显式时序表（`CV.choreo`）。** 页面不再写比例、也不写 `FLY + HOLD` 这种算式，只列步骤，并要求每一步声明**取值方式**，只有两种：
+## 设计决策
 
-| 写法 | 什么情况下用 | 该段秒数 |
-|---|---|---|
-| `{ of:'packDur', k }` | 规范里约定了这一步 | **规范值 × 倍数**，规范页一改全站跟着变 |
-| `{ sec }` | 规范里没这个概念（说明 / 预留缓冲 / 落位延迟 / 两趟间隔 / 收尾） | 页面自己填的秒数 |
+**规范是唯一来源。** 组件的名字、尺寸、配色、耗时都在 `anatomy.html` 约定；参数基线写在 `theme/defaults.js`（调试台「保存到代码」直接覆盖）。原语页在**加载时**读规范值算时间轴（`CV.specVal` / `CV.dur`），改规范要刷新页面才生效。
 
-`kind:'transfer'` 自动展开成四段 —— **传递(规范·数据包整段) → 落位延迟(自定秒, 默认 0.5s) → 落位弹跳(规范) → 间隔(自定秒)**。「传递」= 数据包组件自己的所有耗时（`packDur` 飞 + `packFade` 淡），共用一个倍数；淡出**不和弹跳并行**：包淡完了才轮到落位，四段严格串行、不重叠。只有组件自身的行为（包飞多久+淡多久、弹多久 `popDur`、多块怎么错开 `seatGap`）能走规范，编排节奏一律填秒。
+**齿轮已接入八页。** 右上角齿轮（`parts/chrome.js`）按页列时序行：有规范值的段调「倍数」（规范一改全站跟），没约定的段直接填秒。改动两级存：localStorage `cv.page.<页>.v1` 立即重排，点「保存到代码」写入基线（`node tools/serve.mjs` 下直写 `assets/scenes/pages-base.js`，静态服务退化为下载）。
 
-**一个 transfer 段 = 「一趟传递」，不是「一条流」。** all-gather 每轮四条边**同时**发，所以一轮就是**一个** transfer 段（三轮三个段，共用一组倍数），不是 12 个段 —— 否则齿轮里会冒出 12 组一模一样的倍数，改一个得改 12 次。同理 gather / broadcast / scatter 的三趟是**串行**的，所以是三个段。页面把 `choreo` 返回的窗口对象（`win[id]`，含 `s / travelEnd / fadeEnd / seatStart / popSec`）挂回自己的流对象上，**paint 一律现读 `f.w`，不缓存秒数** —— 齿轮改完 `retime` 会换掉窗口对象，缓存了就永远停在旧时序上。
+**一个 transfer 段 = 「一趟传递」，不是「一条流」。** choreo 的 `move` / `copy` 自动展开成四段：传递（规范·数据包整段）→ 落位延迟（自定秒）→ 落位弹跳（规范）→ 间隔（自定秒），严格串行。all-gather 每轮四条边同时发，一轮就是**一个**段；gather / broadcast / scatter 的三趟串行，所以是三个段。
 
-**数据包的透明度只能由 JS 写。** `.pkt` 千万别挂 `transition: opacity`：淡出是逐帧写 opacity 的，过渡会被每帧的新写入反复重启，目标值永远追不上 —— 表现就是「飞到箭头尖停住 → 一直满不透明 → 快到 fadeEnd 才突然消失」。所以 `.pkt` 不设过渡，入场那点柔化写进 `placePacket`（前 8% 行程渐显 0→1），淡出由 `pktFadeOut` 按秒线性推到 0；两者共用同一个属性，不能再各管一头。
+**时间轴用「秒」写。** 归一化进度容易算错间隔，compile / verbs / 探针全部用秒，进度条刻度（0–1000）只在控件层换算。
 
-**每页右上角有齿轮（`gear.js`）。** 已接入 **gather / broadcast / scatter / all-gather** 四页（其余四页仍是写死比例的旧时间轴，待迁移）。打开是本页的时序表，**分两层**：大步 = 进度条的一段（段与段之间留白 + 实线）；`transfer` 展开出的四件事是小步，挂在同一段下面、用虚线 + 竖线分隔，**组头标一次范围（`3–5`），组内不再复读编号** —— 否则四行都写「3–5」，看着像四个并列的步骤。有规范值的行显示「规范键 规范值 → 倍数 → 秒数」，没规范值的行显示「自定义 → 直接填秒」。
+**送出是消耗语义（move），broadcast 才是复制（copy）。** sum 是归约（累加器逐段折入，Σ 上标可见），split 是切分。四个动词对应四种数据语义，页面不自己发明。
 
-**齿轮的改动分两级存。** 改完立刻重排控件与舞台（`controls.retime` + `api.reload`），同时写 `localStorage: cv.page.<page>.v1`（只在这台浏览器有效，改完数字会亮一下「已存本机」）。要进仓库就点「保存到代码」，把这一页的当前值写进 `assets/cv/pages.js`（`window.CV_PAGE_DEFAULTS`）—— 用 `node tools/serve.mjs` 打开时是**直接覆盖文件**，用静态服务/双击打开时才退回下载。读取优先级是**代码基线 ← 本机临时改动**。「复制成 JSON」这种既不能回灌、也没地方粘的按钮不要做。新页要接齿轮时，记得把 `assets/cv/pages.js` 加进它的 HTML（在 `primitive.js` 之前）。
+**槽位三态语言。** ① 实心彩色块 = 有数据；② 浅紫底「···」= 接收位（只给等着收的格子）；③ 浅灰虚线框 = 空。**送出的那一格是「空」，不是「接收位」。**
 
-由此 `duration`、`STEPS.t`、进度条段宽全部由「规范值×倍数 / 自定秒」算出来，页面里没有一处写死的时长；**进度条每段宽度 = 该段真实秒数**（`controls.js` 按 `Δt` 分配 flex-grow，视觉位置与时间等价，`vToT/tToV` 退化为恒等），不会再出现「一段长 0.2s 和一段长 2.2s 画得一样宽」。
+**reduce 家族通信前每卡一整份。** 数据切成四片、各卡只持一片时 reduce 根本用不了 —— 那是 all-gather 的起点。gather / all-gather 通信前是各卡 1 片；reduce / all-reduce / reduce-scatter 通信前是各卡一整份。
 
-唯一允许不同的是**滑行时长随线长**：规范给的是基准线长下的 `packDur`，线更长就飞更久（速度恒定）。`CV.packFly(len, refLen)` 就是这个换算 —— 虚线长短不同，滑行时间当然不同。
+**All-Reduce 的「双车道」。** 交换是双向的，同一条边上两个包对向而行，法向偏移的符号由行进方向自动反转；偏移量必须 ≥ 包半宽才看得出是两条道（数值见 `engine/verbs/sum.js` 的 HUMP 常量）。
 
-**新增一个原语只改四块。** 每个 `assets/*.js` 里都按 ① DATA ② ROUTE ③ STEPS ④ GEO 分区，`build(S)` 画图例/卡/槽/线/包，`paint(S,t)` 决定每帧状态；其余全部复用 `assets/cv/` 公共层和 `assets/stage.css`。
+**Reduce-Scatter 用递归减半，不用环形。** ring 的段号会错开一格（卡 k 最后拿到第 k+1 段），和对照表「卡 k 留第 k 段」对不上；递归减半的两轮配对（先同列、再同行）天然对齐，还和 all-reduce 共用同一张 2×2 网格。
 
-**GEO 必须逐项抄齐。** SVG 用 `preserveAspectRatio="xMidYMid meet"` 等比缩放，**viewBox 越小 → 缩放倍率越大 → 整页内容都变大**。所以新增页面时 `view / card / slot / hdr / title / badge` 一个都不能自己定，改完用 `getBoundingClientRect()` 量一遍渲染像素。
+**All-to-All 必须画两排缓冲。** 原地转置：上排待发（每步清空一格）、下排已收（轮到自己时一次填满）。12 条消息按目的地分 4 步；连线不画箭头 —— 每条边两个方向都要用，方向交给数据包表达。
 
-**字号写在属性上，CSS 只留字体族。** 标题（15 / 12.5）、徽章（10 / 8.5）、数据块字母（0.33 × 块高 → 15 / 8）都由 `drawCard` / `drawSlot` / `drawLegend` 按参数写在 `font-size` 属性里。CSS 里再写一条 `font-size` 会**盖掉属性**（class 选择器优先于呈现属性），窄屏就会顶着桌面字号 —— 曾经 `.gpu-title` 写死 18px、`.slot-tx` 写死 15px，25 的小块里塞着 15 的字，全是这个原因。
+**「一排 ↔ 两排」整页只做两次。** 三页（reduce 家族）统一：开场预留（长出第二排，只一次）→ 循环「传递 → 落位 → 计算 → 合并」→ 收场收窄（逐块撤 → 收卡，只一次）。循环期间卡片停在两排高，只在「计算」那一拍临时长一层放方框。
 
-**时间轴用「秒」写。** 归一化进度容易让人算错实际间隔，所以每个原语的 `T` 对象都是秒。
+**字号写在属性上，CSS 只留字体族。** 标题 / 徽章 / 块内字母的 `font-size` 由绘制函数（`parts/cast.js`）按参数写在属性里；CSS 再写一条会盖掉属性，窄屏就会顶着桌面字号。
 
-**CSS 曲线用 JS 复刻。** 落位弹跳的 `.slot-pop` 是 `cubic-bezier(.2, .9, .3, 1.45)`，y 控制点 > 1 会过冲。`CV.cubicBezier()` 在 JS 里原样复刻，这样弹跳与纯 CSS 版本逐点一致，又不用给 SVG 元素套 CSS 动画（双层 transform 会让 Chrome 提合成层并丢掉填充色，渲染成黑块）。
+**CSS 曲线用 JS 复刻。** 落位弹跳是 `cubic-bezier(.2, .9, .3, 1.45)`，`CV.cubicBezier()` 在 JS 里逐点复刻（`prim/motion.js` 的 `POP_EASE`）—— 不给 SVG 元素套 CSS 动画（双层 transform 会让 Chrome 提合成层并丢填充色，渲染成黑块）。
 
-**槽位三态语言。** ① 实心彩色块 = 有数据；② 浅紫底「···」= 传输中/待命；③ 浅灰虚线框 = 空。
-
-**All-Reduce 的「双车道」。** 交换是双向的，同一条边上两个包对向而行，各走一条车道。法向偏移的符号**由行进方向自动反转**：两个方向都取 `+HUMP` 就够，不要按 `from < to` 再补正负号 —— 那样 `dx/dy` 已经反向，符号被二次抵消，两个包会永远叠在同一侧。另外 HUMP 必须 **≥ 包半宽**才会看出是两条道：原来每步只搬一段、包主体 24px，`HUMP = 22px` 足够；改成每步搬整份（四段一排，桌面约 100px 宽）之后要抬到 `HUMP = 62px`（窄屏 34px），两条车道之间才留出 23px 的空隙。
-
-**对照表用三档行状态说话。** `layout.html` 把八个原语统一成同一套读法：左边四行是通信前的缓冲区，中间一个动作词，右边四行是通信后的缓冲区。行只有三种状态 —— 结果落在这张卡上（紫色描边）、通信前后没变化（整行退到 40%）、变了但结果不在它身上（正常显示）。格子里的角标表示「同一份数据被切成的第几片」，All-to-All 全靠它区分：通信后 rank k 手上是四张卡的**第 k 片**，四行竖着看下标递增。
-
-**对照表里 reduce 的起点必须是「每卡一份完整数据」。** 数据切成四片、各卡只持一片时，reduce 根本用不了：不同位置的数据相加没有意义，那属于 gather 的场景。所以 gather / all-gather 的「通信前」是各卡 1 片，reduce / all-reduce / reduce-scatter 的「通信前」是各卡一整份 —— 这些原语的起点本来就不同，不能为了对齐而硬拉平。**这条约束同样管动画页**：`allreduce.html` 早期每卡只画一格（看着就是「各持一片」，把四个不同位置的数据加成了一个数），现已改成每卡四格 —— 段数恒为 4，随轮数变化的是每段的**份数**（1→2→4），徽章写的就是份数。
-
-**Reduce-Scatter 是「加完再切」，All-to-All 是「切片转置」。** Reduce-Scatter 先把四份逐段相加得到四段的和，再按段切开、第 k 张卡只留第 k 段，所以通信后每卡只剩一格；All-to-All 完全不求和，每卡把自己那份切成四片、第 k 片发给 rank k，回来时四格都在，只是每格来自不同卡。
-
-**「骨架」和「配方」要分开讲。** `algorithms.html` 的矩阵只放原子骨架 —— 链/树、环、倍增/减半、Bruck、全连接、分层与网内。`RS+AG` 和 `Rabenseifner` 是「拿两个原语拼出第三个」的配方，单独一节讲，不进矩阵；混在一起会让人以为它们又是两种新拓扑。
-
-**Reduce-Scatter 动画用递归减半，不用环形。** 环形的 ring reduce-scatter 同样正确，但它的段号会错开一格（卡 k 最后拿到的是第 k+1 段），和对照表「卡 k 留第 k 段」对不上。递归减半的两轮配对（先同列、再同行）天然对齐，而且和 `allreduce.html` 共用同一张 2×2 网格、同一套配对 —— 正着看是「份数 1→2→4」，倒着看是「段数 4→2→1」。
-
-**Reduce-Scatter 的每一轮都是 reduce 那几拍，一拍不能少。** 四张卡同时动，但每张卡的遭遇跟 `reduce.html` 的目标卡一样：**预留**（长出第二排，只做一次）→ **传递**（对家那几段打成一份飞过来）→ **落位**（依次弹进第二排，`seatGap` 错峰）→ **计算**（卡片再长一层，`计算` 方框浮出来，算完就收）→ **合并**（一块块折进上排同列，1 份 → 2 份 → 4 份 Σ）→ **收窄**（卡片收回单排，只留自己编号那一段）。早期版本只有「飞过去 + 颜色跳一下」，既没有接收排也没有计算框，看不出「先收下再折进」这件事。收窄是**依次退三层，不能抢拍**：方框先淡掉 → 方框那层空间收回（`h3→h2`）→ **第二排空块逐块撤走** → 卡片收回（`h2→h1`）。卡片一矮计算框就跑到卡片外面去（会看见一圈虚影），所以方框必须先于卡片退场；第二排的撤走顺序与卡片收回则照规范 03「两排变一排」。
-
-**Reduce-Scatter 两支箭头的容量不一样，第二排要跟着变。** 第 1 轮每卡交出 2 段、收下 2 段（第二排亮 2 格），第 2 轮只交 1 段、收 1 段。所以两轮之间必须有**独立的一拍「撤掉多余的空位」**（从右往左撤 1 格，`blockDur` 0.4s），不能等到第二轮飞行时偷偷淡掉 —— 否则观众会以为第二轮也要收两段。另外**源卡上被交出的格子必须是「空数据块」，不能借用接收位的「···」紫框**：紫框的含义是「这一格等着收」，源卡那格是被搬空，两者长得一样就分不清谁在发谁在收。`reduce.html` 的源卡同理（整份交出去就空掉）。
-
-**「一排 ↔ 两排」整页只做两次，不跟着轮次反复。** 三页的步骤顺序统一成：**开场预留**（四卡同时长出第二排）→ **循环**（每一轮：传递 → 落位 → 计算 → 合并 → 收掉计算层）→ **收场收窄**（第二排逐块撤走，卡片收回单排）。循环期间卡片一直停在两排高，只在「计算」那一拍临时长一层放方框、算完立刻收回 —— 这样「两排」是整段通信的常态，而不是每一轮重来一次。早期 `allreduce.html` 把长高 / 收回塞进每一轮，看着像「每轮都在搬一次家」，而且总时长被多算了两遍 `rowOpen + rowClose`；`reducescatter.html` 则是预留时就把计算框点亮、一直亮到收窄，等于「先算再传」，与「传递之后才算」的顺序相反。两处都已改成上面的形状。
-
-**All-to-All 必须画两排缓冲。** 它是原地转置：输入槽 j 装「自己要发出去的第 j 片」，输出槽 j 装「别人发给自己的第 j 片」，同一个位置前后含义不同。只画一套格子的话，第 j 步会一边清空一边被填，怎么排步骤都自相矛盾。所以上排是待发的四片（每步清空一格），下排是收到的四片（轮到自己当接收方时一次填满）—— 这也是真实做法：in-place all-to-all 必须有一个临时缓冲。12 条消息按目的地分 4 步，每步只有 3 条边在动。
-
-**All-to-All 的连线不画箭头。** 每条边两个方向都要用（第 0 步是 1→0，第 1 步是 0→1），画一个箭头只会说对一半。方向交给数据包的拖尾表达。
-
-**首页按屏宽等比放大，不写死最大宽度。** 原来 `max-width: 1400px`，在 2560 的屏上左右各空 580px、上下各空 446px —— 整页变成贴在正中间的一张小卡片。现在 `index.css` 里有一个缩放系数 `--s`（≤1499 为 1，按 1500 / 1700 / 1900 / 2100 / 2400 逐档加到 1.36），首页所有尺寸都写成 `calc(Npx * var(--s))`：容器宽高、栅格间距、标题字号、卡片内边距、rank 圆点、箭头 SVG 的宽高全都一起放大。笔记本上 `--s = 1`，与改造前逐像素一致；2560 上容器 1904 宽、两侧各留 328，构图占屏宽 74%。
-
-> 加新尺寸时别再写字面 px —— 写成 `calc(Npx * var(--s))`，否则大屏上会出现「卡片跟着变宽、字号还是 13px」的错位。
-
-**左右两条留白各摆一个浮层，各自居中。** 正文固定 940 居中，左留白宽 `(100% - 940) / 2`，中线就是 `(100% - 940) / 4`：`anatomy.html` 的章节目录、`layout.html` 的原语索引都用 `left: calc((100% - 940px) / 4)` + `translateX(-50%)` 压在各自留白的中线上，垂直方向 `top: 50%` + `translateY(-50%)`。之前目录写 `calc(50% - 620px)`，永远黏着正文，2560 上左边还剩 660px 空白；索引写死 `left: 26px`，直接贴死屏幕边。
-
-**参数调试台在 ≥1760 时也浮到右留白中线。** 从「贴右边缘的整高抽屉」改成「宽 340、高随内容、上下居中的圆角浮窗」，与左目录对称。默认展开的门槛从 1280 提到 **1620** —— 那是 340 宽的抽屉不再压住 940 正文的下界，1280~1620 之间的窗口原来会把每节右端的「桌面 / 窄屏」开关盖在抽屉底下。
+**首页按屏宽等比放大。** `assets/pages/index.css` 有缩放系数 `--s`（≤1499 为 1，逐档放大），所有尺寸写成 `calc(Npx * var(--s))`；加新尺寸别再写字面 px。
 
 ## 交互
 

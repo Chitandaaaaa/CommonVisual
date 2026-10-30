@@ -6,8 +6,8 @@
 
    规范页「参数调试台」和原语页「时序」面板里的「保存到代码」，
    会 POST /__cv/save 到这里，直接覆盖
-     assets/cv/tokens.js   （规范参数基线）
-     assets/cv/pages.js    （每页时序基线）
+     assets/theme/defaults.js     （规范参数基线）
+     assets/scenes/pages-base.js  （每页时序基线）
    —— 不再下载到「下载」文件夹，也不用自己挪文件。
 
    用法：
@@ -27,10 +27,8 @@ const HOST = '127.0.0.1';
 
 /* 白名单：页面只能写这两个基线文件，别的一律 403 */
 const WRITABLE = new Set([
-  'assets/cv/tokens.js',
-  'assets/cv/pages.js',
-  'v2/assets/theme/defaults.js',
-  'v2/assets/scenes/pages-base.js'
+  'assets/theme/defaults.js',
+  'assets/scenes/pages-base.js'
 ]);
 
 const MIME = {
@@ -134,7 +132,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log('CommonVisual  http://%s:%d/', HOST, PORT);
-  console.log('「保存到代码」会直接写入 assets/cv/tokens.js / pages.js');
+  console.log('「保存到代码」会直接写入 assets/theme/defaults.js / assets/scenes/pages-base.js');
 });
 server.on('error', (e) => {
   if (e.code === 'EADDRINUSE') {

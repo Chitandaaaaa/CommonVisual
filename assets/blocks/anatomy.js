@@ -7,8 +7,9 @@
    每一节 = 一张真实渲染的图 + 图上的尺寸/颜色标注，
    不写说明段、不铺表格 —— 信息全部落在图上，读图即读规范。
 
-   demo 不手写 SVG —— 直接调 assets/cv/ 里真实的绘制函数
-   （CV.drawLegend / CV.drawSlot / CV.setSlot / CV.drawCard），
+   demo 不手写 SVG —— 直接调公共绘制层的真实函数
+   （CV.drawLegend / CV.drawSlot / CV.setSlot / CV.drawCard，
+   落点：blocks/legend.js、parts/cast.js），
    保证「规范即实现」：改绘制函数，这一页同时跟着变。
 
    已定稿的三个基础组件：
@@ -2105,12 +2106,12 @@
     var ol = h('ol', 'rules', s);
     [
       '尺寸只从本页 <code>GEO</code> 抄。SVG 等比缩放，<b>viewBox 数字越小 → 整页内容越大</b>，改完用 <code>getBoundingClientRect()</code> 量，别凭数字猜。',
-      '组件只走 <code>assets/cv/</code> 的绘制函数，不手写 <code>rect</code> / <code>text</code>；要改尺寸改 <code>GEO</code>，不改绘制代码。',
+      '组件只走 <code>parts/cast.js</code> / <code>payload.js</code> 的绘制函数，不手写 <code>rect</code> / <code>text</code>；要改尺寸改 <code>GEO</code>，不改绘制代码。',
       '卡内三处字号（标题 / 徽章 / 块内字母）由绘制函数写在 <code>font-size</code> 属性上，<b>CSS 里别再写</b> —— class 选择器会盖掉属性，窄屏就会顶着桌面字号（曾经 25 的块里塞着 15 的字）。',
       '断点 860px：<code>&lt; 860</code> 用窄屏一套；切换时重建舞台，再按当前进度重绘。',
       '下标分工：数据块挂 <code>data-l</code>（聚焦），卡片挂 <code>data-card</code>（置灰）。整份数据的连线与箭头不带 <code>data-l</code>，但整份包内部的小方块要带。',
-      '新增原语 = 复制 <code>assets/reduce.js</code>，只改 <code>DATA</code> / <code>ROUTE</code> / <code>STEPS</code> / <code>GEO</code>，再加落位那一段。',
-      '动效只调函数：落位用 <code>CV.spawnPulse</code>，融合用 <code>CV.createMerge</code>，聚焦用 <code>CV.attachFocus</code>。参数写在 <code>stage.css</code> 里，本页为了不加载它抄了一份 —— <b>改一边必须改另一边</b>。唯一例外是 <code>reduce</code> 的融合：它的整份包外层已有位移 transform，再叠一层会变黑块，所以用 <code>CV.cubicBezier</code> 逐点复刻同一条曲线（<code>POP_EASE</code>）。'
+      '新增原语 = 薄壳 HTML 调 <code>CV.boot(\'&lt;id&gt;\')</code>，剧本写进 <code>scenes/&lt;id&gt;.js</code>，终态登记 <code>registry.js</code>；绘制与时序展开由引擎/动词层接管。',
+      '动效只调函数：落位用 <code>CV.spawnPulse</code>，融合用 <code>CV.createMerge</code>，聚焦用 <code>CV.attachFocus</code>。参数写在 <code>theme/stage-page.css</code> 里，本页为了不加载它抄了一份 —— <b>改一边必须改另一边</b>。唯一例外是 <code>reduce</code> 的融合：它的整份包外层已有位移 transform，再叠一层会变黑块，所以用 <code>CV.cubicBezier</code> 逐点复刻同一条曲线（<code>POP_EASE</code>，真源在 <code>prim/motion.js</code>）。'
     ].forEach(function (x) { h('li', null, ol).innerHTML = x; });
 
     h('h3', null, s).textContent = '本轮已按本页对齐（2026-10-27）';

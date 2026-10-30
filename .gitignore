@@ -1,4 +1,6 @@
 .DS_Store
 .workbuddy/
+.zcode/
 node_modules/
 *.log
+.tmp-*

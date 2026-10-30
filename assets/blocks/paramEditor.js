@@ -361,7 +361,7 @@
     download(blob, 'cv-params-log.json');
   });
 
-  /* ── 保存到代码（生成 tokens.js → 直接写回 assets/cv/tokens.js） ── */
+  /* ── 保存到代码（生成 defaults.js → 直接写回 assets/theme/defaults.js） ── */
   var saveBtn = dock.querySelector('.pd-save');
   saveBtn.addEventListener('click', function () {
     var txt = '/* CommonVisual · 参数默认值（可提交）\n' +
@@ -370,11 +370,11 @@
       P.exportTokens();
     saveBtn.disabled = true;
     saveBtn.textContent = '写入中…';
-    CV.saveFile('v2/assets/theme/defaults.js', txt, function (ok, why) {
+    CV.saveFile('assets/theme/defaults.js', txt, function (ok, why) {
       saveBtn.disabled = false;
       saveBtn.textContent = ok ? '已写入' : '已下载';
       saveBtn.title = ok
-        ? '已写入 v2/assets/theme/defaults.js'
+        ? '已写入 assets/theme/defaults.js'
         : (why === 'file'
             ? '双击打开时浏览器不能写盘，已下载到「下载」文件夹；用 node tools/serve.mjs 启动可直写'
             : '当前服务不支持写盘（python -m http.server 没有 POST），已下载；用 node tools/serve.mjs 启动可直写');

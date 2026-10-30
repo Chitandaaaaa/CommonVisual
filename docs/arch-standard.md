@@ -5,7 +5,7 @@
 >
 > **看图版：[`arch-standard.html`](arch-standard.html)**（同样的内容，图为主；文本细则以本文为准）
 >
-> 相关文档：`AGENTS.md`（验证流程）、`docs/architecture.md`（代码结构地图，改代码找路径用）、
+> 相关文档：`AGENTS.md`（验证流程）、`docs/blueprint.html`（新页蓝图）、
 > `.workbuddy/memory/MEMORY.md`（约定与坑）。
 > 本文的数据由 `node tools/arch.mjs` 扫描得出，不是回忆。
 
@@ -33,6 +33,9 @@
 ---
 
 ## 二、当前架构
+
+> **⚠️ 时效说明（2026-10-31）**：本章写的「当前」是 v1（`assets/cv/` 体系）。v1 已整体删除、
+> v2 提为根目录，本章仅存档对照用；现状请以仓库目录 + `node tools/arch.mjs` 扫描为准。
 
 ### 2.1 分层
 
@@ -350,7 +353,7 @@ Q4  动的是 L0 令牌（R01 / R02）？
 
 1. **补 `T05` 断言**：12 件里只有 `reducescatter` 有 `probes/*.mjs`，其余 11 件是 0 断言。文件互不重叠 → 最多 11 条并行。
 2. **任意单页调整**：`P01–P08` + `P10–P12`，只要不碰 `R*`。
-3. **文档类**：`README`、`docs/*.md`（除本文与 architecture.md 勿同时改）。
+3. **文档类**：`README`、`docs/*.md`（除本文勿同时改）。
 
 ---
 

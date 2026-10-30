@@ -5,12 +5,8 @@
    V1–V8 几何断言，做成 commonChecks(pg, cfg) 供 8 个原语页复用；
    页面专属断言（第 3 组）在各页探针里追加。
 
-   配对规则（verify.mjs）：
-     页面 v2/<p>.html  ↔  tools/probes/v2/<p>.mjs
-     页面 <p>.html     ↔  tools/probes/<p>.mjs
-   本文件被 v2 探针与「旧页自检临时副本」（tools/probes/<p>.mjs）
-   共同 import —— 相对路径 '../v2/_common.mjs' 在两个位置解析到
-   同一个文件，所以副本不用改 import。
+   配对规则（verify.mjs）：页面 <p>.html ↔ tools/probes/<p>.mjs，
+   文件名同名即自动配对（v1 已删，探针统一放 tools/probes/）。
 
    DOM 约定（旧页 kit 与 v2 parts 同构，选择器共用）：
      .gpu-card[data-card] > .card-base / .card-bar / .gpu-title /
@@ -23,10 +19,8 @@
    不在卡片 g 里，closest() 拿不到。
 
    时间轴窗口：getCh() 可用时所有刻度现算（choreo 的 win 键沿用
-   旧页 PLAN 的 id：intro/pre/send1…、r0…、fly1/merge1…）。
-   旧页 reduce / allreduce / reducescatter / alltoall 没挂 getCh，
-   各页探针自带一份「旧页实测刻度表」（cfg 注明），仅自检期使用；
-   v2 就位后走 getCh，不再读旧表。
+   PLAN 的 id：intro/pre/send1…、r0…、fly1/merge1…）。v1 已删，
+   各页一律走 getCh，不再读旧表。
 
    期望值出处（2026-10-30 在旧页 1440×900 各量 2 次一致）：
      V1 卡 300×170 rx14；V2 槽 46×46 rx8 Δx58；V3 四色
@@ -186,7 +180,7 @@ function near(a, b, eps) { return Math.abs(a - b) <= (eps == null ? 1e-4 : eps);
 /* ── 全站通用 20 条 + V1–V8 ──────────────────────────────
    cfg = {
      page      页面键（localStorage / 齿轮用）
-     v2        强制按 v2 跑 2.18–2.21（不传则按 URL 是否含 /v2/ 自动判定）
+     v2        保留兼容位：v1 已删，2.18–2.21 恒跑（不再按 URL 判定）
      gear      是否齿轮页（2.13 / 2.14，及 2.4 / 2.16 的改倍数半截）
      edges     2.11：与 #lWires .wire DOM 序一致的流列表；letter=null 表示整份流
      noMarkers 双向直连边无箭头（alltoall）：要求 marker 数为 0
@@ -218,9 +212,9 @@ export async function commonChecks(pg, cfg) {
   const s0 = await scan(pg);
   const ch = s0.ch;
 
-  /* ── 2.18–2.21 共享层 API 契约（仅 v2 页面；按 URL 自动判定，旧页跳过）
+  /* ── 2.18–2.21 共享层 API 契约（v1 已删，全站恒为 v2，恒跑）
      2026-10-31 拆自旧 2.15：API 存在 / 控件方法 / 图层与 DOM / registry 各自独立判 ── */
-  const isV2 = await pg.evaluate(() => location.pathname.indexOf('/v2/') >= 0);
+  const isV2 = true;
   if (isV2 || cfg.v2) {
     const api = await pg.evaluate(() => {
       const a = window.CV && window.CV.lastMount;
