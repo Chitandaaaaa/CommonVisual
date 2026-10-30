@@ -1,6 +1,8 @@
 /* CommonVisual · allreduce 页探针（v2 契约版，可在旧页自检）
    ------------------------------------------------------------
-   testing.html 3.34–3.40。旧页未挂 getCh：自检用 OLD.allreduce
+   testing.html 3.39–3.45（2026-10-31 拆分重排顺延，原 3.34–3.40；
+   3.42/3.43 采样锚点紫条续记——时序标准定稿后改 win 现算）。
+   旧页未挂 getCh：自检用 OLD.allreduce
    实测刻度（TOTAL 21.52s；第1/2轮飞行中点 225/544；第1轮合并结束
    455；两轮计算框中点 367/688 —— 2026-10-30 实测）。v2 挂 getCh 后
    按字幕锚点（/第 1 轮|第 2 轮/、/相加|合并|折/）现算。
@@ -73,20 +75,20 @@ export async function check(pg) {
   }
   const A = await anchors();
 
-  /* 3.34 挂载四张卡 */
-  ok('3.34 挂载四张卡', common.t0.cards.length === 4, `cards=${common.t0.cards.length}`);
+  /* 3.39 挂载四张卡 */
+  ok('3.39 挂载四张卡', common.t0.cards.length === 4, `cards=${common.t0.cards.length}`);
 
-  /* 3.35 初始态四卡各一整份（allreduce 的起点是整份 ABCD —— 口径已按
+  /* 3.40 初始态四卡各一整份（allreduce 的起点是整份 ABCD —— 口径已按
      实现修正：testing.html 原写「各 1 块」是 allgather 的起点）*/
   {
     const t0 = common.t0;
     const whole = [0, 1, 2, 3].map(r => byCard(t0, r).filter(x => x.l));
-    ok('3.35 初始态四卡各一整份', whole.every(l => l.length === 4) &&
+    ok('3.40 初始态四卡各一整份', whole.every(l => l.length === 4) &&
       whole.every(l => l.map(x => x.l).join() === 'A,B,C,D'),
       whole.map(l => l.length + '块').join(','));
   }
 
-  /* 3.36 横向配对先于纵向 */
+  /* 3.41 横向配对先于纵向 */
   {
     const H = ['0-1', '2-3'], V = ['0-2', '1-3'];
     await seek(pg, A.r1, 300);
@@ -95,22 +97,26 @@ export async function check(pg) {
     await seek(pg, A.r2, 300);
     const s2 = await scan(pg);
     const got2 = [...new Set(s2.wires.filter(x => x.sw === '2.6').map(x => wirePair(s2, x).join('-')))].sort();
-    ok('3.36 横向配对先于纵向',
+    ok('3.41 横向配对先于纵向',
       JSON.stringify(got1) === JSON.stringify(H) && JSON.stringify(got2) === JSON.stringify(V),
       `第1轮=[${got1}] 第2轮=[${got2}]`);
   }
 
-  /* 3.37 横向轮后：每卡上排 4 块全是 2 份 Σᴀ²（口径按实现修正）*/
+  /* 3.42 横向轮后：每卡上排 4 块全是 2 份 Σᴀ²（口径按实现修正）
+     〔紫条续记：采样锚点被字幕第 0 段「逐段待相加」误匹配、采到开场帧；
+       时序标准定稿后改 win.r0merge 现算〕 */
   {
     await seek(pg, A.after1, 500);
     const s = await scan(pg);
     const rows = [0, 1, 2, 3].map(r => byCard(s, r).filter(x => x.l));
     const ok37 = rows.every(l => l.length === 4 && l.every(x => /^Σ[A-D]2$/.test(x.t)));
-    ok('3.37 横向轮后每卡 4 块全 Σᴀ²', ok37,
+    ok('3.42 横向轮后每卡 4 块全 Σᴀ²', ok37,
       rows.map(l => l.length + '块[' + l.map(x => x.t).join('') + ']').join(' '));
   }
 
-  /* 3.38 两轮合并段各出现计算框 */
+  /* 3.43 两轮合并段各出现计算框
+     〔紫条续记：同 3.42 的锚点误匹配（两轮中点被算到开场段）；
+       时序标准定稿后窗口改用 win 现算〕 */
   {
     let max1 = 0, max2 = 0;
     const mids = A.calcMid;
@@ -120,22 +126,22 @@ export async function check(pg) {
       await seek(pg, mids[1], 300);
       max2 = Math.max(0, ...(await scan(pg)).calc);
     }
-    ok('3.38 中段出现计算框（两轮）', max1 > 0.5 && max2 > 0.5,
+    ok('3.43 中段出现计算框（两轮）', max1 > 0.5 && max2 > 0.5,
       `轮1=${max1.toFixed(2)} 轮2=${max2.toFixed(2)}`);
   }
 
-  /* 3.39 / 3.40 终态 */
+  /* 3.44 / 3.45 终态 */
   {
     await seek(pg, 1000, 1100);
     const s = await scan(pg);
     const data = s.slots.filter(x => x.l);
-    ok('3.39 终态每卡四块全是 Σᴀ⁴',
+    ok('3.44 终态每卡四块全是 Σᴀ⁴',
       data.length === 16 && [0, 1, 2, 3].every(r =>
         byCard(s, r).filter(x => x.l).length === 4) &&
       data.every(x => /^Σ[A-D]4$/.test(x.t)),
       `合计=${data.length} 样例=${data[0] && data[0].t}`);
     const raw = s.slots.some(x => /^[A-D]$/.test(x.t) || (x.l && /^[A-D]$/.test(x.l)));
-    ok('3.40 终态没有残留原始块', !raw, raw ? '仍有 A/B/C/D 块' : '无 A/B/C/D');
+    ok('3.45 终态没有残留原始块', !raw, raw ? '仍有 A/B/C/D 块' : '无 A/B/C/D');
   }
 
   return out;

@@ -1,0 +1,11 @@
+{
+  "name": "commonvisual",
+  "private": true,
+  "description": "分布式通信原语可视化 · 纯静态站；package.json 仅供 tools/ 验证工具装 playwright-core",
+  "scripts": {
+    "verify": "node tools/verify.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.49.0"
+  }
+}

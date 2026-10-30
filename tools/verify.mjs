@@ -19,11 +19,12 @@
      - 终态延时给足（默认 1200ms），避免截到过渡中间态
      - 默认桌面 1440×900，窄屏 420×820
    ============================================================ */
-import { chromium } from '/Users/lxm/.workbuddy/binaries/node/workspace/node_modules/playwright-core/index.mjs';
 import http from 'node:http';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { launchBrowser } from './browser.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PROBE_DIR = path.join(ROOT, 'tools', 'probes');
@@ -34,7 +35,7 @@ const norm = (p) => (p.includes('.') ? p : p + '.html');
 const pages = [];
 let frames = ['0', '500', '1000'];
 let noShot = false;
-let outDir = '/tmp/cv-verify';
+let outDir = path.join(os.tmpdir(), 'cv-verify');
 let forcePort = 0;
 for (const a of argv) {
   if (a.startsWith('--frames=')) frames = a.slice(9).split(',');
@@ -59,10 +60,7 @@ const server = http.createServer((req, res) => {
 });
 await new Promise(r => server.listen(PORT, '127.0.0.1', r));
 
-const browser = await chromium.launch({
-  executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  args: ['--no-proxy-server', '--force-device-scale-factor=1']
-});
+const browser = await launchBrowser();
 
 async function loadPage(width, height) {
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1 });
@@ -104,7 +102,7 @@ async function verifyOne(pageFile) {
   let probeResults = null;
   const probePath = path.join(PROBE_DIR, name + '.mjs');
   if (fs.existsSync(probePath)) {
-    const mod = await import('file://' + probePath);
+    const mod = await import(pathToFileURL(probePath).href);
     probeResults = await runProbeModule(pg, mod);
     if (probeResults) for (const r of probeResults) console.log(`  probe ${r.pass ? 'PASS' : 'FAIL'}  ${r.name}  ${r.detail || ''}`);
   }

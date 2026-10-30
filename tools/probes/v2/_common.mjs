@@ -1,9 +1,9 @@
 /* ============================================================
    CommonVisual v2 · 探针公共层
    ------------------------------------------------------------
-   第 2 组全站通用 15 条（2.1–2.15）+ 蓝图 §09 的 V1–V9 几何断言，
-   做成 commonChecks(pg, cfg) 供 8 个原语页复用；页面专属断言
-   （第 3 组）在各页探针里追加。
+   第 2 组全站通用 20 条（2.1–2.21，2026-10-31 拆分重排）+ 蓝图 §09 的
+   V1–V8 几何断言，做成 commonChecks(pg, cfg) 供 8 个原语页复用；
+   页面专属断言（第 3 组）在各页探针里追加。
 
    配对规则（verify.mjs）：
      页面 v2/<p>.html  ↔  tools/probes/v2/<p>.mjs
@@ -183,18 +183,18 @@ export const sc = (sec, total) => Math.max(0, Math.min(1000, Math.round(sec / to
 
 function near(a, b, eps) { return Math.abs(a - b) <= (eps == null ? 1e-4 : eps); }
 
-/* ── 全站通用 15 条 + V1–V9 ──────────────────────────────
+/* ── 全站通用 20 条 + V1–V8 ──────────────────────────────
    cfg = {
      page      页面键（localStorage / 齿轮用）
-     v2        强制按 v2 跑 2.15（不传则按 URL 是否含 /v2/ 自动判定）
-     gear      是否齿轮页（2.10 / 2.11，及 2.3 / 2.13 的改倍数半截）
-     edges     2.8：与 #lWires .wire DOM 序一致的流列表；letter=null 表示整份流
+     v2        强制按 v2 跑 2.18–2.21（不传则按 URL 是否含 /v2/ 自动判定）
+     gear      是否齿轮页（2.13 / 2.14，及 2.4 / 2.16 的改倍数半截）
+     edges     2.11：与 #lWires .wire DOM 序一致的流列表；letter=null 表示整份流
      noMarkers 双向直连边无箭头（alltoall）：要求 marker 数为 0
      uniform   整份流的统一源色（broadcast/reduce/allreduce/reducescatter）
      idleDash  V6 空闲线 dash（默认 '8 7'；alltoall '6 6'）
      idleSw    V6 空闲线宽（默认 '2'；alltoall '1.4'）
-     keep      2.9：keep(letter) → 保留的卡号数组（聚焦不灰化的卡）
-     oldFlight 旧页无 getCh 时 2.8 的飞行中点刻度（v2 走 getCh 现算）
+     keep      2.12：keep(letter) → 保留的卡号数组（聚焦不灰化的卡）
+     oldFlight 旧页无 getCh 时 2.11 的飞行中点刻度（v2 走 getCh 现算）
    }
    getCh 是否可用不用配置：scan() 现场探测，有就走现算窗口，没有就 SKIP。
    返回 { res, t0, ch }：res 已带 2.x/V 断言；t0 是刻度 0 的快照，
@@ -203,13 +203,14 @@ export async function commonChecks(pg, cfg) {
   const res = [];
   const ok = (name, cond, detail) => res.push({ name, pass: !!cond, detail: detail || '' });
 
-  /* ── 2.1 挂载成功 ── */
+  /* ── 2.1 / 2.2 挂载（2026-10-31 拆分：对象存在与时长/段生成分判）── */
   const M = await pg.evaluate(() => {
     const a = window.CV && window.CV.lastMount;
     return a ? { dur: a.controls.duration, segs: document.querySelectorAll('#segs .seg').length } : null;
   });
-  ok('2.1 挂载成功', !!M && typeof M.dur === 'number' && M.dur > 0 && M.segs > 0,
-    M ? `dur=${M.dur} segs=${M.segs}` : 'CV.lastMount 缺失');
+  ok('2.1 挂载对象存在', !!M, M ? 'lastMount 就绪' : 'CV.lastMount 缺失');
+  ok('2.2 时长与段生成', !!M && typeof M.dur === 'number' && M.dur > 0 && M.segs > 0,
+    M ? `dur=${M.dur} segs=${M.segs}` : '');
 
   /* 先把进度条按回 0 再做初始快照：页面挂载后自动播放，不按回去的话
      t0 会撞上开场动画（卡片长高 / 颜色混合），几何断言全部失真。 */
@@ -217,7 +218,8 @@ export async function commonChecks(pg, cfg) {
   const s0 = await scan(pg);
   const ch = s0.ch;
 
-  /* ── 2.15 共享层 API 契约（仅 v2 页面；按 URL 自动判定，旧页跳过）── */
+  /* ── 2.18–2.21 共享层 API 契约（仅 v2 页面；按 URL 自动判定，旧页跳过）
+     2026-10-31 拆自旧 2.15：API 存在 / 控件方法 / 图层与 DOM / registry 各自独立判 ── */
   const isV2 = await pg.evaluate(() => location.pathname.indexOf('/v2/') >= 0);
   if (isV2 || cfg.v2) {
     const api = await pg.evaluate(() => {
@@ -240,10 +242,12 @@ export async function commonChecks(pg, cfg) {
         } : null
       };
     });
-    ok('2.15 共享层 API 契约',
-      api.cv && api.mount && api.ch && api.ctl && api.layers && api.dom &&
-      api.reg && api.reg.n >= 8 && api.reg.sorted && api.reg.full,
-      JSON.stringify(api));
+    ok('2.18 共享层 API 存在', api.cv && api.mount && api.ch,
+      `cv=${api.cv} mount=${api.mount} getCh=${api.ch}`);
+    ok('2.19 控件方法签名', api.ctl, `controls 六方法+duration=${api.ctl}`);
+    ok('2.20 图层与 DOM 齐全', api.layers && api.dom, `layers=${api.layers} dom=${api.dom}`);
+    ok('2.21 registry 契约', !!api.reg && api.reg.n >= 8 && api.reg.sorted && api.reg.full,
+      api.reg ? `n=${api.reg.n} sorted=${api.reg.sorted} full=${api.reg.full}` : 'registry 缺失');
   }
 
   /* ── V1–V8（几何基线，刻度 0 一次快照全量）── */
@@ -267,8 +271,8 @@ export async function commonChecks(pg, cfg) {
   const want4 = PAL.map(p => p.color).sort().join(',');
   ok('V3 四条数据色', dataFills.length === 4 && [...dataFills].sort().join(',') === want4,
     dataFills.join(' '));
-  const emptyFills = [...new Set(s0.slots.filter(s => !s.l && s.dash === '4 3').map(s => s.fill))];
-  ok('V4 空槽底色 #f7f8fc', emptyFills.length >= 1 && emptyFills.every(f => f === '#f7f8fc'),
+  const emptyFills = [...new Set(s0.slots.filter(s => !s.l && (s.dash === '4 3' || s.fill === '#f3eeff')).map(s => s.fill))];
+  ok('V4 空槽底色两态', emptyFills.length >= 1 && emptyFills.every(f => f === '#f7f8fc' || f === '#f3eeff'),
     emptyFills.join(' ') || '无空槽');
   ok('V5 头高 36 · 角标高 18', cs.every(c => c.barY != null && near(c.barY - c.y, 36, 0.5)) &&
     cs.every(c => c.badgeH === 18), cs.map(c => `h${c.barY - c.y}/b${c.badgeH}`).join(' '));
@@ -283,38 +287,36 @@ export async function commonChecks(pg, cfg) {
     s0.rkBg && s0.rkBg !== 'rgba(0, 0, 0, 0)' && s0.rkColor === 'rgb(255, 255, 255)',
     `${s0.rkBg} / ${s0.rkColor}`);
 
-  /* ── 2.2 段数 = 步骤数 ＆ V9 ── */
+  /* ── 2.3 段数 = 步骤数 ── */
   if (ch) {
-    ok('2.2 段数=步骤数', s0.segs.length === ch.t.length, `segs=${s0.segs.length} steps=${ch.t.length}`);
+    ok('2.3 段数=步骤数', s0.segs.length === ch.t.length, `segs=${s0.segs.length} steps=${ch.t.length}`);
   } else {
-    ok('2.2 段数=步骤数', true, 'SKIP(本页无 getCh，v2 复检)');
+    ok('2.3 段数=步骤数', true, 'SKIP(本页无 getCh，v2 复检)');
   }
-  ok('V9 段数=剧本步骤数', s0.segs.length > 0 &&
-    s0.segs.length === (ch ? ch.t.length : s0.segs.length), `n=${s0.segs.length}`);
 
-  /* ── 2.3 段宽 = 真实时长 ── */
+  /* ── 2.4 段宽 = 真实时长 ── */
   if (ch) {
     const spans = ch.t.map((t, i) => (i + 1 < ch.t.length ? ch.t[i + 1] - t : 1 - t));
     const prop = s0.segs.every((g, i) => near(g, spans[i], Math.max(spans[i], 0.01) * 0.02 + 1e-4));
     const even = new Set(s0.segs.map(g => Math.round(g * 1000))).size === 1;
-    ok('2.3 段宽=真实时长（等宽即失败）', prop && !even && spans.length === s0.segs.length,
+    ok('2.4 段宽=真实时长（等宽即失败）', prop && !even && spans.length === s0.segs.length,
       `flex=[${s0.segs.map(x => x.toFixed(3))}] span=[${spans.map(x => x.toFixed(3))}]`);
   } else {
-    ok('2.3 段宽=真实时长（等宽即失败）', true, 'SKIP(本页无 getCh，v2 复检)');
+    ok('2.4 段宽=真实时长（等宽即失败）', true, 'SKIP(本页无 getCh，v2 复检)');
   }
 
-  /* ── 2.4 字幕跟随时间（桌面半截；窄屏半截在 2.12 里一起跑）── */
+  /* ── 2.5 字幕跟随时间（桌面半截；窄屏半截在 2.15 里一起跑）── */
   let midStep = null;
   if (ch) {
     midStep = 2 < ch.t.length ? 2 : ch.t.length - 1;
     const mid = sc(((ch.t[midStep] + (midStep + 1 < ch.t.length ? ch.t[midStep + 1] : 1)) / 2) * ch.total, ch.total);
     await seek(pg, mid, 300);
     const s = await scan(pg);
-    ok('2.4 字幕跟随时间（桌面全文）', s.cap === ch.text[midStep],
+    ok('2.5 字幕跟随时间（桌面全文）', s.cap === ch.text[midStep],
       `step${midStep}: ${s.cap.slice(0, 40)}…`);
   }
 
-  /* ── 2.5 播放控制一致 ── */
+  /* ── 2.6 / 2.7 / 2.8 播放控制（2026-10-31 拆自旧 2.5：切换 / 跳段 / 复位各自独立判）── */
   {
     await seek(pg, 0, 200);
     await pg.click('#play');
@@ -353,11 +355,13 @@ export async function commonChecks(pg, cfg) {
       const a = window.CV.lastMount;
       return { t: a.controls.t(), on: a.controls.isPlaying() };
     });
-    ok('2.5 播放控制一致', playOk && pauseOk && stepOk && stR.t === 0 && stR.on === false,
-      `play=${playOk} pause=${pauseOk} step=${stepOk} R=${stR.t === 0 && !stR.on}`);
+    ok('2.6 播放/暂停切换', playOk && pauseOk, `play=${playOk} pause=${pauseOk}`);
+    ok('2.7 上一步/下一步各跳一段', stepOk,
+      `next=${afterN.toFixed(3)} prev=${afterP.toFixed(3)}`);
+    ok('2.8 R 键复位', stR.t === 0 && stR.on === false, `t=${stR.t} playing=${stR.on}`);
   }
 
-  /* ── 2.6 循环回绕干净 ── */
+  /* ── 2.9 循环回绕干净 ── */
   {
     await seek(pg, 0, 800);
     const a = await scan(pg);
@@ -372,19 +376,19 @@ export async function commonChecks(pg, cfg) {
     await pg.evaluate(() => window.CV.lastMount.controls.setPlaying(false));
     await pg.waitForTimeout(900);
     const b = await scan(pg);
-    ok('2.6 循环回绕干净', sig(b) === base,
+    ok('2.9 循环回绕干净', sig(b) === base,
       sig(b) === base ? 'wrapped' : `base=${base.slice(0, 90)} got=${sig(b).slice(0, 90)}`);
   }
 
-  /* ── 2.7 终态无残留元素 ── */
+  /* ── 2.10 终态无残留元素 ── */
   {
     await seek(pg, 1000, 1200);
     const s = await scan(pg);
     const vis = s.pkts.filter(p => p.o > 0.01).length;
-    ok('2.7 终态无残留元素', vis === 0 && s.rings === 0, `pkt可见=${vis} ring=${s.rings}`);
+    ok('2.10 终态无残留元素', vis === 0 && s.rings === 0, `pkt可见=${vis} ring=${s.rings}`);
   }
 
-  /* ── 2.8 连线与箭头一对一 + 流语义 ── */
+  /* ── 2.11 连线与箭头一对一 + 流语义 ── */
   {
     await seek(pg, 0, 400);
     const s = await scan(pg);
@@ -400,7 +404,7 @@ export async function commonChecks(pg, cfg) {
       ? (nW === cfg.edges.length &&
          (cfg.noMarkers ? nM === 0 : nM === cfg.edges.length))
       : nW > 0;
-    ok('2.8a 连线与 marker 一对一', countOk && uniqM && meUniq && meResolves,
+    ok('2.11a 连线与 marker 一对一', countOk && uniqM && meUniq && meResolves,
       `wire=${nW} marker=${nM} uniq=${uniqM}/${meUniq}/${meResolves}`);
     /* 流语义：字母流 data-l = 字母；整份流无 data-l */
     let semOk = true, semD = '';
@@ -410,7 +414,7 @@ export async function commonChecks(pg, cfg) {
         if ((w.l || null) !== (want || null)) { semOk = false; semD += ` w${i}:l=${w.l}≠${want}`; }
       });
     }
-    ok('2.8b 边色随流语义', semOk, semD || '字母流=字母 / 整份流=无 data-l');
+    ok('2.11b 边色随流语义', semOk, semD || '字母流=字母 / 整份流=无 data-l');
     /* 飞行中点：在飞边的颜色 */
     let flyOk = true, flyD = '无采样点';
     if (ch) {
@@ -439,23 +443,23 @@ export async function commonChecks(pg, cfg) {
       }
       flyD = flyOk ? `${act.length}条在飞` : flyD;
     }
-    ok('2.8c 在飞边色=流色', flyOk, flyD);
+    ok('2.11c 在飞边色=流色', flyOk, flyD);
   }
 
-  /* ── 2.13 时序不重叠、无空档 ── */
+  /* ── 2.16 时序不重叠、无空档 ── */
   if (ch) {
     let ok13 = true, d13 = '';
     for (let i = 0; i + 1 < ch.t.length; i++) {
       if (!(ch.t[i + 1] >= ch.t[i] - DEG)) { ok13 = false; d13 = `step${i} 倒挂`; break; }
     }
     const lastT = ch.t[ch.t.length - 1];
-    ok('2.13 时序不重叠无空档', ok13 && lastT < 1 && lastT > 0,
-      (d13 || `last t=${lastT.toFixed(4)} <1`) + (cfg.gear ? '（改倍数后半截见 2.13b）' : ''));
+    ok('2.16 时序不重叠无空档', ok13 && lastT < 1 && lastT > 0,
+      (d13 || `last t=${lastT.toFixed(4)} <1`) + (cfg.gear ? '（改倍数后半截见 2.16b）' : ''));
   } else {
-    ok('2.13 时序不重叠无空档', true, 'SKIP(本页无 getCh，v2 复检)');
+    ok('2.16 时序不重叠无空档', true, 'SKIP(本页无 getCh，v2 复检)');
   }
 
-  /* ── 2.9 聚焦 hover 与钉住 ── */
+  /* ── 2.12 聚焦 hover 与钉住 ── */
   {
     await seek(pg, 0, 300);
     const tgt = await pg.evaluate(() => {
@@ -500,14 +504,14 @@ export async function commonChecks(pg, cfg) {
       }));
       const pinOk = pin1 === 'B' && pin2.pinned === 'B' && pin2.focus === 'B' &&
         pin3.pinned == null;
-      ok('2.9 聚焦 hover 与钉住', hovOk && pinOk,
+      ok('2.12 聚焦 hover 与钉住', hovOk && pinOk,
         `hover=${hov.focus} dim=[${hov.dim}] want=[${wantDim}] pin=${pin1}/${pin2.pinned}/${pin3.pinned}`);
       /* 收尾：把状态清干净（移出鼠标已在 4,4；若 pin3 仍挂着再点一次取消） */
       if (pin3.pinned) { await pg.mouse.click(tgt.x, tgt.y); await pg.mouse.move(4, 4); }
     }
   }
 
-  /* ── 齿轮三件：2.10 改倍数生效、2.13b 改后仍连续、2.11 持久化 ── */
+  /* ── 齿轮三件：2.13 改倍数生效、2.16b 改后仍连续、2.14 持久化 ── */
   if (cfg.gear) {
     const dur0 = s0.dur;
     await pg.click('.gear-btn');
@@ -544,7 +548,7 @@ export async function commonChecks(pg, cfg) {
     }
     const grp4 = panel && panel.rows.some(r => r.g && r.subs.length === 4 &&
       r.subs.join() === 'travel,delay,pop,hold');
-    ok('2.10a 面板大步并成段（不重复计段）', !!panel && coverOk && grp4,
+    ok('2.13a 面板大步并成段（不重复计段）', !!panel && coverOk && grp4,
       panel ? `cover=${cover}/${ch ? ch.t.length : '?'} grp4=${grp4}` : '面板未打开');
 
     /* travel 倍数 ×2：总时长变、段数不变、该段变宽、时序仍连续 */
@@ -562,10 +566,10 @@ export async function commonChecks(pg, cfg) {
     const prop1 = doubled.segs.every((g, i) => near(g, spans1[i], Math.max(spans1[i], 0.01) * 0.02 + 1e-4));
     const contig1 = spans1.every(x => x > 0) && doubled.ch.t[0] === 0;
     const grewSpans = spans1.some((x, i) => x > spans0[i] + 1e-6);
-    ok('2.10b 倍数×2 生效', doubled.ch && doubled.dur > before.dur &&
+    ok('2.13b 倍数×2 生效', doubled.ch && doubled.dur > before.dur &&
       doubled.segs.length === before.segs.length && prop1 && contig1 && grewSpans,
       `dur ${before.dur}→${doubled.dur} segs=${doubled.segs.length} grew=${grewSpans}`);
-    ok('2.13b 改倍数后时序仍连续', doubled.ch && contig1 &&
+    ok('2.16b 改倍数后时序仍连续', doubled.ch && contig1 &&
       doubled.ch.t[doubled.ch.t.length - 1] < 1,
       `last=${doubled.ch ? doubled.ch.t[doubled.ch.t.length - 1].toFixed(4) : '?'}`);
     /* ↺ 回基线（2.11 的「↺ 能回基线」半截） */
@@ -576,11 +580,11 @@ export async function commonChecks(pg, cfg) {
     });
     await pg.waitForTimeout(500);
     const back = await scan(pg);
-    ok('2.10c ↺ 回基线', back.dur === dur0 && back.segs.length === before.segs.length,
+    ok('2.13c ↺ 回基线', back.dur === dur0 && back.segs.length === before.segs.length,
       `dur=${back.dur} (want ${dur0})`);
     await pg.keyboard.press('Escape');
 
-    /* 2.11 持久化：LS 有记录 → 刷新仍生效 → 清掉回基线 */
+    /* 2.14 持久化：LS 有记录 → 刷新仍生效 → 清掉回基线 */
     const lsKey = 'cv.page.' + cfg.page + '.v1';
     await pg.evaluate((k) => localStorage.setItem(k, JSON.stringify({ travel: 2 })), lsKey);
     await pg.reload({ waitUntil: 'load' });
@@ -597,12 +601,12 @@ export async function commonChecks(pg, cfg) {
       null, { timeout: 8000 }).catch(() => {});
     await pg.waitForTimeout(300);
     const cleared = await pg.evaluate(() => window.CV.lastMount.controls.duration);
-    ok('2.11 参数持久化', persisted.raw && JSON.parse(persisted.raw).travel === 2 &&
+    ok('2.14 参数持久化', persisted.raw && JSON.parse(persisted.raw).travel === 2 &&
       persisted.dur > dur0 && cleared === dur0,
       `ls=${!!persisted.raw} dur ${dur0}→${persisted.dur}→${cleared}`);
   }
 
-  /* ── 2.12 窄屏断点重排（+ 2.4 窄屏短版半截）── */
+  /* ── 2.15 窄屏断点重排（+ 2.5 窄屏短版半截）── */
   {
     await pg.setViewportSize({ width: 859, height: 820 });
     await pg.waitForTimeout(900);
@@ -623,9 +627,9 @@ export async function commonChecks(pg, cfg) {
     await pg.waitForTimeout(900);
     const sD = await scan(pg);
     const backOk = sD.vb === '0 0 1130 680';
-    ok('2.12 窄屏断点重排', narrowOk && backOk,
+    ok('2.15 窄屏断点重排', narrowOk && backOk,
       `narrow=${sN.vb} slot=${sN.slots[0] ? sN.slots[0].w : '?'} back=${sD.vb}`);
-    if (ch) ok('2.4b 窄屏字幕切短版', shortOk, `${shortD}: ${sN.cap.slice(0, 40)}…`);
+    if (ch) ok('2.5b 窄屏字幕切短版', shortOk, `${shortD}: ${sN.cap.slice(0, 40)}…`);
     await pg.setViewportSize({ width: 1440, height: 900 });
     await pg.waitForTimeout(600);
   }

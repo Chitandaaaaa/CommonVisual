@@ -1,6 +1,7 @@
 /* CommonVisual · alltoall 页探针（v2 契约版，可在旧页自检）
    ------------------------------------------------------------
-   testing.html 3.48–3.53。旧页未挂 getCh：自检用 OLD.alltoall 实测刻度
+   testing.html 3.54–3.60（2026-10-31 拆分重排：旧 3.51 拆为 3.57+3.58，其余顺延）。
+   旧页未挂 getCh：自检用 OLD.alltoall 实测刻度
    （TOTAL 14.65s；4 步飞行中点 94/326/558/790；第 0 步收完 270 ——
    2026-10-30 实测）；v2 挂 getCh 后按字幕锚点（/第 (\d+) 步/）现算。
    真值（2026-10-30 旧页 1440×900）：
@@ -53,10 +54,10 @@ export async function check(pg) {
     }));
   }
 
-  /* 3.48 挂载四张卡 */
-  ok('3.48 挂载四张卡', common.t0.cards.length === 4, `cards=${common.t0.cards.length}`);
+  /* 3.54 挂载四张卡 */
+  ok('3.54 挂载四张卡', common.t0.cards.length === 4, `cards=${common.t0.cards.length}`);
 
-  /* 3.49 初始态上排四片、下排空 */
+  /* 3.55 初始态上排四片、下排空 */
   {
     const t0 = common.t0;
     let ok49 = true, d49 = '';
@@ -67,10 +68,10 @@ export async function check(pg) {
       const dnOk = dn.length === 4 && dn.every(x => !x.l && x.op === 1);
       if (!upOk || !dnOk) { ok49 = false; d49 = `卡${r}: up=[${up.map(x => x.t)}] dn空=${dn.filter(x => x.l).length}`; break; }
     }
-    ok('3.49 初始态上排四片、下排空', ok49, d49 || '4 卡 × (上 4 片 + 下 4 空)');
+    ok('3.55 初始态上排四片、下排空', ok49, d49 || '4 卡 × (上 4 片 + 下 4 空)');
   }
 
-  /* 3.50 每步 3 个包同发同一目标；全页 12 条流 */
+  /* 3.56 每步 3 个包同发同一目标；全页 12 条流 */
   {
     const steps = await stepMids();
     const all12 = common.t0.pkts.length === 12;
@@ -87,22 +88,23 @@ export async function check(pg) {
         break;
       }
     }
-    ok('3.50 每步 3 包同发同一目标', ok50, d50);
+    ok('3.56 每步 3 包同发同一目标', ok50, d50);
   }
 
-  /* 3.51 上排逐片清空、徽章同步 */
+  /* 3.57 / 3.58 上排逐片清空；徽章翻转（2026-10-31 拆自旧 3.51，同一帧采样；
+     描述按已实现范围收窄：只验第 0 步之后一帧，逐步推进登记在 testing.html 待处理区③）*/
   {
     const steps = await stepMids();
     await seek(pg, steps[0].after || OLD.alltoall.afterStep0, 500);
     const s = await scan(pg);
     const badges = s.cards.sort((a, b) => a.k - b.k).map(c => c.bt);
-    const badgeOk = badges[0] === '4/4' && badges.slice(1).every(b => b === '0/4');
+    ok('3.58 徽章翻转', badges[0] === '4/4' && badges.slice(1).every(b => b === '0/4'),
+      `徽章=[${badges}]`);
     const cleared = [0, 1, 2, 3].every(r => !rows(s, r).up[0].l);
-    ok('3.51 上排逐片清空、徽章同步', badgeOk && cleared,
-      `徽章=[${badges}] 上排第0片全清=${cleared}`);
+    ok('3.57 上排逐片清空', cleared, `上排第0片全清=${cleared}`);
   }
 
-  /* 3.52 / 3.53 终态 */
+  /* 3.59 / 3.60 终态 */
   {
     await seek(pg, 1000, 1100);
     const s = await scan(pg);
@@ -116,14 +118,14 @@ export async function check(pg) {
       }
     }
     const total = s.slots.filter(x => x.l).length;
-    ok('3.52 终态上排空、下排四块', ok52 && total === 16, (d52 || '') + ` 合计=${total}`);
+    ok('3.59 终态上排空、下排四块', ok52 && total === 16, (d52 || '') + ` 合计=${total}`);
     const distinct = [0, 1, 2, 3].every(r => {
       const letters = rows(s, r).dn.filter(x => x.l).map(x => x.l);
       return new Set(letters).size === 4;
     });
     const sig = [0, 1, 2, 3].map(r => rows(s, r).dn.map(x => x.t).join());
     const noDup = new Set(sig).size === 4;
-    ok('3.53 终态四块来源互不相同', distinct && noDup,
+    ok('3.60 终态四块来源互不相同', distinct && noDup,
       `${sig.join(' | ')} 各卡4源=${distinct} 无两卡全同=${noDup}`);
   }
 

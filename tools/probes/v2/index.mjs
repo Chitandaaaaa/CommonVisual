@@ -101,7 +101,7 @@ export async function check(pg) {
       `v=[${[...new Set(vs)]}] h=[${[...new Set(hs)]}]`);
   }
 
-  /* 2.14 跨页可达：index → 8 个原语页逐个真跳 → relmap 返回都在 */
+  /* 2.17 跨页可达：index → 8 个原语页逐个真跳 → relmap 返回都在 */
   {
     let okAll = true, d14 = [];
     for (const n of data.nodes) {
@@ -114,7 +114,7 @@ export async function check(pg) {
       });
       if (!rel || !/(^|\/)index\.html$/.test(rel)) { okAll = false; d14.push(`${n.en}:返回=${rel}`); }
     }
-    ok('2.14 跨页可达', okAll, okAll ? '8 页进出都通' : d14.join(' '));
+    ok('2.17 跨页可达', okAll, okAll ? '8 页进出都通' : d14.join(' '));
     await pg.goto(new URL('index.html', pg.url()).href, { waitUntil: 'load' }).catch(() => {});
   }
 

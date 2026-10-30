@@ -7,8 +7,8 @@
    表达式里可直接用：CV.lastMount（api）、CV.lastMount.S（运行时状态）、document。
    返回 JSON 字符串。报错会回显 PROBLEMS（控制台 error / pageerror）。
    ============================================================ */
-import { chromium } from '/Users/lxm/.workbuddy/binaries/node/workspace/node_modules/playwright-core/index.mjs';
 import http from 'node:http';
+import { launchBrowser } from './browser.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,10 +32,7 @@ const server = http.createServer((req, res) => {
 });
 await new Promise(r => server.listen(PORT, '127.0.0.1', r));
 
-const browser = await chromium.launch({
-  executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  args: ['--no-proxy-server', '--force-device-scale-factor=1']
-});
+const browser = await launchBrowser();
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
 const pg = await ctx.newPage();
 const errs = [];

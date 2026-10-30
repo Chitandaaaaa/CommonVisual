@@ -1,6 +1,6 @@
 /* CommonVisual · algorithms 页探针（v2 契约版，可在旧页自检）
    ------------------------------------------------------------
-   testing.html 4.8–4.9 + 蓝图 W7。
+   testing.html 4.8–4.11（2026-10-31 拆分重排：旧 4.9 拆为 4.9–4.11）+ 蓝图 W7。
    真值（2026-10-30 待自检确认）：表宽 884、表头 11.5px 大写。
    */
 import { PRIMS } from './_common.mjs';
@@ -40,14 +40,19 @@ export async function check(pg) {
       `矩阵=[${d.mtx.map(r => r.k).join(',')}]`);
   }
 
-  /* 4.9 骨架与实现两层不混（每个原语都有矩阵行 + 常用实现行；骨架卡非空）*/
+  /* 4.9 / 4.10 / 4.11 骨架与实现两层不混（2026-10-31 拆自旧 4.9：
+     矩阵行 / pick 行 / 骨架卡三件事各自独立判）*/
   {
     const canon = PRIMS.map(p => p.en);
     const inMtx = canon.every(k => d.mtx.some(r => r.k === k && r.cells === 6));
     const inPick = canon.every(k => d.pick.indexOf(k) >= 0);
     const cardsOk = d.cards.length === 8 && d.cards.every(c => c.h3 && c.one > 0 && c.dd >= 3);
-    ok('4.9 骨架与实现两层不混', inMtx && inPick && cardsOk,
-      `矩阵全=${inMtx} 实现全=${inPick} 骨架卡=${d.cards.length}张`);
+    ok('4.9 算法矩阵行完整', inMtx,
+      `矩阵全=${inMtx} rows=${d.mtx.length}`);
+    ok('4.10 pick 行齐全', inPick,
+      `pick=${d.pick.length}/8`);
+    ok('4.11 骨架卡无空卡', cardsOk,
+      `骨架卡=${d.cards.length}张 h3/one/dd=${cardsOk}`);
   }
 
   /* W7 表格 884 宽 · 表头 11.5 大写 */
