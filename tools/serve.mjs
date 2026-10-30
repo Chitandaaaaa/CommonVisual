@@ -28,7 +28,9 @@ const HOST = '127.0.0.1';
 /* 白名单：页面只能写这两个基线文件，别的一律 403 */
 const WRITABLE = new Set([
   'assets/cv/tokens.js',
-  'assets/cv/pages.js'
+  'assets/cv/pages.js',
+  'v2/assets/theme/defaults.js',
+  'v2/assets/scenes/pages-base.js'
 ]);
 
 const MIME = {

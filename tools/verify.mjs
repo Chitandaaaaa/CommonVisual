@@ -116,7 +116,7 @@ async function verifyOne(pageFile) {
     for (const fr of frames) {
       const [v, d] = fr.split('@').map(Number);
       const delay = (d || (v === 1000 ? 1200 : 900));
-      await pg.evaluate((vv) => { const api = window.CV.lastMount; api.controls.setPlaying(false); api.controls.seek(vv / 1000); }, v);
+      await pg.evaluate((vv) => { const api = window.CV.lastMount; if (api) { api.controls.setPlaying(false); api.controls.seek(vv / 1000); } }, v);   /* 静态页无 lastMount：不出图只截图 */
       await pg.waitForTimeout(delay);
       const out = path.join(outDir, `${name}-${v}.png`);
       await pg.screenshot({ path: out });
@@ -129,7 +129,7 @@ async function verifyOne(pageFile) {
     await n.pg.goto(url, { waitUntil: 'load' });
     await n.pg.waitForFunction(() => window.CV && window.CV.lastMount && window.CV.lastMount.controls, null, { timeout: 8000 }).catch(() => {});
     await n.pg.waitForTimeout(150);
-    await n.pg.evaluate(() => { const api = window.CV.lastMount; api.controls.setPlaying(false); api.controls.seek(0); });
+    await n.pg.evaluate(() => { const api = window.CV.lastMount; if (api) { api.controls.setPlaying(false); api.controls.seek(0); } });
     await n.pg.waitForTimeout(900);
     const nout = path.join(outDir, `${name}-narrow.png`);
     await n.pg.screenshot({ path: nout });
