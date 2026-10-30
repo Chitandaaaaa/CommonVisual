@@ -84,26 +84,26 @@
 <div class="wrap">
 
   <h1>CommonVisual · 验证用例清单</h1>
-  <div class="sub">55 条，按页面组织：通用 3 条（每页都跑）＋ 原语页 44 条 ＋ 静态页 8 条。已实现 8 条，待补 47 条。</div>
+  <div class="sub">55 条，按页面组织：通用 3 条 ＋ 原语页 44 条 ＋ 静态页 8 条。已实现 8 条，待补 47 条。<b>结构断言每次改完都跑，约 43 秒；截图与人工观感留到提交前和每日定时。</b></div>
   <div class="rule-top">以本页为准 · 改本页需同步 AGENTS.md 一 与 MEMORY.md</div>
 
-  <div class="lead">本页只列<b>用例</b>——能判「过或不过」的验证动作，每条都写明<b>作用在哪个页面</b>。写「全部页」的是每页都跑；写页名的是该页专属，例如「计算框」只在 reduce / allreduce / reducescatter 三页存在，其余五页没有这一项。工具用法不属于用例，放在页末附注。</div>
+  <div class="lead">本页只列<b>用例</b>——能判「过或不过」的验证动作，每条都写明<b>作用在哪个页面</b>，以及<b>什么时候跑</b>：结构断言快，每次改完都跑；截图与人工观感慢，只在提交前和每日定时跑。工具用法不属于用例，放在页末附注。</div>
 
   <div class="ov-wrap">
   <table class="ov" style="margin-top:14px">
-    <thead><tr><th style="width:30px">#</th><th style="width:180px">组</th><th>覆盖</th><th style="width:170px">状态</th></tr></thead>
+    <thead><tr><th style="width:30px">#</th><th style="width:150px">组</th><th>覆盖</th><th style="width:180px">什么时候跑</th><th style="width:150px">状态</th></tr></thead>
     <tbody>
-      <tr><td class="mono">1</td><td><b>通用用例</b></td><td>每页都跑：截图比对、桌面观感、窄屏排版</td><td><span class="pill yes">3 条已实现</span></td></tr>
-      <tr><td class="mono">2</td><td><b>原语页用例</b></td><td>8 页，每页 5–6 条结构断言</td><td><span class="pill yes">5 已实现</span> <span class="pill todo">39 待补</span></td></tr>
-      <tr><td class="mono">3</td><td><b>静态页用例</b></td><td>index / layout / algorithms / anatomy 各 2 条</td><td><span class="pill todo">8 待补</span></td></tr>
+      <tr><td class="mono">1</td><td><b>通用用例</b></td><td>截图比对、桌面观感、窄屏排版</td><td><span class="pill neutral">提交前 / 每日 09:30</span></td><td><span class="pill yes">3 条已实现</span></td></tr>
+      <tr><td class="mono">2</td><td><b>原语页用例</b></td><td>8 页，每页 5–6 条结构断言</td><td><span class="pill yes">每次改完</span></td><td><span class="pill yes">5 已实现</span> <span class="pill todo">39 待补</span></td></tr>
+      <tr><td class="mono">3</td><td><b>静态页用例</b></td><td>index / layout / algorithms / anatomy 各 2 条</td><td><span class="pill yes">每次改完</span></td><td><span class="pill todo">8 待补</span></td></tr>
     </tbody>
   </table>
   </div>
 
   <!-- ===================== 01 ===================== -->
   <section>
-    <div class="sechead"><span class="no">01</span><h2>通用用例 · 每页都跑</h2><span class="meta">3 条，已实现</span></div>
-    <div class="role">与具体原语无关，12 页逐页执行。</div>
+    <div class="sechead"><span class="no">01</span><h2>通用用例 · 每页都跑</h2><span class="meta">3 条 · 提交前 / 每日 09:30</span></div>
+    <div class="role">与具体原语无关，12 页逐页执行。<b>要出图，慢</b>（每页四张截图 + 两次窄屏重排），所以不跟每次改动跑，留到提交前与每日定时。</div>
     <table class="spec">
       <colgroup><col style="width:6%"><col style="width:10%"><col style="width:16%"><col style="width:50%"><col style="width:18%"></colgroup>
       <thead><tr><th class="c-no">序号</th><th>页面</th><th>用例</th><th class="c-v">断言什么 · 通过标准</th><th>状态 / 脚本</th></tr></thead>
@@ -135,7 +135,7 @@
 
   <!-- ===================== 02 ===================== -->
   <section>
-    <div class="sechead"><span class="no">02</span><h2>原语页用例 · 一页一组</h2><span class="meta">44 条 · 已实现 5 / 待补 39</span></div>
+    <div class="sechead"><span class="no">02</span><h2>原语页用例 · 一页一组</h2><span class="meta">44 条 · 每次改完跑 · 已实现 5 / 待补 39</span></div>
     <div class="role">同一页的断言共用一次挂载，按<b>时间顺序</b>排：挂载 → 初始态 → 过程中 → 终态。</div>
     <table class="spec">
       <colgroup><col style="width:6%"><col style="width:10%"><col style="width:16%"><col style="width:50%"><col style="width:18%"></colgroup>
@@ -209,8 +209,8 @@
 
   <!-- ===================== 03 ===================== -->
   <section>
-    <div class="sechead"><span class="no">03</span><h2>静态页用例</h2><span class="meta">8 条，待补</span></div>
-    <div class="role">四张非动画页，只查结构与链接，不查时序。</div>
+    <div class="sechead"><span class="no">03</span><h2>静态页用例</h2><span class="meta">8 条 · 每次改完跑 · 待补</span></div>
+    <div class="role">四张非动画页，只查结构与链接、不查时序，几秒跑完，<b>每次改完都跑</b>。</div>
     <table class="spec">
       <colgroup><col style="width:6%"><col style="width:10%"><col style="width:16%"><col style="width:50%"><col style="width:18%"></colgroup>
       <thead><tr><th class="c-no">序号</th><th>页面</th><th>用例</th><th class="c-v">断言什么 · 通过标准</th><th>状态 / 脚本</th></tr></thead>
@@ -231,12 +231,16 @@
   <div class="appendix">
     <h2>附：工具与跑法（不属于用例）</h2>
     <dl>
-      <dt>跑自动用例</dt>
-      <dd><code>node tools/verify.mjs &lt;页面…&gt; --no-shot</code> 只跑断言不截图；去掉 <code>--no-shot</code> 连 1.1 的四张图一起出。</dd>
+      <dt>每次改完</dt>
+      <dd><code>node tools/verify.mjs &lt;页面…&gt; --no-shot</code> 只跑第 2、3 组，不出图 → 实测 <b>12 页 43 秒</b>（其中 22 次细扫约 6 秒）。改哪页就传哪页，通常 3–5 秒。</dd>
+      <dt>提交前 / 定时</dt>
+      <dd>去掉 <code>--no-shot</code>，连第 1 组的四张截图一起出（12 页约 3–4 分钟）；每日 09:30 由定时任务跑这一版。</dd>
       <dt>量真值</dt>
       <dd><code>node tools/probe.mjs &lt;页面&gt; 0:"&lt;要量的表达式&gt;"</code>，刻度 0 是开头、1000 是结尾；它只报数、不判对错，是写新用例前的尺子。</dd>
       <dt>断言写哪</dt>
       <dd><code>tools/probes/&lt;页面&gt;.mjs</code>，导出 <code>check(pg)</code> 返回 <code>{name, pass, detail}</code>；文件名与页面同名即自动配对。</dd>
+      <dt>写断言的速度约束</dt>
+      <dd>同一页的 5–6 条断言要<b>共用一次时间轴扫描</b>：先采样一轮（记下每个刻度的读数），再各自比对；不要每条重新 seek 一遍，否则 47 条补完会从 43 秒涨到几分钟。</dd>
       <dt>报错收集</dt>
       <dd>每打开一页挂一份监听（脚本崩溃 + 控制台报错/警告），换页换一份。属顺带行为，不算用例。</dd>
       <dt>边界</dt>
