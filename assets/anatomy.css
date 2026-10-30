@@ -503,6 +503,36 @@
 }
 .pd-close:hover { background: #e7eaf3; color: var(--tx-2); }
 .pd-body { flex: 1; position: relative; overflow-y: auto; padding: 10px 12px 4px; }
+/* 作用域条：写明现在调的是哪一节，右边是「全部章节」的回退开关 */
+.pd-scope {
+  display: flex; align-items: center; gap: 8px; flex: none;
+  padding: 7px 12px; border-bottom: 1px solid var(--line); background: #fbfaff;
+}
+.pd-scope-name {
+  font-size: 11.5px; font-weight: 600; color: var(--tx);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pd-scope-all {
+  flex: none; margin-left: auto; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 999px; background: #fff;
+  font-family: var(--sans); font-size: 10.5px; color: var(--accent);
+  padding: 3px 9px; white-space: nowrap;
+}
+.pd-scope-all:hover { background: #eeecfe; }
+/* 空态：本节没参数时，直接列出可跳的二级章节 */
+.pd-empty { padding: 12px 10px 4px; }
+.pd-empty-t { font-size: 11.5px; line-height: 1.6; color: var(--tx-2); margin-bottom: 8px; }
+.pd-empty-n { font-size: 10.5px; line-height: 1.6; color: var(--tx-3); margin-top: 4px; }
+.pd-jump {
+  display: flex; align-items: center; gap: 7px; width: 100%;
+  margin-bottom: 6px; padding: 7px 9px; cursor: pointer; text-align: left;
+  border: 1px solid var(--line); border-radius: 9px; background: #fff;
+  font-family: var(--sans); font-size: 11.5px; color: var(--tx);
+}
+.pd-jump:hover { background: #f7f5ff; border-color: var(--accent); }
+.pd-jump i { font-family: var(--mono); font-style: normal; font-size: 11px; color: var(--accent); }
+.pd-jump span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pd-jump em { margin-left: auto; font-style: normal; font-size: 11px; color: var(--accent); }
 .pd-foot {
   display: flex; align-items: center; gap: 8px; flex: none;
   padding: 9px 12px; border-top: 1px solid var(--line);

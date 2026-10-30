@@ -3,8 +3,9 @@
    ------------------------------------------------------------
    把 CV.params 注册表变成可见 / 可调 / 可锁 / 可记录的界面：
      · 右侧整高抽屉（固定浮层），收起后只剩右下角 ⚙ 按钮，不挡内容
-     · 每个章节一个手风琴分组；滚到哪节哪节自动展开（手动开的保持展开）
-     · 每组标题带「定位 ↗」跳回正文对应章节
+     · 默认只显示「当前章节」的动效参数组，跟着切节走（点 ⚙ 时不会看到满屏别的章）
+     · 当前章节没有参数 → 空态列出可跳的二级章节，点一下直接跳过去
+     · 每组标题「定位 05.3 ↗」跳到正文对应二级标题（不是整节顶部）
      · 改值 → CV.params.set → 触发各章节 onChange 实时重画
      · 重置全部 → 回到 tokens 基线
      · 导出日志 → 下载 JSON 变更记录
@@ -24,6 +25,35 @@
     if (no) secByNo[no.textContent.trim()] = s;
   });
   function sectionOf(key) { return secByNo[key.slice(0, 2)]; }
+  /* 二级标题锚点 'sub-05-3' → 编号 '05.3'（面板上显示的「定位到哪一节」） */
+  function anchorNo(id) {
+    var m = /^sub-(\d{2})-(\d+)$/.exec(id || '');
+    return m ? m[1] + '.' + m[2] : '';
+  }
+  /* 当前显示的节号：单章视图下同一时刻只有一节是 is-active */
+  function curSecNo() {
+    var s = app.querySelector('.sec.is-active');
+    var n = s && s.querySelector('.sec-no');
+    return n ? n.textContent.trim() : null;
+  }
+
+  /* ── 定位：跳到某个参数组对应的「二级章节」──
+     单章视图下二级标题只在它所属那一节显示，所以必须先切节再滚，
+     否则 getElementById 拿到的是 display:none 的元素（rect 全 0，滚过去等于没滚）。
+     showSection 自己会 scrollTo(0,0)，而 html 设了 scroll-behavior:smooth ——
+     紧接着再发起一次平滑滚动会被前一段顶掉，落点飘；隔一帧等布局落定再滚。 */
+  function goTo(sec) {
+    var no = sec.slice(0, 2);
+    var anchorId = (SCHEMA[sec] && SCHEMA[sec].anchor) || '';
+    if (window.CV && window.CV.showSection) window.CV.showSection(no);
+    var el = (anchorId && document.getElementById(anchorId)) || sectionOf(sec);
+    if (!el) return;
+    setTimeout(function () {
+      var top = el.getBoundingClientRect().top + window.pageYOffset - 12;
+      window.scrollTo({ top: top, behavior: 'smooth' });
+      history.replaceState(null, '', '#' + (anchorId || ('sec-' + no)));
+    }, 60);
+  }
 
   /* ── 收起态：右下角悬浮按钮 ── */
   var fab = document.createElement('button');
@@ -41,6 +71,13 @@
       '<span class="pd-title">参数调试台</span>' +
       '<button class="pd-close" title="收起">✕</button>' +
     '</div>' +
+    /* 作用域条：默认「只显示当前章节」，右边那个按钮是回退开关（跨节对照调时才用）。
+       当前章节没有参数时，条上直接写明，正文区给一排跳转入口。 */
+    '<div class="pd-scope">' +
+      '<span class="pd-scope-name"></span>' +
+      '<button class="pd-scope-all" title="显示全部章节的参数（含不属于任何一节的「全局播放」）">' +
+        '全部章节</button>' +
+    '</div>' +
     '<div class="pd-body"></div>' +
     '<div class="pd-foot">' +
       '<span class="pd-logcount">0 条变更</span>' +
@@ -52,8 +89,12 @@
 
   var body = dock.querySelector('.pd-body');
   var logCount = dock.querySelector('.pd-logcount');
+  var scopeName = dock.querySelector('.pd-scope-name');
+  var scopeAllBtn = dock.querySelector('.pd-scope-all');
   var rows = [];                 /* { sec, key, range, num, sync } */
   var log = [];                  /* { t, section, key, from, to } */
+  var groups = [];               /* { el, sec, no, spec, setOpen, state } —— 供按节显隐 */
+  var scopeAll = false;          /* false = 只显示当前章节（默认） */
 
   /* ── 构建每一行 ── */
   function buildRow(sec, key, spec) {
@@ -108,12 +149,19 @@
 
     /* 跨页组（如 prims）没有对应正文章节：不给「定位」，默认常开 */
     var anchored = !!sectionOf(sec);
+    var aId = spec.anchor || '';
+    var aNo = anchorNo(aId);
+    var locTx = aNo ? '定位 ' + aNo : '定位该节';
 
     var head = document.createElement('button');
     head.className = 'pp-group-head';
     head.innerHTML =
       '<span class="pp-group-title">' + spec.label + '</span>' +
-      (anchored ? '<span class="pp-locate" title="定位到正文该节">定位 ↗</span>' : '<span class="pp-tag">跨页</span>') +
+      (anchored
+        ? '<span class="pp-locate" title="' + (aNo
+            ? '跳到正文二级标题 ' + aNo + '（不是整节顶部）'
+            : '跳到正文该节') + '">' + locTx + ' ↗</span>'
+        : '<span class="pp-tag">跨页</span>') +
       '<span class="pp-chev">▸</span>';
 
     var gbody = document.createElement('div');
@@ -151,19 +199,12 @@
       state.touched = true;
       setOpen(!state.open);
     });
-    /* 定位 ↗：优先滚到该组对应的「二级标题」（SCHEMA.anchor），
-       没有 anchor 才回退到整节（沿用 TOC 的 -12 偏移） */
+    /* 定位 ↗：切到该节 → 滚到该组对应的「二级标题」（SCHEMA.anchor），
+       没有 anchor 才回退到整节顶部 */
     var locate = head.querySelector('.pp-locate');
     if (locate) locate.addEventListener('click', function (e) {
       e.stopPropagation();
-      var secNo = sec.slice(0, 2);
-      if (window.CV && window.CV.showSection) window.CV.showSection(secNo);  /* 先切到该节，让锚点可见 */
-      var anchorId = SCHEMA[sec] && SCHEMA[sec].anchor;
-      var el = anchorId ? document.getElementById(anchorId) : sectionOf(sec);
-      if (el) {
-        var top = el.getBoundingClientRect().top + window.pageYOffset - 12;
-        window.scrollTo({ top: top, behavior: 'smooth' });
-      }
+      goTo(sec);
     });
 
     /* 跨页组没有正文锚点：默认展开，且不受滚动联动影响 */
@@ -175,7 +216,99 @@
   }
 
   Object.keys(SCHEMA).forEach(function (sec) {
-    body.appendChild(buildGroup(sec, SCHEMA[sec]));
+    var g = buildGroup(sec, SCHEMA[sec]);
+    groups.push({
+      el: g, sec: sec, no: sec.slice(0, 2), spec: SCHEMA[sec],
+      setOpen: g._setOpen, state: g._state
+    });
+    body.appendChild(g);
+  });
+
+  /* ── 空态：本节没有可调参数时，给一排「跳到那个二级章节」的入口 ──
+     只显示当前章节之后，02/04/06/07/10~13 这些节打开抽屉是空的；
+     光写一句「本节无参数」等于把人赶走，所以直接把可跳的地方列出来。 */
+  var empty = document.createElement('div');
+  empty.className = 'pd-empty';
+  empty.style.display = 'none';
+  (function buildEmpty() {
+    var t = document.createElement('div');
+    t.className = 'pd-empty-t';
+    t.textContent = '本节没有可调的动效参数。跳到下面任一一节：';
+    empty.appendChild(t);
+    Object.keys(SCHEMA).forEach(function (sec) {
+      var sp = SCHEMA[sec];
+      if (!sp.anchor) return;                 /* 没有正文锚点的（global）不给跳转 */
+      var b = document.createElement('button');
+      b.className = 'pd-jump';
+      b.innerHTML = '<i>' + anchorNo(sp.anchor) + '</i>' +
+        '<span>' + sp.label + '</span><em>↗</em>';
+      b.title = '跳到正文二级标题 ' + anchorNo(sp.anchor);
+      b.addEventListener('click', function () { goTo(sec); });
+      empty.appendChild(b);
+    });
+    var n = document.createElement('div');
+    n.className = 'pd-empty-n';
+    n.textContent = '「全局播放」不属于任何一节，切「全部章节」可调。';
+    empty.appendChild(n);
+  })();
+  body.appendChild(empty);
+
+  /* ── 按「当前章节」显隐分组 ── */
+  var scopeNameEl = scopeName;
+  var lastNo = null;
+  function renderScope() {
+    var no = curSecNo();
+    var isNew = (no !== lastNo);
+    lastNo = no;
+    var hit = null, any = false;
+    groups.forEach(function (g) {
+      /* 全部模式下 global（no='gl'）也显示；本节模式下它不属于任何一节，隐藏 */
+      var show = scopeAll || (no && g.no === no);
+      g.el.style.display = show ? '' : 'none';
+      if (!show) return;
+      any = true;
+      if (g.no === no) hit = g;
+    });
+    /* 刚切到新节：把本节的组自动摊开（切节是新上下文，摊开是预期）。
+       用户手动收起后不再强行改 —— 除非又切了一次节。 */
+    if (!scopeAll && isNew && hit) hit.setOpen(true);
+    empty.style.display = any ? 'none' : '';
+    scopeNameEl.textContent = scopeAll
+      ? '全部章节'
+      : ((no ? no + ' · ' : '') + (hit ? hit.spec.label : '本节无可调参数'));
+    if (scopeAll && hit) body.scrollTop = Math.max(0, hit.el.offsetTop - 6);
+  }
+
+  function onSectionChange() {
+    if (curSecNo() === lastNo) return;
+    renderScope();
+  }
+
+  /* 切节联动：anatomy.js 的 showSection 会调 CV._sectionChanged（右侧二级导航重建也挂在这）。
+     这里包一层而不是直接赋值 —— 直接赋值会把导航的重建逻辑顶掉。 */
+  (function hookSection() {
+    var prev = window.CV._sectionChanged;
+    window.CV._sectionChanged = function (no) {
+      if (prev) { try { prev(no); } catch (e) { /* 导航重建挂了也不能挡着切节 */ } }
+      onSectionChange();
+    };
+    /* 兜底：不依赖钩子名与加载顺序，直接看哪节被标成 is-active。
+       只观察 .sec 自身（不 subtree）—— 节内 svg 每帧改 style 会把回调刷爆。 */
+    if (window.MutationObserver) {
+      var mo = new MutationObserver(onSectionChange);
+      [].slice.call(app.querySelectorAll('.sec')).forEach(function (s) {
+        mo.observe(s, { attributes: true, attributeFilter: ['class', 'style'] });
+      });
+    }
+  })();
+
+  scopeAllBtn.addEventListener('click', function () {
+    scopeAll = !scopeAll;
+    scopeAllBtn.textContent = scopeAll ? '仅当前节' : '全部章节';
+    scopeAllBtn.title = scopeAll
+      ? '只看当前章节的动效参数'
+      : '显示全部章节的参数（含不属于任何一节的「全局播放」）';
+    renderScope();
   });
 
   /* ── 日志计数 ── */
@@ -198,26 +331,16 @@
   fab.addEventListener('click', function () { open = true; apply(); });
   dock.querySelector('.pd-close').addEventListener('click', function () { open = false; apply(); });
 
-  /* ── 滚动联动：滚到哪节，哪节自动展开（手动开/关的保持原状）── */
+  /* ── 联动：切节由 renderScope 负责换组（单章视图，滚动不改变当前节）；
+     这里只处理「每次打开抽屉」—— 打开即摊开本节那一组。 ── */
   var ticking = false;
   function sync() {
     if (!open) return;
-    var y = window.pageYOffset + window.innerHeight * 0.32;   /* 沿用 TOC 的 32% 判定线 */
-    var cur = null, list = [].slice.call(app.querySelectorAll('.sec'));
-    list.forEach(function (s) {
-      if (s.getBoundingClientRect().top + window.pageYOffset <= y) cur = s;
-    });
-    var max = document.documentElement.scrollHeight - window.innerHeight;
-    if (window.pageYOffset >= max - 2) cur = list[list.length - 1];   /* 兜底：末节顶不到判定线 */
-    if (!cur) return;
-    var no = cur.querySelector('.sec-no'); if (!no) return;
-    var grp = body.querySelector('.pp-group[data-no="' + no.textContent.trim() + '"]');
-    if (!grp) return;
-    if (!grp._state.touched) grp._setOpen(true);              /* 仅自动展开「没被手动碰过」的组 */
-    body.scrollTop = grp.offsetTop - 6;                       /* 把当前组滚进抽屉视野 */
+    lastNo = null;                     /* 每次打开都算新上下文，把本节组摊开 */
+    renderScope();
   }
   window.addEventListener('scroll', function () {
-    if (!ticking) { ticking = true; requestAnimationFrame(function () { ticking = false; sync(); }); }
+    if (!ticking) { ticking = true; requestAnimationFrame(function () { ticking = false; onSectionChange(); }); }
   }, { passive: true });
   window.addEventListener('resize', function () {
     if (window.innerWidth < DOCK_FIT) open = false;            /* 变窄就收起，避免压住正文 */
@@ -268,5 +391,8 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
-  apply();   /* 初始：宽屏开，窄屏收起 */
+  /* 初始一律收起（见上面 open 的说明）：DOCK_FIT 只在 resize 变窄时用来强制收起，
+     不参与初始判定 —— 否则右侧二级导航永远被抽屉挤掉。 */
+  renderScope();                       /* 先定好当前节，再谈开合 */
+  apply();
 })(window.CV = window.CV || {});

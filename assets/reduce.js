@@ -8,7 +8,8 @@
    ① 不存在「先堆起来再压缩」的中间态：rank0 只有一个累加器，每来一份立刻折进。
    ② reduce 是**消耗**数据，源卡交出去缓冲区就空（broadcast 才是复制）。
 
-   目标卡三态：一份同构 → 预留长高放第二排 → 计算再长高放方框 → 收窄。
+   步骤顺序：预留一次（一排变两排）→ 三趟「传递 → 计算」循环 → 收场一次（两排变一排）。
+   循环里卡片一直停在两排高，只在「计算」那一拍临时长一层放方框、算完就收回。
    卡片中心固定，高度变化上下同时扩。
 
    只声明数据 / 时间轴 / 文案 / 几何位置 / 落位规则；
@@ -30,14 +31,30 @@
   var SEG = CV.specVal('fuseDur') || 0.55;
   var GAP = CV.specVal('mergeGap') || 0.5;
 
+  /* 一排 ↔ 两排 走规范 03：卡片伸缩 cardDur、第二排每块 blockDur、块间 blockGap。
+     「预留」= 一排变两排（先长够再逐块亮出空位），
+     「收尾」= 两排变一排（先逐块撤走空位再收回卡片）—— 原来收尾这一步是缺的，
+     卡片一直停在高位、挂着四个空槽。 */
+  var RS = CV.rowSpan(PARTS);
+
+  /* 计算方框这一拍走规范 07：长出那一层 / 方框展示 / 收回，三段各自可调。
+     · grow   卡片 h2 → h3 的伸长
+     · shrink 卡片 h3 → h2 的缩回
+     · merge  这一拍的停留：方框亮着，同时四段在折进去 —— 两件事并行，取**较大者**。
+              融合还没折完就收卡会让方框先没了、Σ 还少一块；反过来多亮一会儿没副作用。 */
+  var GROW   = CV.specVal('growDur')   || 0.75;
+  var SHRINK = CV.specVal('shrinkDur') || 0.7;
+  var HOLD   = CV.specVal('holdDur')   || 0.95;
+
   /* ── ② 时间轴（秒）── */
   var TM = {
-    init: 0.6, prealloc: 0.7, fly: 1.7, pop: 0.6, grow: 0.4,
-    merge: SEG + 3 * GAP, shrink: 0.4
+    init: 0.6, prealloc: RS.open, fly: 1.7, pop: 0.6, grow: GROW,
+    merge: Math.max(SEG + 3 * GAP, HOLD), shrink: SHRINK, collapse: RS.close
   };
 
   var CYCLE = TM.fly + TM.pop + TM.grow + TM.merge + TM.shrink;
-  var TOTAL = TM.init + TM.prealloc + CYCLE * 3 + 0.5;
+  var COLLAPSE_AT = TM.init + TM.prealloc + CYCLE * 3;
+  var TOTAL = COLLAPSE_AT + TM.collapse + 0.5;
   function N(sec) { return sec / TOTAL; }
 
   var ROUTE = { target: 0, flows: [] };
@@ -91,13 +108,13 @@
 
   var STEPS = [
     { t: 0, text: rk(0) + rk(1) + rk(2) + rk(3) + ' 各持整份 ' + whole() },
-    { t: N(TM.init), text: rk(0) + ' 预留 4 份缓冲' }
+    { t: N(TM.init), text: rk(0) + ' 预留 4 份缓冲：卡片先长高，再逐块亮出第二排空位' }
   ];
   ROUTE.flows.forEach(function (f) {
     STEPS.push({ t: N(f.start), text: rk(f.from) + ' 的整份送往 ' + rk(0) });
     STEPS.push({ t: N(f.popEnd), text: '逐段相加，累加到 ' + (f.from + 1) + ' 份' });
   });
-  STEPS.push({ t: N(ROUTE.flows[ROUTE.flows.length - 1].end), text: '结果只留在 ' + rk(0) });
+  STEPS.push({ t: N(COLLAPSE_AT), text: '结果定在 ' + rk(0) + '：撤掉空位，卡片收回单排' });
 
   /* ── ④ 几何 ── */
   var GEO = CV.geo({
@@ -148,6 +165,7 @@
               ', ' + w.tx + ' ' + ty;
       w.path.setAttribute('d', d);
       w.len = w.path.getTotalLength();
+      /* 端点每变一次，虚线末端都要重新收进箭头里（否则线头会重新顶到尖端） */
     });
   }
   /* wires 在 paint 里由 S 提供，layoutWires 通过闭包变量取 */
@@ -272,10 +290,12 @@
       var c0 = L.slot;
       var CH = cardH();
 
-      /* —— 阶段一：预留缓冲 —— */
-      var pPre = clamp((sec - TM.init) / TM.prealloc, 0, 1);
-      var growPre = CV.easeInOutQuad(clamp(pPre / 0.72, 0, 1));
-      var rowA = clamp((growPre - 0.15) / 0.3, 0, 1);
+      /* —— 阶段一：预留缓冲 = 规范 03 的「一排变两排」——
+         ① 卡片先绕中心长够 ② 第二排空块再逐块亮出（块间留间隔），绝不边宽边加。
+         收尾那一步是它的倒放（两排变一排）：先逐块撤空位，再收回卡片。 */
+      var op = CV.rowOpen(sec - TM.init, PARTS);
+      var cl = CV.rowClose(sec - COLLAPSE_AT, PARTS);
+      var growPre = op.g * cl.g;
 
       /* —— 阶段二：计算 —— */
       var growCal = 0, chipA = 0, cur = null, mergeP = 0;
@@ -316,10 +336,10 @@
       /* —— 下排接收位 —— */
       var lastMergeEnd = ROUTE.flows[ROUTE.flows.length - 1].mergeEnd;
       var waiting = sec < lastMergeEnd;
-      emptyRow.forEach(function (s) {
+      emptyRow.forEach(function (s, k) {
         moveSlot(s, rowY2);
         CV.setSlot(s, null, { active: waiting });
-        s.g.style.opacity = String(rowA);
+        s.g.style.opacity = (op.v[k] * cl.v[k]).toFixed(3);
       });
       ROUTE.flows.forEach(function (f) {
         ghost[f.from].forEach(function (s) { moveSlot(s, rowY2); });
@@ -327,12 +347,19 @@
 
       var n = doneParts(sec);
 
-      /* —— 累加器（上排）—— */
+      /* —— 累加器（上排）——
+         规范 09 的标记法：折进 2 份起就是 Σ + 下标列字母 + 上标份数，
+         每折进一份上标 +1（2 → 3 → 4）；正在折的这一份过半就切过去，
+         与颜色插值过半同拍，不会出现「颜色已经深了、标记还是一块」的错位。 */
       chips[ROUTE.target].forEach(function (s, i) {
         var base = DATA[i].color;
         var c = sumColor(base, n);
-        if (cur) c = CV.mix(c, sumColor(base, n + 1), mergeE(mergeP, i));
-        CV.setSlot(s, { letter: DATA[i].letter, color: c }, {});
+        var eMerge = cur ? mergeE(mergeP, i) : 0;
+        if (cur) c = CV.mix(c, sumColor(base, n + 1), eMerge);
+        var k = n + (eMerge >= 0.5 ? 1 : 0);
+        CV.setSlot(s, k >= 2
+          ? { letter: 'Σ', sub: DATA[i].letter, count: k, color: c }
+          : { letter: DATA[i].letter, color: c }, {});
       });
 
       /* —— 源卡：交出去就不再留着（消耗语义）—— */
@@ -342,8 +369,9 @@
         var sending = f && sec >= f.start && sec < f.arrive;
         var gone = f && sec >= f.arrive;
         chips[r].forEach(function (s, i) {
+          /* 交出 = 消耗：包一离开这一格就变回空数据块（「···」紫框是接收位的状态，不能借给它） */
           if (gone) CV.setSlot(s, null, {});
-          else if (sending) CV.setSlot(s, null, { active: true });
+          else if (sending) CV.setSlot(s, null, {});
           else CV.setSlot(s, DATA[i], {});
         });
       });

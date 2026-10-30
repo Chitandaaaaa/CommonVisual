@@ -35,8 +35,8 @@
           { label: '节奏', keys: ['blockGap'] }
         ],
         keys: {
-          cardDur:  { label: '卡片伸缩', unit: 's', def: 1.3,  min: 0.3, max: 3,   step: 0.05 },
-          blockDur: { label: '单块时长', unit: 's', def: 0.55, min: 0.1, max: 1.5, step: 0.05 },
+          cardDur:  { label: '卡片伸缩', unit: 's', def: 0.8,  min: 0.3, max: 3,   step: 0.05 },
+          blockDur: { label: '单块时长', unit: 's', def: 0.4,  min: 0.1, max: 1.5, step: 0.05 },
           blockGap: { label: '块间隔',   unit: 's', def: 0.15, min: 0,   max: 0.6, step: 0.01 }
         }
       },
@@ -58,6 +58,25 @@
           packLead:   { label: '起步让出', unit: '',   def: 0.16, min: 0,  max: 0.5, step: 0.01 },
           trailDist:  { label: '拖尾退后', unit: 'px', def: 24,  min: 8,   max: 60,  step: 1 },
           trailScale: { label: '拖尾浓度', unit: '×',  def: 1,   min: 0,   max: 2,   step: 0.05 }
+        }
+      },
+      /* 计算方框组件规范（07 那一节）：卡片「再长一层」把方框放进去，算完再收回。
+         只有三件是组件自己的事 —— 卡片长、方框亮着、卡片收：
+         · growDur   长出这一层（h2 → h3，顶边钉死只往下长）花多久
+         · holdDur   方框亮着的整段（读出「正在算」需要的停留）
+         · shrinkDur 把这一层收回去（h3 → h2）花多久
+         方框自己那 0.35s 淡入 / 淡出是与卡片伸缩**错开**的短衔接（先长空间再弹内容、
+         先灭内容再收空间），不是「这个组件要花的时间」，所以不进规范、不上面板。 */
+      '07-calc': {
+        label: '方框动态',
+        anchor: 'sub-07-2',
+        groups: [
+          { label: '耗时', keys: ['growDur', 'holdDur', 'shrinkDur'] }
+        ],
+        keys: {
+          growDur:   { label: '卡片伸长', unit: 's', def: 0.75, min: 0.1, max: 2, step: 0.05 },
+          holdDur:   { label: '方框展示', unit: 's', def: 0.95, min: 0.2, max: 4, step: 0.05 },
+          shrinkDur: { label: '卡片缩回', unit: 's', def: 0.7,  min: 0.1, max: 2, step: 0.05 }
         }
       },
       /* 落位组件规范（08 那一节的 .slot-pop）。
@@ -235,6 +254,56 @@
     }).catch(function () { download('network'); });
   };
 
+  /* ---------- 一排 ↔ 两排：规范 03「卡片动态」的两个场景 ----------
+     reduce / all-reduce / reduce-scatter 的「预留第二排 / 收掉第二排」必须走同一套数、
+     同一个顺序，否则规范页调了这里没反应、三页之间还会互相打架。
+
+     开（一排变两排）：① 卡片绕中心上下变宽 cardDur → 衔接 0.3s → ② 第二排空块
+                        从左到右逐块淡入，每块 blockDur，块间 blockGap
+     收（两排变一排）：① 第二排从右往左逐块淡出（同节奏）→ 衔接 0.25s → ② 卡片收回 cardDur
+
+     「先长够再放块 / 撤完再收卡」这两段衔接是页面编排（与规范页写死的 .3 / .25 一致），
+     不进参数表；除了它们，卡片伸缩与块的节奏全部取自 03-card。 */
+  function rowSpec() {
+    function g(k, d) {
+      var v = CV.params.get('03-card', k);
+      return (typeof v === 'number') ? v : d;
+    }
+    return { cardDur: g('cardDur', 0.8), blockDur: g('blockDur', .4), blockGap: g('blockGap', .15) };
+  }
+  CV.rowSpec = rowSpec;
+
+  function seg01(T, a, b) { return b <= a ? 1 : CV.clamp((T - a) / (b - a), 0, 1); }
+
+  /* 这一步要排多少秒：n = 第二排的块数 */
+  CV.rowSpan = function (n) {
+    var S = rowSpec(), step = S.blockDur + S.blockGap;
+    var blocks = (n - 1) * step + S.blockDur;
+    return { open: S.cardDur + 0.3 + blocks, close: blocks + 0.25 + S.cardDur,
+             blocks: blocks, cardDur: S.cardDur, step: step };
+  };
+
+  /* T = 这一步开始以来的秒数（T<0 视作 0）。g = 卡片高度进度 0→1，v[i] = 第 i 块的可见度 */
+  CV.rowOpen = function (T, n) {
+    var S = rowSpec(), step = S.blockDur + S.blockGap, b0 = S.cardDur + 0.3, v = [];
+    for (var i = 0; i < n; i++) {
+      var s0 = b0 + i * step;
+      v.push(CV.easeInOutQuad(seg01(T, s0, s0 + S.blockDur)));
+    }
+    return { g: CV.easeInOutQuad(seg01(T, 0, S.cardDur)), v: v };
+  };
+
+  /* 倒放：块先从右往左逐个撤走，全撤完才收卡片。g = 1→0（卡片高度进度） */
+  CV.rowClose = function (T, n) {
+    var S = rowSpec(), step = S.blockDur + S.blockGap;
+    var goneAt = (n - 1) * step + S.blockDur, shrinkAt = goneAt + 0.25, v = [];
+    for (var i = 0; i < n; i++) {
+      var s0 = (n - 1 - i) * step;                 /* 最右一块先走 */
+      v.push(T <= s0 ? 1 : 1 - CV.easeInOutQuad(seg01(T, s0, s0 + S.blockDur)));
+    }
+    return { g: 1 - CV.easeInOutQuad(seg01(T, shrinkAt, shrinkAt + S.cardDur)), v: v };
+  };
+
   /* ---------- 徽章几何：drawCard 与 resizeCard 共用 ----------
      「src」三个字母挤在 22×14 的小框里，文字几乎贴着边框。
      这里把框放大到 28×18，并让文字的垂直位置按新框高重算。
@@ -367,6 +436,16 @@
         var sp = el('tspan', { 'font-size': '0.62em', dy: '0.34em' }, s.text);
         sp.textContent = data.sub;
       }
+      /* 上标份数：Σ 块的规范写法 = Σ + 下标列字母 + 上标「已折进几份」。
+         dy 是累计的：有下标时要从下标的位置拉回基线上方，
+         em 相对的是 tspan 自己的字号（0.52 × 父级），换算过比例。 */
+      if (data.count != null) {
+        var su = el('tspan', {
+          'font-size': '0.52em', 'font-weight': '600',
+          dy: data.sub != null ? '-1.28em' : '-0.9em'
+        }, s.text);
+        su.textContent = String(data.count);
+      }
       if (s.g.getAttribute('data-l') !== data.letter) s.g.setAttribute('data-l', data.letter);
     } else if (opt.active) {
       s.rect.setAttribute('fill', '#f3eeff');
@@ -387,13 +466,21 @@
     s.g.style.opacity = opt.hidden ? '0' : '';
   };
 
-  /* ---------- 箭头 marker（放在 defs 里，每个数据流一个） ---------- */
+  /* ---------- 箭头 marker（放在 defs 里，每个数据流一个） ----------
+     尖端不是锐角，而是「线宽那么宽的小平头」：
+     三角形在尖端的宽度是 0，而线是 2px 粗、round 端帽半径 1px ——
+     尖端落在路径终点时，那半个圆头必然从三角尖两侧各露出 ~1px，
+     看起来就是「虚线超过了箭头」（染色实测：红线上沿三角尖两侧都露）。
+     平头改成 1.46 个 viewBox 单位：markerUnits=strokeWidth 时
+     宽度 = 1.46 × (markerWidth × 线宽 / 8) = 1.0 × 线宽 —— 正好等于线端直径，
+     圆帽被完整盖住；线粗时 marker 同步变粗，这个等式与线宽无关。
+     只钝掉最后 2px，11px 箭头的整体轮廓不变。 */
   CV.drawMarker = function (defs, id, letter) {
     var mk = el('marker', {
       id: id, viewBox: '0 0 8 8', refX: 8, refY: 4,
       markerWidth: 5.5, markerHeight: 5.5, orient: 'auto'
     }, defs);
-    var attrs = { class: 'arw', d: 'M0,0 L8,4 L0,8 Z', fill: '#c3cadb' };
+    var attrs = { class: 'arw', d: 'M0,0 L8,3.27 L8,4.73 L0,8 Z', fill: '#c3cadb' };
     if (letter) attrs['data-l'] = letter;
     var p = el('path', attrs, mk);
     return { marker: mk, path: p };

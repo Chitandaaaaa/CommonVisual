@@ -6,12 +6,13 @@
      第 2 轮 同行配对（0↔1, 2↔3），每卡 2 段 → 1 段
    段号天然对齐对照表：卡 k 最后留下的就是第 k 段。
 
-   ★ 每一轮都照 reduce 页把「五拍」写全，少一拍就看不懂：
-     ① 预留  卡片长出第二排接收位，计算框亮起（只做一次，四卡同时）
-     ② 传递  对家那几段打成一份飞过来
-     ③ 落位  收到的段依次弹进第二排（规范 seatGap 错峰）
-     ④ 合并  一块块折进上排同列，颜色随之加深（1 份 → 2 份 → 4 份 Σ）
-     ⑤ 收窄  最后收掉空行与计算框，每卡只留自己编号那一段
+   ★ 步骤顺序：预留一次 → 循环（传递 → 落位 → 算 → 收层）→ 收场一次
+     开场  ① 预留  四卡同时「一排变两排」：卡片先长高，第二排空位逐块亮出（规范 03）
+     循环  ② 传递  对家那几段打成一份飞过来
+           ③ 落位  收到的段依次弹进第二排（规范 seatGap 错峰）
+           ④ 计算  卡片再长一层，「计算」方框浮出来（算完就收，第二排留着）
+           ⑤ 合并  一块块折进上排同列，颜色随之加深（1 份 → 2 份 → 4 份 Σ）
+     收场  ⑥ 收窄  撤掉第二排空位，卡片收回单排，每卡只留自己编号那一段
 
    两条语义铁律与 reduce 相同：
      · 没有「先堆起来再压缩」的中间态：上排就是累加器，来一份立刻折进去
@@ -69,6 +70,21 @@
   var MGAP   = specNum('mergeGap', 0.5);     /* 多列依次融合错开多久 */
   var FADE   = 0.55;                         /* 包飞到后原地淡掉的秒数（编排） */
 
+  /* 一排 ↔ 两排 走规范 03（与 reduce / all-reduce 同源）：
+     预留 = 一排变两排（卡片先长够 → 第二排空块逐块亮出），
+     收窄 = 两排变一排（第二排逐块撤走 → 卡片收回）。
+     「计算框」那层（h2↔h3）走规范 07：growDur 撑开 / holdDur 展示 / shrinkDur 收回，
+     与规范页那一节同源；方框自己那 .35s 淡入淡出是与伸缩错开的衔接。
+     撑开和淡入在这一页是**串行**的（先长够 h3、方框再浮出），和 reduce 的读法一致。 */
+  var RS = CV.rowSpan(PARTS);
+  var GROW_D   = specNum('growDur', 0.75);
+  var HOLD_D   = specNum('holdDur', 0.95);
+  var SHRINK_D = specNum('shrinkDur', 0.7);
+  var CALC_FADE = 0.35;                        /* 方框淡入 / 淡出占的秒数 */
+  var CALC_UP   = GROW_D + CALC_FADE;          /* 卡片长到 h3 → 方框淡入 */
+  var CALC_DOWN = CALC_FADE + SHRINK_D;        /* 方框淡出 → 卡片落回 h2（第二排留着） */
+  var BLOCKD    = specNum('blockDur', 0.4);   /* 规范 03：第二排单个空块消失的时长 */
+
   var X = CV.primText(DATA);
   var rk = X.rk, seg = X.seg, whole = X.whole;
 
@@ -80,17 +96,20 @@
     PLAN.push({ id: id, sec: sec, text: text, short: short });
   }
 
-  /* 一轮里「几块依次落位 / 几块依次融合」的窗口长度 —— 批内错峰，不是页面节奏 */
   var N1 = RECV[0][0].length, N2 = RECV[1][0].length;
   var SEAT1 = (N1 - 1) * SEATG + POP, SEAT2 = (N2 - 1) * SEATG + POP;
-  var MRG1  = (N1 - 1) * MGAP  + FUSE, MRG2  = (N2 - 1) * MGAP + FUSE;
+  /* 一轮里「几块依次落位 / 几块依次融合」的窗口长度 —— 批内错峰，不是页面节奏。
+     合并窗口同时是「方框亮着」的那一段，所以不低于规范 07 的 holdDur
+     （融合早就折完了、方框还亮着，比反过来「方框先没了 Σ 还少一块」好）。 */
+  var MRG1  = Math.max((N1 - 1) * MGAP  + FUSE, HOLD_D);
+  var MRG2  = Math.max((N2 - 1) * MGAP  + FUSE, HOLD_D);
 
   plan('intro', 1.1,
     rk(0) + rk(1) + rk(2) + rk(3) + ' 各持一整份 ' + whole() + '，四段各 1 份，待逐段相加',
     '四卡各持一整份 ' + whole());
-  plan('reserve', 1.3,
-    '四卡同时预留接收位：卡片长出第二排，计算框亮起',
-    '预留第二排 + 计算框');
+  plan('reserve', RS.open,
+    '开场先预留：四卡同时「一排变两排」—— 卡片先长高，第二排空位再逐块亮出（整页只做一次）',
+    '四卡同时长出第二排');
   plan('fly1', 1.7,
     '第 1 轮 传递：同列互换 —— ' + rk(0) + '↔' + rk(2) + '、' + rk(1) + '↔' + rk(3) +
     '，各把对方要的两段送出',
@@ -98,9 +117,18 @@
   plan('seat1', SEAT1,
     '落位：收下的两段依次弹进第二排',
     '收下两段，依次落位');
+  plan('calc1', CALC_UP,
+    '要算了：卡片先长一层把位置让出来，「计算」方框再浮出 —— 先长空间、再填内容',
+    '浮出计算框');
   plan('merge1', MRG1,
-    '合并：两段依次折进上排，这两段加到 2 份',
-    '折进上排，各段 2 份');
+    '合并：两段依次折进上排，这两段加到 2 份 —— 过半就亮出 Σᴀ²（下标列字母、上标份数）',
+    '折进上排，各段 Σᴀ²');
+  plan('down1', CALC_DOWN,
+    '这一轮算完：方框退回，卡片落回两排 —— 第二排留着给下一轮',
+    '收起计算框，第二排留着');
+  plan('slim', BLOCKD,
+    '第二轮只换一段：第二轮用不上的那一个空位先撤掉（从右往左），留下要用的那格',
+    '撤掉多余的空位');
   plan('fly2', 1.7,
     '第 2 轮 传递：同行互换 —— ' + rk(0) + '↔' + rk(1) + '、' + rk(2) + '↔' + rk(3) +
     '，交出最后一段、收下对方那段',
@@ -108,12 +136,15 @@
   plan('seat2', SEAT2,
     '落位：这一轮每卡只收一段',
     '收下一段，落位');
+  plan('calc2', CALC_UP,
+    '再算一次：方框重新浮出来，这一段是四份相加',
+    '再浮出计算框');
   plan('merge2', MRG2,
-    '合并：折进上排，这一段四份相加变 Σ',
-    '折进 → Σ');
-  plan('shrink', 1.0,
-    '收窄：收掉空行与计算框，每卡只留自己编号那一段',
-    '卡片收窄，只留一段');
+    '合并：折进上排，这一段凑满四份 —— 上标跳到 4（Σᴀ⁴）',
+    '折进 → 凑满 4 份');
+  plan('shrink', CALC_DOWN + RS.close,
+    '收场：先把方框收掉，第二排空位再逐块撤走，卡片收回单排 —— 每卡只留自己编号那一段',
+    '撤掉第二排，卡片收回单排');
   plan('tail', 2.2,
     '每张卡只留一段的和：' + rk(0) + ' 留 ' + seg(0) + '，' + rk(1) + ' 留 ' + seg(1) +
     '，四卡拼起来才是整份结果',
@@ -246,6 +277,33 @@
     return clamp(((sec - w.s) - idx * MGAP) / FUSE, 0, 1);
   }
 
+  /* 计算层这一刻的进度：每轮「浮出 → 算 → 收起」，最后收场那一段也走同一条收法。
+     e = 卡片 h2→h3 的撑开量，a = 方框透明度。
+     撑开与淡入是串行的：前 RU 段把卡撑到 h3（方框位置还空着），后 (1−RU) 段方框原地淡入 ——
+     两件事的秒数分别等于规范 07 的 growDur 与那 .35s 衔接，所以比例得算出来，不能写死。 */
+  function calcPhase(sec) {
+    var ups = [AT.calc1, AT.calc2];
+    var downs = [AT.down1, { s: AT.shrink.s, e: AT.shrink.s + CALC_DOWN }];
+    var RU = GROW_D / CALC_UP;
+    var RF = CALC_FADE / CALC_DOWN;
+    for (var i = 0; i < ups.length; i++) {
+      var u = ups[i], d = downs[i];
+      if (sec < u.s) return { e: 0, a: 0 };
+      if (sec < u.e) {
+        var g = (sec - u.s) / (u.e - u.s);
+        return { e: CV.easeInOutQuad(clamp(g / RU, 0, 1)),
+                 a: clamp((g - RU) / (1 - RU), 0, 1) };
+      }
+      if (sec < d.s) return { e: 1, a: 1 };
+      if (sec < d.e) {
+        var s = (sec - d.s) / (d.e - d.s);
+        return { e: 1 - CV.easeInOutQuad(clamp((s - RF) / (1 - RF), 0, 1)),
+                 a: 1 - clamp(s / RF, 0, 1) };
+      }
+    }
+    return { e: 0, a: 0 };
+  }
+
   /* 这一段此刻几「份」+ 是否正在交出 / 已经交出（消耗语义） */
   function partState(r, i, sec) {
     var n = 1, sending = false, gone = false;
@@ -265,15 +323,17 @@
     return { n: n, sending: sending, gone: gone };
   }
 
-  /* 这一列此刻该不该露出接收位：本轮要收 → 1，上一轮收过而本轮不收 → 淡出 */
+  /* 这一列此刻该不该露出接收位。
+     第一轮收 N1 段 → 亮 N1 列；第二轮只收 N2 段，用不上的那几列在「slim」这一步撤掉
+     （从右往左，同规范 03 的撤法），撤完再开始第二轮。 */
   function recvAlpha(r, i, sec) {
     var inA = RECV[0][r].indexOf(i) >= 0;
     var inB = RECV[1][r].indexOf(i) >= 0;
     if (inA && inB) return 1;
-    var tSwitch = AT.fly2.s;
-    if (inA) return 1 - clamp((sec - (tSwitch - 0.3)) / 0.3, 0, 1);
-    if (inB) return clamp((sec - (tSwitch - 0.3)) / 0.3, 0, 1);
-    return 0;
+    if (inB) return 1;                     /* 只第二轮用：一直亮着等它来（本页没这种情况） */
+    if (!inA) return 0;
+    /* 第一轮要、第二轮不要 → slim 撤掉。每卡只多 1 块，不必错峰 */
+    return 1 - CV.easeInOutQuad(clamp((sec - AT.slim.s) / BLOCKD, 0, 1));
   }
 
   CV.primitive({
@@ -375,21 +435,17 @@
                                 全局加速由控件推进 t 的速度负责，不在这里换算 */
       var c0 = L.slot;
 
-      /* —— ① 预留：先长到两排，再让出计算框 —— */
-      var pRes = clamp((sec - AT.reserve.s) / (AT.reserve.e - AT.reserve.s), 0, 1);
-      var e1 = CV.easeInOutQuad(clamp(pRes / 0.62, 0, 1));
-      var e2 = CV.easeInOutQuad(clamp((pRes - 0.62) / 0.38, 0, 1));
-      var rowA = clamp((pRes - 0.30) / 0.30, 0, 1);
-      var calcA = clamp((pRes - 0.62) / 0.38, 0, 1);
+      /* —— ① 预留 = 规范 03 的「一排变两排」：卡片先长够，第二排空块再逐块亮出 ——
+         整页只做一次；之后每一轮回自己「浮出 / 收起」计算层（见 calcPhase）。 */
+      var op = CV.rowOpen(sec - AT.reserve.s, PARTS);
 
-      /* —— ⑤ 收窄：先把第二排和计算框淡掉，再收卡片 ——
-         两件事不能同时做：卡片一矮，计算框就跑到卡片外面去了（会看见一圈虚影）。 */
-      var pShRaw = clamp((sec - AT.shrink.s) / (AT.shrink.e - AT.shrink.s), 0, 1);
-      var pFade = clamp(pShRaw / 0.35, 0, 1);
-      var pSh = CV.easeInOutQuad(clamp((pShRaw - 0.32) / 0.68, 0, 1));
+      /* —— ⑥ 收场 = 倒过来：方框先没 → 计算层收回 → 第二排逐块撤 → 卡片收回 ——
+         方框和卡片不能同时动：卡片一矮，计算框就跑到卡片外面去了（会看见一圈虚影）。 */
+      var cl = CV.rowClose(sec - AT.shrink.s - CALC_DOWN, PARTS);
+      var cf = calcPhase(sec);
 
       var C = heights();
-      var h = C.h1 + (C.h2 - C.h1) * e1 + (C.h3 - C.h2) * e2 - (C.h3 - C.h1) * pSh;
+      var h = C.h1 + (C.h2 - C.h1) * (op.g * cl.g) + (C.h3 - C.h2) * cf.e;
       var IN = inner(h);
       var rowStep = c0.sh + L.rowGap;
 
@@ -415,15 +471,19 @@
           var s = chips[r][i];
           moveSlot(s, y1);
           var st = partState(r, i, sec);
+          /* 交出 = 消耗：包一离开，这一格立刻变回空数据块（不是「接收中」的紫框）——
+             紫框是第二排「等着收」的状态，源卡上那格是被搬空，两者不能同款。 */
           if (st.gone) {
             CV.setSlot(s, null, {});
           } else if (st.sending) {
-            CV.setSlot(s, null, { active: true });
+            CV.setSlot(s, null, {});
           } else {
-            CV.setSlot(s, {
-              letter: st.n >= PARTS - 0.02 ? 'Σ' : DATA[i].letter,
-              color: colorFor(i, st.n)
-            }, {});
+            /* 规范 09 的标记法：折进 2 份起是 Σ + 下标列字母 + 上标份数。
+               n 在折进动画里是连续值（1 → 2 → 4），过 1.5（折进过半）切 Σ，份数取整。 */
+            var sig = st.n >= 1.5;
+            CV.setSlot(s, sig
+              ? { letter: 'Σ', sub: DATA[i].letter, count: Math.round(st.n), color: colorFor(i, st.n) }
+              : { letter: DATA[i].letter, color: colorFor(i, st.n) }, {});
           }
           if (!st.gone) left++;
 
@@ -448,7 +508,7 @@
                          sec < AT[qc === 0 ? 'fly1' : 'fly2'].e &&
                          RECV[qc][r].indexOf(j) >= 0;
           CV.setSlot(rs, null, { active: inFlight });
-          rs.g.style.opacity = (recvAlpha(r, j, sec) * rowA * (1 - pFade)).toFixed(3);
+          rs.g.style.opacity = (recvAlpha(r, j, sec) * op.v[j] * cl.v[j]).toFixed(3);
         }
 
         var bt = left + ' 段';
@@ -459,7 +519,7 @@
         if (cb) {
           cb.wrap.setAttribute('transform',
             'translate(' + (g.x + g.w / 2) + ' ' + (g.y + IN.yc) + ')');
-          var ca = calcA * (1 - pFade);
+          var ca = cf.a;
           cb.wrap.style.opacity = String(ca);
           cb.wrap.setAttribute('data-on', ca > 0.5 ? '1' : '0');
         }

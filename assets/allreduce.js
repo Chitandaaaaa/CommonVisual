@@ -10,19 +10,21 @@
      第 2 轮 纵向配对 0↔2、1↔3 —— 四段各合 4 份
    终点：四张卡都是 [Σ Σ Σ Σ]，第 i 段 = 四张卡第 i 段的和。
 
-   ── 每一轮都走 reduce 那套「六拍」，不把外来份直接糊进累加器 ──
-     ① 传递：整份包沿虚线飞到卡边
-     ② 长高：卡片上下同时扩，下排腾出 4 个接收位（空位淡入）
-     ③ 落位：对方那份四段逐个摆进接收位（缩放过冲 → 弹跳）
-     ④ 计算：卡片再长高一层，「计算」方框浮在下排下方（reduce 同款）
-     ⑤ 合并：逐段被吸到上排累加器，颜色加深，合完那段弹一下
-     ⑥ 收回：方框先淡出、两层依次收回 —— 这一拍走完下一轮才允许起飞
+   ── 步骤顺序：预留一次 → 循环（传递 → 计算）→ 收场一次 ──
+     开场  四张卡同时「一排变两排」：卡片上下扩开，第二排空位逐块亮出（规范 03）
+     循环  每一轮都是同一套五拍，卡片全程保持两排：
+             ① 传递：整份包沿虚线飞到卡边
+             ② 落位：对方那份四段逐个摆进第二排接收位（缩放过冲 → 弹跳）
+             ③ 计算：卡片再长高一层，「计算」方框浮在下排下方（reduce 同款）
+             ④ 合并：逐段被吸到上排累加器，颜色加深，合完那段弹一下
+             ⑤ 收层：方框先淡出，卡片只收回「计算」那一层（第二排留着给下一轮）
+     收场  全部轮次算完，再「两排变一排」：第二排空位逐块撤走 → 卡片收回
 
    为什么长高不会把版面顶歪：卡片中心固定、上下对称扩；数据两排的位置
    按 (h3−h2)/2 反补，所以「长计算层」时数据块本身不动、只有卡边在扩。
-   桌面卡片最高 231，行距压到 300 才装得下（330 时第二排会多出画布 17px），
-   行间净空 69 —— 纵向那对车道（相距 108）本来就靠水平错开、不吃这段净空，
-   而飞包时卡片已收回原高（净空 130），所以飞行段也不挤。
+   桌面卡片最高 231，行距压到 300 才装得下（330 时第二排会多出画布 17px）。
+   循环期间卡片停在两排高 203，行间净空 97 —— 纵向那对车道本来就靠水平错开
+   （humpV=54），不吃这段净空，而整份包高只有 20 左右，飞行段也不挤。
 
    只声明数据 / 时间轴 / 文案 / 几何位置 / 落位规则；
    舞台与布局生命周期由 assets/cv/primitive.js 统一接管。
@@ -51,15 +53,28 @@
   var MGAP = CV.specVal('mergeGap') || 0.5;
   var POPD = (CV.params && CV.params.get('08-seat', 'popDur')) || 0.55;
 
+  /* 一排 ↔ 两排 走规范 03（与 reduce 同源）：卡片伸缩 cardDur / 每块 blockDur / 块间 blockGap。
+     整页只做两次，不跟着轮次反复：
+       开场 EXPAND   = 「一排变两排」：卡片先长够，第二排空块再逐块亮出
+       收场 COLLAPSE = 「两排变一排」：第二排先逐块撤走，卡片才收回
+     轮次内部收放的「计算」那一层（h2↔h3）走规范 07（growDur / holdDur / shrinkDur），
+     和规范页那一节是同一组数。 */
+  var RS = CV.rowSpan(PARTS);
+  var GROW   = CV.specVal('growDur')   || 0.75;
+  var HOLD   = CV.specVal('holdDur')   || 0.95;
+  var SHRINK = CV.specVal('shrinkDur') || 0.7;
+  var CALC_FADE = 0.35;   /* 「浮出 / 收起」里方框淡入淡出占的秒数（与伸缩错开的衔接） */
+
   var TM = {
     init: 0.9,
     fly: 1.1,
-    grow: 0.5,       /* 卡片长高，腾出下排接收区 */
+    land: 0.1,       /* 包到卡边 → 开始落位的小停顿（没有长高这一拍了，留一口气） */
     pop: 0.5,        /* 单块弹出（缩放过冲） */
     stag: 0.12,      /* 四段之间的小错峰：一块一块落位，但不拖成 4 个 seatGap */
-    growCalc: 0.4,   /* 再长一层，给「计算」方框腾位置 */
-    merge: SEG + (PARTS - 1) * MGAP,
-    shrink: 0.7,     /* 方框淡出 → 计算层收回 → 接收层收回 */
+    growCalc: GROW,  /* 再长一层，给「计算」方框腾位置（方框要等这一层长够才浮出） */
+    /* 方框亮着 = 四段在折进去；两件事并行，取较大者（融合没完就收卡，Σ 会少一块） */
+    merge: Math.max(SEG + (PARTS - 1) * MGAP, HOLD),
+    calcDown: CALC_FADE + SHRINK,   /* 本轮算完：方框先淡出，卡片再收回「计算」层 */
     gap: 0.55
   };
   /* 落位整段长 = 三档错峰 + 最后一块的弹跳尾（弹跳比落位晚 popDur 才开始） */
@@ -68,20 +83,21 @@
   function mkRound(start) {
     var r = { start: start };
     r.arrive = r.start + TM.fly;          /* 包到卡边 */
-    r.growEnd = r.arrive + TM.grow;       /* 卡片长高完成，接收区就位 */
-    r.popStart = r.growEnd;               /* 外来份开始落位 */
+    r.popStart = r.arrive + TM.land;      /* 外来份开始落位（接收排开场就备好了） */
     r.popEnd = r.popStart + POP_SPAN;     /* 四块落位并弹完 */
     r.calcStart = r.popEnd;               /* 再长一层，放「计算」方框 */
-    r.calcEnd = r.calcStart + TM.growCalc;
-    r.mergeStart = r.calcEnd;             /* 方框就位后才开始相加 */
+    r.calcEnd = r.calcStart + TM.growCalc;      /* 长够 h3，方框位置还空着 */
+    r.mergeStart = r.calcEnd + CALC_FADE;       /* 方框淡入完，才开始相加（先长空间、再填内容） */
     r.mergeEnd = r.mergeStart + TM.merge; /* 逐段合完 */
-    r.end = r.mergeEnd + TM.shrink;       /* 方框淡出、卡片收回原高 = 本轮真正结束 */
+    r.end = r.mergeEnd + TM.calcDown;     /* 方框淡出、计算层收回 = 本轮真正结束 */
     return r;
   }
 
-  var ROUNDS = [mkRound(TM.init)];
+  var EXPAND_AT = TM.init;
+  var ROUNDS = [mkRound(EXPAND_AT + RS.open + 0.25)];
   ROUNDS.push(mkRound(ROUNDS[0].end + TM.gap));   /* 上一轮收完才起飞 */
-  var TOTAL = ROUNDS[1].end + 0.6;
+  var COLLAPSE_AT = ROUNDS[1].end + 0.35;
+  var TOTAL = COLLAPSE_AT + RS.close + 0.6;
   function N(sec) { return sec / TOTAL; }
 
   var ROUNDS_DEF = [
@@ -121,36 +137,50 @@
     return { k: 1.16 + (1 - 1.16) * e2, o: 1 };
   }
 
-  /* 当前处在哪一拍：返回本帧两个撑开量（接收层 lift、计算层 calc）与合并进度 merge */
+  /* ① 一排 ↔ 两排：整页只发生两次（开场 EXPAND、收场 COLLAPSE）。
+       两段的进度相乘 —— 开场没走完时 lift 从 0 起，收场开始后 lift 回落到 0。
+       第二排每块的可见度同理：开场逐块亮、收场逐块撤。 */
+  function rowPhase(sec) {
+    var op = CV.rowOpen(sec - EXPAND_AT, PARTS);
+    var cl = CV.rowClose(sec - COLLAPSE_AT, PARTS);
+    var v = [];
+    for (var i = 0; i < PARTS; i++) v.push(op.v[i] * cl.v[i]);
+    return { lift: op.g * cl.g, v: v };
+  }
+
+  /* ② 轮次内部：只管「计算」那一层的收放与逐段合并进度（卡片的两排由 rowPhase 管） */
   function stageOf(sec) {
     var q = -1;
-    for (var i = 0; i < ROUNDS.length; i++) if (sec >= ROUNDS[i].arrive) q = i;
-    if (q < 0) return { q: -1, lift: 0, calc: 0, merge: 0, calcA: 0 };
+    for (var i = 0; i < ROUNDS.length; i++) if (sec >= ROUNDS[i].start) q = i;
+    if (q < 0) return { q: -1, calc: 0, merge: 0, calcA: 0 };
     var R = ROUNDS[q];
-    if (sec < R.growEnd) {
-      return { q: q, lift: CV.easeInOutQuad((sec - R.arrive) / TM.grow), calc: 0, merge: 0, calcA: 0 };
-    }
-    if (sec < R.popEnd) {
-      return { q: q, lift: 1, calc: 0, merge: 0, calcA: 0 };
+    if (sec < R.calcStart) {
+      return { q: q, calc: 0, merge: 0, calcA: 0 };            /* 飞行 / 落位 */
     }
     if (sec < R.calcEnd) {
-      /* 计算层撑开：方框在后半段才淡入（和卡片同时长出来，不会先浮在空旷处） */
+      /* 先长空间：卡片撑到 h3，方框位置还空着（不跟着一起浮，否则它先悬在空处） */
       var g = clamp((sec - R.calcStart) / TM.growCalc, 0, 1);
-      return { q: q, lift: 1, calc: CV.easeInOutQuad(g), merge: 0,
-               calcA: clamp((g - 0.30) / 0.60, 0, 1) };
+      return { q: q, calc: CV.easeInOutQuad(g), merge: 0, calcA: 0 };
+    }
+    if (sec < R.mergeStart) {
+      /* 再填内容：这一层已经有了，方框原地淡入 */
+      return { q: q, calc: 1, merge: 0,
+               calcA: clamp((sec - R.calcEnd) / CALC_FADE, 0, 1) };
     }
     if (sec < R.mergeEnd) {
-      return { q: q, lift: 1, calc: 1, merge: clamp((sec - R.mergeStart) / TM.merge, 0, 1), calcA: 1 };
+      return { q: q, calc: 1, merge: clamp((sec - R.mergeStart) / TM.merge, 0, 1), calcA: 1 };
     }
-    /* 收回：方框先没、计算层再合、接收层最后收 —— 三层依次退，不抢拍 */
-    var s = clamp((sec - R.mergeEnd) / TM.shrink, 0, 1);
-    return {
-      q: q,
-      lift: 1 - CV.easeInOutQuad(clamp((s - 0.45) / 0.55, 0, 1)),
-      calc: 1 - CV.easeInOutQuad(clamp((s - 0.20) / 0.80, 0, 1)),
-      merge: 1,
-      calcA: 1 - clamp(s / 0.35, 0, 1)
-    };
+    if (sec < R.end) {
+      /* 收层：方框先没 → 卡片再收回计算层（第二排不动，留给下一轮） */
+      var d = sec - R.mergeEnd;
+      return {
+        q: q,
+        calc: 1 - CV.easeInOutQuad(clamp((d - CALC_FADE) / (TM.calcDown - CALC_FADE), 0, 1)),
+        merge: 1,
+        calcA: 1 - clamp(d / CALC_FADE, 0, 1)
+      };
+    }
+    return { q: q, calc: 0, merge: 1, calcA: 0 };   /* 本轮已完：等下一轮 / 等收场 */
   }
 
   /* ── ③ 文案 ── */
@@ -162,12 +192,15 @@
     { t: 0,
       text: rk(0) + rk(1) + rk(2) + rk(3) + ' 各持一整份 ' + whole() + '，四段都在每张卡上，逐段待相加',
       short: '四卡各持一整份 ' + whole() },
+    { t: N(EXPAND_AT),
+      text: '开场先预留：四张卡同时「一排变两排」—— 卡片上下扩开，第二排接收位逐块亮出（整页只做一次）',
+      short: '四卡同时长出第二排' },
     { t: N(ROUNDS[0].start),
       text: '第 1 轮：' + rk(0) + rk(1) + ' 左右互换整份，' + rk(2) + rk(3) + ' 左右互换整份',
       short: '第 1 轮 横向互换整份' },
-    { t: N(ROUNDS[0].growEnd),
-      text: '对方那份到了：卡片先长高、腾出下排接收区，再把那四块一块块摆进去',
-      short: '卡片长高，对方那份落位' },
+    { t: N(ROUNDS[0].popStart),
+      text: '对方那份到了：四块一块块摆进第二排接收区',
+      short: '对方那份落位' },
     { t: N(ROUNDS[0].calcStart),
       text: '要算了：卡片再长高一层，放下「计算」方框 —— 求和、平均、取最大最小都按段独立算，四段同时进',
       short: '浮出计算方框，四段同时算' },
@@ -175,7 +208,7 @@
       text: seg(0) + ' 只和 ' + seg(0) + ' 加、' + seg(1) + ' 只和 ' + seg(1) + ' 加 —— 逐段被吸进累加器，四段各合 2 份',
       short: '逐段相加，四段各合 2 份' },
     { t: N(ROUNDS[1].start),
-      text: '第 2 轮：' + rk(0) + rk(2) + ' 上下互换整份，' + rk(1) + rk(3) + ' 上下互换整份 —— 长高、落位、算法、收回再来一遍',
+      text: '第 2 轮：' + rk(0) + rk(2) + ' 上下互换整份，' + rk(1) + rk(3) + ' 上下互换整份 —— 还是落位、算法、收层这三拍',
       short: '第 2 轮 纵向互换整份' },
     { t: N(ROUNDS[1].calcStart),
       text: '这一轮的四段已经是 2 份的中间结果，同样进方框再算一次',
@@ -183,9 +216,12 @@
     { t: N(ROUNDS[1].mergeStart),
       text: '仍是按段对位相加：这次把 2 份再合成 4 份，四段各自把四张卡的值加齐',
       short: '再合一遍，四段各合 4 份' },
-    { t: N(TOTAL - 0.6),
+    { t: N(ROUNDS[1].mergeEnd),
       text: '四张卡都变成 ' + SIG + SIG + SIG + SIG + '：第 i 段 = 四张卡第 i 段的和，四份结果完全相同',
-      short: '四卡都是四段各自的和 ' + SIG + SIG + SIG + SIG }
+      short: '四卡都是四段各自的和 ' + SIG + SIG + SIG + SIG },
+    { t: N(COLLAPSE_AT),
+      text: '轮次走完才收场：第二排空位逐块撤走，卡片收回单排 —— 结果就是上排那四个 ' + SIG,
+      short: '撤掉第二排，卡片收回单排' }
   ];
 
   /* ── ④ 几何：2×2 网格（与 All-Gather / Reduce-Scatter 同尺寸）──
@@ -387,7 +423,9 @@
       var h3 = h2 + L.calcGap + L.calc.h + L.areaPad - 16;
 
       var st = stageOf(sec);
-      var lift = st.lift;
+      var rp = rowPhase(sec);
+      var lift = rp.lift;          /* 一排↔两排：开场一次、收场一次 */
+      var rowV = rp.v;
       var q = st.q;
 
       var h = h1 + (h2 - h1) * lift + (h3 - h2) * st.calc;
@@ -428,23 +466,27 @@
         });
       });
 
-      /* 接收区空位的淡入：卡片长高过半才露出来，收窄时先于卡片消失 */
-      var areaA = lift <= 0 ? 0 : clamp((lift - 0.15) / 0.45, 0, 1);
+      /* 接收区空位：整页只亮一次（开场）、只撤一次（收场），节奏与时长由规范 03 决定 */
 
       RANKS.forEach(function (r) {
         var topY = cards[r].geo.y + L.hdr + pT;
         var botY = topY + rowStep;
 
-        /* —— ③ 上排累加器：颜色按「合到几份」插值，过半切成 Σ —— */
+        /* —— ③ 上排累加器：颜色按「合到几份」插值，过半切成 Σ ——
+           规范 09 的标记法：Σ 块要带下标列字母 + 上标已折进份数（Σᴀ² → Σᴀ⁴）。
+           两轮都是过半就切：第 1 轮合完是 2 份 Σᴀ²，第 2 轮合完是 4 份 Σᴀ⁴。 */
         chips[r].forEach(function (s, i) {
           var e = st.merge > 0 ? mergeE(st.merge, i) : 0;
           var col = e > 0 ? CV.mix(colorFor(i, lvl0), colorFor(i, lvl1), e) : colorFor(i, lvl0);
-          var letter = (lvl1 === PARTS && e >= 0.5) ? 'Σ' : DATA[i].letter;
+          var sig = e >= 0.5 && lvl1 >= 2;
+          var letter = sig ? 'Σ' : DATA[i].letter;
           moveSlot(s, topY);
-          var key = letter + '|' + col;
+          var key = letter + '|' + col + '|' + (sig ? lvl1 : '');
           if (paintKey['c' + r + i] !== key) {
             paintKey['c' + r + i] = key;
-            CV.setSlot(s, { letter: letter, color: col }, {});
+            CV.setSlot(s, sig
+              ? { letter: 'Σ', sub: DATA[i].letter, count: lvl1, color: col }
+              : { letter: letter, color: col }, {});
           }
           /* 这一段刚合完 → 弹一下（退回去时删标记，正放不会重复弹） */
           var pk = 'p' + r + i + '_' + q;
@@ -456,9 +498,9 @@
         });
 
         /* —— ④ 下排接收位 —— */
-        empties[r].forEach(function (s) {
+        empties[r].forEach(function (s, i) {
           moveSlot(s, botY);
-          s.g.style.opacity = String(areaA);
+          s.g.style.opacity = String(rowV[i]);
         });
 
         /* —— ④' 计算方框：卡在「下排下方」那段空白里，随卡片高度逐帧走 ——

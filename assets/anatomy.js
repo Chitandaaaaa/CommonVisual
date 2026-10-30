@@ -78,6 +78,25 @@
     addTabs(host, ['桌面', '窄屏'], function (i) { render(!!i); });
   }
 
+  /* ── 三个滤镜全站只建一份 ──
+     drawCard / drawPacket / drawCalc 里写死了 url(#fCard) / #fGlow / #fTrail，
+     所以不能每个 demo 各带一份 defs：本页 22 个 demo 会产生 22 个同 id 的 <filter>
+     （非法 HTML，且 url(#fCard) 恒解析到文档里第一个，前一个 demo 被 removeChild
+     之后引用会漂到下一个）。改为挂一个 0 尺寸的隐藏 svg 放唯一一份定义，
+     参数与 gather.html 逐字一致，观感不变。 */
+  (function sharedFilters() {
+    var fs = el('svg', { width: 0, height: 0, 'aria-hidden': 'true', focusable: 'false' });
+    fs.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
+    var d = el('defs', {}, fs);
+    var f = el('filter', { id: 'fCard', x: '-40%', y: '-40%', width: '180%', height: '190%' }, d);
+    el('feDropShadow', { dx: 0, dy: 6, stdDeviation: 12, 'flood-color': '#2a3352', 'flood-opacity': '.1' }, f);
+    var fg = el('filter', { id: 'fGlow', x: '-90%', y: '-90%', width: '280%', height: '280%' }, d);
+    el('feDropShadow', { dx: 0, dy: 0, stdDeviation: 8, 'flood-color': '#1a1f36', 'flood-opacity': '.22' }, fg);
+    var ft = el('filter', { id: 'fTrail', x: '-90%', y: '-90%', width: '280%', height: '280%' }, d);
+    el('feDropShadow', { dx: 0, dy: 0, stdDeviation: 5, 'flood-color': '#1a1f36', 'flood-opacity': '.14' }, ft);
+    document.body.appendChild(fs);
+  })();
+
   /* 示例面板：里面放一个真实绘制函数渲染的 SVG（1:1 像素） */
   function demo(host, vbW, vbH, aria) {
     var box = h('div', 'demo', host);
@@ -88,15 +107,9 @@
       role: 'img', 'aria-label': aria || ''
     });
     box.appendChild(s);
-    /* drawCard / drawPacket 硬编码引用 #fCard / #fGlow / #fTrail，
-       每个 demo 自带一份 defs（参数与 gather.html 里的一致） */
-    var d = el('defs', {}, s);
-    var f = el('filter', { id: 'fCard', x: '-40%', y: '-40%', width: '180%', height: '190%' }, d);
-    el('feDropShadow', { dx: 0, dy: 6, stdDeviation: 12, 'flood-color': '#2a3352', 'flood-opacity': '.1' }, f);
-    var fg = el('filter', { id: 'fGlow', x: '-90%', y: '-90%', width: '280%', height: '280%' }, d);
-    el('feDropShadow', { dx: 0, dy: 0, stdDeviation: 8, 'flood-color': '#1a1f36', 'flood-opacity': '.22' }, fg);
-    var ft = el('filter', { id: 'fTrail', x: '-90%', y: '-90%', width: '280%', height: '280%' }, d);
-    el('feDropShadow', { dx: 0, dy: 0, stdDeviation: 5, 'flood-color': '#1a1f36', 'flood-opacity': '.14' }, ft);
+    /* 只留空 defs 给 marker / 渐变（它们每次生成的 id 都是唯一的）；
+       三个滤镜用上面那份共享的 */
+    el('defs', {}, s);
     return s;
   }
 
@@ -307,11 +320,12 @@
 
       if (m.note) subTx(g, m.bx, m.note, 'A→r0 · B→r1 · C→r2 · D→r3', '#939bb2', m.fs, 'start');
 
-      /* 右侧：归约结果 */
+      /* 右侧：归约结果 —— 规范 09 的标记法：Σ + 下标列字母 + 上标已折进份数。
+         这里拿 A 列做代表：四张卡各出一份 A，折进 4 份。 */
       var sig = CV.drawSlot(g, m.sigX, midY - sl.sh / 2, sl.sw, sl.sh);
-      CV.setSlot(sig, { letter: 'Σ', color: SIGMA }, {});
+      CV.setSlot(sig, { letter: 'Σ', sub: 'A', count: 4, color: SIGMA }, {});
       capTx(g, m.txX, m.cap, '归约结果');
-      subTx(g, m.txX, m.sub, nr ? '四卡终态同色' : '四卡终态都是这一块深紫', '#939bb2', m.fs, 'start');
+      subTx(g, m.txX, m.sub, nr ? 'Σᴀ⁴ · 四卡终态同色' : '四份相加 · 四卡终态都是这一块深紫', '#939bb2', m.fs, 'start');
 
       if (m.arrow) {
         var ax1 = m.bx + bw + 24, ax2 = m.sigX - 12;
@@ -337,9 +351,10 @@
       var sz = nr ? G.narrow.slot.sw : G.desktop.slot.sw;
       var xs = nr ? [40, 82, 124] : [40, 126, 212];
       var capY = 12, topY = 24, labY = topY + sz + 18, dimY = labY + 14;
-      /* 说明行要落在尺寸数字之后再留 18px，否则两者会叠在一起 */
+      /* 说明行要落在尺寸数字之后再留 18px，否则两者会叠在一起。
+         画布只有 276 宽，一句写完要 293px —— 右端会被画布裁掉，所以拆两行。 */
       var noteY = dimY + 14 + (nr ? 18 : 20);
-      var g = demo(s, 276, nr ? 128 : 152,
+      var g = demo(s, 276, nr ? 140 : 166,
         '数据块的三种状态，' + (nr ? '窄屏 25' : '桌面 46') + ' 真实尺寸');
 
       capTx(g, 40, capY, (nr ? '窄屏 ' : '桌面 ') + sz + ' × ' + sz);
@@ -353,7 +368,8 @@
       });
       dimH(g, 40, 40 + sz, dimY, String(sz));
 
-      subTx(g, 40, noteY, '块内字母 ' + Math.round(sz * 0.33) + 'px = 0.33 × 块高，mono 居中 · 状态标签距块 18', '#939bb2', 10, 'start');
+      subTx(g, 40, noteY, '块内字母 ' + Math.round(sz * 0.33) + 'px = 0.33 × 块高，mono 居中', '#939bb2', 10, 'start');
+      subTx(g, 40, noteY + 14, '状态标签距块 18（三态同尺寸）', '#939bb2', 10, 'start');
     }
 
     addTab(s, render);
@@ -741,7 +757,8 @@
     /* 引线直接落在曲线上：取曲线中点，不靠算，靠 getPointAtLength */
     var mid = wA.path.getPointAtLength(wA.len * 0.5);
     lead(A, mid.x, mid.y, 321, 30, '线宽 2 · 虚线 8 7 · 端点 round', 'middle');
-    lead(A, 556, 148, 610, 92, '箭头 11×11 · 尖端对齐终点', 'start');
+    /* 引线只有 150px 可写（610 → 760），文案必须压在 ~125px 内，长句会出界 */
+    lead(A, 556, 148, 610, 92, '箭头 11×11 · 尖端接住线端', 'start');
     subTx(A, 40, 200, '控制点 = 起点 + 0.42 × 跨距，两端切线水平 → S 形曲线', '#939bb2', 9.5, 'start');
 
     /* ── 下：四种走线 ── */
@@ -1222,79 +1239,125 @@
     var sub = h('div', 'sub-hd', s);
     h('h3', null, sub).textContent = '卡片在下方长高，两排位置不动';
     var body = h('div', null, s);
-    var curStop = null;
-    addTabs(sub, ['桌面', '窄屏', '动态'], function (i) {
-      if (curStop) { curStop(); curStop = null; }
+    addTabs(sub, ['桌面', '窄屏'], function (i) {
       body.innerHTML = '';
-      if (i === 2) curStop = drawGrow(body);
-      else draw(body, i === 1);
+      draw(body, i === 1);
     });
 
-    /* ── 动态：三个高度 h1 → h2 → h3 走一遍再退回去 ──
-       ② 绕中心上下同时扩，③ 顶边钉死只往下长 —— 这两种长法不一样，动起来才分得清。
-       每帧都调 CV.resizeCard，和 reduce.js 改高度的方式是同一条路径。 */
+    /* ── 07.2 动态：只演「方框那一层」（h2 ↔ h3）──
+       原来它是 07.1 的第三个 tab，和「桌面/窄屏」两张静态图挤在一起：
+       静态图讲几何（长多少、方框在哪儿居中），动态讲时间（长多久、亮多久、收多久），
+       两者量纲不同，而且三段耗时要在调试台里逐秒调 —— 单独成一节才好对着调。 */
+    var dynSub = h('div', 'sub-hd', s);
+    h('h3', null, dynSub).textContent = '动态 · 方框长出与收回';
+    var dynBox = h('div', null, s);
+    var stopDyn = null;
+    function playDyn() {
+      if (stopDyn) { stopDyn(); stopDyn = null; }
+      dynBox.innerHTML = '';
+      stopDyn = drawGrow(dynBox);
+    }
+    playDyn();
+
+    /* 参数台改了「方框动态」任意键（或重置全部）→ 停掉旧 rAF、按新时长重播。
+       这几段时长是**读一次就定住**的（时间轴在创建时算好），所以不能只改数字，必须重建。 */
+    CV.params.onChange(function (ch) {
+      if ((ch.section === '07-calc' || ch.section === '*') && stopDyn) playDyn();
+    });
+
+    h('p', 'specs', s).innerHTML =
+      '<b>三段耗时</b> 卡片伸长（h2 → h3）/ 方框展示 / 卡片缩回（h3 → h2）——' +
+        '都在右侧调试台「方框动态」里调，改完这一节立刻按新时长重播<br>' +
+      '<b>不进规范</b> 方框那 0.35s 淡入 / 淡出是与伸缩<b>错开</b>的衔接：' +
+        '先长空间、再填内容；先灭内容、再收空间 —— 两件事串行，不重叠，所以不算「组件耗时」<br>' +
+      '<b>页面同样能调</b> reduce 页那一拍读的是同一组值（伸长 / 缩回直接取，' +
+        '展示取「与四段融合的较大者」），这里调到 1.2s，reduce 页也跟着变长';
+
+    /* ── 07.2 动态：只演「方框那一层」（h2 ↔ h3）──
+       起点直接给到 h2：h1 → h2（一排变两排）是 03 讲过的，本节的题目是方框，
+       不该让半条时间花在别的事上。
+       三段耗时全部走规范 07-calc（右侧调试台可调），改完按新时长重播；
+       方框那 0.35s 淡入 / 淡出是与伸缩**错开**的衔接，不进规范。
+       每帧调 CV.resizeCard，和 reduce.js 改高度是同一条路径。 */
     function drawGrow(host) {
-      var Q = { cw: 300, hd: 36, sw: 46, gap: 12, rowGap: 12, calcGap: 10,
+      var Q = { cw: 300, hd: 36, sw: 46, gap: 12, rowGap: 12, calcGap: 10, areaPad: 12,
                 chipW: 56, chipH: 22, fs: 11.5, tipFs: 10.5, tipTx: 'sum · avg · max · min' };
       var PRE_WIDEN = 25;
       var h1 = 170;
       var h2 = h1 + Q.sw + Q.rowGap - PRE_WIDEN;              /* 203 */
-      var h3 = h2 + Q.calcGap + Q.chipH + 12 - 16;            /* 231 */
-      var x = 130, top3 = 62;
-      /* h1 与 h2 共用中心（② 是绕中心扩），h3 顶边钉死 → 中心自己就往下走了 */
-      var mid = top3 + (h2 - h1) / 2 + h2 / 2;
-      var off1 = Q.hd + (h1 - Q.hd - 16 - Q.sw) / 2;                       /* 72 */
+      var h3 = h2 + Q.calcGap + Q.chipH + Q.areaPad - 16;     /* 231 */
+      var x = 130, top = 62;                    /* 顶边钉死：h2 与 h3 共用同一条顶边 */
       var off2 = Q.hd + (h2 - Q.hd - 2 * Q.sw - Q.rowGap) / 2;             /* 67.5 */
       var rowW = 4 * Q.sw + 3 * Q.gap, rowX = x + (Q.cw - rowW) / 2;
 
-      var A = demo(host, 520, 352,
-        '某张目标卡的三个高度：h1 单排 → h2 两排（绕中心扩）→ h3 带计算方框（顶边钉死）');
+      /* ── 时间轴：全部由规范值算出来，改参数 = 改总长 ── */
+      var DUR = {
+        grow:   CV.params.get('07-calc', 'growDur')   || 0.75,
+        hold:   CV.params.get('07-calc', 'holdDur')   || 0.95,
+        shrink: CV.params.get('07-calc', 'shrinkDur') || 0.7
+      };
+      var FADE = 0.35;   /* 方框淡入 / 淡出：与伸缩错开的衔接，不是「组件耗时」 */
+      var GAP1 = 0.25;   /* 长够 → 方框才亮：先长空间、再填内容 */
+      var GAP2 = 0.2;    /* 方框灭了 → 卡片才收：先灭、再收 */
+      var REST = 0.9;    /* 首尾各驻留一下，读得出「起点是两排」 */
 
-      capTx(A, 24, 26, '同一张目标卡走一遍：先长空间、再填内容 —— 数据与方框各走两步，回收时倒过来');
+      var tA = REST;                        /* 开始伸长 */
+      var tB = tA + DUR.grow;               /* 长够 */
+      var tC = tB + GAP1;                   /* 方框开始淡入 */
+      var tD = tC + FADE;                   /* 方框全亮 */
+      var tE = tD + DUR.hold;               /* 开始淡出 */
+      var tF = tE + FADE;                   /* 方框没了 */
+      var tG = tF + GAP2;                   /* 开始缩回 */
+      var tH = tG + DUR.shrink;             /* 缩回 h2 */
+      var SPAN = tH + REST;
+
+      var A = demo(host, 520, 352,
+        '目标卡从两排（h2）长出计算方框那一层（h3）再收回：顶边钉死，只往下长');
+
+      capTx(A, 24, 26, '只演方框这一层：伸长 ' + DUR.grow.toFixed(2) + 's → 展示 ' +
+        DUR.hold.toFixed(2) + 's → 缩回 ' + DUR.shrink.toFixed(2) + 's（右侧调试台可调）');
 
       var card = CV.drawCard(A, {
-        key: 0, geo: { x: x, y: top3, w: Q.cw, h: h3 }, color: DATA[0].color,
+        key: 0, geo: { x: x, y: top, w: Q.cw, h: h2 }, color: DATA[0].color,
         title: 'rank 0', role: 'dst', target: true,
         hdr: Q.hd, titleSize: 15, badgeSize: 10
       });
 
-      /* h1 / h2 / h3 三条卡底刻度：动画在中间跑，参照线不动 */
-      [[top3 + (h2 - h1) / 2 + h1, 'h1 ' + h1],
-       [top3 + h2, 'h2 ' + h2],
-       [top3 + h3, 'h3 ' + h3]].forEach(function (r) {
+      /* 两条卡底刻度：动画在中间跑，参照线不动。
+         h1 不参与本节，不画 —— 三条线挤在 28px 里反而读不出「长了多少」。
+         右侧只留 66px 放字（卡右边 430 → 画布 520），所以标签用半角短写法。 */
+      [[top + h2, 'h2 ' + h2],
+       [top + h3, 'h3 ' + h3 + ' · +' + (h3 - h2)]].forEach(function (r) {
         el('line', {
-          x1: x + Q.cw + 4, y1: r[0], x2: 466, y2: r[0],
+          x1: x + Q.cw + 4, y1: r[0], x2: 446, y2: r[0],
           stroke: '#b9c0d2', 'stroke-width': 1, 'stroke-dasharray': '3 3'
         }, A);
-        subTx(A, 470, r[0] + 3.5, r[1], '#8b93a6', 9.5, 'start');
+        subTx(A, 450, r[0] + 3.5, r[1], '#8b93a6', 9.5, 'start');
       });
-      /* 中心线只画卡片外面那两截：穿进卡里会横切数据块，反而看不清 */
-      [[52, x], [x + Q.cw, 452]].forEach(function (r) {
+      /* 顶边钉死：只在卡的左右两侧各挑出一小截，说明这条边整个动画都不动 */
+      [[118, x], [x + Q.cw, 448]].forEach(function (r) {
         el('line', {
-          x1: r[0], y1: mid, x2: r[1], y2: mid,
-          stroke: '#d9c9fb', 'stroke-width': 1, 'stroke-dasharray': '6 5'
+          x1: r[0], y1: top, x2: r[1], y2: top,
+          stroke: '#c9b6f7', 'stroke-width': 1.4
         }, A);
       });
-      subTx(A, 20, mid - 6, 'h1 / h2 中心', '#b9a4f0', 9.5, 'start');
+      subTx(A, 452, top + 3.5, '顶边不动', '#b9a4f0', 9, 'start');
 
-      var row1 = [], row2 = [];
+      /* 两排都是实块：进入「计算」前提是数据已经到位，空槽那一段归 03 讲。
+         行位整个动画不动（顶边钉死 + 两排位置不动），所以画一次就够，不必逐帧挪。 */
       for (var i = 0; i < 4; i++) {
-        var s1 = CV.drawSlot(A, rowX + i * (Q.sw + Q.gap), top3 + off2, Q.sw, Q.sw);
-        CV.setSlot(s1, DATA[i], {});
-        row1.push(s1);
-        var s2 = CV.drawSlot(A, rowX + i * (Q.sw + Q.gap), top3 + off2 + Q.sw + Q.rowGap, Q.sw, Q.sw);
-        CV.setSlot(s2, null, { active: true });
-        s2.g.style.opacity = '0';
-        row2.push(s2);
+        var colX = rowX + i * (Q.sw + Q.gap);
+        CV.setSlot(CV.drawSlot(A, colX, top + off2, Q.sw, Q.sw), DATA[i], {});
+        CV.setSlot(CV.drawSlot(A, colX, top + off2 + Q.sw + Q.rowGap, Q.sw, Q.sw), DATA[i], {});
       }
 
-      /* 方牌：位置只用 h2 态的几何算一次，后面只改不透明度 */
-      var blankTop = top3 + off2 + Q.sw + Q.rowGap + Q.sw;      /* 259.5 */
-      var calcY = blankTop + (top3 + h3 - blankTop - Q.chipH) / 2;
+      /* 方牌：位置只用 h3 态的几何算一次，后面只改不透明度 */
+      var blankTop = top + off2 + Q.sw + Q.rowGap + Q.sw;      /* 233.5 */
+      var calcY = blankTop + Math.max(Q.calcGap, (top + h3 - blankTop - Q.chipH) / 2);
       var calcCx = x + Q.cw / 2;
 
-      /* 占位虚线框：③ 第一步「先长空间」时这段还空着，先给个同尺寸的框；
-         第二步方框一亮它就退场 —— 和 ② 里「空槽 → 实块」是对仗的 */
+      /* 占位虚线框：先长空间时这一段还空着，先给个同尺寸的框；
+         方框一亮它就退场 —— 「先长空间、再填内容」的两步在图上看得见 */
       var ph = el('rect', {
         x: calcCx - Q.chipW / 2, y: calcY, width: Q.chipW, height: Q.chipH,
         rx: Math.round(Q.chipH * .3), fill: 'none',
@@ -1315,100 +1378,48 @@
         fill: '#6d28d9', 'font-size': 10.5, 'font-weight': 600
       }, A);
 
-      var filled = false;
-
-      /* 时间轴：几何与内容拆开走，一共 8s
-         长：②a 长空间 → ②b 落数据 → ③a 长空间 → ③b 显示计算
-         收：计算先没 → 数据先退回空槽 → 收方框空间 → 收第二排空间 */
-      return anim(8000, function (T) {
-        var g2 = 0, g3 = 0, chipOp = 0, fade = 1, label;
-        if (T < 0.6) {
-          label = '① 单排 · h1 = ' + h1;
-        } else if (T < 1.35) {
-          g2 = easeIO(seg(T, .6, 1.35));
-          label = '②-a 先长空间：绕中心上下同时扩';
-        } else if (T < 1.6) {
-          g2 = 1;
-          label = '②-a 空间到位 · h2 = ' + h2 + '，第二排还是空槽';
-        } else if (T < 1.85) {
-          g2 = 1; fade = easeIO(seg(T, 1.6, 1.85));
-          label = '②-b 再落数据：空槽 → 实块';
-        } else if (T < 2.6) {
-          g2 = 1;
-          label = '② 两排就位 · h2 = ' + h2 + '（上下各 ' + (h2 - h1) / 2 + '）';
-        } else if (T < 3.35) {
-          g2 = 1; g3 = easeIO(seg(T, 2.6, 3.35));
-          label = '③-a 先长空间：顶边钉死，只往下长';
-        } else if (T < 3.6) {
-          g2 = 1; g3 = 1;
-          label = '③-a 空间到位 · h3 = ' + h3 + '，方框位置还空着';
-        } else if (T < 3.95) {
-          g2 = 1; g3 = 1; chipOp = easeIO(seg(T, 3.6, 3.95));
-          label = '③-b 再显示计算：方框淡入';
-        } else if (T < 4.9) {
-          g2 = 1; g3 = 1; chipOp = 1;
-          label = '③ 计算态 · h3 = ' + h3 + '（+' + (h3 - h2) + ' 全给方框）';
-        } else if (T < 5.25) {
-          g2 = 1; g3 = 1; chipOp = 1 - easeIO(seg(T, 4.9, 5.25));
-          label = '收 1 · 计算先消失（卡片还不动）';
-        } else if (T < 5.4) {
-          g2 = 1; g3 = 1;
-          label = '收 1 · 方框收起，h 仍是 ' + h3;
-        } else if (T < 5.65) {
-          g2 = 1; g3 = 1; fade = 1 - easeIO(seg(T, 5.4, 5.65));
-          label = '收 2 · 完整数据先退回空槽';
-        } else if (T < 5.85) {
-          g2 = 1; g3 = 1; fade = easeIO(seg(T, 5.65, 5.85));
-          label = '收 2 · 第二排已退回空槽';
-        } else if (T < 6.1) {
-          g2 = 1; g3 = 1;
-          label = '收 3 · 再从下方把这段空间收回去';
-        } else if (T < 6.8) {
-          g2 = 1; g3 = 1 - easeIO(seg(T, 6.1, 6.8));
-          label = '收 3 · 方框空间收回（顶边仍钉死）';
-        } else if (T < 7.0) {
-          g2 = 1;
-          label = '收 3 · 回到两排 · h2 = ' + h2;
-        } else if (T < 7.75) {
-          g2 = 1 - easeIO(seg(T, 7.0, 7.75));
-          label = '收 4 · 第二排空间收回（绕中心）';
+      /* 时间轴：一轮 = 驻留 → 伸长 → 方框淡入 → 展示 → 方框淡出 → 缩回 → 驻留。
+         三段主耗时来自规范（tA~tH 全是 DUR 算出来的），改参数 = 改这两条边界的间隔。 */
+      return anim(SPAN * 1000, function (T) {
+        var g3, chipOp, label;
+        if (T < tA) {
+          g3 = 0; chipOp = 0;
+          label = '① 两排就位 · h2 = ' + h2 + '（这一层还没长出来）';
+        } else if (T < tB) {
+          g3 = easeIO(seg(T, tA, tB)); chipOp = 0;
+          label = '② 伸长 ' + DUR.grow.toFixed(2) + 's：顶边钉死，只往下长';
+        } else if (T < tC) {
+          g3 = 1; chipOp = 0;
+          label = '② 长够 · h3 = ' + h3 + '，方框位置还空着';
+        } else if (T < tD) {
+          g3 = 1; chipOp = easeIO(seg(T, tC, tD));
+          label = '③ 方框淡入：先长空间，再填内容';
+        } else if (T < tE) {
+          g3 = 1; chipOp = 1;
+          label = '③ 展示 ' + DUR.hold.toFixed(2) + 's · 正在计算';
+        } else if (T < tF) {
+          g3 = 1; chipOp = 1 - easeIO(seg(T, tE, tF));
+          label = '收 1 · 方框先消失（卡片还不动）';
+        } else if (T < tG) {
+          g3 = 1; chipOp = 0;
+          label = '收 1 · 方框已收，h 仍是 ' + h3;
+        } else if (T < tH) {
+          g3 = 1 - easeIO(seg(T, tG, tH)); chipOp = 0;
+          label = '收 2 · 缩回 ' + DUR.shrink.toFixed(2) + 's（顶边仍钉死）';
         } else {
-          label = '① 单排 · h1 = ' + h1;
+          g3 = 0; chipOp = 0;
+          label = '① 回到两排 · h2 = ' + h2 + '（等下一次计算）';
         }
 
-        var h = h1 + (h2 - h1) * g2 + (h3 - h2) * g3;
-        /* 顶边：只有 ② 会动（绕中心，上下各让 16.5），③ 一动不动 */
-        var top = top3 + (h2 - h1) / 2 * (1 - g2);
+        /* 顶边钉死、两排位置不动：只有卡底在走，行位一个像素都不挪 */
+        var h = h2 + (h3 - h2) * g3;
         CV.resizeCard(card, { x: x, y: top, w: Q.cw, h: h });
-
-        var r1y = top + off1 + (off2 - off1) * g2;
-        var r2y = r1y + Q.sw + Q.rowGap;
-        row1.forEach(function (sl) { moveSlotY(sl, r1y); });
-
-        /* 第二排的透明度 = 空间淡入 × 内容淡入：
-           空间那层由 g2 决定（长高时长出来、收窄时跟着走），
-           内容那层只在「空槽 ↔ 实块」切换的那一下用，切换时它刚好是 0，
-           所以不会出现一块实数据突然蹦出来或突然没掉。
-           （setSlot 会清空 style.opacity，必须先切内容再写透明度） */
-        var wantFill = (T >= 1.6 && T < 5.65);
-        if (wantFill !== filled) {
-          filled = wantFill;
-          row2.forEach(function (sl, i) {
-            CV.setSlot(sl, wantFill ? DATA[i] : null, wantFill ? {} : { active: true });
-          });
-        }
-        var rowOp = seg(g2, .35, .85) * fade;
-        row2.forEach(function (sl) {
-          moveSlotY(sl, r2y);
-          sl.g.style.opacity = rowOp.toFixed(3);
-        });
 
         chip.wrap.style.opacity = chipOp.toFixed(3);
         chip.wrap.setAttribute('data-on', chipOp > .5 ? '1' : '0');
         /* 占位框只在「正向长空间」时出场：随 g3 淡入，方框一亮就被它盖掉；
-           回收时一律不出（4.9s 起锁 0，那一刻 chipOp 恰好还是 1、本来也是 0，无缝），
-           否则卡片往下缩时它会挂在卡底外面 */
-        var phOp = (T < 4.9 ? 1 - chipOp : 0) * seg(g3, .55, .85);
+           回收时一律不出（tE 起锁 0），否则卡片往回缩时它会挂在卡底外面 */
+        var phOp = (T < tE ? 1 - chipOp : 0) * seg(g3, .55, .85);
         ph.style.opacity = phOp.toFixed(3);
 
         stage.textContent = label;
@@ -1721,7 +1732,7 @@
     var y2 = cy0 + off2;                    /* 下排块顶边 */
 
     /* ── 上：实时。四列从左到右依次融合，2.2s 走完、3.2s 一轮 ── */
-    var A = demo(s, 620, 330, '两行四列：下排的块依次被上排吸走，上排融合后变成 Σ');
+    var A = demo(s, 620, 330, '两行四列：下排的块依次被上排吸走，上排融合后变成 Σ + 列字母 + 份数');
     capTx(A, 24, 26, '四列从左到右依次融合 —— 上排是累加器，下排是刚到的一份');
 
     CV.drawCard(A, {
@@ -1740,13 +1751,13 @@
       CV.setSlot(CV.drawSlot(A, bx, y2, Q.sw, Q.sw), null, {});
     }
 
-    /* 一份 + 一份 → Σ：颜色按 (份数−1)/3 向 DEEP 收一格 */
+    /* 一份 + 一份 → Σ + 列字母 + 份数：颜色按 (份数−1)/3 向 DEEP 收一格 */
     var merges = DATA.map(function (d, k) {
       return CV.createMerge(A, {
         x: rowX + k * (Q.sw + Q.gap) + Q.sw / 2,
         y0: y2 + Q.sw / 2, y1: y1 + Q.sw / 2, size: Q.sw,
         data: d, target: top[k],
-        to: { letter: 'Σ', color: CV.mix(d.color, SIGMA, 1 / 3) }
+        to: { letter: 'Σ', sub: d.letter, count: 2, color: CV.mix(d.color, SIGMA, 1 / 3) }
       });
     });
 
@@ -1769,7 +1780,7 @@
       '位移 ↑ · 缩放 ↓ · 不透明度 ↓ —— 三个量都单调，一次回头都没有',
       '#939bb2', 10, 'start');
     subTx(A, 24, cy0 + h2 + 48,
-      '目标块自己不缩放，只被一道白光扫过（扫完才换成 Σ）',
+      '目标块自己不缩放，只被一道白光扫过（扫完才换成 Σ + 列字母 + 已折进份数）',
       '#939bb2', 10, 'start');
 
     var HOLD0 = .55, CYCLE = 3.2, fresh = false;
@@ -1816,7 +1827,7 @@
     [[100, .10, '① 唤醒 · p .10', '描边收实、提亮一档'],
      [270, .35, '② 上浮 · p .35', '缩到 .85，还在下方'],
      [440, .62, '③ 消散 · p .62', '缩到 .40、淡到一半'],
-     [610, 1, '④ 注入 · p 1.00', '白光扫完，已换 Σ']].forEach(function (f) {
+     [610, 1, '④ 注入 · p 1.00', '白光扫完，已换 Σᴀ²']].forEach(function (f) {
       var c = f[0];
       var tg = CV.drawSlot(B, c - Q.sw / 2, ty, Q.sw, Q.sw);
       CV.setSlot(tg, DATA[0], {});
@@ -1824,7 +1835,7 @@
       var m = CV.createMerge(B, {
         x: c, y0: by + Q.sw / 2, y1: ty + Q.sw / 2, size: Q.sw,
         data: DATA[0], target: tg,
-        to: { letter: 'Σ', color: CV.mix(DATA[0].color, SIGMA, 1 / 3) }
+        to: { letter: 'Σ', sub: 'A', count: 2, color: CV.mix(DATA[0].color, SIGMA, 1 / 3) }
       });
       m.apply(f[1]);
       framesB.push({ m: m, p: f[1] });          /* 参数一改要重新 apply 这四个定格 */
@@ -1849,7 +1860,11 @@
         '② 上浮 <code>' + nx(wake) + '–' + nx(rise) + '</code> 走 y₀→y₁ 并缩到 <code>' + nx(shrink) + '</code>，' +
         '到 <code>' + nx(fade) + '</code> 开始淡出 · ' +
         '③ 注入 <code>' + nx(gs) + '–' + nx(ge) + '</code> 白光扫过（峰值 <code>' + nx(gloss) + '</code>），' +
-        '<code>' + nx(swap) + '</code> 那一刻目标换成 Σ 并加深<br>' +
+        '<code>' + nx(swap) + '</code> 那一刻目标换成 Σ + 列字母 + 已折进份数，并加深<br>' +
+      '<b>结果块的写法（规范）</b> 换 Σ 起，块上写三样：大 <code>Σ</code>、该列字母作<b>下标</b>、' +
+        '已折进几份作<b>上标</b> —— 两块相加 <code>Σᴀ²</code>、三块 <code>Σᴀ³</code>、四块 <code>Σᴀ⁴</code>，' +
+        '每折进一份上标就 +1，份数一眼可数。绘制走 <code>CV.setSlot</code> 的 ' +
+        '<code>{ letter:\'Σ\', sub:\'A\', count:2 }</code>，<code>CV.createMerge</code> 的 <code>to</code> 同款<br>' +
       '<b>白光怎么扫</b> 一块和块等大的 <code>rect</code> + 三停渐变（两端全透明），' +
         '只改 <code>gradientTransform</code> 的 <code>translate</code>：<code>−1 → 1</code> 就是一个块宽。' +
         '不用 <code>clipPath</code>，也不会扫出块外<br>' +
@@ -2160,7 +2175,8 @@
 
     /* 单章视图：同一时刻只显示一节，其余 display:none。
        左侧目录 / 右侧二级导航 / 参数台「定位」都走这里切换章节。 */
-    function showSection(no) {
+    /* 只负责「把某一节显示出来」，返回它在 secs 里的下标（-1 = 没有这一节） */
+    function applyNo(no) {
       var idx = -1;
       secs.forEach(function (s2, k) {
         var n = (s2.querySelector('.sec-no') || {}).textContent || '';
@@ -2169,6 +2185,16 @@
         s2.classList.toggle('is-active', on);
         if (on) idx = k;
       });
+      return idx;
+    }
+
+    function showSection(no) {
+      var idx = applyNo(no);
+      if (idx < 0) {
+        /* 锚点指向不存在的节（旧链接 / 手改 hash）：不回退就是整页空白 */
+        no = (secs[0].querySelector('.sec-no') || {}).textContent || '01';
+        idx = applyNo(no);
+      }
       window.scrollTo(0, 0);
       if (idx >= 0) { lockA = links[idx]; setOn(links[idx]); }
       history.replaceState(null, '', '#sec-' + no);
@@ -2222,7 +2248,7 @@
     nav.setAttribute('aria-label', '分节导航');
     var title = document.createElement('div');
     title.className = 'rtoc-t';
-    title.textContent = '本节水目录';
+    title.textContent = '本节子目录';
     nav.appendChild(title);
     var navBody = document.createElement('div');
     navBody.className = 'rtoc-body';
@@ -2323,6 +2349,18 @@
         else if (hsh.indexOf('sub-') === 0) no = hsh.split('-')[1] || no;
       }
       if (window.CV && window.CV.showSection) window.CV.showSection(no);
+      /* 带 #sub-xx-n 进来时：showSection 会滚回顶部并把 hash 重写成 #sec-xx，
+         所以子标题必须在它之后再滚一次 —— 否则这个锚点等于没生效 */
+      if (hsh.indexOf('sub-') === 0) {
+        var t = document.getElementById(hsh);
+        if (t) {
+          window.scrollTo(0, t.getBoundingClientRect().top + window.pageYOffset - 12);
+          /* showSection 把 hash 改成了 #sec-xx，这里补回来：
+             否则「复制地址栏」拿到的是整节而不是刚跳到的二级标题，
+             与参数台「定位」跳完留下的 #sub-xx-n 也不一致。 */
+          history.replaceState(null, '', '#' + hsh);
+        }
+      }
       spy();                                /* 初始高亮本节首个子标题 */
     })();
   })();
