@@ -64,10 +64,19 @@ CommonVisual/
 ├── anatomy.html            组件与动效规范（一图一节，1:1 像素示例）
 ├── 分布式通信原语详解.md    内容源
 ├── docs/
+│   ├── architecture.md      代码结构地图：改代码前找路径用
+│   ├── arch-standard.md     架构标准：当前/目标架构 + 组件清单 + 拆分判据
+│   ├── arch-standard.html   同上，看图版（少文字、多图：分层图/矩阵/判定树）
+│   ├── testing.html         验证用例清单（83 条：通用 3 / 全站 15 / 原语 53 / 静态 12）
+│   ├── BUGS.md              缺陷台账（每日定时回归写入）
 │   └── 待讨论-Ring与Tree.md
 ├── tools/
-│   └── serve.mjs          本地开发服务：静态文件 + 「保存到代码」的写盘端点
-│                          （POST /__cv/save，只允许写 cv/tokens.js 与 cv/pages.js）
+│   ├── serve.mjs          本地开发服务：静态文件 + 「保存到代码」的写盘端点
+│   │                      （POST /__cv/save，只允许写 cv/tokens.js 与 cv/pages.js）
+│   ├── verify.mjs         一次验证：报错检查 + 几何探针 + 最小截图集
+│   ├── probe.mjs          单点几何探针（查一个数，十几秒）
+│   ├── arch.mjs           依赖扫描：CV.* 定义/使用配对，出真实文件依赖边
+│   └── probes/<page>.mjs  每页断言，verify 自动加载执行
 └── assets/
     ├── stage.css           精简版共用的全部样式
     ├── layout.css          对照表样式
