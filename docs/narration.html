@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CommonVisual · 逐动作解说 · 名词表与文案</title>
+<style>
+  :root{
+    --bg:#f5f6f8;--panel:#fff;--ink:#1c2130;--ink2:#4b5364;--muted:#7a8296;
+    --line:#e4e7ee;--accent:#7c3aed;--ok:#059669;--warn:#d97706;--bad:#dc2626;
+    --shadow:0 1px 2px rgba(20,25,40,.06),0 8px 24px rgba(20,25,40,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 24px 80px}
+  h1{font-size:24px;margin:0 0 6px;letter-spacing:-.3px}
+  .sub{color:var(--muted);font-size:12.5px}
+  .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:4px 10px;border-radius:20px;border:1px solid #ddd4fb;background:#f1ecfe;color:var(--accent)}
+  .badge.grey{border-color:var(--line);background:#eef0f5;color:var(--muted)}
+  .lead{margin:16px 0 0;color:var(--ink2);font-size:13.2px}
+  .lead b{color:var(--ink)}
+
+  section{margin:34px 0 0}
+  .sechead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+  .sechead .no{font:600 12px/1 ui-monospace,Menlo,monospace;color:#fff;background:var(--accent);padding:6px 9px;border-radius:7px;letter-spacing:.5px}
+  .sechead h2{font-size:17px;margin:0}
+  .sechead .meta{font-size:11.5px;color:var(--muted)}
+  .role{color:var(--muted);font-size:12.5px;margin:0 0 10px}
+  .role b{color:var(--ink2)}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:14px 16px;margin-top:12px}
+  .card h3{font-size:13.5px;margin:0 0 8px}
+  .fig{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px}
+  .fig svg{display:block;width:100%;height:auto}
+  .fig figcaption{font-size:11.5px;color:var(--muted);padding:6px 4px 0}
+
+  table{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);font-size:12.5px}
+  th,td{padding:7px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#fafbfd;color:var(--ink2);font-weight:600;font-size:11.5px;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}
+  .nm{font-weight:600;color:#3b2b7a}
+
+  table.lex td:first-child{width:132px;white-space:nowrap}
+  table.lex td:nth-child(3){width:210px;color:var(--muted);font-size:12px}
+  table.lex td:nth-child(4){width:96px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:11px;white-space:nowrap}
+  table.lex tr.act td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+
+  /* 解说表：编号 | 开始 | 结束 | 解说 | 结果 */
+  table.na{table-layout:fixed}
+  table.na col.c-no{width:54px}
+  table.na col.c-t1{width:76px}
+  table.na col.c-t2{width:62px}
+  table.na col.c-what{width:auto}
+  table.na col.c-res{width:212px}
+  table.na td.t{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:#3f4658;white-space:nowrap}
+  table.na td.t.blank{background:#fcfcfd}
+  table.na td.no{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;font-weight:600;color:var(--accent)}
+  table.na td.what{font-size:12.6px}
+  table.na td.res{color:var(--muted);font-size:12.2px}
+  table.na tr.grp td{background:#f6f4ff;border-top:1px solid #e3dbfb;border-bottom:1px solid #e3dbfb;padding:6px 11px}
+  table.na tr.grp .gp{font-weight:700;color:#5b3fbe;font-size:12.3px}
+  table.na tr.grp .gs{color:#7a72a0;font-size:11.5px;font-weight:400;margin-left:8px;font-family:ui-monospace,Menlo,monospace}
+  table.na tr.rest td.what{color:var(--muted)}
+
+  /* 同刻：连续几行共用一个「开始」格 */
+  table.na td.sim{background:#f7f4ff;border-right:1px solid #e3dbfb;vertical-align:middle;
+    font-weight:600;color:#5b3fbe;white-space:nowrap}
+  table.na td.sim .same{display:block;margin-top:3px;font:600 9px/1.5 -apple-system,"PingFang SC",sans-serif;
+    color:#7c3aed;background:#efe8ff;border-radius:5px;padding:1px 5px;text-align:center}
+
+  .note{background:#fdfaf3;border:1px solid #f0e2c8;border-radius:10px;padding:10px 13px;color:#6b5a35;font-size:12.4px;margin-top:14px}
+  .note b{color:#4a3c1f}
+  .note.blue{background:#f4f8ff;border-color:#d8e4f7;color:#35507a}
+  .note.blue b{color:#1f3a63}
+  .note.warn{background:#fef6f6;border-color:#f3d6d6;color:#7c3535}
+  .note.warn b{color:#5e2323}
+  ul.tight{margin:6px 0 0;padding-left:20px}
+  ul.tight li{margin:4px 0}
+  .k{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;background:#eceef4;padding:0 4px;border-radius:4px;color:#3f4658}
+
+  .pghead{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;margin:2px 0 8px}
+  .pghead .zh{font-size:15.5px;font-weight:700}
+  .pghead .en{font-size:11.5px;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+  .pghead .tag{font-size:11px;padding:2px 8px;border-radius:6px;background:#eef0f5;color:var(--muted)}
+  .pgmeta{font-size:12.3px;color:var(--ink2);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 13px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .pgmeta b{color:var(--ink)}
+  .pgmeta .row{margin:2px 0}
+  .final{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px}
+  .final .f{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12.3px}
+  .final .f b{display:block;font-size:12px;color:var(--ink2);margin-bottom:4px}
+  .toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:8px;margin-top:12px}
+  .toc a{display:block;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 11px;text-decoration:none;color:var(--ink2);font-size:12.4px;box-shadow:var(--shadow)}
+  .toc a b{color:var(--accent);font-family:ui-monospace,Menlo,monospace;font-size:11px;margin-right:6px}
+  .toc a span{color:var(--muted);font-size:11px;float:right;font-family:ui-monospace,Menlo,monospace}
+  .todo{background:#fdf3e3;color:var(--warn);font-size:10.5px;padding:1px 7px;border-radius:6px;font-weight:600}
+
+  @media (max-width:980px){
+    table.lex td:first-child{width:112px}
+    table.lex td:nth-child(3){width:150px}
+    table.lex td:nth-child(4){width:78px}
+    table.na col.c-res{width:170px}
+  }
+  @media (max-width:760px){
+    .wrap{padding:18px 12px 60px}
+    body{overflow-x:auto}
+    table{min-width:680px}
+    .fig{overflow-x:auto}
+    .fig svg{min-width:680px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>逐动作解说 · 名词表与文案</h1>
+  <div class="sub">CommonVisual v2 · <span class="k">docs/narration.html</span> · 2026-10-31 草案 v3</div>
+  <div class="badges">
+    <span class="badge">设计稿 · 代码未动</span>
+    <span class="badge grey">八页全覆盖</span>
+    <span class="badge grey">秒数为默认参数下实测</span>
+  </div>
+
+  <p class="lead">
+    这版改了三处：<b>①</b> 同一时刻发生的多行动作共用同一个「开始」格，并标 <b>同刻 ×N</b>，一眼看出是一瞬间的事；
+    <b>②</b> 卡名改成 <b>四槽卡-2</b> 这种带连字符的写法；<b>③</b> 「静止」行不再写「就位」这类空话，只写<b>此刻场上有什么</b>。
+    另外补齐剩下 7 页（scatter / broadcast / all-gather / reduce / all-reduce / reduce-scatter / all-to-all）。
+  </p>
+
+  <div class="toc" id="toc"></div>
+
+  <!-- ============================ 01 ============================ -->
+  <section id="s1">
+    <div class="sechead"><span class="no">01</span><h2>面板长什么样</h2><span class="meta">右下角齿轮 · 两个标签页</span></div>
+    <p class="role">面板位置不动，宽度从 372px 加到 <b>约 620px</b>（五列排得开）。滚动条只在内层列表，头部与标签条固定。</p>
+
+    <figure class="fig">
+      <svg viewBox="0 0 900 430" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif">
+        <defs>
+          <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto">
+            <path d="M0,0 L7,3.2 L0,6.4 z" fill="#9aa2b6"/>
+          </marker>
+          <filter id="sh" x="-20%" y="-20%" width="150%" height="160%">
+            <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#1c2130" flood-opacity=".09"/>
+          </filter>
+        </defs>
+        <rect x="0" y="0" width="900" height="430" fill="#fbfbfd"/>
+
+        <text x="24" y="26" font-size="11.5" fill="#7a8296">舞台页（面板收起）</text>
+        <rect x="24" y="36" width="460" height="330" rx="10" fill="#fff" stroke="#e4e7ee" filter="url(#sh)"/>
+        <text x="44" y="62" font-size="12.5" font-weight="600" fill="#1c2130">Gather · 汇聚</text>
+        <text x="44" y="78" font-size="9.5" fill="#9aa2b6">broadcast · scatter · gather · allgather …</text>
+        <line x1="24" y1="88" x2="484" y2="88" stroke="#eef0f5"/>
+
+        <rect x="48" y="150" width="132" height="78" rx="7" fill="#fff" stroke="#c4b5fd" stroke-width="1.4"/>
+        <path d="M48 157 a7 7 0 0 1 7 -7 h118 a7 7 0 0 1 7 7 v10 h-132 z" fill="#7c3aed"/>
+        <text x="56" y="160" font-size="8" fill="#fff">rank 0</text>
+        <rect x="146" y="151" width="26" height="12" rx="6" fill="#fff" fill-opacity=".22"/>
+        <text x="159" y="160" font-size="6.6" fill="#fff" text-anchor="middle">dst</text>
+        <rect x="58" y="186" width="20" height="20" rx="4" fill="#7c3aed"/>
+        <text x="68" y="200" font-size="9" fill="#fff" text-anchor="middle">A</text>
+        <rect x="82" y="186" width="20" height="20" rx="4" fill="#f5f6fa" stroke="#d7dbe6" stroke-dasharray="3 3"/>
+        <rect x="106" y="186" width="20" height="20" rx="4" fill="#f5f6fa" stroke="#d7dbe6" stroke-dasharray="3 3"/>
+        <rect x="130" y="186" width="20" height="20" rx="4" fill="#f5f6fa" stroke="#d7dbe6" stroke-dasharray="3 3"/>
+
+        <g>
+          <rect x="330" y="96" width="110" height="52" rx="7" fill="#fff" stroke="#e4e7ee"/>
+          <path d="M330 103 a7 7 0 0 1 7 -7 h96 a7 7 0 0 1 7 7 v9 h-110 z" fill="#0891b2"/>
+          <text x="338" y="108" font-size="8" fill="#fff">rank 1</text>
+          <rect x="396" y="97" width="26" height="11" rx="5.5" fill="#fff" fill-opacity=".22"/>
+          <text x="409" y="105.5" font-size="6.2" fill="#fff" text-anchor="middle">src</text>
+          <rect x="375" y="118" width="20" height="20" rx="4" fill="#0891b2"/>
+          <text x="385" y="132" font-size="9" fill="#fff" text-anchor="middle">B</text>
+        </g>
+        <g>
+          <rect x="330" y="170" width="110" height="52" rx="7" fill="#fff" stroke="#e4e7ee"/>
+          <path d="M330 177 a7 7 0 0 1 7 -7 h96 a7 7 0 0 1 7 7 v9 h-110 z" fill="#059669"/>
+          <text x="338" y="182" font-size="8" fill="#fff">rank 2</text>
+          <rect x="396" y="171" width="26" height="11" rx="5.5" fill="#fff" fill-opacity=".22"/>
+          <text x="409" y="179.5" font-size="6.2" fill="#fff" text-anchor="middle">src</text>
+          <rect x="375" y="192" width="20" height="20" rx="4" fill="#059669"/>
+          <text x="385" y="206" font-size="9" fill="#fff" text-anchor="middle">C</text>
+        </g>
+        <g>
+          <rect x="330" y="244" width="110" height="52" rx="7" fill="#fff" stroke="#e4e7ee"/>
+          <path d="M330 251 a7 7 0 0 1 7 -7 h96 a7 7 0 0 1 7 7 v9 h-110 z" fill="#d97706"/>
+          <text x="338" y="256" font-size="8" fill="#fff">rank 3</text>
+          <rect x="396" y="245" width="26" height="11" rx="5.5" fill="#fff" fill-opacity=".22"/>
+          <text x="409" y="253.5" font-size="6.2" fill="#fff" text-anchor="middle">src</text>
+          <rect x="375" y="266" width="20" height="20" rx="4" fill="#d97706"/>
+          <text x="385" y="280" font-size="9" fill="#fff" text-anchor="middle">D</text>
+        </g>
+
+        <path d="M328 122 Q 250 152 182 178" fill="none" stroke="#c3cadb" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <path d="M328 196 Q 250 196 182 198" fill="none" stroke="#c3cadb" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <path d="M328 270 Q 250 246 182 218" fill="none" stroke="#c3cadb" stroke-width="1.4" stroke-dasharray="5 4"/>
+
+        <rect x="44" y="304" width="386" height="34" rx="8" fill="#f7f8fb" stroke="#eef0f5"/>
+        <text x="58" y="325" font-size="9.4" fill="#4b5364">rank 1 发送 B 的第 1 段</text>
+        <rect x="230" y="318" width="150" height="4" rx="2" fill="#e6e8f0"/>
+        <rect x="230" y="318" width="52" height="4" rx="2" fill="#7c3aed"/>
+        <circle cx="282" cy="320" r="3.4" fill="#fff" stroke="#7c3aed" stroke-width="1.4"/>
+
+        <circle cx="454" cy="290" r="12" fill="#fff" stroke="#7c3aed" stroke-width="1.5" filter="url(#sh)"/>
+        <circle cx="454" cy="290" r="18" fill="none" stroke="#7c3aed" stroke-width="1.1" stroke-opacity=".28" stroke-dasharray="2 3"/>
+        <g stroke="#7c3aed" stroke-width="1.3" fill="none">
+          <circle cx="454" cy="290" r="3.8"/>
+          <path d="M454 281.6 v1.8 M454 296.6 v1.8 M445.6 290 h1.8 M460.6 290 h1.8 M447.6 283.6 l1.2 1.2 M459.2 295.2 l1.2 1.2 M459.6 284.4 l-1.2 1.2 M448.4 295.6 l-1.2 1.2"/>
+        </g>
+        <text x="454" y="322" font-size="8" fill="#7c3aed" text-anchor="middle">点此展开</text>
+
+        <line x1="494" y1="200" x2="538" y2="200" stroke="#9aa2b6" stroke-width="1.2" marker-end="url(#ar)"/>
+        <text x="516" y="192" font-size="9" fill="#9aa2b6" text-anchor="middle">展开</text>
+
+        <text x="556" y="26" font-size="11.5" fill="#7a8296">齿轮面板（宽 620px）</text>
+        <rect x="556" y="36" width="320" height="330" rx="10" fill="#fff" stroke="#e4e7ee" filter="url(#sh)"/>
+
+        <text x="572" y="58" font-size="11" font-weight="600" fill="#1c2130">时序 · 参数</text>
+        <path d="M846 53 l4 4 l4 -4" fill="none" stroke="#c3cadb" stroke-width="1.3"/>
+        <line x1="556" y1="68" x2="876" y2="68" stroke="#eef0f5"/>
+
+        <rect x="556" y="68" width="320" height="30" fill="#fbfbfe"/>
+        <rect x="570" y="73" width="52" height="21" rx="6" fill="#eef0f5"/>
+        <text x="596" y="87" font-size="9.2" fill="#7a8296" text-anchor="middle">时序</text>
+        <rect x="628" y="73" width="86" height="21" rx="6" fill="#fff" stroke="#ddd4fb"/>
+        <text x="671" y="87" font-size="9.2" fill="#7c3aed" text-anchor="middle">逐动作解说</text>
+        <line x1="628" y1="95" x2="714" y2="95" stroke="#7c3aed" stroke-width="2"/>
+        <line x1="556" y1="98" x2="876" y2="98" stroke="#eef0f5"/>
+
+        <g font-size="8.4">
+          <rect x="566" y="104" width="300" height="14" fill="#fafbfd"/>
+          <g fill="#8b93aa" font-size="8.2">
+            <text x="572" y="114">编号</text><text x="606" y="114">开始</text><text x="646" y="114">结束</text>
+            <text x="684" y="114">解说</text><text x="812" y="114">结果</text>
+          </g>
+
+          <rect x="566" y="118" width="300" height="14" fill="#f6f4ff"/>
+          <text x="572" y="128.5" fill="#5b3fbe" font-weight="700">第 3 步 · B 传递 · 4.15 秒</text>
+          <text x="752" y="128.5" fill="#7a72a0" font-size="8">1.20 → 5.35</text>
+
+          <g fill="#3f4658">
+            <text x="572" y="144" fill="#7c3aed" font-weight="600">3.1</text><text x="606" y="144">1.20</text><text x="646" y="144">1.50</text><text x="684" y="144">rank 1 单槽卡 · 变暗</text><text x="812" y="144" fill="#7a8296">60%</text>
+            <text x="572" y="158" fill="#7c3aed" font-weight="600">3.2</text><text x="606" y="158">1.20</text><text x="646" y="158">1.50</text><text x="684" y="158">弧线 1 · 点亮</text><text x="812" y="158" fill="#7a8296">青色虚线</text>
+            <text x="572" y="172" fill="#7c3aed" font-weight="600">3.3</text><text x="606" y="172">1.20</text><text x="646" y="172">1.50</text><text x="684" y="172">四槽卡-2 · 转接收位</text><text x="812" y="172" fill="#7a8296">紫底 ···</text>
+            <text x="572" y="186" fill="#7c3aed" font-weight="600">3.4</text><text x="606" y="186">1.20</text><text x="646" y="186">1.32</text><text x="684" y="186">单体包 B · 起飞</text><text x="812" y="186" fill="#7a8296">弧线1起点</text>
+          </g>
+
+          <rect x="566" y="192" width="300" height="15" fill="#fbf8ff"/>
+          <rect x="566" y="192" width="2.4" height="15" fill="#7c3aed"/>
+          <g font-weight="600">
+            <text x="572" y="203" fill="#7c3aed">3.5</text><text x="606" y="203" fill="#3f4658">1.32</text><text x="646" y="203" fill="#3f4658">2.70</text><text x="684" y="203" fill="#1c2130">单体包 B · 飞行</text>
+            <text x="812" y="203" fill="#7a8296" font-weight="400">沿弧线 1</text>
+          </g>
+
+          <g fill="#3f4658">
+            <text x="572" y="217" fill="#7c3aed" font-weight="600">3.6</text><text x="606" y="217">2.70</text><text x="646" y="217"></text><text x="684" y="217">单体包 B · 抵达</text><text x="812" y="217" fill="#7a8296">箭头尖</text>
+            <text x="572" y="231" fill="#7c3aed" font-weight="600">3.7</text><text x="606" y="231">2.70</text><text x="646" y="231">3.30</text><text x="684" y="231">单体包 B · 淡出</text><text x="812" y="231" fill="#7a8296">透明</text>
+            <text x="572" y="245" fill="#7c3aed" font-weight="600">3.8</text><text x="606" y="245">2.70</text><text x="646" y="245"></text><text x="684" y="245">弧线 1 · 余辉</text><text x="812" y="245" fill="#7a8296">40% 青色</text>
+          </g>
+        </g>
+        <text x="684" y="266" font-size="8.2" fill="#b9bfcd">⋯ 还有 30 行，内层滚动</text>
+
+        <line x1="556" y1="332" x2="876" y2="332" stroke="#eef0f5"/>
+        <rect x="700" y="342" width="166" height="18" rx="6" fill="#7c3aed"/>
+        <text x="783" y="355" font-size="8.8" fill="#fff" text-anchor="middle">跟随播放 · 自动高亮</text>
+
+        <text x="24" y="404" font-size="9.4" fill="#8b93aa">① 齿轮在舞台右下角　② 打开后两个标签页　③ 滚动只在内层列表，头部与标签条固定</text>
+      </svg>
+      <figcaption>图 1 · 齿轮面板位置与两个标签页。「时序」保持原样，「逐动作解说」是新增的；「配置原文」按你的意见取消。</figcaption>
+    </figure>
+
+    <p class="role" style="margin-top:16px">这一版的新东西：<b>同刻的四行共用一个「开始」格</b>，格子里标「同刻 ×4」，四行的行底也连成一块浅紫——扫一眼就知道这四件事是同一瞬间发生的。</p>
+
+    <figure class="fig">
+      <svg viewBox="0 0 900 330" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif">
+        <defs>
+          <filter id="sh2" x="-20%" y="-20%" width="150%" height="160%">
+            <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#1c2130" flood-opacity=".09"/>
+          </filter>
+        </defs>
+        <rect x="0" y="0" width="900" height="330" fill="#fbfbfd"/>
+        <rect x="30" y="24" width="640" height="286" rx="10" fill="#fff" stroke="#e4e7ee" filter="url(#sh2)"/>
+
+        <rect x="42" y="38" width="616" height="22" rx="6" fill="#fafbfd"/>
+        <g font-size="10" fill="#8b93aa" font-weight="600">
+          <text x="52" y="53">编号</text><text x="104" y="53">开始</text><text x="182" y="53">结束</text>
+          <text x="244" y="53">解说</text><text x="520" y="53">结果</text>
+        </g>
+        <text x="556" y="53" font-size="9" fill="#b9bfcd">← 只写对象</text>
+
+        <rect x="42" y="66" width="616" height="20" fill="#f6f4ff"/>
+        <text x="52" y="80" font-size="10.5" fill="#5b3fbe" font-weight="700">第 3 步 · B 传递 · 4.15 秒</text>
+        <text x="286" y="80" font-size="9.6" fill="#7a72a0">1.20 → 5.35</text>
+
+        <!-- 同刻块：4 行共用一个开始格 -->
+        <rect x="96" y="88" width="60" height="80" fill="#f7f4ff" stroke="#e3dbfb"/>
+        <text x="126" y="122" font-size="10.6" font-weight="700" fill="#5b3fbe" text-anchor="middle">1.20</text>
+        <rect x="104" y="130" width="44" height="14" rx="4" fill="#efe8ff"/>
+        <text x="126" y="140" font-size="8.4" font-weight="700" fill="#7c3aed" text-anchor="middle">同刻 ×4</text>
+
+        <g font-size="10.2">
+          <text x="52" y="104" fill="#7c3aed" font-weight="600">3.1</text><text x="182" y="104" fill="#3f4658">1.50</text><text x="244" y="104" fill="#1c2130">rank 1 单槽卡 · 变暗</text><text x="520" y="104" fill="#7a8296">60%</text>
+          <text x="52" y="124" fill="#7c3aed" font-weight="600">3.2</text><text x="182" y="124" fill="#3f4658">1.50</text><text x="244" y="124" fill="#1c2130">弧线 1 · 点亮</text><text x="520" y="124" fill="#7a8296">青色虚线</text>
+          <text x="52" y="144" fill="#7c3aed" font-weight="600">3.3</text><text x="182" y="144" fill="#3f4658">1.50</text><text x="244" y="144" fill="#1c2130">四槽卡-2 · 转接收位</text><text x="520" y="144" fill="#7a8296">紫底 ···</text>
+          <text x="52" y="164" fill="#7c3aed" font-weight="600">3.4</text><text x="182" y="164" fill="#3f4658">1.32</text><text x="244" y="164" fill="#1c2130">单体包 B · 起飞</text><text x="520" y="164" fill="#7a8296">弧线 1 起点</text>
+        </g>
+
+        <rect x="42" y="172" width="616" height="20" fill="#fbf8ff"/>
+        <rect x="42" y="172" width="3" height="20" fill="#7c3aed"/>
+        <g font-size="10.2" font-weight="600">
+          <text x="52" y="186" fill="#7c3aed">3.5</text><text x="104" y="186" fill="#3f4658">1.32</text><text x="182" y="186" fill="#3f4658">2.70</text><text x="244" y="186" fill="#1c2130">单体包 B · 飞行</text>
+          <text x="520" y="186" fill="#7a8296" font-weight="400">沿弧线 1</text>
+        </g>
+        <text x="700" y="186" font-size="9.2" fill="#7c3aed">← 正在播这一行</text>
+
+        <g font-size="10.2">
+          <text x="52" y="205" fill="#7c3aed" font-weight="600">3.6</text><text x="104" y="205" fill="#3f4658">2.70</text><text x="182" y="205"></text><text x="244" y="205" fill="#1c2130">单体包 B · 抵达</text><text x="520" y="205" fill="#7a8296">箭头尖</text>
+          <text x="52" y="224" fill="#7c3aed" font-weight="600">3.7</text><text x="104" y="224" fill="#3f4658">2.70</text><text x="182" y="224" fill="#3f4658">3.30</text><text x="244" y="224" fill="#1c2130">单体包 B · 淡出</text><text x="520" y="224" fill="#7a8296">透明</text>
+        </g>
+        <text x="700" y="205" font-size="9.2" fill="#a6adc0">← 结束空着 = 瞬时</text>
+
+        <line x1="42" y1="238" x2="658" y2="238" stroke="#e8ebf2" stroke-dasharray="2 4"/>
+        <text x="52" y="250" font-size="8.6" fill="#c3c8d4">⋯ 3.8 / 3.9 略</text>
+
+        <rect x="42" y="256" width="616" height="20" fill="#fbf8ff"/>
+        <rect x="42" y="256" width="3" height="20" fill="#7c3aed"/>
+        <text x="52" y="270" font-size="10.2" fill="#7c3aed" font-weight="600">3.10</text>
+        <text x="104" y="270" font-size="10.2" fill="#3f4658">3.30</text>
+        <text x="182" y="270" font-size="10.2" fill="#3f4658">3.80</text>
+        <text x="244" y="270" font-size="10.2" fill="#7a8296" font-weight="600">画面 · 静止</text>
+        <text x="520" y="270" font-size="10.2" fill="#7a8296">四槽卡-2 保持接收位</text>
+        <text x="700" y="270" font-size="9.2" fill="#7c3aed">← 静止也高亮</text>
+
+        <text x="700" y="40" font-size="9.4" fill="#8b93aa">同刻的判定：</text>
+        <text x="700" y="56" font-size="9.4" fill="#8b93aa">开始时间完全相同的</text>
+        <text x="700" y="72" font-size="9.4" fill="#8b93aa">连续几行 → 合并开始格</text>
+        <text x="700" y="96" font-size="9.4" fill="#8b93aa">高亮时这几行一起亮</text>
+        <text x="700" y="120" font-size="9.4" fill="#8b93aa">列宽：编号 54 / 开始 76</text>
+        <text x="700" y="136" font-size="9.4" fill="#8b93aa">结束 62 / 解说自适应</text>
+        <text x="700" y="152" font-size="9.4" fill="#8b93aa">结果 212</text>
+      </svg>
+      <figcaption>图 2 · 列表排版。同刻的四行共用「1.20 同刻 ×4」这一格；瞬时动作的结束列留空；结果列只放对象。</figcaption>
+    </figure>
+  </section>
+
+  <!-- ============================ 02 ============================ -->
+  <section id="s2">
+    <div class="sechead"><span class="no">02</span><h2>名词表</h2><span class="meta">正文只出现这些词 · 定义与时长都在这里</span></div>
+    <p class="role">三条规则：颜色、尺寸、坐标不进正文也不进这张表；动作的定义、视觉后果、时长只写在这里，步骤里不再解释；表外的动作词不许出现。</p>
+
+    <div class="card">
+      <h3>2.1 卡名怎么写</h3>
+      <p class="role" style="margin:0 0 8px">格式 <span class="k">卡形态[-槽号]</span>；同一版面里有好几张同形态的卡时，前面加 <span class="k">r&lt;rank&gt;/</span>。</p>
+      <table class="lex">
+        <tbody>
+          <tr><td class="nm">四槽卡-2</td><td>四槽卡的第 2 个槽。版面里只有一张四槽卡时这样写就够。</td><td>gather 的 rank 0</td><td class="mono">—</td></tr>
+          <tr><td class="nm">r1/四槽卡-3</td><td>2×2 版面（四张都是四槽卡）里，rank 1 那张的第 3 个槽。</td><td>reduce 家族四页</td><td class="mono">—</td></tr>
+          <tr><td class="nm">r2/单槽卡</td><td>单槽卡只有 1 个槽，不写槽号，用 rank 区分。</td><td>gather / scatter / broadcast 的右侧三张</td><td class="mono">—</td></tr>
+          <tr><td class="nm">四槽卡</td><td>整张卡作为主体时（不指某个槽），只写形态名。</td><td>如「四槽卡 · 长高」</td><td class="mono">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>2.2 物件 · 卡片</h3>
+      <table class="lex">
+        <thead><tr><th>名词</th><th>定义</th><th>易混点</th><th>时长</th></tr></thead>
+        <tbody>
+          <tr><td class="nm">单槽卡</td><td>卡内 1 个槽，居中，持一段数据。</td><td>gather / scatter / broadcast 的两侧卡</td><td class="mono">—</td></tr>
+          <tr><td class="nm">四槽卡</td><td>卡内一排 4 个槽，居中；可能只装了 1 块。</td><td>能装 4 块不代表装满了</td><td class="mono">—</td></tr>
+          <tr><td class="nm">双排卡</td><td>上排 4 槽 + 下排 4 槽，卡高多一层。</td><td>预留之后到收场之前一直是它</td><td class="mono">—</td></tr>
+          <tr><td class="nm">计算态卡</td><td>双排卡中间再插一层计算框。</td><td>算完即退回双排卡</td><td class="mono">—</td></tr>
+          <tr><td class="nm">卡体</td><td>卡片本体。<b>卡宽永远一样</b>，槽多不会变宽。</td><td>只有高度会变</td><td class="mono">—</td></tr>
+          <tr><td class="nm">标题条 / 角标</td><td>顶部色带写 <span class="k">rank N</span>；右端小胶囊写 <span class="k">src</span> / <span class="k">dst</span> / <span class="k">1/4</span> / <span class="k">4 段</span>。</td><td>前两个是角色，后两个是进度</td><td class="mono">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>2.3 物件 · 槽与块</h3>
+      <table class="lex">
+        <thead><tr><th>名词</th><th>定义</th><th>易混点</th><th>时长</th></tr></thead>
+        <tbody>
+          <tr><td class="nm">槽</td><td>卡内一个方形位置。<b>槽是位置，块是数据</b>。</td><td>槽可以空着</td><td class="mono">—</td></tr>
+          <tr><td class="nm">空格</td><td>浅灰底 + 灰虚线框，无字。</td><td>看得见但没数据</td><td class="mono">—</td></tr>
+          <tr><td class="nm">接收位</td><td>紫底 + 紫实线框 + 居中 <span class="k">···</span>。</td><td>只出现在接收方</td><td class="mono">—</td></tr>
+          <tr><td class="nm">数据块</td><td>实色底 + 白字母。</td><td>A 紫 / B 青 / C 绿 / D 橙</td><td class="mono">—</td></tr>
+          <tr><td class="nm">分片块</td><td>数据块带右下角小下标，表示第几片。</td><td>all-to-all 用</td><td class="mono">—</td></tr>
+          <tr><td class="nm">Σ 块</td><td>折进 2 份以上数据的累加块：<span class="k">Σ</span> + 下标列字母 + 上标份数。</td><td>份数每次相加 +1（all-reduce 是翻倍）</td><td class="mono">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>2.4 物件 · 连线与运动体</h3>
+      <table class="lex">
+        <thead><tr><th>名词</th><th>定义</th><th>易混点</th><th>时长</th></tr></thead>
+        <tbody>
+          <tr><td class="nm">弧线</td><td>两卡之间的虚线弧，末端一枚小三角箭头。</td><td>未点亮时是灰的</td><td class="mono">—</td></tr>
+          <tr><td class="nm">直连</td><td>两卡之间的双向连线，没有箭头。</td><td>all-to-all 用；同一条线四步都会被点亮</td><td class="mono">—</td></tr>
+          <tr><td class="nm">单体包</td><td>一个包，内装 1 块数据。</td><td>gather / scatter / all-gather / reduce-scatter / all-to-all</td><td class="mono">—</td></tr>
+          <tr><td class="nm">整份包</td><td>一个包，内并排 4 块，表示一整份。</td><td>broadcast / reduce / all-reduce</td><td class="mono">—</td></tr>
+          <tr><td class="nm">残影</td><td>包身后两层逐渐缩小的副本，越远越淡。</td><td>永远在来路上</td><td class="mono">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>2.5 动作（正文的谓语只用这些）<span class="todo" style="margin-left:8px">核心表</span></h3>
+      <table class="lex">
+        <thead><tr><th>名词</th><th>定义 &amp; 视觉后果</th><th>反直觉点</th><th>时长</th></tr></thead>
+        <tbody>
+          <tr class="act"><td class="nm">变暗</td><td>卡整体不透明度 → 60%，表示它正在交出数据。</td><td>只有 gather 有；其余页用「交空」表示消耗</td><td class="mono">0.30s</td></tr>
+          <tr class="act"><td class="nm">复原</td><td>卡不透明度 → 100%。</td><td>在<b>包抵达</b>那一刻开始，不是落位时</td><td class="mono">0.30s</td></tr>
+          <tr class="act"><td class="nm">交空</td><td>送出方那一格立刻变空（1 格或 4 格同时）。</td><td>是「消耗」，不是搬走后又长回来</td><td class="mono">瞬时</td></tr>
+          <tr class="act"><td class="nm">显形</td><td>从不可见淡入为空格或接收位。</td><td>显形的是「位置」，不是数据</td><td class="mono">0.32s</td></tr>
+          <tr class="act"><td class="nm">转接收位</td><td>空格 → 紫底 <span class="k">···</span>。</td><td>从起飞那一刻就开始，不必等到达</td><td class="mono">0.30s</td></tr>
+          <tr class="act"><td class="nm">点亮</td><td>线由灰变数据色、加粗、箭头换色；飞行期间虚线随包前进。</td><td>颜色是渐变过去的</td><td class="mono">0.30s</td></tr>
+          <tr class="act"><td class="nm">起飞</td><td>包在起点出现并渐显。</td><td>渐显只占行程前 8%</td><td class="mono">0.12s</td></tr>
+          <tr class="act"><td class="nm">飞行</td><td>包沿路径前进，起终点缓入缓出，两层残影跟随。</td><td>不是匀速</td><td class="mono">1.50s</td></tr>
+          <tr class="act"><td class="nm">抵达</td><td>包停在箭头尖 / 终点，位置不再变化。</td><td>瞬时</td><td class="mono">瞬时</td></tr>
+          <tr class="act"><td class="nm">淡出</td><td>包不透明度线性 → 0。</td><td>包是被目标「吃进去」</td><td class="mono">0.60s</td></tr>
+          <tr class="act"><td class="nm">余辉</td><td>线降到 40%（家族页 45%）保留数据色。</td><td><b>不是变灰</b></td><td class="mono">瞬时</td></tr>
+          <tr class="act"><td class="nm">落位</td><td>接收位消失，该槽当场变成数据块。</td><td><b>不是渐变换色</b></td><td class="mono">瞬时</td></tr>
+          <tr class="act"><td class="nm">弹跳</td><td>该槽从 35% 放大到 116% 再落回 100%。</td><td>多块时按 0.50 错峰</td><td class="mono">0.55s</td></tr>
+          <tr class="act"><td class="nm">长高</td><td>卡高增加一层，腾出第二排。</td><td>开场只做一次，收场才收回</td><td class="mono">0.80s</td></tr>
+          <tr class="act"><td class="nm">逐块出现</td><td>第二排的接收位从左到右一块块淡入。</td><td>是「位置」逐个出现</td><td class="mono">0.40s/块，隔 0.15</td></tr>
+          <tr class="act"><td class="nm">逐块撤</td><td>第二排的接收位从右往左一块块撤掉。</td><td>先撤块，再收卡，不能同时</td><td class="mono">0.40s/块，隔 0.15</td></tr>
+          <tr class="act"><td class="nm">计算框·浮现</td><td>卡片中间那层写 <span class="k">sum · avg · max · min</span> 的方框淡入。</td><td>先长空间，后填内容</td><td class="mono">0.40s</td></tr>
+          <tr class="act"><td class="nm">计算框·淡出</td><td>方框淡出，卡片随后缩回。</td><td>方框一定早于卡片退场</td><td class="mono">0.32s</td></tr>
+          <tr class="act"><td class="nm">折进</td><td>下排的块被吸进上排累加器，上排块变 Σ、份数 +1（all-reduce 翻倍）。</td><td>不是复制过去；段与段错峰 0.50</td><td class="mono">0.42s/段</td></tr>
+          <tr class="act"><td class="nm">收层</td><td>计算态卡退回双排卡。</td><td>只剩卡片在缩，数据钉在原地</td><td class="mono">0.70s</td></tr>
+          <tr class="act"><td class="nm">收窄</td><td>reduce-scatter 第二轮前，把这一轮用不上的一格撤掉。</td><td>单独一拍，不跟飞行同时发生</td><td class="mono">0.40s</td></tr>
+          <tr class="act"><td class="nm">静止</td><td>整段画面无运动对象。</td><td>单独成一节，也参与高亮</td><td class="mono">按步</td></tr>
+        </tbody>
+      </table>
+      <div class="note blue">
+        <b>时长都是「当前默认值」。</b>它们来自全局规范（飞行 1.5 / 淡出 0.6 / 弹跳 0.55 / 折进 0.42 / 长高 0.75…），齿轮面板一改就整体变。
+        所以真正的数字必须<b>从时间轴实时算</b>，这份文档里的秒数只是当前默认。
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 03 ============================ -->
+  <section id="s3">
+    <div class="sechead"><span class="no">03</span><h2>八页总览</h2><span class="meta">时长与节数</span></div>
+    <p class="role">下表秒数是<b>默认参数下实测</b>的整页时长（改齿轮倍数或播放速度会整体缩放）。</p>
+    <table id="overview">
+      <thead><tr><th>页面</th><th>方向</th><th>版面</th><th>时长</th><th>步骤 / 节数</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <div id="pages"></div>
+
+  <!-- ============================ 12 ============================ -->
+  <section id="s12">
+    <div class="sechead"><span class="no">12</span><h2>时间与高亮怎么保证对得上</h2><span class="meta">你说的「时间得共用」</span></div>
+    <div class="card">
+      <h3>12.1 时间只算一次</h3>
+      <ul class="tight">
+        <li>编译时产出每一步的起止与内部段边界；解说行只是在这条轴上<b>按段切分</b>，不手写秒数。</li>
+        <li>齿轮改倍数、或改播放速度后，时间轴整条重算 → 解说区间<b>跟着重算</b>；文案不动，只刷新区间。</li>
+        <li>断言：解说最后一行的结束 == 动画总时长；每行结束 ≥ 开始。不等就是偏移对错了，开发期直接报错。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>12.2 高亮规则</h3>
+      <ul class="tight">
+        <li>当前时刻落在 <span class="k">[开始, 结束)</span> 内 → 该行高亮；<b>同刻的几行一起亮</b>，正是「同刻」标记的意义。</li>
+        <li>结束为空的行（瞬时动作）：从开始时刻起<b>保持高亮 0.15 秒</b>，否则一闪就看不见。</li>
+        <li>静止行照常高亮 —— 播到静止段，画面无动作、列表也无动作，自洽。</li>
+        <li>只在「命中行集合」变化时改 class，不逐帧写 DOM；自动滚动仅在目标行不在视口时触发，用户手动滚动后暂停跟随 2 秒。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>12.3 名词标准化怎么不跑偏</h3>
+      <ul class="tight">
+        <li>词表（第 02 章）落成独立文件，<b>解说生成器和面板样式共用同一份</b>，不许各页自己写说法。</li>
+        <li>生成器只接受词表里的动作词；遇到表外动作<b>直接报错</b> —— 想加动作必须先补词表。</li>
+        <li>页面只提供「谁 / 什么 / 去哪」，句子由生成器按固定句式拼：<span class="k">主体 · 动作</span> + 结果列只放对象。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================ 13 ============================ -->
+  <section id="s13">
+    <div class="sechead"><span class="no">13</span><h2>等你拍板 / 我发现的问题</h2><span class="meta">看完再动手</span></div>
+    <div class="card">
+      <ul class="tight">
+        <li><b>① 同刻合并的方式</b>：现在是把连续几行共用一个「开始」格，格内标「同刻 ×N」。另一种是每行照写时间、只在左侧画一条竖线框住。你挑一个。</li>
+        <li><b>② 静止行</b>：按你说的只写「此刻场上有什么」。要不要再短一点，只写非空的那几格？</li>
+        <li><b>③ 家族页粒度</b>：「四段依次折进」合成了一行（错峰 0.50 写在结果里），没拆成 4 行。要拆的话 reduce 会多 12 行、all-reduce 多 8 行。</li>
+        <li><b>④ 一个可能需要修的观察</b>：all-reduce 第 1 轮合并后上排是 <span class="k">ΣA²</span>，但第 2 轮飞行期间会退回普通字母 <span class="k">A</span>（只剩色调变浓），到第 2 轮合并才又变回 <span class="k">ΣA⁴</span>。按文案「这一轮已经是 2 份的中间结果」，中间掉 Σ 标记看着像 bug。</li>
+        <li><b>⑤ reduce 的终态不一致</b>：动画里三张源卡交出整份后保持空白，但 <span class="k">registry.post</span> 记的是「原样变暗」。落地时以哪个为准？</li>
+        <li><b>⑥ 收尾的「读结果」提示</b>：现在终点只是静止 2 秒，没有强调。要不要补一个轻微的高亮提示？</li>
+      </ul>
+    </div>
+    <p class="role" style="margin-top:14px">本轮只写文档，<b>没有改任何代码</b>。第 04–11 章的表格由文末数据表生成，改一行数据就能改文案。</p>
+  </section>
+
+</div>
+
+<script>
+/* ============================================================
+   解说数据
+   一行 = [开始, 结束, 主体·动作, 结果]，编号自动生成
+   同刻自动合并：同一组内「开始」相同的连续行共用一个开始格
+   ============================================================ */
+
+function fmt(v) { return (Math.round(v * 100) / 100).toFixed(2); }
+
+var MOVE = 4.15;
+
+/* choreo 页的三步传递，按参数生成，保证三页说法一致 */
+function transfer(o) {
+  var r = [], s = o.s;
+  if (o.dim) r.push([s, s + 0.30, o.src + ' · 变暗', '60% 不透明']);
+  if (o.hole) r.push([s, '', o.src + (o.hole4 ? ' · 交空（4 格）' : ' · 交空'), '空格']);
+  r.push([s, s + 0.30, o.wire + ' · 点亮', o.color + '虚线']);
+  r.push([s, s + 0.30, o.slot + (o.copy4 ? ' · 4 格转接收位' : ' · 转接收位'), '紫底 ···']);
+  r.push([s, s + 0.12, o.pkt + ' · 起飞', o.wire + ' 起点']);
+  r.push([s + 0.12, s + 1.50, o.pkt + ' · 飞行', '沿' + o.wire]);
+  r.push([s + 1.50, '', o.pkt + ' · 抵达', '箭头尖']);
+  r.push([s + 1.50, s + 2.10, o.pkt + ' · 淡出', '透明']);
+  r.push([s + 1.50, '', o.wire + ' · 余辉', '40% ' + o.color]);
+  if (o.dim) r.push([s + 1.50, s + 1.80, o.src + ' · 复原', '100%']);
+  r.push([s + 2.10, s + 2.60, '画面 · 静止', o.slot + ' 保持接收位']);
+  r.push([s + 2.60, '', o.slot + (o.copy4 ? ' · 4 格落位' : ' · 落位'),
+          o.copy4 ? '数据块 A B C D' : '数据块 ' + o.letter]);
+  r.push([s + 2.60, s + 3.15, o.slot + ' · 弹跳', o.copy4 ? '4 格同时落定' : '落定']);
+  r.push([s + 3.15, s + 4.15, '画面 · 静止', o.after]);
+  return r;
+}
+
+/* all-gather：一轮 */
+function allgatherRound(s, o) {
+  return [
+    [s, '', '待收槽 · 转接收位', '紫底 ···（每卡 1 格）'],
+    [s, s + 0.30, '4 条环边 · 点亮', '各自的数据色'],
+    [s, s + 0.12, '单体包 · 起飞（4 个）', '各自环边起点'],
+    [s + 0.12, s + 1.50, '单体包 · 飞行', '沿环边'],
+    [s + 1.50, '', '单体包 · 抵达', '箭头尖'],
+    [s + 1.50, s + 2.10, '单体包 · 淡出', '透明'],
+    [s + 1.50, '', '4 条环边 · 余辉', '40% 数据色'],
+    [s + 2.60, '', '四张卡 · 落位', o.recv],
+    [s + 2.60, s + 3.15, '四张卡 · 弹跳', '各 1 格落定'],
+    [s + 3.15, s + 4.15, '画面 · 静止', o.state]
+  ];
+}
+
+/* reduce */
+function reduceSteps() {
+  var st = [], CYC = 5.67;
+  st.push({ t: '第 1 步 · 说明 · 0.60 秒', span: '0.00 → 0.60', rows: [
+    [0.00, 0.60, '画面 · 静止', '四张四槽卡各 4 格：都是 A B C D（四份形状相同的数据）']
+  ]});
+  st.push({ t: '第 2 步 · 预留缓冲 · 3.15 秒', span: '0.60 → 3.75', rows: [
+    [0.60, 1.40, '四张四槽卡 · 长高', '一排变两排（卡高多一层）'],
+    [1.70, 2.10, '第二排-1 · 显形', '接收位（紫底 ···）'],
+    [2.25, 2.65, '第二排-2 · 显形', '接收位'],
+    [2.80, 3.20, '第二排-3 · 显形', '接收位'],
+    [3.35, 3.75, '第二排-4 · 显形', '接收位']
+  ]});
+  ['r1', 'r2', 'r3'].forEach(function (who, k) {
+    var s = 3.75 + CYC * k, src = 'r' + (k + 1) + '/四槽卡', w = '弧线 ' + (k + 1), sup = String(k + 2);
+    st.push({ t: '第 ' + (k + 3) + ' 步 · ' + who + ' 的整份 · 5.67 秒',
+      span: fmt(s) + ' → ' + fmt(s + CYC), rows: [
+      [s, '', src + ' · 交空（4 格）', '空格'],
+      [s, s + 0.30, w + ' · 点亮', '数据色'],
+      [s, s + 0.14, '整份包 · 起飞', w + ' 起点'],
+      [s + 0.14, s + 1.70, '整份包 · 飞行', '沿' + w],
+      [s + 1.70, '', '整份包 · 抵达', '箭头尖'],
+      [s + 1.70, s + 2.30, '第二排 · 落位', '4 块同时弹出'],
+      [s + 1.70, s + 2.30, '整份包 · 淡出', '透明'],
+      [s + 1.70, '', w + ' · 余辉', '45% 数据色'],
+      [s + 2.30, s + 3.05, '双排卡 · 长高', '腾出计算层'],
+      [s + 2.56, s + 2.94, '计算框 · 浮现', 'sum · avg · max · min'],
+      [s + 3.05, s + 4.97, '四段 · 逐段折进（错峰 0.50）',
+        'ΣA' + sup + ' ΣB' + sup + ' ΣC' + sup + ' ΣD' + sup],
+      [s + 4.97, s + 5.29, '计算框 · 淡出', '透明'],
+      [s + 5.29, s + 5.67, '计算态卡 · 收层', '退回双排卡']
+    ]});
+  });
+  st.push({ t: '第 6 步 · 收场 · 3.60 秒', span: '20.76 → 24.36', rows: [
+    [20.76, 22.81, '第二排 · 逐块撤（从右往左）', '4 个接收位撤掉'],
+    [23.06, 23.86, '四张卡 · 收回', '单排卡'],
+    [23.86, 24.36, '画面 · 静止', '四槽卡四格 ΣA⁴ ΣB⁴ ΣC⁴ ΣD⁴；三张源卡空着']
+  ]});
+  return st;
+}
+
+/* all-reduce */
+function exchangeRound(s) {
+  return [
+    [s, s + 0.30, '两条直连 · 点亮（两对同时）', '数据色'],
+    [s, s + 0.14, '整份包 · 起飞（4 个）', '各连线起点'],
+    [s + 0.14, s + 1.10, '整份包 · 飞行', '沿直连'],
+    [s + 1.10, '', '整份包 · 抵达', '对方卡边缘'],
+    [s + 1.10, s + 1.70, '整份包 · 淡出', '透明'],
+    [s + 1.10, '', '两条直连 · 余辉', '40% 数据色'],
+    [s + 1.20, s + 2.11, '第二排 · 落位（4 块错峰 0.12）', '每卡各收 4 块'],
+    [s + 2.11, s + 2.86, '双排卡 · 长高', '腾出计算层'],
+    [s + 2.86, s + 3.21, '计算框 · 浮现', 'sum · avg · max · min'],
+    [s + 3.21, s + 5.13, '四段 · 逐段折进（错峰 0.50）', '四段各 2 份 → Σ²'],
+    [s + 5.13, s + 6.18, '计算框 · 淡出 → 收层', '退回双排卡']
+  ];
+}
+function allreduceSteps() {
+  var st = [];
+  st.push({ t: '第 1 步 · 说明 · 0.90 秒', span: '0.00 → 0.90', rows: [
+    [0.00, 0.90, '画面 · 静止', '四张四槽卡各 4 格 A B C D；6 条直连灰色']
+  ]});
+  st.push({ t: '第 2 步 · 预留两排 · 3.40 秒', span: '0.90 → 4.30', rows: [
+    [0.90, 1.70, '四张四槽卡 · 长高（同时）', '一排变两排'],
+    [2.00, 2.40, '第二排-1 · 显形', '接收位'],
+    [2.55, 2.95, '第二排-2 · 显形', '接收位'],
+    [3.10, 3.50, '第二排-3 · 显形', '接收位'],
+    [3.65, 4.05, '第二排-4 · 显形', '接收位'],
+    [4.05, 4.30, '画面 · 静止', '四张双排卡，上排各 4 块']
+  ]});
+  st.push({ t: '第 3 步 · 第 1 轮（横向互换）· 6.18 秒', span: '4.30 → 10.48', rows: exchangeRound(4.30) });
+  st.push({ t: '第 4 步 · 轮间停顿 · 0.55 秒', span: '10.48 → 11.03', rows: [
+    [10.48, 11.03, '画面 · 静止', '四张双排卡上排各 4 块 Σ²（色调更浓）']
+  ]});
+  st.push({ t: '第 5 步 · 第 2 轮（纵向互换）· 6.18 秒', span: '11.03 → 17.21', rows: exchangeRound2(11.03) });
+  st.push({ t: '第 6 步 · 终点展示 · 0.35 秒', span: '17.21 → 17.56', rows: [
+    [17.21, 17.56, '画面 · 静止', '四张卡上排都是 ΣA⁴ ΣB⁴ ΣC⁴ ΣD⁴']
+  ]});
+  st.push({ t: '第 7 步 · 收场 · 3.70 秒', span: '17.56 → 21.26', rows: [
+    [17.56, 19.61, '第二排 · 逐块撤（从右往左）', '4 个接收位撤掉'],
+    [19.86, 20.66, '四张卡 · 收回', '单排卡'],
+    [20.66, 21.26, '画面 · 静止', '四张卡各 4 格 Σ⁴']
+  ]});
+  return st;
+}
+function exchangeRound2(s) {
+  var r = exchangeRound(s);
+  r[9][3] = '四段各 4 份 → Σ⁴';
+  return r;
+}
+
+/* reduce-scatter */
+function rsSteps() {
+  var st = [];
+  st.push({ t: '第 1 步 · 说明 · 1.10 秒', span: '0.00 → 1.10', rows: [
+    [0.00, 1.10, '画面 · 静止', '四张四槽卡各 4 格 A B C D；8 条直连灰色']
+  ]});
+  st.push({ t: '第 2 步 · 预留两排 · 3.15 秒', span: '1.10 → 4.25', rows: [
+    [1.10, 1.90, '四张四槽卡 · 长高（同时）', '一排变两排'],
+    [2.20, 2.60, '第二排-1 · 显形', '接收位'],
+    [2.75, 3.15, '第二排-2 · 显形', '接收位'],
+    [3.30, 3.70, '第二排-3 · 显形', '接收位'],
+    [3.85, 4.25, '第二排-4 · 显形', '接收位']
+  ]});
+  st.push({ t: '第 3 步 · 第 1 轮（同列互换）· 5.85 秒', span: '4.25 → 10.10', rows: [
+    [4.25, '', '四张卡 · 交空（各 2 格）', 'r0/r1 交 C D，r2/r3 交 A B'],
+    [4.25, 4.55, '四条直连 · 点亮', '数据色'],
+    [4.25, 4.39, '单体包 · 起飞（8 个）', '各直连起点'],
+    [4.39, 5.95, '单体包 · 飞行', '沿直连'],
+    [5.95, '', '单体包 · 抵达', '对端卡边缘'],
+    [5.95, 6.55, '单体包 · 淡出', '透明'],
+    [5.95, '', '四条直连 · 余辉', '42% 数据色'],
+    [5.95, 7.00, '第二排 · 落位（2 段错峰 0.50）', '每卡收 2 块'],
+    [7.00, 8.10, '双排卡 · 长高', '腾出计算层'],
+    [7.35, 7.73, '计算框 · 浮现', 'sum · avg · max · min'],
+    [8.10, 9.05, '两段 · 逐段折进（错峰 0.50）', '这两段各合 2 份 → Σ²'],
+    [9.05, 10.10, '计算框 · 淡出 → 收层', '退回双排卡（第二排留着）']
+  ]});
+  st.push({ t: '第 4 步 · 撤掉多余空位 · 0.40 秒', span: '10.10 → 10.50', rows: [
+    [10.10, 10.50, '第二排-2 · 撤（从右往左）', '这一轮用不上，撤掉']
+  ]});
+  st.push({ t: '第 5 步 · 第 2 轮（同行互换）· 4.30 秒', span: '10.50 → 14.80', rows: [
+    [10.50, '', '四张卡 · 交空（各 1 格）', '交出最后一段'],
+    [10.50, 10.80, '四条直连 · 点亮', '数据色'],
+    [10.50, 10.64, '单体包 · 起飞（4 个）', '各直连起点'],
+    [10.64, 12.20, '单体包 · 飞行', '沿直连'],
+    [12.20, '', '单体包 · 抵达', '对端卡边缘'],
+    [12.20, 12.80, '单体包 · 淡出', '透明'],
+    [12.20, '', '四条直连 · 余辉', '42% 数据色'],
+    [12.20, 12.75, '第二排 · 落位（1 段）', '每卡只收 1 块'],
+    [12.75, 13.85, '双排卡 · 长高', '腾出计算层'],
+    [13.00, 13.38, '计算框 · 浮现', 'sum · avg · max · min'],
+    [13.85, 14.80, '这一段 · 折进', '凑满 4 份 → Σ⁴']
+  ]});
+  st.push({ t: '第 6 步 · 收场 · 6.35 秒', span: '14.80 → 21.15', rows: [
+    [14.80, 15.85, '计算框 · 淡出 → 收层', '退回双排卡'],
+    [15.85, 17.90, '第二排 · 逐块撤（从右往左）', '接收位撤光'],
+    [18.15, 18.95, '四张卡 · 收回', '单排卡'],
+    [18.95, 21.15, '画面 · 静止', 'r0 只剩 ΣA⁴、r1 只剩 ΣB⁴、r2 只剩 ΣC⁴、r3 只剩 ΣD⁴']
+  ]});
+  return st;
+}
+
+/* all-to-all */
+function atoaSteps() {
+  var st = [], S0 = 0.90, STEP = 3.40;
+  st.push({ t: '第 1 步 · 说明 · 0.90 秒', span: '0.00 → 0.90', rows: [
+    [0.00, 0.90, '画面 · 静止', '四张卡上排 A0–A3（各带下标）、下排 4 个空格；6 条直连灰色']
+  ]});
+  for (var q = 0; q < 4; q++) {
+    var s = S0 + STEP * q, arr = s + 0.95, done = arr + 2.05;
+    var rows = [
+      [s, '', '四张卡 · 交空（上排-' + (q + 1) + '）', '空格（4 张同时）'],
+      [s, '', '下排 · 转接收位', '紫底 ···'],
+      [s, s + 0.30, '三条直连 · 点亮', '数据色'],
+      [s, s + 0.14, '单体包 · 起飞（3 个）', '各直连起点'],
+      [s + 0.14, arr, '单体包 · 飞行', '沿直连'],
+      [arr, '', '单体包 · 抵达', 'rank ' + q + ' 卡边缘'],
+      [arr, arr + 0.60, '单体包 · 淡出', '透明'],
+      [arr, '', '三条直连 · 余辉', '30% 数据色'],
+      [arr, done, '下排 · 落位（4 块错峰 0.50）', 'A' + q + ' B' + q + ' C' + q + ' D' + q],
+      [arr + 1.50, done, '下排-4 · 弹跳', '最后一块落定']
+    ];
+    if (q < 3) rows.push([done, s + STEP, '画面 · 静止', '四张卡上排少 1 片，下排有 ' + (q + 1) + ' 块']);
+    st.push({ t: '第 ' + (q + 2) + ' 步 · 第 ' + (q + 1) + ' 片互换 · ' + (q < 3 ? '3.40' : '3.00') + ' 秒',
+      span: fmt(s) + ' → ' + fmt(done), rows: rows });
+  }
+  st.push({ t: '第 6 步 · 收尾 · 0.60 秒', span: '14.10 → 14.70', rows: [
+    [14.10, 14.70, '画面 · 静止', '四张卡上排空、下排 A B C D（来源全换）']
+  ]});
+  return st;
+}
+
+var PAGES = [
+  { id: 'gather', cn: 'Gather · 收集', en: 'gather', dir: 'N → 1', dur: 15.65,
+    board: '左边 1 张四槽卡（rank 0，接收方，边框发亮），右边竖排 3 张单槽卡（rank 1/2/3，发送方）',
+    wire: '3 条弧线：各单槽卡左缘 → 四槽卡右缘',
+    steps: [
+      { t: '第 1 步 · 说明 · 0.60 秒', span: '0.00 → 0.60', rows: [
+        [0.00, 0.60, '画面 · 静止',
+         '四槽卡-1 装 A，-2/-3/-4 是空格但看不见；三张单槽卡各 1 块 B / C / D；3 条弧线灰色；图例 4 块']
+      ]},
+      { t: '第 2 步 · 预留缓冲 · 0.60 秒', span: '0.60 → 1.20', rows: [
+        [0.60, 0.92, '四槽卡-2 · 显形', '空格'],
+        [0.60, 0.92, '四槽卡-3 · 显形', '空格'],
+        [0.60, 0.92, '四槽卡-4 · 显形', '空格'],
+        [0.92, 1.20, '画面 · 静止', '四槽卡：A + 3 个空格']
+      ]},
+      { t: '第 3 步 · B 传递 · 4.15 秒', span: '1.20 → 5.35', rows: transfer({
+        s: 1.20, src: 'r1/单槽卡', wire: '弧线 1', pkt: '单体包 B',
+        slot: '四槽卡-2', letter: 'B', color: '青色', dim: true,
+        after: '四槽卡：A、B + 2 个空格' }) },
+      { t: '第 4 步 · C 传递 · 4.15 秒', span: '5.35 → 9.50', rows: transfer({
+        s: 1.20 + MOVE, src: 'r2/单槽卡', wire: '弧线 2', pkt: '单体包 C',
+        slot: '四槽卡-3', letter: 'C', color: '绿色', dim: true,
+        after: '四槽卡：A、B、C + 1 个空格' }) },
+      { t: '第 5 步 · D 传递 · 4.15 秒', span: '9.50 → 13.65', rows: transfer({
+        s: 1.20 + MOVE * 2, src: 'r3/单槽卡', wire: '弧线 3', pkt: '单体包 D',
+        slot: '四槽卡-4', letter: 'D', color: '橙色', dim: true,
+        after: '四槽卡四格填满' }) },
+      { t: '第 6 步 · 收尾 · 2.00 秒', span: '13.65 → 15.65', rows: [
+        [13.65, 15.65, '画面 · 静止', '四槽卡四格 A B C D；三张单槽卡各留原块；3 条弧线余辉']
+      ]}
+    ],
+    final: [
+      ['四槽卡（r0）', '四格填满 A / B / C / D，从左到右连续'],
+      ['三张单槽卡', '各留原块 B / C / D（gather 是复制，不是搬走）'],
+      ['三条弧线', '各保留自己的颜色，亮度 40%，箭头指向四槽卡']
+    ]
+  },
+
+  { id: 'scatter', cn: 'Scatter · 分散', en: 'scatter', dir: '1 → N', dur: 15.65,
+    board: '左边 1 张四槽卡（rank 0，源，持整份），右边竖排 3 张单槽卡（rank 1/2/3，接收方）',
+    wire: '3 条弧线：四槽卡右缘 → 各单槽卡左缘',
+    steps: [
+      { t: '第 1 步 · 说明 · 0.60 秒', span: '0.00 → 0.60', rows: [
+        [0.00, 0.60, '画面 · 静止', '四槽卡四格 A B C D；三张单槽卡各 1 个空格但看不见；3 条弧线灰色']
+      ]},
+      { t: '第 2 步 · 接收位就绪 · 0.60 秒', span: '0.60 → 1.20', rows: [
+        [0.60, 0.92, 'r1/单槽卡 · 显形', '空格'],
+        [0.60, 0.92, 'r2/单槽卡 · 显形', '空格'],
+        [0.60, 0.92, 'r3/单槽卡 · 显形', '空格'],
+        [0.92, 1.20, '画面 · 静止', '四槽卡仍 A B C D；三张单槽卡各 1 个空格']
+      ]},
+      { t: '第 3 步 · B 传递 · 4.15 秒', span: '1.20 → 5.35', rows: transfer({
+        s: 1.20, src: '四槽卡-2', wire: '弧线 1', pkt: '单体包 B', hole: true,
+        slot: 'r1/单槽卡', letter: 'B', color: '青色',
+        after: '四槽卡：A、C、D + 1 空格；r1 有 B' }) },
+      { t: '第 4 步 · C 传递 · 4.15 秒', span: '5.35 → 9.50', rows: transfer({
+        s: 1.20 + MOVE, src: '四槽卡-3', wire: '弧线 2', pkt: '单体包 C', hole: true,
+        slot: 'r2/单槽卡', letter: 'C', color: '绿色',
+        after: '四槽卡：A、D + 2 空格' }) },
+      { t: '第 5 步 · D 传递 · 4.15 秒', span: '9.50 → 13.65', rows: transfer({
+        s: 1.20 + MOVE * 2, src: '四槽卡-4', wire: '弧线 3', pkt: '单体包 D', hole: true,
+        slot: 'r3/单槽卡', letter: 'D', color: '橙色',
+        after: '四槽卡只剩 A' }) },
+      { t: '第 6 步 · 收尾 · 2.00 秒', span: '13.65 → 15.65', rows: [
+        [13.65, 15.65, '画面 · 静止', '四槽卡只剩 A；三张单槽卡各 1 段 B / C / D；3 条弧线余辉']
+      ]}
+    ],
+    final: [
+      ['四槽卡（r0）', '只剩第 1 格 A，其余三格空'],
+      ['三张单槽卡', '各 1 段：B / C / D'],
+      ['与 gather 的区别', 'gather 送出去还留着，scatter 送出去就没了']
+    ]
+  },
+
+  { id: 'broadcast', cn: 'Broadcast · 广播', en: 'broadcast', dir: '1 → N', dur: 15.65,
+    board: '左边 1 张四槽卡（rank 0，源，持整份），右边竖排 3 张四槽卡（rank 1/2/3，各 4 格）',
+    wire: '3 条弧线：四槽卡右缘 → 各四槽卡左缘',
+    steps: [
+      { t: '第 1 步 · 说明 · 0.60 秒', span: '0.00 → 0.60', rows: [
+        [0.00, 0.60, '画面 · 静止', 'r0 四格 A B C D；r1 / r2 / r3 各 4 个空格但看不见；3 条弧线灰色']
+      ]},
+      { t: '第 2 步 · 接收位就绪 · 0.60 秒', span: '0.60 → 1.20', rows: [
+        [0.60, 0.92, 'r1/四槽卡 · 4 格显形', '4 个空格'],
+        [0.60, 0.92, 'r2/四槽卡 · 4 格显形', '4 个空格'],
+        [0.60, 0.92, 'r3/四槽卡 · 4 格显形', '4 个空格'],
+        [0.92, 1.20, '画面 · 静止', 'r0 满 A B C D；其余三张各 4 个空格']
+      ]},
+      { t: '第 3 步 · 广播给 r1 · 4.15 秒', span: '1.20 → 5.35', rows: transfer({
+        s: 1.20, src: 'r0/四槽卡', wire: '弧线 1', pkt: '整份包', copy4: true,
+        slot: 'r1/四槽卡', color: '紫色',
+        after: 'r0 与 r1 都是 A B C D' }) },
+      { t: '第 4 步 · 广播给 r2 · 4.15 秒', span: '5.35 → 9.50', rows: transfer({
+        s: 1.20 + MOVE, src: 'r0/四槽卡', wire: '弧线 2', pkt: '整份包', copy4: true,
+        slot: 'r2/四槽卡', color: '紫色',
+        after: 'r0 / r1 / r2 都是 A B C D' }) },
+      { t: '第 5 步 · 广播给 r3 · 4.15 秒', span: '9.50 → 13.65', rows: transfer({
+        s: 1.20 + MOVE * 2, src: 'r0/四槽卡', wire: '弧线 3', pkt: '整份包', copy4: true,
+        slot: 'r3/四槽卡', color: '紫色',
+        after: '四张卡都是 A B C D' }) },
+      { t: '第 6 步 · 收尾 · 2.00 秒', span: '13.65 → 15.65', rows: [
+        [13.65, 15.65, '画面 · 静止', '四张卡各 4 格满 A B C D；3 条弧线余辉']
+      ]}
+    ],
+    final: [
+      ['四张卡', '全部 A B C D（源卡一块没少）'],
+      ['与 gather / scatter 的区别', '包是「整份」的，落位时 4 格同时变'],
+      ['线条颜色', '统一用源卡的颜色，不按目标分色']
+    ]
+  },
+
+  { id: 'allgather', cn: 'All-Gather · 全收集', en: 'all-gather', dir: 'N → N', dur: 13.95,
+    board: '2×2 四张四槽卡（rank 0/1/2/3），各持 1 段，角标 1/4',
+    wire: '4 条固定环边：0→1→3→2→0，每轮复用同一批线',
+    steps: [
+      { t: '第 1 步 · 说明 · 0.90 秒', span: '0.00 → 0.90', rows: [
+        [0.00, 0.90, '画面 · 静止', '四张卡各 1 块（A / B / C / D）+ 3 个空格；4 条环边灰色']
+      ]},
+      { t: '第 2 步 · 第 1 轮 · 4.15 秒', span: '0.90 → 5.05', rows: allgatherRound(0.90, {
+        recv: 'r0 收 C、r1 收 A、r2 收 D、r3 收 B', state: '四张卡各 2 块' }) },
+      { t: '第 3 步 · 第 2 轮 · 4.15 秒', span: '5.05 → 9.20', rows: allgatherRound(5.05, {
+        recv: 'r0 收 D、r1 收 C、r2 收 B、r3 收 A', state: '四张卡各 3 块' }) },
+      { t: '第 4 步 · 第 3 轮 · 4.15 秒', span: '9.20 → 13.35', rows: allgatherRound(9.20, {
+        recv: 'r0 收 B、r1 收 D、r2 收 A、r3 收 C', state: '四张卡都集齐 A B C D' }) },
+      { t: '第 5 步 · 收尾 · 0.60 秒', span: '13.35 → 13.95', rows: [
+        [13.35, 13.95, '画面 · 静止', '四张卡四格满 A B C D；4 条环边余辉']
+      ]}
+    ],
+    final: [
+      ['四张卡', '全部 A B C D'],
+      ['复制语义', '发出去的那一块自己还留着（不是消耗）'],
+      ['环的顺序', '0→1→3→2→0：每轮每张卡把手上最新的一段交给下家']
+    ]
+  },
+
+  { id: 'reduce', cn: 'Reduce · 归约', en: 'reduce', dir: 'N → 1', dur: 24.36,
+    board: '左边 1 张四槽卡（rank 0，接收方，会两次长高），右边竖排 3 张四槽卡（rank 1/2/3，各持一整份）',
+    wire: '3 条弧线：各源卡左缘 → 四槽卡右缘',
+    steps: reduceSteps(),
+    final: [
+      ['四槽卡（r0）', '四格 ΣA⁴ ΣB⁴ ΣC⁴ ΣD⁴，每段都是四张卡该段的和'],
+      ['三张源卡', '交出整份后空着（消耗语义）'],
+      ['与 all-reduce 的区别', '只有 rank 0 拿到结果，其余三张没有']
+    ] },
+
+  { id: 'allreduce', cn: 'All-Reduce · 全归约', en: 'all-reduce', dir: 'N → N', dur: 21.26,
+    board: '2×2 四张四槽卡（rank 0/1/2/3），各持一整份，角标 4 段',
+    wire: '6 条直连：首轮左右两对（0↔1、2↔3），次轮上下两对（0↔2、1↔3）',
+    steps: allreduceSteps(),
+    final: [
+      ['四张卡', '都变成 ΣA⁴ ΣB⁴ ΣC⁴ ΣD⁴，四份结果完全相同'],
+      ['份数', '翻倍 1 → 2 → 4，不是每次加一'],
+      ['两轮配对', '第 1 轮横向、第 2 轮纵向（recursive doubling）']
+    ] },
+
+  { id: 'reducescatter', cn: 'Reduce-Scatter · 归约分散', en: 'reduce-scatter', dir: 'N → N', dur: 21.15,
+    board: '2×2 四张四槽卡（rank 0/1/2/3），各持一整份，角标 4 段',
+    wire: '8 条直连：首轮同列（0↔2、1↔3），次轮同行（0↔1、2↔3）',
+    steps: rsSteps(),
+    final: [
+      ['每张卡', '只留自己编号那一段：r0 是 ΣA⁴、r1 是 ΣB⁴、r2 是 ΣC⁴、r3 是 ΣD⁴'],
+      ['四张拼起来', '才是完整结果（所以叫 reduce + scatter）'],
+      ['中间没有整份 Σ', '全程不会先合成一整份再切开']
+    ] },
+
+  { id: 'alltoall', cn: 'All-to-All · 全互换', en: 'all-to-all', dir: 'N → N', dur: 14.70,
+    board: '2×2 四张四槽卡（rank 0/1/2/3），上排待发、下排接收，角标 4 片',
+    wire: '6 条双向直连（4 条正交边 + 2 条对角线），没有箭头',
+    steps: atoaSteps(),
+    final: [
+      ['四张卡', '上排空、下排 A B C D，位置没变但每格来自不同的卡'],
+      ['这就是一次转置', '第 j 片统一送到 rank j'],
+      ['四步走完', '每步只发一片，12 个包分 4 步，避免同时飞看不清']
+    ] }
+];
+
+/* ============================================================
+   渲染
+   ============================================================ */
+(function () {
+  var pagesEl = document.getElementById('pages');
+  var tocEl = document.getElementById('toc');
+  var ovBody = document.querySelector('#overview tbody');
+
+  function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+  PAGES.forEach(function (p, idx) {
+    var no = 4 + idx;
+    var rowsAll = 0;
+    p.steps.forEach(function (s) { rowsAll += s.rows.length; });
+
+    var html = '';
+    html += '<div class="pghead"><span class="zh">' + p.cn + '</span><span class="en">' + p.en +
+            '</span><span class="tag">' + p.dir + '</span><span class="tag">' + p.dur.toFixed(2) +
+            ' 秒</span><span class="tag">' + p.steps.length + ' 步 · ' + rowsAll + ' 节</span></div>';
+    html += '<div class="pgmeta"><div class="row"><b>版面</b>　' + p.board + '</div>' +
+            '<div class="row"><b>连线</b>　' + p.wire + '</div></div>';
+    html += '<table class="na"><colgroup><col class="c-no"><col class="c-t1"><col class="c-t2"><col class="c-what"><col class="c-res"></colgroup>' +
+            '<thead><tr><th>编号</th><th>开始</th><th>结束</th><th>解说</th><th>结果</th></tr></thead><tbody>';
+
+    p.steps.forEach(function (st, si) {
+      html += '<tr class="grp"><td colspan="5"><span class="gp">' + st.t +
+              '</span><span class="gs">' + st.span + '</span></td></tr>';
+      var rows = st.rows, i = 0;
+      while (i < rows.length) {
+        var j = i;
+        while (j + 1 < rows.length && rows[j + 1][0] === rows[i][0]) j++;
+        var span = j - i + 1;
+        for (var k = i; k <= j; k++) {
+          var r = rows[k];
+          var isRest = (r[2] === '画面 · 静止');
+          html += '<tr' + (isRest ? ' class="rest"' : '') + '>';
+          html += '<td class="no">' + (si + 1) + '.' + (k + 1) + '</td>';
+          if (k === i) {
+            html += '<td class="t' + (span > 1 ? ' sim' : '') + '" rowspan="' + span + '">' +
+                    fmt(r[0]) + (span > 1 ? '<span class="same">同刻 ×' + span + '</span>' : '') + '</td>';
+          }
+          html += '<td class="t' + (r[1] === '' ? ' blank' : '') + '">' +
+                  (r[1] === '' ? '' : fmt(r[1])) + '</td>';
+          html += '<td class="what">' + r[2] + '</td><td class="res">' + r[3] + '</td></tr>';
+        }
+        i = j + 1;
+      }
+    });
+    html += '</tbody></table>';
+
+    if (p.final) {
+      html += '<div class="final">';
+      p.final.forEach(function (f) { html += '<div class="f"><b>' + f[0] + '</b>' + f[1] + '</div>'; });
+      html += '</div>';
+    }
+
+    var sec = document.createElement('section');
+    sec.id = 'p-' + p.id;
+    sec.innerHTML = '<div class="sechead"><span class="no">' + pad2(no) + '</span><h2>' + p.cn +
+      '</h2><span class="meta">' + p.steps.length + ' 步 · ' + rowsAll + ' 节 · ' +
+      p.dur.toFixed(2) + ' 秒</span></div>' + html;
+    pagesEl.appendChild(sec);
+
+    var a = document.createElement('a');
+    a.href = '#p-' + p.id;
+    a.innerHTML = '<b>' + pad2(no) + '</b>' + p.cn.split(' · ')[0] + '<span>' + p.dur.toFixed(2) + 's</span>';
+    tocEl.appendChild(a);
+
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + p.cn + '</td><td>' + p.dir +
+      '</td><td style="color:#7a8296;font-size:12px">' + p.board.replace(/（[^）]*）/g, '') +
+      '</td><td class="mono">' + p.dur.toFixed(2) + 's</td><td>' +
+      p.steps.length + ' 步 / ' + rowsAll + ' 节</td>';
+    ovBody.appendChild(tr);
+  });
+
+  /* 目录补两条：规则与待确认 */
+  ['s12', '时间与高亮', '12'].forEach(function () {});
+  function addToc(id, label, no) {
+    var a = document.createElement('a');
+    a.href = '#' + id;
+    a.innerHTML = '<b>' + no + '</b>' + label;
+    tocEl.appendChild(a);
+  }
+  addToc('s12', '时间与高亮', '12');
+  addToc('s13', '等你拍板', '13');
+})();
+</script>
+</body>
+</html>
