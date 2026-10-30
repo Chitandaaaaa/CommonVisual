@@ -19,14 +19,14 @@
 靠截图猜要 3 轮，每轮 40–60 秒。
 
 ```bash
-# 仓库自带的探针（同进程起 server + 无头 Chrome，跑完自己退出）
-node .workbuddy/tools/cdp.mjs probe page=index.html w=2560 h=1440 "(()=>{ ... return {...} })()"
-node .workbuddy/tools/cdp.mjs shot  page=index.html w=2560 h=1440 out=x.png   # 加 x/y/cw/ch 可 1:1 裁切
+# 仓库自带的验证工具（一次启动起 server + 无头 Chrome，跑完自己退出）
+node tools/verify.mjs index            # 报错检查 + 几何探针 + 最小截图集(初始/飞行中点/终态/窄屏) → pass/fail 表
+node tools/probe.mjs index 480:"(()=>{ ... return {...} })()"   # 随手查一个几何数，scrub 为进度条刻度(0–1000)
 ```
 
-`probe` 会一并回显 `problems`（`Runtime.exceptionThrown` + `Log` 的 error 级），
-所以「页面有没有报错」不用另开工具。习惯 `/tmp/probe.mjs` 的话也一样用，
-但这个脚本在仓库里、不依赖本机装了什么。
+`verify` 会一并回显 `problems`（`Runtime.exceptionThrown` + `Log` 的 error 级），
+所以「页面有没有报错」不用另开工具；`probe` 只做单点几何查询。
+两个脚本都在仓库 `tools/` 里、不依赖本机装了什么，**不要用 `/tmp` 下的散落脚本**。
 
 典型探针：`relmap.gridTemplateRows`、`h1.getComputedStyle().fontSize`、
 `wire.getAttribute('d')`、两元素 `rect` 的中心距、`.rel-arrow` 的 `w/h`。
@@ -82,6 +82,7 @@ Bash 结束会回收后台进程，所以每次调用都得重新冷启动 Chrom
 **⑦ 连续跑多页 probe 要给每个进程不同的 `port=`。**
 Chrome 的 `--remote-debugging-port=9333` 是写死的，上一个实例没退干净时
 下一个会卡在「chrome devtools 未就绪」（15s 后抛错）。**一次 Bash 调一页**，别 for 循环。
+（注：本仓库 `tools/verify.mjs` 已内置端口管理，可一次传多页；手写 `tools/probe.mjs` 仍建议一次一页。）
 
 ---
 
@@ -114,10 +115,12 @@ All-to-All 的两条对角线端点改了两轮：
 被全部 8 个原语页共用。任何改动都要回归，而且**回归用 probe 不用全截图**：
 
 ```bash
+# 共享层改动后，八页过一遍几何探针（用仓库工具，不用 /tmp 脚本）
 for p in gather scatter broadcast reduce allgather allreduce reducescatter alltoall; do
-  echo -n "$p: "; node /tmp/probe.mjs "http://127.0.0.1:$PORT/$p.html" \
+  echo -n "$p: "; node tools/probe.mjs "$p" \
     "(()=>{const m=document.querySelector('.relmap');return getComputedStyle(m).gridTemplateRows})()"
 done
+# 或直接：node tools/verify.mjs gather scatter ...   （一次启动跑完多页 + 截图）
 ```
 
 实例：给 `relmap` 加「上邻居」时把 `grid-template-rows` 从 `repeat(3,auto)` 改成
