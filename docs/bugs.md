@@ -25,7 +25,7 @@ node tools/verify.mjs index gather scatter broadcast reduce allgather allreduce 
 | 2026-10-31 | index | W1 节点卡断言 282×64，实测 282×**63**：1px 平台渲染差（校准值出自他机，本机 Windows 实测 63） | `node tools/verify.mjs index --no-shot` | 已放宽（2026-11-01 断言改高 63–64、容 ±1px 平台行高差——.node 未写 line-height，治本要动 index.css 版式，不做） |
 | 2026-10-31 | anatomy | 组件样式双份：页面抄 `theme/stage-page.css` 一份值（.slot-tx / .calc-tx 等），改真源必须手动同步，无机制保证 | 改 stage-page.css 后开 anatomy 对照 | 技术债（暂不修） |
 | 2026-10-31 | allreduce | 第 2 轮飞行期间上排从 Σ² 回退成普通字母（浓色），合并过半才重新亮 Σ —— 与「这一轮已是 2 份中间结果」的叙事相悖（steps.html §13-④，随解说页签落地核实） | 播到第 2 轮起飞 → 合并过半看上排字母 | 已修（2026-11-01 Σ 判定改认「已持有份数」，sum.js overlayAllreduce；probe 实测 r2 飞行中点全 Σᴀ²、r2merge 早段逐段升 Σ⁴；3.42 扩双采样重校全绿） |
-| 2026-10-31 | allgather | 一轮的 4 块落位弹跳按 seatGap 0.50 错峰，末块弹到 s+4.65、越过轮界（轮长 4.15）约 0.5s —— 下一轮已起飞时上一轮还有块在弹（解说表按轮界截断，代码行为越界） | 逐帧看第 1 轮 seatStart 后 2 秒 | 待修（错峰缩短或轮末 hold 加长，需重校 V 契约） |
+| 2026-10-31 | allgather | 一轮的 4 块落位弹跳按 seatGap 0.50 错峰，末块弹到 s+4.65、越过轮界（轮长 4.15）约 0.5s —— 下一轮已起飞时上一轮还有块在弹（解说表按轮界截断，代码行为越界） | 逐帧看第 1 轮 seatStart 后 2 秒 | 已修（2026-11-01 pop 段如实计入错峰：beat 声明 `stagger:4`，pop 段 = popDur+(n−1)×seatGap = 2.05s，轮长 4.15→5.65、总长 13.95→18.45；单颗弹跳时长改取 popOne=0.55 不变；末块弹完距下一轮起飞 1.0s；V 契约 3.32–3.38 与全量 11 页回归全绿） |
 
 ## 巡检历史
 

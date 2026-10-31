@@ -375,7 +375,9 @@
         var at = CV.seatAt(fi, w.seatStart);
         if (sec >= at && !seenM[key]) {
           seenM[key] = 1;
-          CV.beat.seat(S.layers.fx, S.chips[f.to[0]][idxOf(f.letter)], P(f.color).color, w.popSec);
+          /* 单颗弹跳时长 = popOne（popDur 分量）；错峰页的 popSec 是整段
+             错峰窗口（首弹起 → 末弹止），拿来当单颗时长会把每颗都拉长 */
+          CV.beat.seat(S.layers.fx, S.chips[f.to[0]][idxOf(f.letter)], P(f.color).color, w.popOne || w.popSec);
         } else if (sec < at && seenM[key]) {
           delete seenM[key];
         }

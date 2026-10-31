@@ -69,10 +69,12 @@ CV.scene('allgather', (function () {
       { id: 'intro', kind: 'wait', label: '说明', sec: 0.9,
         text: rk(0) + rk(1) + rk(2) + rk(3) + ' 各持一段 ' + whole() },
 
-      /* 三轮：流由上面的环算法推导（数据，不是绘制逻辑）；键名按时序标准 1 起 */
-      { id: 'r1', kind: 'move', label: '第 1 轮', text: '第 1 轮：顺时针各发一份', flows: ROUND_FLOWS[0] },
-      { id: 'r2', kind: 'move', label: '第 2 轮', text: '第 2 轮：顺时针各发一份', flows: ROUND_FLOWS[1] },
-      { id: 'r3', kind: 'move', label: '第 3 轮', text: '第 3 轮：顺时针各发一份', flows: ROUND_FLOWS[2] },
+      /* 三轮：流由上面的环算法推导（数据，不是绘制逻辑）；键名按时序标准 1 起。
+         stagger: 4 = 一拍 4 块错峰落位，pop 段时长如实含错峰窗口（compile.js）；
+         不声明则按「每趟只落一块」算，末块弹跳会越出轮界（bugs.md 2026-10-31）。 */
+      { id: 'r1', kind: 'move', label: '第 1 轮', text: '第 1 轮：顺时针各发一份', flows: ROUND_FLOWS[0], stagger: 4 },
+      { id: 'r2', kind: 'move', label: '第 2 轮', text: '第 2 轮：顺时针各发一份', flows: ROUND_FLOWS[1], stagger: 4 },
+      { id: 'r3', kind: 'move', label: '第 3 轮', text: '第 3 轮：顺时针各发一份', flows: ROUND_FLOWS[2], stagger: 4 },
 
       { id: 'tail', kind: 'wait', label: '收尾', sec: 0.6,
         text: '四张卡都集齐 ' + whole() }

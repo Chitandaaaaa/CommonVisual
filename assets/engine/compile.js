@@ -97,7 +97,18 @@
       no += 1;
       if (sg.kind === 'transfer') {
         var run = 0;
-        var parts = SEAT_PARTS.map(function (p) {
+        /* 一拍内 n 块错峰落位（beat 声明 stagger: n，如 allgather）：pop 段
+           如实扩成 popDur + (n−1)×seatGap——SEAT_PARTS 隐含「每趟只落一块」，
+           整轮并发的页会把末块弹跳漏出轮界（bugs.md 2026-10-31）。走 of
+           数组：面板仍按规范值显示、仍调同一根倍数杆；不传 stagger 照旧。 */
+        var srcs = SEAT_PARTS;
+        if (sg.stagger > 1) {
+          var ofL = ['popDur'];
+          for (var spi = 1; spi < sg.stagger; spi++) ofL.push('seatGap');
+          srcs = SEAT_PARTS.slice();
+          srcs[2] = { key: 'pop', label: '落位弹跳', specLabel: '弹跳+错峰', of: ofL };
+        }
+        var parts = srcs.map(function (p) {
           var o = part(p);
           o.no = no;
           o.s = total + run;
@@ -158,6 +169,10 @@
         w.seatStart = it.seatStart / speed;
         w.seatEnd   = it.seatEnd / speed;
         w.popSec    = (it.seatEnd - it.seatStart) / speed;
+        /* 单颗弹跳时长（popDur 分量）：错峰页 popSec 是整段窗口，别拿来当
+           单颗动画时长；单块页两者相等 */
+        w.popOne    = ((it.parts[2].subs && it.parts[2].subs.length)
+                          ? it.parts[2].subs[0].sec : it.parts[2].sec) / speed;
       }
       win[it.id] = w;
       it.win = w;
@@ -198,7 +213,8 @@
       if (b.kind === 'wait') {
         return { id: b.id, kind: 'wait', label: b.label || '说明', sec: b.sec, text: b.text, short: b.short };
       }
-      return { id: b.id, kind: 'transfer', label: b.label, text: b.text, short: b.short };
+      return { id: b.id, kind: 'transfer', label: b.label, text: b.text, short: b.short,
+               stagger: b.stagger };
     });
     var ch = CV.choreo(page, segs);
     ch.beats = scene.beats;
