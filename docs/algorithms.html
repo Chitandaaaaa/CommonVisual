@@ -29,6 +29,44 @@
   .pill-todo{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:6px;font-weight:600;background:#fdf3e3;color:#d97706;margin-right:6px}
   .kb .why{color:#7a8296;font-size:12px}
   .legend{margin:16px 0 0;font-size:12px;color:#7a8296}
+
+  /* ── 下部三章（2026-11-01 自 assets/pages/algorithms.css 摘并；矩阵样式未搬——本页骨架行用 .kb/.mtx 点阵）── */
+  .sec{padding:30px 0 34px;border-top:1px solid var(--line);scroll-margin-top:24px}
+  .sec-hd{margin-bottom:18px}
+  .sec-hd h2{margin:0 0 6px;font-size:17px;font-weight:600;letter-spacing:-.1px}
+  .sec-hd p{margin:0;max-width:680px;font-size:12.5px;color:var(--tx-2)}
+  .algo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .algo-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 16px 14px}
+  .algo-card h3{display:flex;align-items:baseline;gap:8px;margin:0 0 4px;font-size:14px;font-weight:600}
+  .algo-card h3 em{font-style:normal;font-family:var(--mono);font-size:11px;font-weight:400;color:var(--tx-3)}
+  .algo-card .one{margin:0 0 11px;font-size:12.5px;color:var(--tx-2)}
+  .algo-card dl{display:grid;grid-template-columns:40px 1fr;gap:5px 9px;margin:0;font-size:11.5px}
+  .algo-card dt{color:var(--tx-3)}
+  .algo-card dd{margin:0;color:var(--tx-2)}
+  .paths{display:flex;flex-direction:column;gap:10px}
+  .path{display:grid;grid-template-columns:186px 1fr auto;gap:16px;align-items:center;padding:13px 17px;background:var(--panel);border:1px solid var(--line);border-radius:13px}
+  .path.is-default{border-color:#d7cffa}
+  .path-a b{display:block;font-size:13px;font-weight:600}
+  .path-a em{font-style:normal;font-size:11px;color:var(--tx-3)}
+  .path-flow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:11.5px;color:var(--tx-2)}
+  .path-flow u{text-decoration:none;padding:3px 9px;border-radius:7px;background:#f4f2fe;border:1px solid #e6e1fb;color:var(--accent);white-space:nowrap}
+  .path-flow u.mid{background:#fdf7ea;border-color:#f1e5c6;color:#8d6208}
+  .path-flow s{text-decoration:none;color:var(--tx-3)}
+  .path-m{text-align:right;font-size:11px;color:var(--tx-3);white-space:nowrap;line-height:1.6}
+  .path-m b{display:block;font-size:12px;font-weight:600;color:var(--tx-2)}
+  .tbl{width:100%;border-collapse:collapse}
+  .tbl th{padding:0 14px 8px 0;text-align:left;font-size:11.5px;font-weight:400;color:var(--tx-3);border-bottom:1px solid var(--line);white-space:nowrap}
+  .tbl td{padding:11px 14px 11px 0;font-size:12.5px;color:var(--tx-2);border-bottom:1px solid #f2f4f9;vertical-align:top}
+  .tbl td b{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--tx)}
+  .tail{margin:16px 0 0;font-size:12.5px;color:var(--tx-2);max-width:700px}
+  .tail + .tail{margin-top:9px}
+  .tail b{color:var(--tx);font-weight:600}
+  @media (max-width:720px){
+    .algo-grid{grid-template-columns:1fr}
+    .path{grid-template-columns:1fr;gap:9px;padding:13px 14px}
+    .path-m{text-align:left}
+    .path-m b{display:inline;margin-right:8px}
+  }
 </style>
 </head>
 <body>
@@ -44,7 +82,7 @@
     </a>
     <h1>通信原语 · 算法口径</h1>
     <p class="lead">每条原语五行口径：<b>通信前 → 骨架 → 轮次 → 终态 → 锚点</b>。registry 管两头（pre / post），scenes 管每一拍，rounds.js 管轮次；本页把三段口径拼成表。通信前、终态、骨架从 <code>assets/registry.js</code>、轮次从 <code>assets/rounds.js</code> 现渲染，不另抄一份。</p>
-    <div class="note"><b>数据层（2026-10-31 建，2026-11-01 收编锚点）：</b>轮次与锚点均由 <code>assets/rounds.js</code> 收编——算法数据层，逐字转录自动词展开与剧本 beats，不另选骨架。锚点是 win 名表的引用（<code>&lt;键&gt;.s / &lt;键&gt;.e</code>），键名按时序标准（win 键命名三条规则见 rounds.js 头注释）。八种骨架的定义与 All-Reduce 三条路线、NCCL 选型目前留在备用页 <a href="../algorithms-old.html">algorithms-old.html</a>（退役参考，非验证对象），合并进本页是<b>后续待办</b>。</div>
+    <div class="note"><b>数据层（2026-10-31 建，2026-11-01 收编锚点）：</b>轮次与锚点均由 <code>assets/rounds.js</code> 收编——算法数据层，逐字转录自动词展开与剧本 beats，不另选骨架。锚点是 win 名表的引用（<code>&lt;键&gt;.s / &lt;键&gt;.e</code>），键名按时序标准（win 键命名三条规则见 rounds.js 头注释）。八种骨架的定义、All-Reduce 三条路线与 NCCL 选型已于 2026-11-01 收编进本页下部三章（<b>#4 定稿</b>，总览矩阵不搬——与每原语「骨架」行同源 registry.algo）；备用页 algorithms-old.html 同日退役删除。</div>
   </header>
 
   <main id="app"></main>
@@ -61,8 +99,8 @@
 <script>
 (function () {
   'use strict';
-  /* 六列骨架名与 blocks/table.js 的算法矩阵一致（合并待办时收编进 registry） */
-  var COLS = ['链 / 树', 'Ring', '倍增 / 减半', 'Bruck', '全连接', '分层 / 网内'];
+  /* 六列骨架名：唯一事实在 registry（CV.ALGO_COLS），本页只读不抄 */
+  var COLS = CV.ALGO_COLS;
 
   function sideText(e) {
     if (!e || e.empty) return '<span class="dim">空</span>';
@@ -107,13 +145,95 @@
       '<table class="kb">' +
       '<tr><th>通信前</th><td>' + sidesText(p.pre) + '</td></tr>' +
       '<tr><th>骨架</th><td>' + mtxRow(p.algo) +
-        '<div class="pick"><b>常用实现：</b>' + p.pick.a + ' —— ' + p.pick.n + '</div></td></tr>' +
+        '<div class="pick"><b>常用实现：</b>' + p.pick.a + ' —— ' + p.pick.n + '</div>' +
+        (id === 'reduce' ? '<div class="why">备注：本页 = Star 语义示意（NCCL 实际走 Ring/Tree）。</div>' : '') +
+        '</td></tr>' +
       '<tr><th>轮次</th><td>' + roundsText(id) + '</td></tr>' +
       '<tr><th>终态</th><td>' + sidesText(p.post) + '</td></tr>' +
       '<tr><th>锚点</th><td>' + anchorsText(id) + '</td></tr>' +
       '</table></section>';
   });
   html += '<p class="legend">骨架图例：实心 = NCCL 常见默认 · 空格 = 也可以用（看规模与包大小）· × = 这条路走不通。六列依次：' + COLS.join(' · ') + '。</p>';
+
+  /* ── 下部三章（2026-11-01 自 blocks/table.js 的 algorithmsApp 收编为页内数据，
+          属算法域事实，不是单条原语的事实——所以不进 registry）── */
+  function sec(id, title, lead, body) {
+    return '<section class="sec" id="' + id + '">' +
+      '<div class="sec-hd"><h2>' + title + '</h2>' +
+      (lead ? '<p>' + lead + '</p>' : '') +
+      '</div>' + body + '</section>';
+  }
+  function tbl(head, rows) {
+    return '<table class="tbl"><thead><tr>' +
+      head.map(function (h) { return '<th>' + h + '</th>'; }).join('') +
+      '</tr></thead><tbody>' +
+      rows.map(function (r) {
+        return '<tr>' + r.map(function (c, i) {
+          return i === 0 ? '<td><b>' + c + '</b></td>' : '<td>' + c + '</td>';
+        }).join('') + '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }
+
+  /* 八种骨架：前六种是原子的拓扑结构，后两种是集群维度 */
+  var ALGOS = [
+    { cn: '链式', en: 'Chain', one: '收到就往后传，每张卡只跟左右两家说话。', rounds: 'N−1 步', good: '实现最简单，只要点对点', bad: '延迟线性增长，末尾的卡等最久' },
+    { cn: '树', en: 'Tree', one: '每轮把扇出翻倍，一层层往下铺。', rounds: 'log₂N 轮', good: '延迟低，小包最快', bad: '内部节点负载重，要用双树摊平' },
+    { cn: '环', en: 'Ring', one: '只和左右邻居走，数据分块绕圈流水。', rounds: 'N−1 轮', good: '带宽最优，没有 root，随便扩', bad: '延迟随 N 增长，小包吃亏' },
+    { cn: '递归加倍', en: 'Doubling', one: '按距离 1、2、4… 找伙伴，整份互换。', rounds: 'log₂N 轮', good: '轮数少，4 张卡两轮就够', bad: '每轮数据翻倍，要求 N 是 2 的幂' },
+    { cn: '递归减半', en: 'Halving', one: '每轮砍掉一半数据，只发给一半伙伴。', rounds: 'log₂N 轮', good: 'Reduce-Scatter 的最优解', bad: '同样要求 N 是 2 的幂' },
+    { cn: 'Bruck', en: 'Bruck', one: '每轮按不同偏移循环移位，发不同的块。', rounds: 'log₂N 轮', good: '支持任意 N，不要求 2 的幂', bad: '要移位缓冲区，实现最绕' },
+    { cn: '全连接', en: 'Direct', one: '两两直接发，谁也不用中转。', rounds: '1 步', good: '小 N 最快，NVSwitch 上近乎无敌', bad: 'O(N²) 条消息，规模一大就爆炸' },
+    { cn: '分层 / 网内', en: 'Hierarchical', one: '节点内 NVLink 一套、跨节点 IB 一套；或让交换机直接做归约。', rounds: '两级叠加', good: '大集群唯一现实解，SHARP 能把 reduce 流量砍半', bad: '要感知拓扑，调优复杂' }
+  ];
+
+  /* All-Reduce 三条主流路线（前两条能同时做到流量最优） */
+  var PATHS = [
+    { name: '环形 Ring', sub: 'NCCL 默认的大包路径', def: true, steps: ['Reduce-Scatter · 环', '每卡只剩 1 段 Σ', 'All-Gather · 环'], m1: '2(N−1) 步', m2: '流量 2(N−1)/N · S' },
+    { name: 'Rabenseifner', sub: '2004 年的最优解，轮数最省', steps: ['Reduce-Scatter · 减半', '每卡只剩 1 段 Σ', 'All-Gather · 加倍'], m1: '2 log₂N 轮', m2: '流量 2(N−1)/N · S' },
+    { name: '直接递归加倍', sub: '不切前后段，边换边加', steps: ['段数 1 → 2 → 4 直接长满'], m1: 'log₂N 轮', m2: '流量 S · log₂N' }
+  ];
+
+  /* NCCL 运行时选型：按「包大小 × 拓扑 × 协议」算代价 */
+  var NCCL = [
+    { k: 'Ring', w: '大包、跨节点，带宽优先 —— 默认多数情况选它' },
+    { k: 'Tree', w: '小包、延迟敏感，比如几百字节的梯度同步' },
+    { k: 'NVLS / NVLS_TREE', w: 'NVLink Switch 内部做 multicast 与归约，省一次往返' },
+    { k: 'CollNetDirect / CollNetChain', w: 'IB 交换机支持 SHARP 时，把归约下推到网络' },
+    { k: 'PAT', w: '用离线调优出的调度表，即 TACCL 那条路线' }
+  ];
+
+  html += sec('algos', '八种骨架怎么走',
+    '前六种是原子的拓扑结构；后两种是放到真实集群上必须叠加的维度 —— 一台机器内 8 张卡走 NVLink、跨机器走 IB，本来就是两套网络。',
+    '<div class="algo-grid">' + ALGOS.map(function (a) {
+      return '<article class="algo-card"><h3>' + a.cn + '<em>' + a.en + '</em></h3>' +
+        '<p class="one">' + a.one + '</p><dl>' +
+        '<dt>轮数</dt><dd>' + a.rounds + '</dd>' +
+        '<dt>强项</dt><dd>' + a.good + '</dd>' +
+        '<dt>软肋</dt><dd>' + a.bad + '</dd></dl></article>';
+    }).join('') + '</div>');
+
+  html += sec('paths', 'All-Reduce 三条路线',
+    'RS + AG、Rabenseifner 常被当成算法提起，其实是「拿已有的原语拼出第三个」，所以不在上面各原语的骨架行里。三条主流路线，前两条能同时做到流量最优。',
+    '<div class="paths">' + PATHS.map(function (p) {
+      var flow = p.steps.map(function (s, i) {
+        var tag = (i === 1 && p.steps.length === 3) ? '<u class="mid">' + s + '</u>' : '<u>' + s + '</u>';
+        return (i ? '<s>→</s>' : '') + tag;
+      }).join('');
+      return '<div class="path' + (p.def ? ' is-default' : '') + '">' +
+        '<div class="path-a"><b>' + p.name + '</b><em>' + p.sub + '</em></div>' +
+        '<div class="path-flow">' + flow + '</div>' +
+        '<div class="path-m"><b>' + p.m1 + '</b>' + p.m2 + '</div></div>';
+    }).join('') + '</div>' +
+    '<p class="tail"><b>RS + AG 的关键是融合。</b>中间那步「每卡只剩 1 段和」如果写回显存再调第二个 kernel，就白省了；NCCL 把它压进同一个 kernel，中间结果只在寄存器里过一下 —— 这正是 All-Reduce 不等于「先 Reduce 再 Broadcast」的原因。</p>' +
+    '<p class="tail"><b>Rabenseifner 的规律是距离翻倍。</b>前半段距离 1、2、4… 每轮折掉一半、段数减半；后半段按同样的距离把和铺回去。总流量与环形相同，只是把「N−1 圈」压成了「2 log₂N 轮」；卡多时轮数优势明显，四张卡这种小规模反而是环形更简单。</p>' +
+    '<p class="tail"><b>直接加倍快在轮数少。</b>四张卡只要 2 轮，但每轮每张卡都收发整份数据，总流量 S · log₂N，卡一多就比前两条贵。「allreduce.html」画的就是这一种。</p>');
+
+  html += sec('nccl', 'NCCL 怎么选',
+    '自动的 —— 内部按「包大小 × 拓扑 × 协议」算代价，大多数时候轮不到你操心。想强制可以用环境变量。',
+    tbl(['NCCL_ALGO', '什么时候用'], NCCL.map(function (r) { return [r.k, r.w]; })) +
+    '<p class="tail">另外 <b>NCCL_PROTO</b>（Simple / LL / LL128）管的是传输协议而不是算法，但它同样决定小包的延迟，常和 NCCL_ALGO 一起调。</p>');
+
   document.getElementById('app').innerHTML = html;
 })();
 </script>

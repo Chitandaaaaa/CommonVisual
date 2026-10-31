@@ -28,9 +28,8 @@
 | [`reducescatter.html`](reducescatter.html) | 归约分散 —— 递归减半两轮，每卡先长出第二排接收位，之后每轮「传递 → 落位 → 计算 → 合并」，段数 4→2→1 |
 | [`alltoall.html`](alltoall.html) | 全互换 —— 上排待发、下排已收，按目的地分四步，12 条直连消息 |
 | [`docs/prepost.html`](docs/prepost.html) | **通信原语语义（前后对照表）** —— 八个原语各自「通信前 / 通信后」每张卡的缓冲区，没变化的行置灰；数据来自 `registry.js` 的 pre / post |
-| [`docs/algorithms.html`](docs/algorithms.html) | **算法口径** —— 每条原语五行：通信前 / 骨架 / 轮次 / 终态 / 锚点（轮次与锚点自 `assets/rounds.js` 现渲染） |
+| [`docs/algorithms.html`](docs/algorithms.html) | **算法口径** —— 每条原语五行：通信前 / 骨架 / 轮次 / 终态 / 锚点（轮次与锚点自 `assets/rounds.js` 现渲染）；下部三章：八种骨架 / All-Reduce 三条路线 / NCCL 选型 |
 | [`docs/visual.html`](docs/visual.html) | **组件与动效规范** —— 一图一节、1:1 像素示例，右侧参数调试台实时改 |
-| [`algorithms-old.html`](algorithms-old.html) | 退役备用 —— 旧「实现方式」页：六类骨架矩阵、八种骨架、All-Reduce 三条路线、NCCL 选型（不在验证范围，内容待并入算法口径） |
 
 每个原语页页角有**关系导航**（`nav/`，数据来自 `registry.js` 的 `rel`）：横向是同族的全体版，纵向是同列的上/下一个，点原语名回首页。
 
@@ -92,11 +91,10 @@ engine/verbs/      copy / move / sum / split 四个动词 —— 绘制与逐帧
 CommonVisual/
 ├── index.html              首页：原语关系树
 ├── gather.html … alltoall.html   8 个原语动画页（薄壳）
-├── algorithms-old.html     退役备用：旧「实现方式」页（不在验证范围）
 ├── 分布式通信原语详解.md    内容源（仅作参考，不作标准 —— 口径以 scenes/*.js + registry.js 为准，见 AGENTS.md 三①）
 ├── docs/                   规范页：经 ../assets/ 引用底层组件，与业务代码两条线互不依赖
 │   ├── architecture.html   架构标准：组件库与代码架构（分层 / 组件 / 扩展点）
-│   ├── specs.html          规范清单与关系图（11 条）
+│   ├── specs.html          规范清单与关系图（12 条）
 │   ├── prepost.html      语义：前后数据布局对照表（registry 投影，原根 layout.html）
 │   ├── algorithms.html     算法口径：每原语五行（通信前/骨架/轮次/终态/锚点；轮次与锚点均已收编）
 │   ├── visual.html         组件与动效规范：1:1 真值 + 参数调试台（原根 anatomy.html）
@@ -124,7 +122,7 @@ CommonVisual/
 │   ├── prim/               dom / geom / motion
 │   ├── nav/                edge / node / mini
 │   ├── blocks/             head / table / toc / legend / anatomy / paramEditor
-│   ├── pages/              文档页样式（index / docs / anatomy / algorithms）
+│   ├── pages/              文档页样式（index / docs / anatomy）
 │   └── theme/              theme.js/css + stage-page.css（舞台样式真源）
 │                           + defaults.js（参数基线）
 └── package.json            仅验证工具需要（playwright-core）

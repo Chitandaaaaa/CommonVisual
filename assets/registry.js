@@ -9,9 +9,11 @@
      · pre/post  通信前后四张卡各持什么（对照表用）
      · algo  算法矩阵一行；pick  常用实现
    显示顺序与派生：
-     · CV.REG_ORDER      首页树的先序（对照表 / 算法矩阵共用这一份）
+     · CV.REG_ORDER      首页树的先序（对照表 / 算法口径页共用这一份）
      · CV.registryById   id → 记录
      · CV.registryEdges  全部关系边（8 条）
+     · CV.ALGO_COLS(_S)  算法矩阵六列名（2026-11-01 自 blocks/table.js
+       的 COLS / COLS_S 收编——algorithmsApp 随 algorithms-old 页退役）
    五个投影页从这里渲染，不许任何页面自己再抄一份 —— v1 同一桩
    事实抄了 4 处，改一处漏三处（含「全互换 / 全交换」这种分叉）。
    ============================================================ */
@@ -149,6 +151,11 @@
   /* 首页树的先序（与旧 index 手排时代的文档序一致） */
   CV.REG_ORDER = ['broadcast', 'scatter', 'gather', 'allgather',
                   'reduce', 'allreduce', 'reducescatter', 'alltoall'];
+
+  /* 算法矩阵六列名（骨架行 6 个点依次对应谁）。唯一事实只此一份：
+     全名口径表图例用，短名给窄屏胶囊/紧凑场景。 */
+  CV.ALGO_COLS = ['链 / 树', 'Ring', '倍增 / 减半', 'Bruck', '全连接', '分层 / 网内'];
+  CV.ALGO_COLS_S = ['链 / 树', 'Ring', '减半 / 加倍', 'Bruck', '全连接', '分层'];
 
   CV.registryById = function (id) {
     for (var i = 0; i < CV.registry.length; i++) if (CV.registry[i].id === id) return CV.registry[i];

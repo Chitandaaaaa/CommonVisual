@@ -68,20 +68,20 @@
 <div class="wrap">
 
   <h1>规范清单与关系图</h1>
-  <div class="sub">CommonVisual v2 · <span class="mono">docs/specs.html</span> · 2026-10-31</div>
+  <div class="sub">CommonVisual v2 · <span class="mono">docs/specs.html</span> · 2026-11-01</div>
   <div class="badges">
     <span class="badge">v2 only · v1 已全部删除</span>
     <span class="badge grey">盘点性质 · 随实现演进同步更新</span>
   </div>
 
   <p class="lead">
-    两章：<b>①</b> 规范文件清单——每份规范在哪、干什么、缺什么；<b>②</b> 关系图——这些规范谁说了算、谁被谁约束、运行时唯一能写回哪里。
+    三章：<b>①</b> 规范文件清单——每份规范在哪、干什么、缺什么；<b>②</b> 关系图——这些规范谁说了算、谁被谁约束、运行时唯一能写回哪里；<b>③</b> 变更元规范——基线文件怎么改、改完伴随什么。
   </p>
 
   <!-- ============================ 01 ============================ -->
   <section>
-    <div class="sechead"><span class="no">01</span><h2>规范文件清单</h2><span class="meta">11 条在册 · 1 占位 2 有缺口 · 1 退役备用 · 3 件已删除</span></div>
-    <p class="role">十一条一组、从宏观排到微观：<b>1–2 总纲</b>，<b>3–6 内容规范</b>（语义 / 算法 / 步骤 / 视觉），<b>7–9 数据与参数</b>，<b>10–11 守护</b>。原则：<b>规范是规范、业务代码是业务代码，两条线互不依赖</b>——都只向下引用 <code>assets/</code> 的底层组件，底层组件符合 architecture 约束。实现代码不在表内——它被规范约束，不是规范。</p>
+    <div class="sechead"><span class="no">01</span><h2>规范文件清单</h2><span class="meta">12 条在册 · 3 件已删除</span></div>
+    <p class="role">十二条一组、从宏观排到微观：<b>1–2 总纲</b>，<b>3–6 内容规范</b>（语义 / 算法 / 步骤 / 视觉），<b>7–9 数据与参数</b>，<b>10–11 守护</b>，<b>12 元规范</b>。原则：<b>规范是规范、业务代码是业务代码，两条线互不依赖</b>——都只向下引用 <code>assets/</code> 的底层组件，底层组件符合 architecture 约束。实现代码不在表内——它被规范约束，不是规范。</p>
 
     <table>
       <thead>
@@ -90,7 +90,7 @@
       <tbody>
         <tr>
           <td class="mono">1</td><td class="nm">规范总览</td><td class="mono">docs/specs.html</td>
-          <td>本页：11 条规范在哪、缺什么、谁说了算（含关系图）</td>
+          <td>本页：12 条规范在哪、缺什么、谁说了算（含关系图与变更元规范）</td>
           <td><span class="pill ok">✅ 在用</span>&nbsp;（本页）</td>
         </tr>
         <tr>
@@ -106,7 +106,7 @@
         <tr>
           <td class="mono">4</td><td class="nm">通信原语算法</td><td class="mono">docs/algorithms.html</td>
           <td>每条原语 5 行口径：通信前 / 骨架 / 轮次 / 终态 / 锚点。registry 管两头、scenes 管每一拍、rounds.js 管轮次与锚点，本页管中间</td>
-          <td><span class="pill fix">🔧 占位稿</span>&nbsp;通信前 / 终态 / 骨架从 registry、轮次与锚点从 rounds.js（算法数据层首件，2026-10-31 建；2026-11-01 锚点随 win 命名统一并入，时序标准见 rounds.js 头注释）现渲染；与备用页合并是后续待办</td>
+          <td><span class="pill ok">✅ 在用</span>&nbsp;2026-11-01 定稿：八种骨架 / All-Reduce 三条路线 / NCCL 选型三章收编进本页下部（备用页 algorithms-old.html 同日退役删除，总览矩阵不搬——与每原语「骨架」行同源 registry.algo）；通信前 / 终态 / 骨架从 registry、轮次与锚点从 rounds.js（算法数据层，2026-10-31 建；2026-11-01 锚点随 win 命名统一并入）现渲染</td>
         </tr>
         <tr>
           <td class="mono">5</td><td class="nm">通信原语步骤</td><td class="mono">docs/steps.html</td>
@@ -126,7 +126,7 @@
         <tr>
           <td class="mono">8</td><td class="nm">通信原语动效参数</td><td class="mono">assets/theme/defaults.js</td>
           <td>动效耗时的唯一数值来源</td>
-          <td><span class="pill fix">🔧 要修</span>&nbsp;文件在但仍是空 { }，且未被任何页面加载 ——「保存到代码」落盘无效（bugs.md 已记）</td>
+          <td><span class="pill ok">✅ 在用</span>&nbsp;2026-11-01 首次落盘（6 组 23 参数）并接入 12 页（theme.js 前加载）；改基线走调试台「保存到代码」直写，见第 03 章</td>
         </tr>
         <tr>
           <td class="mono">9</td><td class="nm">通信原语时序编排</td><td class="mono">assets/scenes/pages-base.js</td>
@@ -143,18 +143,10 @@
           <td>回归失败只记账、不改代码</td>
           <td><span class="pill ok">✅ 正常</span>&nbsp;自 docs/BUGS.md 更名</td>
         </tr>
-      </tbody>
-    </table>
-
-    <p class="role" style="margin-top:18px">退役 / 备用——不进主清单，各留一行去向：</p>
-    <table>
-      <thead>
-        <tr><th style="width:130px">文档</th><th style="width:250px">路径</th><th>是什么 · 退役时间 · 还能看哪里</th></tr>
-      </thead>
-      <tbody>
         <tr>
-          <td class="nm">实现方式与算法骨架</td><td class="mono">algorithms-old.html（根）</td>
-          <td><span class="pill off">📦 备用</span>&nbsp;旧「实现方式」投影页：六类骨架矩阵、八种骨架、All-Reduce 三条路线、NCCL 选型。2026-10-31 自根 algorithms.html 改名退役，从首页导航摘除、不在验证范围；内容待合并进 #4 算法口径表（后续待办）</td>
+          <td class="mono">12</td><td class="nm">变更元规范</td><td class="mono">docs/specs.html 第 03 章</td>
+          <td>两份基线文件的唯一合法改法与伴随义务——规范体系自身怎么变</td>
+          <td><span class="pill ok">✅ 在用</span>&nbsp;2026-11-01 随 defaults.js 首次落盘成文</td>
         </tr>
       </tbody>
     </table>
@@ -237,10 +229,10 @@
         <g class="node">
           <rect class="box" x="442" y="44" width="168" height="72" rx="8"/>
           <text class="num" x="602" y="60" text-anchor="end">4</text>
-          <circle class="dot-o" cx="460" cy="60" r="4"/>
+          <circle class="dot-g" cx="460" cy="60" r="4"/>
           <text class="cn" x="472" y="64">通信原语算法</text>
           <text class="f" x="456" y="86">algorithms.html</text>
-          <text class="sub" x="456" y="104">骨架 · 轮次 · 锚点（占位稿）</text>
+          <text class="sub" x="456" y="104">骨架 · 轮次 · 锚点</text>
         </g>
         <g class="node">
           <rect class="box" x="628" y="44" width="168" height="72" rx="8"/>
@@ -335,6 +327,30 @@
       </svg>
       <figcaption><b>读法：</b>顶层 #2–#6 五份规范说了算；下一层 #7–#9 是各自的实现——语义(#3) ↔ registry.js(#7)、算法(#4) ↔ rounds.js、步骤(#5) ↔ defaults.js(#8)、视觉(#6) ↔ pages-base.js(#9)，一条竖线一条对应；算法数据层已建首件 rounds.js（轮次 + 锚点口径，win 键命名标准在其头注释；2026-11-01 锚点并入）。紫虚线既是 #9 对 #6 的对应，也是运行时<b>唯一</b>能写回的地方（调试台「保存到代码」，defaults.js 同被写回）。守护层判过不过、失败只记账；已删除与退役的文档不在图内，去向见第 01 章清单。</figcaption>
     </figure>
+  </section>
+
+  <!-- ============================ 03 ============================ -->
+  <section>
+    <div class="sechead"><span class="no">03</span><h2>变更元规范</h2><span class="meta">两份基线 · 唯一合法改法 · 伴随义务</span></div>
+    <p class="role">运行时能写回仓库的只有两个基线文件（写盘白名单在 <code>tools/serve.mjs</code>，其余路径一律 403）。改基线<b>只许走页面、不许手编</b>——页面路径自带「写盘 → 刷新 → 读回生效」验证闭环，手编绕过它。localStorage 里的调试覆盖只是临时的，清缓存即回基线，永不进仓库。</p>
+    <table>
+      <thead>
+        <tr><th style="width:250px">基线</th><th>怎么改（唯一合法路径）</th><th style="width:260px">本基线特有义务</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">assets/theme/defaults.js<br>（#8 参数基线）</td>
+          <td><code>node tools/serve.mjs</code> → 开 <code>docs/visual.html</code> → 右下 ⚙ 调试台调值 → 「保存到代码」→ 刷新确认生效</td>
+          <td>值必须在 #6 视觉规范正文里有出处——正文与基线不一致即缺陷，记 bugs.md</td>
+        </tr>
+        <tr>
+          <td class="mono">assets/scenes/pages-base.js<br>（#9 时序基线）</td>
+          <td>齿轮面板调倍数 / 填秒 → 「保存到代码」→ 刷新确认编译真生效（拿一段时长肉眼可验）</td>
+          <td>只存覆盖值——空表＝以 scenes 剧本为准，不预填、不抄剧本常量进基线</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="role" style="margin-top:14px">两条共同的伴随义务：① 基线即公共层——改完跑 verify 全量（8 原语页 + index + docs/prepost.html + docs/visual.html，先 --no-shot，提交前去 --no-shot 加截图比对）；② 本页 01 章状态列同步，涉及页面表 / 目录树时同步 README。几何变了先回 #6 / #5 规范正文对口径，再动代码。</p>
   </section>
 
 </div>

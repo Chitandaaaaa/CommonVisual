@@ -838,7 +838,7 @@ td.dim{color:var(--tx2)}
 │             anatomy.js  paramEditor.js                     <span class="c">L2  搭页面（后两件仅 docs/visual.html 加载）</span>
 ├── <span class="k">engine/</span>    compile.js  director.js
 │             <span class="k">verbs/</span>   move.js  copy.js  split.js  sum.js    <span class="c">L3  2 + 4 个</span>
-├── <span class="k">pages/</span>     index.css  docs.css  anatomy.css  algorithms.css  <span class="c">页面样式</span>
+├── <span class="k">pages/</span>     index.css  docs.css  anatomy.css            <span class="c">页面样式</span>
 ├── <span class="k">registry.js</span>                                              <span class="c">L4  1 份 · 8 条事实</span>
 ├── <span class="k">rounds.js</span>                                                <span class="c">L4  轮次口径 · 算法数据层</span>
 ├── <span class="k">scenes/</span>    gather  scatter  broadcast  reduce
@@ -851,7 +851,6 @@ td.dim{color:var(--tx2)}
 <span class="c">docs/</span>   specs.html  清单与关系图    prepost.html  语义
         algorithms.html  算法口径   visual.html     组件与动效规范
         steps / test-cases / bugs …                              <span class="c">规范页（经 ../assets/ 用组件）</span>
-（备用）  algorithms-old.html（根，退役参考，不在验证范围）
 
 <span class="c">离线</span>  tools/serve.mjs  verify.mjs  probe.mjs  browser.mjs  arch.mjs</pre>
 
@@ -866,7 +865,6 @@ td.dim{color:var(--tx2)}
       <tr><td><b>docs/algorithms.html</b> 算法口径</td><td>4 项：theme/docs.css、registry、rounds（最薄）</td><td>内联脚本直读 registry + rounds，不进装配层</td><td>verify docs/algorithms.html</td></tr>
       <tr><td><b>docs/visual.html</b> 视觉</td><td>13 项：css×3、prim×2、<b>parts/cast·payload·beat·chrome</b>、blocks/legend·anatomy·paramEditor</td><td>blocks/anatomy.js 自装配（无 boot 调用）</td><td><b>与原语页共用 parts 四件：改这四件 = 8 原语页 + 本页</b></td></tr>
       <tr><td><b>specs / steps / test-cases</b></td><td>0（自包含）</td><td>纯静态</td><td>无</td></tr>
-      <tr><td><b>algorithms-old</b>（退役）</td><td>同 prepost 一档 + algorithms.css + table.js 的 algorithmsApp</td><td><code>boot('algorithms')</code></td><td>不在验证范围</td></tr>
     </tbody>
   </table>
   <div class="note" style="margin-top:14px">
