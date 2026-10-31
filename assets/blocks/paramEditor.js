@@ -9,7 +9,7 @@
      · 改值 → CV.params.set → 触发各章节 onChange 实时重画
      · 重置全部 → 回到 tokens 基线
      · 导出日志 → 下载 JSON 变更记录
-     · 保存到代码 → 写入 tokens.js（本地服务下直接落盘），固化当前值为代码基线
+     · 保存到代码 → 写入 defaults.js（本地服务下直接落盘），固化当前值为代码基线
    纯运行时工具，不动任何页面行为；默认值仍来自代码。
    ============================================================ */
 (function (CV) {
@@ -364,9 +364,9 @@
   /* ── 保存到代码（生成 defaults.js → 直接写回 assets/theme/defaults.js） ── */
   var saveBtn = dock.querySelector('.pd-save');
   saveBtn.addEventListener('click', function () {
-    var txt = '/* CommonVisual · 参数默认值（可提交）\n' +
-      '   由规范页「保存到代码」写入：把当前（含运行时调过的）参数固化为代码基线。\n' +
-      '   必须在 kit.js 之前加载，kit.js 会读 window.CV_PARAM_DEFAULTS 覆盖内置默认值。 */\n' +
+    var txt = '/* CommonVisual · 参数默认值（可提交基线）\n' +
+      '   由规范页「保存到代码」直接写入本文件：把当前（含运行时调过的）参数固化为代码基线。\n' +
+      '   必须在 theme.js 之前加载，theme.js 读 window.CV_PARAM_DEFAULTS 覆盖内置默认值。 */\n' +
       P.exportTokens();
     saveBtn.disabled = true;
     saveBtn.textContent = '写入中…';

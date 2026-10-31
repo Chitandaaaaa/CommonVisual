@@ -31,7 +31,7 @@ const cssFiles = files.filter(p => p.endsWith('.css'));
 const read = p => readFileSync(p, 'utf8');
 
 /* ---------- 1. 定义归属：CV 成员名 → 文件 ---------- */
-const owner = new Map();      // "drawCard" -> assets/cv/kit.js
+const owner = new Map();      // "PALETTE" -> assets/theme/theme.js
 const defined = new Map();    // file -> Set(names)
 for (const f of jsFiles) {
   const src = read(f);
