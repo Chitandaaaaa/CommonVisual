@@ -1,192 +1,73 @@
 # AGENTS.md
 
-给在这个仓库干活的人（和 agent）的操作手册。**只写「怎么做才不会浪费时间」，不重复项目知识** ——
-页面清单、设计决策、尺寸常量、踩过的坑，全在 `.workbuddy/memory/MEMORY.md`，开工前先读那个。
+给在这个仓库干活的 agent 的规矩。项目知识（页面清单、设计决策、尺寸常量）在
+`.workbuddy/memory/MEMORY.md`，规范文件清单与关系图在 `docs/specs.html`——这里只写「怎么做才不浪费时间」。
 
-> 仓库现状（2026-10-31）：v1 页面整套已删除，v2 提为根目录。根目录 12 个 HTML 是唯一页面集，
-> 结构见 `README.md` 的目录树，边界见 `docs/arch-standard.md`，加新页流程见 `docs/blueprint.html`。
+## 一、项目速览
 
----
+CommonVisual 是零构建的静态可视化站点，用逐步动画讲清 8 种分布式通信原语（gather / scatter / broadcast / reduce / allgather / allreduce / reducescatter / alltoall）。技术栈是纯 HTML + CSS + 原生 JS：全局命名空间 `window.CV` + defer 脚本，不用框架、不用 ESM、不用打包——「双击 html 就能看」是硬需求（file:// 下 ESM 被 CORS 拦）。核心入口是根目录 9 个 HTML（8 原语页 + index），每页是薄壳、只调 `CV.boot('<id>')`，内容全在 `assets/scenes/<id>.js` 纯数据剧本里；**规范页在 `docs/`**（prepost / algorithms / visual / specs / steps / test-cases），经 `../assets/` 引用底层组件——规范与业务代码两条线互不依赖，都只向下用组件。单一事实源是 `assets/registry.js`（每条原语的 pre / post 语义 + algo + rel + verbs），公共层 `assets/engine/`（compile / director / verbs）、`parts/`、`prim/`、`theme/` 被八页共用。唯一 dev 依赖 playwright-core，`tools/` 用无头 Chrome 跑几何断言与截图；仓库没有 build、没有 lint。
 
-## 一、验证：先 probe，后截图
-
-这是最大的效率分水岭。2026-10-26 做 Reduce-Scatter + All-to-All 两页，
-花了 **34 张截图 / 11 个批次 / 9 次 Chrome 冷启动 / 17 分钟**，
-但只定位到 **6 个独立问题** —— 平均 5.7 张图换 1 个问题，其中一整批（5 张）什么问题都没查出来。
-
-### 硬规则
-
-**① 几何断言一律用数字，不用眼睛。**
-「两个包叠在一起了吗」「卡片越界了吗」「标题字号对吗」「元素对齐了吗」——
-这些都能用 `getBoundingClientRect()` / `getComputedStyle()` 一次量出来，十几秒。
-靠截图猜要 3 轮，每轮 40–60 秒。
+## 二、关键命令
 
 ```bash
-# 仓库自带的验证工具（一次启动起 server + 无头 Chrome，跑完自己退出）
-node tools/verify.mjs gather          # 报错检查 + 几何探针 + 最小截图集(初始/飞行中点/终态/窄屏) → pass/fail 表
-node tools/probe.mjs gather 310:"(()=>{ ... return {...} })()"   # 随手查一个几何数，scrub 为进度条刻度(0–1000)
+npm i                                              # 首次：装 playwright-core（唯一依赖）；浏览器路径特殊时用 CV_CHROME / CV_PLAYWRIGHT_CORE
+node tools/verify.mjs gather --no-shot             # 每次改完：结构断言 + 报错回显（单页 5–15 秒，11 页约 2 分钟）
+node tools/verify.mjs gather scatter reduce ...    # 提交前 / 每日 09:30 定时：去掉 --no-shot 加截图比对（11 页 3–4 分钟）
+node tools/probe.mjs gather 310:"(()=>{ ... })()"  # 写断言前量真值（十几秒）；刻度是 0–1000 的 scrub
 ```
 
-`verify` 会一并回显 `problems`（`Runtime.exceptionThrown` + `Log` 的 error 级），
-所以「页面有没有报错」不用另开工具；`probe` 只做单点几何查询。
-两个脚本都在仓库 `tools/` 里，**不写死任何一台机器的路径**：
-首次使用先在仓库根目录 `npm i`（装 playwright-core），浏览器自动探测
-Chrome/Edge 常规安装位，特殊位置用 `CV_CHROME`、playwright-core 位置用
-`CV_PLAYWRIGHT_CORE` 环境变量指定（装载逻辑在 `tools/browser.mjs`）。
-**不要用 `/tmp` 下的散落脚本**。
+分频规则（按 `docs/test-cases.html` 的用例组分频，不按改动大小）：
 
-典型探针：`document.querySelectorAll('#segs .seg').length`（段数 = 步骤数）、
-`[...document.querySelectorAll('#lChips .slot-tx')].map(t => t.textContent)`（槽位内容）、
-`.pkt` 的 `opacity` / `transform`、两元素 `rect` 的中心距、`#segs .seg` 的 `flexGrow`（段宽 = 秒数）。
-
-**② 每张截图必须对应一个「待验证的断言」。**
-截之前先想清楚：这张图我要判断什么？判断不了就别截。
-「再截一张看看」是最贵的动作。
-
-**③ 顺序：写完代码 → probe 全部关键几何 → 只截 3 类帧。**
-先把低级错误（尺寸、坐标、行数）用数字清干净，截图只用来确认**观感**（颜色、层次、节奏）。
-
-### 验收分频：结构断言每次改完跑，截图留到提交前
-
-按 `docs/testing.html` 的三组用例分频（不是按改动大小分）：
-
-| 跑什么 | 什么时候 | 命令 | 实测 |
-|---|---|---|---|
-| 第 2、3、4 组 · 结构断言（97 条） | **每次改完** | `node tools/verify.mjs <改到的页> --no-shot` | 单页 5–15 秒；12 页约 2 分 20 秒 |
-| 第 1 组 · 截图比对 + 人工观感（3 条） | **提交前 / 每日 09:30 定时** | 去掉 `--no-shot` | 12 页 3–4 分钟 |
-| 单点几何（写断言前量真值） | 写完代码先量 | `node tools/probe.mjs <页> <刻度>:"<表达式>"` | 十几秒 |
-
-- **改哪页传哪页**，别无脑全量：一次改动通常只影响一页，全量是多余的等待。
-- **例外：改公共层**（`engine/` 的 compile / director / verbs、`parts/`、`prim/`、`theme/`）→ 一次影响 8 个原语页，当次传 8 页 `--no-shot`（约 1 分钟，可接受），红了的当场修，不等定时。
-- **写断言要共用一次扫描**：同一页的断言别各自 seek，先采样一轮记下读数再比对（探针里已按此实现：每页一次挂载、窗口刻度由 getCh 现算），否则「每次改完都跑」就守不住了。
-- **缺陷统一记在 `docs/BUGS.md`**：定时回归与人工验证都往那张表追加，别散落在聊天里。只记录，不改业务代码。
-- **验证用例清单以 `docs/testing.html` 为准**（**100 条，按页面组织**：① 通用 3 条＝截图比对 / 桌面观感 / 窄屏排版，每页都跑；② **全站通用 20 条**＝播放器（挂载/段数/段宽/字幕/播放切换/跳段/复位/循环回绕/残留）、参数（齿轮/持久化）、聚焦、时序连续、导航、共享层 API 契约（2.18–2.21），跨页且不属于任何单个原语；③ 原语页 60 条＝8 页各 6–9 条（挂载 → 初始态 → 过程中 → 终态）；④ 静态页 17 条。**100 条已全部实现**（2026-10-31 拆分重排：17 处「一条用例捆绑多个验证」就地拆开、编号顺延 83 → 100，旧编号映射见 testing.html 页末；探针在 `tools/probes/`，文件名与页面同名即自动配对）。每条都标「页面」，避免把 reducescatter 专属的断言当成全站通用；标「改口径」的条目已按实现对齐（历史轮次 b1c2da0 / 2026-10-30 / 2026-10-31 口径定案 3.23 / 3.24 / 3.28 / V4），照红条文案即可；当前门禁仅 3 条紫（3.42 / 3.43 / 3.51 采样锚点，待时序标准定稿），另有一批审计发现登记在 testing.html 顶部待处理区③（只记录未排期）。工具用法、文件放哪、返回什么结构、输出怎么读**都不算用例**，统一放页末「附：工具与跑法」。**原则：只有能判「过或不过」的验证动作才算用例**——基础设施（起服务/开浏览器）、约定（文件路径/返回结构）、顺带行为（收报错/跑考卷/汇总判定）、纪律（截图前写目的）一律不占编号。改验证规则先改那一页，再同步本节。
-
-### 每个新页面的最小截图集（3–4 张，不是 5 张）
-
-| 帧 | scrub | 断言 |
-|---|---|---|
-| 初始态 | `0@900` | 卡片/槽位/导航/图例都对 |
-| 本轮飞行中点 | 见下 | 对向包分离、线色、箭头方向 |
-| 终态 | `1000@1200` | 结果一致、徽章、连线收敛 |
-| 窄屏 | `0@900` @420×820 | 字幕不截断、不溢出 |
-
-**飞行中点的 scrub 值不要手算**：页面挂 `getCh()`，所有窗口刻度现算
-（`CV.lastMount.getCh()`），探针 `_common.mjs` 里的 `sc(sec, total)` 就是换算。
-段边界（如 `v250`）是动画起点，不是中点。
-
----
-
-## 二、CDP 截图的坑（都真踩过）
-
-**① server 和 Chrome 必须在同一条 Bash 命令里。**
-Bash 结束会回收后台进程，所以每次调用都得重新冷启动 Chrome（约 4s）。
-一次命令里跑完所有帧，别拆成多次。
-
-**② 端口写错会静默失败。**
-2026-10-26 有一批图白截：server 起在 `8813`，请求写的 `8814`，
-还加了 `2>/dev/null` 把报错吞了 —— 命令显示成功，图是 `ERR_CONNECTION_REFUSED` 错误页。
-
-- **绝不**给截图命令加 `2>/dev/null`
-- 截图脚本应回显 `location.href` 和 `document.title`，一眼看出是不是打到了目标页
-- **两张图字节数完全相同 = 一定是废帧**（同一画面），立刻查
-
-**③ `scrub` 是进度条刻度（0–1000），`controls.seek()` 要 0–1。**
-工具里已经除了 1000，别在手写的探针里再把刻度直接喂给 `seek` ——
-`clamp(125, 0, 1) = 1`，任何中间值都会变成**终态**，而命令照样报成功。
-判断依据：截的是「飞行中段」，字幕却是收尾那句。
-
-**④ 有 CSS 过渡的帧 `@delay` ≥ 800ms。**
-`scrub` 跳步后立刻截，会截到 `fill` / `opacity` 的过渡中间态 —— 看起来像 bug，其实只是半透明。
-终态尤其要给足（`@1200`）。
-
-**⑤ `Runtime.evaluate` 必须传 `returnByValue: true`**，否则拿不到 `result.value`。
-
-**⑥ `curl` 要 `--noproxy '*'`**（环境里有系统代理，localhost 之外的请求会被拦）。
-
-**⑦ 连续跑多页 probe 要给每个进程不同的 `port=`。**
-Chrome 的 `--remote-debugging-port=9333` 是写死的，上一个实例没退干净时
-下一个会卡在「chrome devtools 未就绪」（15s 后抛错）。**一次 Bash 调一页**，别 for 循环。
-（注：本仓库 `tools/verify.mjs` 已内置端口管理，可一次传多页；手写 `tools/probe.mjs` 仍建议一次一页。）
-
----
-
-## 三、返工的两个根因（可预防）
-
-**① 算法选型：草图定了什么就写什么。**
-Reduce-Scatter 的草图明确画的是 recursive halving（段数 4→2→1），
-实现时我却先试了 ring，理由是「NCCL 默认」。
-结果 ring 的段号错开一格，和对照表「卡 k 留第 k 段」对不上，**整个文件重写，5 张截图全废**。
-
-> 骨架选择在上一轮讨论里就该定死。写代码时不要重新评估。
-
-**② 几何公式先在纸上算，不要边截边调。**
-All-to-All 的两条对角线端点改了两轮：
-- 第一轮：原本想用 `bend` 把对角线弯开，正负号写反，弯错方向
-- 第二轮：端点用「两卡中心连线求交」，45° 时交点正好落在卡**角**上，视觉上线穿过了卡角
-
-正确做法是**射线与矩形边界求交**（按方向分别除 `w/2` 和 `h/2` 取小者），
-这个公式写在纸上 30 秒，试错要 2 轮截图。
-
-> 后续用户判定对角线的弧线不如直线清楚，已改成直线中心交叉（`bend` 全部删除）。
-> 成立的前提是「每步最多一条对角线在动」—— 分步规则一旦改动，
-> 中心交叉点就可能出现两个包相撞，届时要么改回弧线，要么给包加法向偏移。
-
----
-
-## 四、改公共层必须全量回归
-
-`assets/engine/`（compile / director / verbs）、`assets/parts/`、`assets/prim/`、`assets/theme/`
-被全部 8 个原语页共用；`boot.js` / `registry.js` 还影响 4 个文档页。任何改动都要回归，
-而且**回归用 probe 不用全截图**：
-
-```bash
-# 共享层改动后，八页过一遍几何探针（用仓库工具，不用 /tmp 脚本）
-for p in gather scatter broadcast reduce allgather allreduce reducescatter alltoall; do
-  echo -n "$p: "; node tools/probe.mjs "$p" \
-    0:"document.querySelectorAll('#segs .seg').length"
-done
-# 或直接：node tools/verify.mjs gather scatter ...   （一次启动跑完多页 + 截图）
-```
-
-实例：`verbs/sum.js` 的 HUMP（双车道法向偏移）一改，allreduce 与 reducescatter 的对向包
-分离度全变；`theme/stage-page.css` 改的是八页共用的舞台样式，12 页都得看一眼。
-
----
-
-## 五、时间预算（用于判断「是不是卡住了」）
-
-| 任务 | 合理耗时 |
+| 什么时候 | 跑什么 |
 |---|---|
-| 新建一个原语页（剧本照抄现成页改数据） | 20–25 分钟 |
-| 其中：读参考剧本 + 蓝图 | 5 |
-| 写 scenes + 薄壳 HTML | 10 |
-| probe 全部几何 | 2 |
-| 截图 3 批 | 4–5 |
-| 改公共层 + 回归 | +10 |
-| 每次返工 | +8 |
+| 每次改完 | `verify <改到的页> --no-shot`（第 2/3/4 组 93 条结构断言）；**改公共层例外**：当次传 8 原语页 + index + docs/prepost.html + docs/visual.html |
+| 提交前 / 09:30 定时 | 去掉 `--no-shot`：截图比对 + 人工观感（第 1 组 3 条） |
+| 写断言前 | probe 量真值，再落成 `tools/probes/<页>.mjs`（与页面同名即自动配对） |
 
-**超过这个量级就是在返工**，应该停下来重新想，而不是接着截图。
+- 改哪页传哪页，别无脑全量；docs 规范页带路径传参（`verify docs/prepost.html`）。verify 顺带回显 `problems`（页面报错不用另开工具），退出码非 0 即失败——它就是本仓库的「测试」。
+- 同一页的多条断言共用一次时间轴扫描，别各自 seek，否则「每次改完都跑」守不住。
+- 顺序铁律：写完代码 → probe 量全部关键几何 → 只截 4 类帧确认观感（初始 `0@900` / 飞行中点 / 终态 `1000@1200` / 窄屏 `420×820`）。几何一律用数字量，截图只看颜色层次节奏；先截最可能出问题的 1 帧，别一次截 5 帧逐张读。
 
----
+## 三、代码规范
 
-## 六、别做的事
+- **薄壳页面**：HTML 只含 `CV.boot('<id>')`；内容、文案、时序全在 scenes 剧本，剧本必须是纯数据（能过 `JSON.stringify`）。加新页全流程见 `docs/architecture.html`。
+- **单一事实源**：原语语义（pre / post / algo / rel / verbs）只写 `registry.js` 一份；动画终态唯一来源是 registry 的 `post`，页面和探针都读它，不许解析动画终态当事实。
+- **命名对齐**：页面 id 贯穿全套——`gather.html` ↔ `scenes/gather.js` ↔ `probes/gather.mjs`；docs 规范页按文件名配对探针（prepost.mjs / visual.mjs），boot id 是分发键不随文件名（prepost.html 仍 `CV.boot('layout')`）；全局只经 `window.CV` 与约定数据位（如 `CV_PARAM_DEFAULTS`），不另起全局变量。
+- **跨页零引用**：8 个页面 JS 互不引用，要复用就下沉公共层；公共层改动必须 8 页回归（用 probe，不用全截图）。
+- **只有引擎碰时间**：时间轴编译一次，播放 / seek / 循环只是改 t 的推进方式；组件不自组合。
+- **不硬编码**：尺寸、颜色、耗时走 theme 令牌与 `defaults.js`；scrub 用 0–1000 刻度、`controls.seek()` 用 0–1，换算交给页面 `getCh()`。
+- **口径有出处**：文案与动态步骤看 `docs/steps.html`，组件真值看 `docs/visual.html`，算法口径看 `docs/algorithms.html`，用例清单以 `docs/test-cases.html` 为准（96 条＝通用 3 + 全站 20 + 原语页 60 + index 4 + 规范页 9，只有能判「过 / 不过」的验证动作才占编号）；改验证规则先改那一页，再同步本文件。
+- **收尾五件事**：probe 回归 → README 页面表 / 目录树同步 → 新原语补四件套（薄壳 HTML + scenes 剧本 + registry 登记 + probes 断言）→ `.workbuddy/memory/` 当日日志（长期约定进 MEMORY.md）→ commit 正文写清「为什么这么改」。
 
-- 别在没有明确断言时截图
-- 别用截图判断「差几像素」
-- 别在写代码阶段重新评估已经在草图里定下的算法
-- 别给截图/验证命令加 `2>/dev/null`
-- 别一次截 5 帧然后逐张读 —— 先截最可能出问题的那 1 帧
-- 别改完公共层就直接交付，8 个页面都得过一遍 probe
-- 别解析动画终态当事实 —— 终态唯一来源是 `registry.js` 的 `post`，页面与探针都读它
+## 四、边界与禁区
 
----
+不要碰：
 
-## 七、收尾清单
+- `.workbuddy/memory/` 只追加不删改；`docs/bugs.md` 是缺陷台账——每日 09:30 定时巡检只记账不改码，人工发现的缺陷也记那里，别散落在聊天里。
+- v1 已彻底删除：不存在 `assets/cv/*`，arch-standard / architecture.md 等 v1 旧文档不要恢复；现行架构标准是 `docs/architecture.html`（结构以 README 目录树为准）。
+- 内容源 `分布式通信原语详解.md` 只读：NCCL 底层算法与「本项目映射」场景表都不是本站口径，内容源与实现冲突以实现为准；想引用它的说法，先改规范页再改代码。
 
-1. `probe` 回归（改哪页传哪页；公共层改了传 8 页 + 4 文档页）
-2. 更新 `README.md` 的页面表 / 目录树 / 设计决策
-3. 新原语要补：薄壳 HTML（`CV.boot('<id>')`）+ `scenes/<id>.js` 剧本 + `registry.js` 登记
-   （`pre / post / rel / verbs`）—— 全流程见 `docs/blueprint.html`
-4. 追加 `.workbuddy/memory/YYYY-MM-DD.md`，长期约定写进 `MEMORY.md`
-5. 提交时把「为什么这么改」写进 commit message 正文，不只是标题
+禁止操作：
+
+- 不引入框架 / 构建 / ESM，不升级、不新增依赖。
+- 不做静默重构：公共层（engine / parts / prim / theme / boot / registry）一改 8 页几何全变，回归没跑不算完，红了的当场修。
+- 不发无断言的截图；不给截图 / 验证命令加 `2>/dev/null`；不用 `/tmp` 散落脚本；工具不写死任何机器的路径。
+- 不在写码阶段重新评估草图已定的算法骨架；几何公式先纸上算，不边截边调。
+
+## 五、历史问题与注意点（一句话一条）
+
+1. server 和 Chrome 必须在同一条 Bash 命令里——Bash 结束回收后台进程，拆开跑就每次 4 秒冷启动。
+2. 端口写错加 `2>/dev/null` = 命令成功、图是错误页（8813/8814 事故）——截图脚本必须回显 `location.href` 和 `document.title`。
+3. 两张截图字节数完全相同 = 一定是废帧，立刻查。
+4. 把 0–1000 的 scrub 直接喂给 `seek()` 会被 clamp 成终态还报成功——识别法：截的是飞行中段、字幕却是收尾那句。
+5. 有 CSS 过渡的帧 `@delay` ≥ 800ms、终态给足 1200ms，否则截到 fill / opacity 中间态，看着像 bug 其实不是。
+6. `Runtime.evaluate` 必须 `returnByValue: true`，否则拿不到 `result.value`。
+7. `curl` 要 `--noproxy '*'`——环境有系统代理，localhost 之外的请求会被拦。
+8. Chrome remote-debugging-port 写死 9333：verify.mjs 已内置端口管理可一次多页，手写 probe 仍要一次一页，上一实例没退净会卡 15 秒后报错。
+9. 飞行中点的 scrub 别手算——页面挂 `getCh()`，探针 `_common.mjs` 的 `sc(sec, total)` 现算；段边界（如 v250）是动画起点不是中点。
+10. 算法骨架在写码阶段重新选型，代价是整文件重写 + 5 张截图全废（Reduce-Scatter 草图定的 recursive halving 被换成 ring）。
+11. alltoall 对角线用直线中心交叉的前提是「每步最多一条对角线在动」——分步规则一改就会两包相撞，届时改回弧线或加法向偏移。
+12. verify 的挂载超时是静默的（8 秒后照常跑）——头部行 `dur=null` 冒充通过，看 dur 是否为 null 才能识破。
+13. 探针固定大步长会漏小窗口阶段（reducescatter 计算框只在合并段亮，step=120 漏拍被误判回归）——细扫或按页面 STEPS 定位阶段中点。
+14. 写断言前先读 paint 里的初值，别从路由和步骤反推（gather `count` 从 1 起跳等 7 处口径修正的教训）。
+15. 时间预算：新原语页 20–25 分钟、公共层改动回归 +10、每次返工 +8——超预算就是在返工，停下来重新想，别接着截图。

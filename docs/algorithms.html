@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CommonVisual · 通信原语算法口径</title>
+<meta name="description" content="八个集合通信原语的算法口径表：每页五行——通信前 / 骨架 / 轮次 / 终态 / 锚点。通信前、终态、骨架从 registry 现渲染；轮次与锚点待时序标准定稿后收编。">
+<link rel="stylesheet" href="../assets/theme/theme.css">
+<link rel="stylesheet" href="../assets/pages/docs.css">
+<style>
+  .note{margin:14px 0 0;background:#f7f9fc;border:1px dashed #cfd8e6;border-radius:9px;padding:9px 13px;font-size:12.5px;color:#4a5568}
+  .note b{color:#33415c}
+  .prim{margin:26px 0 0;background:#fff;border:1px solid #e4e7ee;border-radius:12px;box-shadow:0 1px 2px rgba(20,25,40,.06),0 8px 24px rgba(20,25,40,.05);overflow:hidden}
+  .prim>h2{margin:0;padding:12px 16px 10px;font-size:15.5px;border-bottom:1px solid #e4e7ee;background:#fafbfd}
+  .prim>h2 em{font-style:normal;color:#7a8296;font-weight:400;font-size:12.5px;margin-left:8px}
+  .prim>h2 .dir{float:right;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:#7c3aed;background:#f3efff;border:1px solid #e5dcfd;border-radius:6px;padding:2px 8px}
+  table.kb{width:100%;border-collapse:collapse;font-size:12.8px}
+  table.kb th{width:74px;text-align:left;vertical-align:top;padding:9px 0 9px 16px;color:#4b5364;font-weight:600;white-space:nowrap;border-bottom:1px solid #eef0f5}
+  table.kb td{padding:9px 16px 9px 0;border-bottom:1px solid #eef0f5;color:#1c2130}
+  table.kb tr:last-child th,table.kb tr:last-child td{border-bottom:none}
+  table.kb .dim{color:#7a8296}
+  .mtx{display:inline-flex;gap:6px;vertical-align:-2px}
+  .mtx .d{width:16px;height:16px;border-radius:5px;border:1.5px solid #b9aecf;position:relative}
+  .mtx .d.ok{background:#7c3aed;border-color:#7c3aed}
+  .mtx .d.none{background:#fff;border-style:dashed;border-color:#d5d9e4}
+  .mtx .d.none::after{content:'×';position:absolute;inset:0;display:grid;place-items:center;font-size:10px;color:#a3aaba}
+  .kb .pick{margin-top:5px;color:#4b5364}
+  .kb .pick b{color:#1c2130}
+  .pill-todo{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:6px;font-weight:600;background:#fdf3e3;color:#d97706;margin-right:6px}
+  .kb .why{color:#7a8296;font-size:12px}
+  .legend{margin:16px 0 0;font-size:12px;color:#7a8296}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="hd">
+    <a class="back" href="../index.html">
+      <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+        <path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      原语关系树
+    </a>
+    <h1>通信原语 · 算法口径</h1>
+    <p class="lead">每条原语五行口径：<b>通信前 → 骨架 → 轮次 → 终态 → 锚点</b>。registry 管两头（pre / post），scenes 管每一拍；本页立中间口径的表格。通信前、终态、骨架从 <code>assets/registry.js</code> 现渲染，不另抄一份。</p>
+    <div class="note"><b>占位稿（2026-10-31）：</b>轮次、锚点两列待时序标准定稿后收编；八种骨架的定义与 All-Reduce 三条路线、NCCL 选型目前留在备用页 <a href="../algorithms-old.html">algorithms-old.html</a>（退役参考，非验证对象），合并进本页是<b>后续待办</b>。</div>
+  </header>
+
+  <main id="app"></main>
+
+  <footer class="ft">
+    <p>两头语义在 <a href="prepost.html" style="color:inherit">前后对照表</a>，零件尺寸在 <a href="visual.html" style="color:inherit">组件与动效规范</a>。</p>
+    <a class="back" href="../index.html">← 回到原语关系树</a>
+  </footer>
+
+</div>
+
+<script src="../assets/registry.js"></script>
+<script>
+(function () {
+  'use strict';
+  /* 六列骨架名与 blocks/table.js 的算法矩阵一致（合并待办时收编进 registry） */
+  var COLS = ['链 / 树', 'Ring', '倍增 / 减半', 'Bruck', '全连接', '分层 / 网内'];
+
+  function sideText(e) {
+    if (!e || e.empty) return '<span class="dim">空</span>';
+    var t = e.c.join(' ');
+    if (e.flag) t += ' <span class="dim">（' + e.flag + '）</span>';
+    return t;
+  }
+  function sidesText(arr) {
+    return arr.map(function (e, i) { return '卡' + i + '：' + sideText(e); }).join('　');
+  }
+  function mtxRow(algo) {
+    return '<span class="mtx">' + algo.map(function (s) {
+      return '<span class="d ' + s + '" title="' + s + '"></span>';
+    }).join('') + '</span>';
+  }
+
+  var html = '';
+  CV.REG_ORDER.forEach(function (id) {
+    var p = CV.registryById(id);
+    html += '<section class="prim" id="' + id + '">' +
+      '<h2>' + p.en + '<em>' + p.cn + ' · ' + p.oneWord + '</em><span class="dir">' + p.dir + '</span></h2>' +
+      '<table class="kb">' +
+      '<tr><th>通信前</th><td>' + sidesText(p.pre) + '</td></tr>' +
+      '<tr><th>骨架</th><td>' + mtxRow(p.algo) +
+        '<div class="pick"><b>常用实现：</b>' + p.pick.a + ' —— ' + p.pick.n + '</div></td></tr>' +
+      '<tr><th>轮次</th><td><span class="pill-todo">待补</span><span class="why">每页几轮、每轮动哪些边 —— scenes 管每一拍，轮次口径待时序标准定稿后收编（test-cases 3.42 / 3.43 / 3.51 紫条同源）。</span></td></tr>' +
+      '<tr><th>终态</th><td>' + sidesText(p.post) + '</td></tr>' +
+      '<tr><th>锚点</th><td><span class="pill-todo">待补</span><span class="why">采样锚点（验哪一帧）待时序标准定稿。</span></td></tr>' +
+      '</table></section>';
+  });
+  html += '<p class="legend">骨架图例：实心 = NCCL 常见默认 · 空格 = 也可以用（看规模与包大小）· × = 这条路走不通。六列依次：' + COLS.join(' · ') + '。</p>';
+  document.getElementById('app').innerHTML = html;
+})();
+</script>
+</body>
+</html>

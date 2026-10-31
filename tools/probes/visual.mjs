@@ -1,18 +1,17 @@
-/* CommonVisual · anatomy 页探针（v2 契约版，可在旧页自检）
+/* CommonVisual · visual 页探针（v2 契约版；原 anatomy 页，2026-10-31 移入 docs/）
    ------------------------------------------------------------
-   testing.html 4.12–4.17（2026-10-31 拆分重排：旧 4.10 拆为 4.12–4.14、
-   旧 4.12 拆为 4.16+4.17）+ 2.14 的 anatomy 半截（cv.params.v1 持久化）
-   + 蓝图 W8。
-   口径（2026-10-30 按旧页实测修正 4.12，现 4.16）：旧页只有 03 节有「动态」
+   test-cases.html 4.8–4.13（2026-10-31 原 4.12–4.17 随页退役顺延，更早拆分史见 git）
+   + 2.14 的 visual 半截（cv.params.v1 持久化）+ 蓝图 W8。
+   口径（2026-10-30 按旧页实测修正，现 4.12）：本页只有 03 节有「动态」
    tab 组（一排变两排 ↔ 两排变一排）；07 的动态是自动播放、无 tab。
-   探针按「存在动态 tab 就考」写，v2 若给 07 也加了 tab 会自动被考。
+   探针按「存在动态 tab 就考」写，若给 07 也加了 tab 会自动被考。
    W 真值（2026-10-30 待自检确认）：.toc 152×367 r12；.demo 884×230 r14。
    */
 export async function check(pg) {
   const out = [];
   const ok = (name, cond, detail) => out.push({ name, pass: !!cond, detail: detail || '' });
 
-  /* 4.12 / 4.13 / 4.14 章节齐全、目录对齐、切换交互
+  /* 4.8 / 4.9 / 4.10 章节齐全、目录对齐、切换交互
      （2026-10-31 拆自旧 4.10：数量与编号 / 目录 / 点击切换各自独立判）*/
   {
     const d = await pg.evaluate(() => {
@@ -23,12 +22,12 @@ export async function check(pg) {
     });
     const noSeq = d.secs.map(s => s.no);
     const continuous = noSeq.every((n, i) => n === String(i + 1).padStart(2, '0'));
-    ok('4.12 章节数与编号连续', d.secs.length === 13 && continuous,
+    ok('4.8 章节数与编号连续', d.secs.length === 13 && continuous,
       `sec=${d.secs.length} 编号连续=${continuous}`);
     /* 目录锚点是 #sec-NN；本页是单章视图，点击 = 切到第 NN 节（无真实锚元素）*/
     const tocOk = d.toc.length === d.secs.length &&
       d.toc.every((id, i) => id === 'sec-' + d.secs[i].no);
-    ok('4.13 目录对齐', tocOk, `目录=${d.toc.length}/13`);
+    ok('4.9 目录对齐', tocOk, `目录=${d.toc.length}/13`);
     let clickOk = true;
     if (tocOk && d.toc.length > 1) {
       /* 点第 7 项目：第 7 节显示、其余隐藏、hash 重写 */
@@ -42,14 +41,14 @@ export async function check(pg) {
         return vis.length === 1 && vis[0].querySelector('.sec-no').textContent === '07' &&
           location.hash === '#sec-07';
       });
-      /* 回到第 1 节，后续断言（4.15 / W8 / 4.16）默认状态不受影响 */
+      /* 回到第 1 节，后续断言（4.11 / W8 / 4.12）默认状态不受影响 */
       await pg.evaluate(() => { document.querySelectorAll('.toc a')[0].click(); });
       await pg.waitForTimeout(300);
     }
-    ok('4.14 章节切换交互', clickOk, `切换显示+hash=${clickOk}`);
+    ok('4.10 章节切换交互', clickOk, `切换显示+hash=${clickOk}`);
   }
 
-  /* 4.15 每节示例都能挂载（01–12 节每节有非空画布；13 施工约定无画布豁免）*/
+  /* 4.11 每节示例都能挂载（01–12 节每节有非空画布；13 施工约定无画布豁免）*/
   {
     const d = await pg.evaluate(() => {
       const q = (s, r) => [...(r || document).querySelectorAll(s)];
@@ -59,7 +58,7 @@ export async function check(pg) {
       }));
     });
     const bad = d.filter(x => x.id !== 'rules' && x.svg === 0);
-    ok('4.15 每节示例都能挂载', bad.length === 0,
+    ok('4.11 每节示例都能挂载', bad.length === 0,
       bad.length ? `无画布节=${bad.map(x => x.id).join(',')}` : `01–12 节均有 svg`);
   }
 
@@ -80,7 +79,7 @@ export async function check(pg) {
       `toc=${d.toc} demo=${d.demo}`);
   }
 
-  /* 4.16 / 4.17 动态 tab 切换内容真的变；切回复原、旧 rAF 已停
+  /* 4.12 / 4.13 动态 tab 切换内容真的变；切回复原、旧 rAF 已停
      （2026-10-31 拆自旧 4.12：变化与复原+rAF 守恒各自独立判）*/
   {
     await pg.evaluate(() => {
@@ -105,8 +104,8 @@ export async function check(pg) {
       return null;
     });
     if (!tab) {
-      ok('4.16 tab 切换内容真的变', false, '没找到动态 tab 组');
-      ok('4.17 切回复原、rAF 不增', false, '没找到动态 tab 组');
+      ok('4.12 tab 切换内容真的变', false, '没找到动态 tab 组');
+      ok('4.13 切回复原、rAF 不增', false, '没找到动态 tab 组');
     } else {
       const fp = () => pg.evaluate(() => {
         const hd = document.querySelector('[data-probe-dyn]');
@@ -140,14 +139,14 @@ export async function check(pg) {
       const changed = f0 && f1 && (f0.n !== f1.n || f0.svg !== f1.svg);
       const restored = f0 && f2 && f0.svg === f2.svg;
       const noLeak = n1 <= n0 && n2 <= n0;
-      ok('4.16 tab 切换内容真的变', changed,
+      ok('4.12 tab 切换内容真的变', changed,
         `${tab.where} svg ${f0 && f0.svg}→${f1 && f1.svg}`);
-      ok('4.17 切回复原、rAF 不增', restored && noLeak,
+      ok('4.13 切回复原、rAF 不增', restored && noLeak,
         `复原=${restored} rAF ${n0}→${n1}→${n2} svg ${f2 && f2.svg}`);
     }
   }
 
-  /* 2.14-anatomy 参数持久化（cv.params.v1）*/
+  /* 2.14-visual 参数持久化（cv.params.v1）*/
   {
     const r1 = await pg.evaluate(() => {
       CV.params.set('05-packet', 'packDur', 2.5);
@@ -162,7 +161,7 @@ export async function check(pg) {
       v: CV.params.get('05-packet', 'packDur'),
       ls: localStorage.getItem('cv.params.v1')
     }));
-    ok('2.14-anatomy 参数持久化',
+    ok('2.14-visual 参数持久化',
       r1.ls && JSON.parse(r1.ls)['05-packet'] && JSON.parse(r1.ls)['05-packet'].packDur === 2.5 &&
       r1.now === 2.5 && r2 === 2.5 && r3.v === 1.5 && !r3.ls,
       `set→${r1.now} reload→${r2} reset→${r3.v}`);

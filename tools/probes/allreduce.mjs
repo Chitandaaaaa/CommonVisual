@@ -1,6 +1,6 @@
 /* CommonVisual · allreduce 页探针（v2 契约版，可在旧页自检）
    ------------------------------------------------------------
-   testing.html 3.39–3.45（2026-10-31 拆分重排顺延，原 3.34–3.40；
+   test-cases.html 3.39–3.45（2026-10-31 拆分重排顺延，原 3.34–3.40；
    3.42/3.43 采样锚点紫条续记——时序标准定稿后改 win 现算）。
    旧页未挂 getCh：自检用 OLD.allreduce
    实测刻度（TOTAL 21.52s；第1/2轮飞行中点 225/544；第1轮合并结束
@@ -79,7 +79,7 @@ export async function check(pg) {
   ok('3.39 挂载四张卡', common.t0.cards.length === 4, `cards=${common.t0.cards.length}`);
 
   /* 3.40 初始态四卡各一整份（allreduce 的起点是整份 ABCD —— 口径已按
-     实现修正：testing.html 原写「各 1 块」是 allgather 的起点）*/
+     实现修正：test-cases.html 原写「各 1 块」是 allgather 的起点）*/
   {
     const t0 = common.t0;
     const whole = [0, 1, 2, 3].map(r => byCard(t0, r).filter(x => x.l));

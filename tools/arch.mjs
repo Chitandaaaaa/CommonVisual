@@ -7,8 +7,8 @@
      4. CSS → CSS：@import + 共享类/变量归属
    用法：node tools/arch.mjs [--json]
 */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { join, relative, dirname } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const rel = p => relative(ROOT, p);
@@ -70,13 +70,33 @@ for (const f of jsFiles) {
   if (g.size) globals.set(from, g);
 }
 
-/* ---------- 3. HTML 引用 ---------- */
+/* ---------- 3. HTML 引用 ----------
+   根页面写 assets/…，docs/ 规范页写 ../assets/… —— 按页面所在目录
+   归一成仓库相对路径，两种都收；顺带记「引用了但文件不存在」的断链。 */
 const htmlRefs = new Map();
+const htmlBroken = new Map();   // page -> Set(写的原文)
 for (const f of htmls) {
   const src = read(f);
   const refs = [];
-  for (const m of src.matchAll(/(?:src|href)="(assets\/[^"]+)"/g)) refs.push(m[1]);
+  for (const m of src.matchAll(/(?:src|href)="((?:\.\.\/)?assets\/[^"]+)"/g)) {
+    const p = relative(ROOT, join(dirname(f), m[1]));   // join 自动折叠 ../
+    refs.push(p);
+    if (!existsSync(join(ROOT, p))) {
+      if (!htmlBroken.has(rel(f))) htmlBroken.set(rel(f), new Set());
+      htmlBroken.get(rel(f)).add(m[1]);
+    }
+  }
   htmlRefs.set(rel(f), refs);
+}
+
+/* ---------- 3b. 反向依赖检查：两条线原则 —— assets 层不得引用 docs/ ----------
+   剥掉注释再扫，避免文案示例误报（如 paramEditor 头注释里的 docs/visual.html）。 */
+const reverseDeps = new Map();
+for (const f of jsFiles.concat(cssFiles)) {
+  if (!rel(f).startsWith('assets/')) continue;
+  const src = read(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const hits = [...src.matchAll(/["'(](docs\/[^"')\s]+)/g)].map(m => m[1]);
+  if (hits.length) reverseDeps.set(rel(f), hits);
 }
 
 /* ---------- 4. CSS 依赖 ---------- */
@@ -121,6 +141,8 @@ const out = {
   })),
   globals: Object.fromEntries([...globals].map(([k, v]) => [k, [...v]])),
   htmlRefs: Object.fromEntries(htmlRefs),
+  htmlBroken: Object.fromEntries([...htmlBroken].map(([k, v]) => [k, [...v].sort()])),
+  reverseDeps: Object.fromEntries(reverseDeps),
   cssEdges: Object.fromEntries([...cssEdges].map(([k, v]) => [k, [...v]])),
   cssVarUse: Object.fromEntries([...cssVarUse].map(([k, v]) => [k, [...v].sort()])),
   cssVarShared: Object.fromEntries([...cssVarShared].sort())
@@ -131,6 +153,12 @@ if (process.argv.includes('--json')) {
 } else {
   console.log('## HTML → 资源');
   for (const [h, r] of htmlRefs) console.log(`  ${h}: ${r.join(', ')}`);
+  console.log('\n## 断链（引用了但文件不存在）');
+  if (!htmlBroken.size) console.log('  （无）');
+  for (const [h, s] of htmlBroken) console.log(`  ${h}: ${[...s].join(', ')}`);
+  console.log('\n## 反向依赖（assets 层引用 docs/ —— 应为零，两条线原则）');
+  if (!reverseDeps.size) console.log('  （无，两条线成立）');
+  for (const [f, hits] of reverseDeps) console.log(`  ${f}: ${hits.join(', ')}`);
   console.log('\n## JS 依赖边（A 使用 B 定义的 CV.*）');
   for (const { from, to } of out.jsEdges) {
     for (const t of to) console.log(`  ${from} → ${t.file}  [${t.members.join(' ')}]`);

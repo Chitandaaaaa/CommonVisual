@@ -1,9 +1,9 @@
-/* CommonVisual · layout 页探针（v2 契约版，可在旧页自检）
+/* CommonVisual · prepost 页探针（v2 契约版；原 layout 页，2026-10-31 移入 docs/ 并更名 prepost）
    ------------------------------------------------------------
-   testing.html 4.5–4.7 + 蓝图 W5/W6 + 2.7 的跨页对照半截。
-   口径（2026-10-30 按旧页实测修正 4.7）：index 与 layout 的原语
+   test-cases.html 4.5–4.7 + 蓝图 W5/W6 + 2.7 的跨页对照半截。
+   口径（2026-10-30 按旧页实测修正 4.7）：index 与 prepost 的原语
    「集合与中文名」逐字一致；顺序两处本就不同（index=树序、
-   layout=对照表序），只比集合不比顺序。
+   prepost=对照表序），只比集合不比顺序。
    W 真值（2026-10-30 实测待自检确认）：.cell 20×20 r5 字10；.row 358×46 r12。
    */
 import { PRIMS } from './_common.mjs';
@@ -76,14 +76,15 @@ export async function check(pg) {
   /* 4.7 表头顺序与 index 一致（口径：比集合与中文名，不比顺序）*/
   {
     const railEn = d.rail;
-    await pg.goto(new URL('index.html', pg.url()).href, { waitUntil: 'load' }).catch(() => {});
+    const selfUrl = pg.url();                     /* 记下自身绝对 URL：跳去 index 后按它回来（相对路径会以 index 为基准解析错） */
+    await pg.goto(new URL('../index.html', selfUrl).href, { waitUntil: 'load' }).catch(() => {});
     await pg.waitForTimeout(300);
     const idx = await pg.evaluate(() =>
       [...document.querySelectorAll('.node')].map(a => ({
         en: a.querySelector('.node-en').textContent,
         cn: a.querySelector('.node-cn').textContent
       })));
-    await pg.goto(new URL('layout.html', pg.url()).href, { waitUntil: 'load' }).catch(() => {});
+    await pg.goto(selfUrl, { waitUntil: 'load' }).catch(() => {});
     await pg.waitForTimeout(300);
     const canonEn = PRIMS.map(p => p.en).sort().join();
     const setEq = [...new Set(idx.map(x => x.en))].sort().join() === canonEn &&

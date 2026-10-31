@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>CommonVisual · 组件与动效规范</title>
 <meta name="description" content="所有原语页面共用的零件清单：完整数据、数据块、rank 卡片的名字、尺寸与配色，后续新增页面一律照这里整改。">
-<link rel="stylesheet" href="assets/theme/theme.css">
-<link rel="stylesheet" href="assets/pages/docs.css">
-<link rel="stylesheet" href="assets/pages/anatomy.css">
+<link rel="stylesheet" href="../assets/theme/theme.css">
+<link rel="stylesheet" href="../assets/pages/docs.css">
+<link rel="stylesheet" href="../assets/pages/anatomy.css">
 </head>
 <body>
 
 <div class="wrap">
 
   <header class="hd">
-    <a class="back" href="index.html">
+    <a class="back" href="../index.html">
       <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
         <path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
@@ -27,23 +27,23 @@
   <main id="app"></main>
 
   <footer class="ft">
-    <p>语义与前后状态在 <a href="layout.html" style="color:inherit">前后对照表</a>，实现方式在 <a href="algorithms.html" style="color:inherit">算法骨架</a>，这里是零件尺寸。</p>
-    <a class="back" href="index.html">← 回到原语关系树</a>
+    <p>语义与前后状态在 <a href="prepost.html" style="color:inherit">前后对照表</a>，算法口径在 <a href="algorithms.html" style="color:inherit">算法口径表</a>，这里是零件尺寸。</p>
+    <a class="back" href="../index.html">← 回到原语关系树</a>
   </footer>
 
 </div>
 
 <!-- v2 组件层：demo 直接复用真实组件（cast / payload / beat / chrome） -->
-<script src="assets/prim/dom.js"></script>
-<script src="assets/theme/theme.js"></script>
-<script src="assets/prim/motion.js"></script>
-<script src="assets/parts/cast.js"></script>
-<script src="assets/parts/payload.js"></script>
-<script src="assets/parts/beat.js"></script>
-<script src="assets/parts/chrome.js"></script>
-<script src="assets/blocks/legend.js"></script>
-<script src="assets/blocks/anatomy.js"></script>
+<script src="../assets/prim/dom.js"></script>
+<script src="../assets/theme/theme.js"></script>
+<script src="../assets/prim/motion.js"></script>
+<script src="../assets/parts/cast.js"></script>
+<script src="../assets/parts/payload.js"></script>
+<script src="../assets/parts/beat.js"></script>
+<script src="../assets/parts/chrome.js"></script>
+<script src="../assets/blocks/legend.js"></script>
+<script src="../assets/blocks/anatomy.js"></script>
 <!-- 参数调试台（仅规范页）：把 CV.params 变成可见 / 可调 / 可锁 / 可记录的面板 -->
-<script src="assets/blocks/paramEditor.js"></script>
+<script src="../assets/blocks/paramEditor.js"></script>
 </body>
 </html>

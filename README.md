@@ -27,9 +27,10 @@
 | [`allreduce.html`](allreduce.html) | 全归约 —— 每卡先持一整份四段，开场长出第二排，2×2 网格整份互换两轮（每轮 传递→落位→计算→合并），四段各自累加到 4 份，收场收回单排，四卡都是 `[Σ Σ Σ Σ]` |
 | [`reducescatter.html`](reducescatter.html) | 归约分散 —— 递归减半两轮，每卡先长出第二排接收位，之后每轮「传递 → 落位 → 计算 → 合并」，段数 4→2→1 |
 | [`alltoall.html`](alltoall.html) | 全互换 —— 上排待发、下排已收，按目的地分四步，12 条直连消息 |
-| [`layout.html`](layout.html) | **前后对照表** —— 八个原语各自「通信前 / 通信后」每张卡的缓冲区，没变化的行置灰；数据来自 `registry.js` 的 pre / post |
-| [`algorithms.html`](algorithms.html) | **实现方式** —— 原语 × 六类算法骨架矩阵、八种骨架、All-Reduce 的三条路线、NCCL 选型 |
-| [`anatomy.html`](anatomy.html) | **组件与动效规范** —— 一图一节、1:1 像素示例，右侧参数调试台实时改 |
+| [`docs/prepost.html`](docs/prepost.html) | **通信原语语义（前后对照表）** —— 八个原语各自「通信前 / 通信后」每张卡的缓冲区，没变化的行置灰；数据来自 `registry.js` 的 pre / post |
+| [`docs/algorithms.html`](docs/algorithms.html) | **算法口径** —— 每条原语五行：通信前 / 骨架 / 轮次 / 终态 / 锚点（占位稿：轮次、锚点待时序标准定稿收编） |
+| [`docs/visual.html`](docs/visual.html) | **组件与动效规范** —— 一图一节、1:1 像素示例，右侧参数调试台实时改 |
+| [`algorithms-old.html`](algorithms-old.html) | 退役备用 —— 旧「实现方式」页：六类骨架矩阵、八种骨架、All-Reduce 三条路线、NCCL 选型（不在验证范围，内容待并入算法口径） |
 
 每个原语页页角有**关系导航**（`nav/`，数据来自 `registry.js` 的 `rel`）：横向是同族的全体版，纵向是同列的上/下一个，点原语名回首页。
 
@@ -86,17 +87,17 @@ engine/verbs/      copy / move / sum / split 四个动词 —— 绘制与逐帧
 CommonVisual/
 ├── index.html              首页：原语关系树
 ├── gather.html … alltoall.html   8 个原语动画页（薄壳）
-├── layout.html             前后对照表
-├── algorithms.html         实现方式
-├── anatomy.html            组件与动效规范
-├── 分布式通信原语详解.md    内容源
-├── docs/
-│   ├── arch-standard.md / .html   架构标准：目标态词汇表 + 拆分判据
-│   ├── blueprint.html      新页蓝图：加一个原语要动哪些件
-│   ├── specs.html          规范清单与关系图
-│   ├── testing.html        验证用例清单（100 条，含旧编号映射）
-│   ├── BUGS.md             缺陷台账（回归与人工验证统一追加）
-│   └── narration.html      逐动作解说面板草案（待定稿）
+├── algorithms-old.html     退役备用：旧「实现方式」页（不在验证范围）
+├── 分布式通信原语详解.md    内容源（仅作参考，不作标准 —— 口径以 scenes/*.js + registry.js 为准，见 AGENTS.md 三①）
+├── docs/                   规范页：经 ../assets/ 引用底层组件，与业务代码两条线互不依赖
+│   ├── architecture.html   架构标准：组件库与代码架构（分层 / 组件 / 扩展点）
+│   ├── specs.html          规范清单与关系图（11 条）
+│   ├── prepost.html      语义：前后数据布局对照表（registry 投影，原根 layout.html）
+│   ├── algorithms.html     算法口径：每原语五行（通信前/骨架/轮次/终态/锚点，占位稿）
+│   ├── visual.html         组件与动效规范：1:1 真值 + 参数调试台（原根 anatomy.html）
+│   ├── steps.html          原语动态步骤规范：名词表 + 逐动作解说文案（原 docs/action.html）
+│   ├── test-cases.html     验证用例清单（96 条，含旧编号映射）
+│   └── bugs.md             缺陷台账（回归与人工验证统一追加）
 ├── tools/
 │   ├── serve.mjs           开发服务 + 「保存到代码」写盘端点（POST /__cv/save，白名单两个基线文件）
 │   ├── verify.mjs          页面验证：报错检查 + 几何探针 + 最小截图集
@@ -124,7 +125,7 @@ CommonVisual/
 
 ## 验证
 
-验证纪律（先 probe 后截图、验收分频、CDP 坑）见 [`AGENTS.md`](AGENTS.md)；用例清单是 [`docs/testing.html`](docs/testing.html)（100 条：通用 3 + 全站通用 20 + 原语页 60 + 静态页 17，全部已实现）。一图流：
+验证纪律（先 probe 后截图、验收分频、CDP 坑）见 [`AGENTS.md`](AGENTS.md)；用例清单是 [`docs/test-cases.html`](docs/test-cases.html)（96 条：通用 3 + 全站通用 20 + 原语页 60 + index 与规范页 13，全部已实现）。一图流：
 
 ```bash
 node tools/verify.mjs <页> --no-shot   # 结构断言，每次改完跑（改哪页传哪页）
@@ -134,7 +135,7 @@ node tools/probe.mjs <页> <刻度>:"<表达式>"   # 单点几何，写断言�
 
 ## 设计决策
 
-**规范是唯一来源。** 组件的名字、尺寸、配色、耗时都在 `anatomy.html` 约定；参数基线写在 `theme/defaults.js`（调试台「保存到代码」直接覆盖）。原语页在**加载时**读规范值算时间轴（`CV.specVal` / `CV.dur`），改规范要刷新页面才生效。
+**规范是唯一来源。** 组件的名字、尺寸、配色、耗时都在 `docs/visual.html` 约定；参数基线写在 `theme/defaults.js`（调试台「保存到代码」直接覆盖）。原语页在**加载时**读规范值算时间轴（`CV.specVal` / `CV.dur`），改规范要刷新页面才生效。
 
 **齿轮已接入八页。** 右上角齿轮（`parts/chrome.js`）按页列时序行：有规范值的段调「倍数」（规范一改全站跟），没约定的段直接填秒。改动两级存：localStorage `cv.page.<页>.v1` 立即重排，点「保存到代码」写入基线（`node tools/serve.mjs` 下直写 `assets/scenes/pages-base.js`，静态服务退化为下载）。
 

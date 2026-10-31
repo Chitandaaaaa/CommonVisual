@@ -49,9 +49,11 @@ for (const arg of rest) {
   const expr = arg.slice(i + 1);
   const out = await pg.evaluate(async ([vv, ex]) => {
     const api = window.CV && window.CV.lastMount;
-    api.controls.setPlaying(false);
-    api.controls.seek(vv / 1000);
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    if (api) {                                   /* 静态规范页无挂载：不 seek，直接求值 */
+      api.controls.setPlaying(false);
+      api.controls.seek(vv / 1000);
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    }
     try { return JSON.stringify(new Function('return (' + ex + ')')()); }
     catch (e) { return 'EVAL ERROR ' + e.message; }
   }, [v, expr]);

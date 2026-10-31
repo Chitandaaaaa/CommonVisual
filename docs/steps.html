@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CommonVisual · 逐动作解说 · 名词表与文案</title>
+<title>CommonVisual · 逐动作解说 · 原语动态步骤规范</title>
 <style>
   :root{
     --bg:#f5f6f8;--panel:#fff;--ink:#1c2130;--ink2:#4b5364;--muted:#7a8296;
@@ -87,9 +87,6 @@
   .pgmeta{font-size:12.3px;color:var(--ink2);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 13px;margin-bottom:10px;box-shadow:var(--shadow)}
   .pgmeta b{color:var(--ink)}
   .pgmeta .row{margin:2px 0}
-  .final{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px}
-  .final .f{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12.3px}
-  .final .f b{display:block;font-size:12px;color:var(--ink2);margin-bottom:4px}
   .toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:8px;margin-top:12px}
   .toc a{display:block;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 11px;text-decoration:none;color:var(--ink2);font-size:12.4px;box-shadow:var(--shadow)}
   .toc a b{color:var(--accent);font-family:ui-monospace,Menlo,monospace;font-size:11px;margin-right:6px}
@@ -115,8 +112,9 @@
 <div class="wrap">
 
   <h1>逐动作解说 · 名词表与文案</h1>
-  <div class="sub">CommonVisual v2 · <span class="k">docs/narration.html</span> · 2026-10-31 草案 v3</div>
+  <div class="sub">CommonVisual v2 · <span class="k">docs/steps.html</span> · 2026-10-31 v3</div>
   <div class="badges">
+    <span class="badge">原语页动态步骤规范</span>
     <span class="badge">设计稿 · 代码未动</span>
     <span class="badge grey">八页全覆盖</span>
     <span class="badge grey">秒数为默认参数下实测</span>
@@ -753,11 +751,6 @@ var PAGES = [
       { t: '第 6 步 · 收尾 · 2.00 秒', span: '13.65 → 15.65', rows: [
         [13.65, 15.65, '画面 · 静止', '四槽卡四格 A B C D；三张单槽卡各留原块；3 条弧线余辉']
       ]}
-    ],
-    final: [
-      ['四槽卡（r0）', '四格填满 A / B / C / D，从左到右连续'],
-      ['三张单槽卡', '各留原块 B / C / D（gather 是复制，不是搬走）'],
-      ['三条弧线', '各保留自己的颜色，亮度 40%，箭头指向四槽卡']
     ]
   },
 
@@ -789,11 +782,6 @@ var PAGES = [
       { t: '第 6 步 · 收尾 · 2.00 秒', span: '13.65 → 15.65', rows: [
         [13.65, 15.65, '画面 · 静止', '四槽卡只剩 A；三张单槽卡各 1 段 B / C / D；3 条弧线余辉']
       ]}
-    ],
-    final: [
-      ['四槽卡（r0）', '只剩第 1 格 A，其余三格空'],
-      ['三张单槽卡', '各 1 段：B / C / D'],
-      ['与 gather 的区别', 'gather 送出去还留着，scatter 送出去就没了']
     ]
   },
 
@@ -825,11 +813,6 @@ var PAGES = [
       { t: '第 6 步 · 收尾 · 2.00 秒', span: '13.65 → 15.65', rows: [
         [13.65, 15.65, '画面 · 静止', '四张卡各 4 格满 A B C D；3 条弧线余辉']
       ]}
-    ],
-    final: [
-      ['四张卡', '全部 A B C D（源卡一块没少）'],
-      ['与 gather / scatter 的区别', '包是「整份」的，落位时 4 格同时变'],
-      ['线条颜色', '统一用源卡的颜色，不按目标分色']
     ]
   },
 
@@ -849,53 +832,28 @@ var PAGES = [
       { t: '第 5 步 · 收尾 · 0.60 秒', span: '13.35 → 13.95', rows: [
         [13.35, 13.95, '画面 · 静止', '四张卡四格满 A B C D；4 条环边余辉']
       ]}
-    ],
-    final: [
-      ['四张卡', '全部 A B C D'],
-      ['复制语义', '发出去的那一块自己还留着（不是消耗）'],
-      ['环的顺序', '0→1→3→2→0：每轮每张卡把手上最新的一段交给下家']
     ]
   },
 
   { id: 'reduce', cn: 'Reduce · 归约', en: 'reduce', dir: 'N → 1', dur: 24.36,
     board: '左边 1 张四槽卡（rank 0，接收方，会两次长高），右边竖排 3 张四槽卡（rank 1/2/3，各持一整份）',
     wire: '3 条弧线：各源卡左缘 → 四槽卡右缘',
-    steps: reduceSteps(),
-    final: [
-      ['四槽卡（r0）', '四格 ΣA⁴ ΣB⁴ ΣC⁴ ΣD⁴，每段都是四张卡该段的和'],
-      ['三张源卡', '交出整份后空着（消耗语义）'],
-      ['与 all-reduce 的区别', '只有 rank 0 拿到结果，其余三张没有']
-    ] },
+    steps: reduceSteps() },
 
   { id: 'allreduce', cn: 'All-Reduce · 全归约', en: 'all-reduce', dir: 'N → N', dur: 21.26,
     board: '2×2 四张四槽卡（rank 0/1/2/3），各持一整份，角标 4 段',
     wire: '6 条直连：首轮左右两对（0↔1、2↔3），次轮上下两对（0↔2、1↔3）',
-    steps: allreduceSteps(),
-    final: [
-      ['四张卡', '都变成 ΣA⁴ ΣB⁴ ΣC⁴ ΣD⁴，四份结果完全相同'],
-      ['份数', '翻倍 1 → 2 → 4，不是每次加一'],
-      ['两轮配对', '第 1 轮横向、第 2 轮纵向（recursive doubling）']
-    ] },
+    steps: allreduceSteps() },
 
   { id: 'reducescatter', cn: 'Reduce-Scatter · 归约分散', en: 'reduce-scatter', dir: 'N → N', dur: 21.15,
     board: '2×2 四张四槽卡（rank 0/1/2/3），各持一整份，角标 4 段',
     wire: '8 条直连：首轮同列（0↔2、1↔3），次轮同行（0↔1、2↔3）',
-    steps: rsSteps(),
-    final: [
-      ['每张卡', '只留自己编号那一段：r0 是 ΣA⁴、r1 是 ΣB⁴、r2 是 ΣC⁴、r3 是 ΣD⁴'],
-      ['四张拼起来', '才是完整结果（所以叫 reduce + scatter）'],
-      ['中间没有整份 Σ', '全程不会先合成一整份再切开']
-    ] },
+    steps: rsSteps() },
 
   { id: 'alltoall', cn: 'All-to-All · 全互换', en: 'all-to-all', dir: 'N → N', dur: 14.70,
     board: '2×2 四张四槽卡（rank 0/1/2/3），上排待发、下排接收，角标 4 片',
     wire: '6 条双向直连（4 条正交边 + 2 条对角线），没有箭头',
-    steps: atoaSteps(),
-    final: [
-      ['四张卡', '上排空、下排 A B C D，位置没变但每格来自不同的卡'],
-      ['这就是一次转置', '第 j 片统一送到 rank j'],
-      ['四步走完', '每步只发一片，12 个包分 4 步，避免同时飞看不清']
-    ] }
+    steps: atoaSteps() }
 ];
 
 /* ============================================================
@@ -947,12 +905,6 @@ var PAGES = [
       }
     });
     html += '</tbody></table>';
-
-    if (p.final) {
-      html += '<div class="final">';
-      p.final.forEach(function (f) { html += '<div class="f"><b>' + f[0] + '</b>' + f[1] + '</div>'; });
-      html += '</div>';
-    }
 
     var sec = document.createElement('section');
     sec.id = 'p-' + p.id;

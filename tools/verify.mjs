@@ -79,7 +79,7 @@ async function runProbeModule(page, mod) {
 }
 
 async function verifyOne(pageFile) {
-  const name = pageFile.replace('.html', '');
+  const name = pageFile.split('/').pop().replace('.html', '');
   const { ctx, pg, errs } = await loadPage(1440, 900);
   const url = `http://127.0.0.1:${PORT}/${pageFile}`;
   await pg.goto(url, { waitUntil: 'load' });
@@ -111,10 +111,12 @@ async function verifyOne(pageFile) {
   const shots = [];
   if (!noShot) {
     fs.mkdirSync(outDir, { recursive: true });
+    const hasCV = await pg.evaluate(() => !!window.CV);
+    if (!hasCV) console.log(`  ⚠ 页面无 CV，疑似停在错误页：${pg.url()} —— 截图照出，但多半是废帧（8813 模式），先查探针的跨页跳转`);
     for (const fr of frames) {
       const [v, d] = fr.split('@').map(Number);
       const delay = (d || (v === 1000 ? 1200 : 900));
-      await pg.evaluate((vv) => { const api = window.CV.lastMount; if (api) { api.controls.setPlaying(false); api.controls.seek(vv / 1000); } }, v);   /* 静态页无 lastMount：不出图只截图 */
+      await pg.evaluate((vv) => { const api = window.CV && window.CV.lastMount; if (api) { api.controls.setPlaying(false); api.controls.seek(vv / 1000); } }, v);   /* 静态页无 lastMount：不出图只截图 */
       await pg.waitForTimeout(delay);
       const out = path.join(outDir, `${name}-${v}.png`);
       await pg.screenshot({ path: out });

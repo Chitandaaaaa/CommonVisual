@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CommonVisual · 组件库与代码架构蓝图</title>
+<title>CommonVisual · 组件库与代码架构</title>
 <style>
 :root{
   --bg:#f4f6fb; --panel:#fff; --line:#e5e8f1; --line2:#d3d8e6;
@@ -101,30 +101,19 @@ td.dim{color:var(--tx2)}
 <div class="wrap">
 
 <header>
-  <div class="kicker">Blueprint · v2</div>
+  <div class="kicker">Architecture · Standard · v2</div>
   <h1>组件库与代码架构</h1>
   <p class="lead">
-    只问一件事：<b>要讲清这套东西，需要哪些零件？</b><br>
-    从这个问题出发，得到 <b>32 件组件</b>、<b>5 类页面</b>、<b>6 层架构</b>，以及 <b>5 个写明形状的扩展点</b>。
+    本页是 CommonVisual 组件库与代码架构的标准。只回答一个问题：<b>要讲清 8 种原语，需要哪些零件？</b><br>
+    从这个问题出发，得到 <b>32 件组件</b>、<b>6 层架构</b>，以及 <b>5 个写明形状的扩展点</b>。
   </p>
   <div class="chips">
     <span class="chip"><b>32</b>组件</span>
-    <span class="chip"><b>5</b>类页面</span>
     <span class="chip"><b>4</b>动作原语</span>
     <span class="chip"><b>8</b>份剧本</span>
     <span class="chip"><b>6</b>层依赖</span>
     <span class="chip"><b>5</b>个扩展点</span>
     <span class="chip"><b>0</b>组件互相引用</span>
-  </div>
-
-  <div class="note" style="margin-top:24px;background:#fff7ed;border-color:#fed7aa;color:#7c2d12">
-    <b style="color:#9a3412">v2 相对 v1 改了三处，都是 v1 的错。</b>
-    <span style="display:block;margin-top:6px;line-height:1.85">
-      ① v1 只看了 8 个原语页，<b style="color:#7c2d12">漏了首页关系树、前后对照表、算法骨架页、规范页</b> —— 这四页占需求的一半，却一件组件都没配。
-      ② 因此 v1 的「需求 → 模型」推导只推出了舞台概念，把另外五条需求硬塞进了同一套动画模型。
-      ③ v1 没有回答「加一个原语 / 加一个动画 / 加一个数据块要改哪里」，等于没写扩展性。
-      <b style="color:#7c2d12">本页 01、02、04 已按这三件事重写，另加 05 页面族、07 扩展点。</b>
-    </span>
   </div>
 </header>
 
@@ -135,7 +124,6 @@ td.dim{color:var(--tx2)}
     这个项目要讲的东西，本质上只有一句话：<b>一份数据从哪来、经过什么、到哪去。</b>
     8 个原语不是 8 份代码，是这句话的 8 种特例。
     所以先定模型，再定零件 —— 零件的分类依据不该是「长得像」，而是<b>它回答哪一个问题</b>。
-    <b>这一节先推「过程」那一支</b>，另一半紧接着补。
   </p>
 
   <div class="fig">
@@ -232,13 +220,6 @@ td.dim{color:var(--tx2)}
     <div class="figcap">需求不会直接变成代码。<b>中间必须过一道「概念」</b> —— 概念定了，组件和架构才有依据。</div>
   </div>
 
-  <div class="note" style="background:#fff7ed;border-color:#fed7aa;color:#7c2d12">
-    <b style="color:#9a3412">但这张图只覆盖了一半需求。</b>
-    左列五条里，只有第 1 条（8 个原语各要一段动画）是「过程」，其余四条都是「把同一批事实换个摆法」。
-    v1 把这四条也塞进了舞台五概念，于是首页、对照表、算法页、规范页在组件库里没有位置。
-    正确做法是先分叉，再各自成模型。
-  </div>
-
   <div class="fig" style="margin-top:22px">
     <svg viewBox="0 0 1100 436" role="img" aria-label="需求分成过程与呈现两支，呈现一支收敛为一份事实加五种投影">
       <defs>
@@ -313,15 +294,15 @@ td.dim{color:var(--tx2)}
 
           <rect x="690" y="176" width="98" height="52" rx="8" fill="#fff" stroke="#e5e8f1"/>
           <text x="700" y="196" font-size="11.5" font-weight="600">对照表</text>
-          <text x="700" y="214" font-size="10.5" fill="#939bb2" font-family="ui-monospace,monospace">layout</text>
+          <text x="700" y="214" font-size="10.5" fill="#939bb2" font-family="ui-monospace,monospace">prepost</text>
 
           <rect x="796" y="176" width="98" height="52" rx="8" fill="#fff" stroke="#e5e8f1"/>
-          <text x="806" y="196" font-size="11.5" font-weight="600">算法骨架</text>
+          <text x="806" y="196" font-size="11.5" font-weight="600">算法口径</text>
           <text x="806" y="214" font-size="10.5" fill="#939bb2" font-family="ui-monospace,monospace">algorithms</text>
 
           <rect x="584" y="236" width="98" height="52" rx="8" fill="#fff" stroke="#e5e8f1"/>
-          <text x="594" y="256" font-size="11.5" font-weight="600">规格页</text>
-          <text x="594" y="274" font-size="10.5" fill="#939bb2" font-family="ui-monospace,monospace">anatomy</text>
+          <text x="594" y="256" font-size="11.5" font-weight="600">视觉规范</text>
+          <text x="594" y="274" font-size="10.5" fill="#939bb2" font-family="ui-monospace,monospace">visual</text>
 
           <rect x="690" y="236" width="204" height="52" rx="8" fill="#fffbeb" stroke="#fde68a"/>
           <text x="700" y="256" font-size="11.5" font-weight="600" fill="#92400e">舞台动画 ×8</text>
@@ -335,7 +316,7 @@ td.dim{color:var(--tx2)}
       <text x="20" y="348" font-size="13" font-weight="600" fill="#3b0f8f">所以「页面」不是五个各自独立的功能，是同一份事实的五个投影。</text>
       <text x="20" y="372" font-size="12.5" fill="#6d28d9">这条一立，扩展性就有一半答案了：<tspan font-weight="600">新增一个原语，不是改五个页面，是往事实表加一行 —— 五个页面自己长出来。</tspan></text>
       <text x="20" y="396" font-size="12.5" fill="#6d28d9">另一半答案在「过程」那一支：新增一种动作，是往动词表加一个文件；新增一种块数，是换一次几何策略。</text>
-      <text x="20" y="410" font-size="11.5" fill="#939bb2">两者都不动引擎主体。详见 07。</text>
+      <text x="20" y="410" font-size="11.5" fill="#939bb2">两者都不动引擎主体。详见 06。</text>
     </svg>
     <div class="figcap">需求先分「过程 / 呈现」两支。<b>过程出五概念，呈现出一份事实表</b> —— 组件库要同时服务这两支。</div>
   </div>
@@ -471,7 +452,7 @@ td.dim{color:var(--tx2)}
         <text x="1096" y="242" font-size="10.5" fill="#939bb2" text-anchor="end">仅舞台</text>
       </g>
 
-      <!-- ───── N 关系（v2 新增） ───── -->
+      <!-- ───── N 关系 ───── -->
       <g>
         <rect x="0" y="284" width="140" height="52" rx="9" fill="#f0fdf7" stroke="#a7f3d0"/>
         <text x="14" y="306" font-size="11" font-family="ui-monospace,monospace" font-weight="700" fill="#047857">N</text>
@@ -506,7 +487,7 @@ td.dim{color:var(--tx2)}
         <text x="1096" y="322" font-size="10.5" fill="#939bb2" text-anchor="end">全部页角</text>
       </g>
 
-      <!-- ───── Bk 页面块（v2 新增） ───── -->
+      <!-- ───── Bk 页面块 ───── -->
       <g>
         <rect x="0" y="348" width="140" height="52" rx="9" fill="#fdf2f8" stroke="#f9a8d4"/>
         <text x="14" y="370" font-size="11" font-family="ui-monospace,monospace" font-weight="700" fill="#be185d">Bk</text>
@@ -542,7 +523,6 @@ td.dim{color:var(--tx2)}
         <text x="928" y="367" font-size="10" font-family="ui-monospace,monospace" font-weight="700" fill="#be185d">Bk6</text>
         <text x="952" y="367" font-size="11.5" font-family="ui-monospace,monospace" font-weight="600">block.demo</text>
         <text x="928" y="386" font-size="10.5" fill="#939bb2">单件示例盒 + tab</text>
-        
       </g>
 
       <!-- ───── X 播放器 ───── -->
@@ -579,7 +559,7 @@ td.dim{color:var(--tx2)}
         <text x="1096" y="434" font-size="10.5" fill="#939bb2" text-anchor="end">仅舞台</text>
       </g>
 
-      <text x="0" y="492" font-size="11.5" fill="#939bb2">另有 4 件不属于组件库的引擎件：<tspan font-family="ui-monospace,monospace" fill="#6d28d9" font-weight="600">clock</tspan> · <tspan font-family="ui-monospace,monospace" fill="#6d28d9" font-weight="600">director</tspan> · <tspan font-family="ui-monospace,monospace" fill="#6d28d9" font-weight="600">verb.*</tspan> · <tspan font-family="ui-monospace,monospace" fill="#6d28d9" font-weight="600">compile</tspan>　—— 它们不画东西，只决定「现在是第几帧、这一帧该走哪条路」。</text>
+      <text x="0" y="492" font-size="11.5" fill="#939bb2">另有引擎件不属于组件库：<tspan font-family="ui-monospace,monospace" fill="#6d28d9" font-weight="600">director</tspan> · <tspan font-family="ui-monospace,monospace" fill="#6d28d9" font-weight="600">verb.*</tspan> · <tspan font-family="ui-monospace,monospace" fill="#6d28d9" font-weight="600">compile</tspan>　—— 它们不画东西，只决定「现在是第几帧、这一帧该走哪条路」。</text>
     </svg>
     <div class="figcap">32 件按「服务于哪一步」分组，不按图形类型分。<b>同组内部互不引用</b>，组合权在引擎。</div>
   </div>
@@ -629,14 +609,6 @@ td.dim{color:var(--tx2)}
     <b>「存在的理由」这一列是硬约束。</b>任何组件如果答不上「它回答哪个问题」，就不该存在。
     反过来，任何一个问题如果没人回答，就说明组件库漏了东西 —— 这一列是组件库的自检清单。
   </div>
-
-  <div class="note" style="background:#fff7ed;border-color:#fed7aa;color:#7c2d12">
-    <b style="color:#9a3412">v1 就是漏在这张清单上。</b>
-    v1 只问了「画一次流动需要什么」，17 件全是舞台零件。可首页的关系树要的是<b style="color:#7c2d12">节点卡 + 带方向的线 + 参与点阵</b>，
-    对照表和算法页要的是<b style="color:#7c2d12">页头、图例、目录、表格</b>，规范页要的是<b style="color:#7c2d12">示例盒和尺寸线</b>。
-    这些问题的答案不在舞台里，所以 v1 的组件库对四个页面是空的。
-    补的 14 件（N×5 + Bk×6 + X4 改口径）不是锦上添花，是补漏。
-  </div>
 </section>
 
 <!-- ============ 03 ============ -->
@@ -666,7 +638,6 @@ td.dim{color:var(--tx2)}
 
       <!-- 8 行 -->
       <g font-size="12.5">
-        <!-- row template y=70,114,... -->
         <rect x="0" y="52" width="1100" height="46" fill="#fff"/>
         <text x="2" y="80" font-weight="600">Broadcast</text>
         <circle cx="340" cy="75" r="6" fill="#fff" stroke="#e5e8f1" stroke-width="1.2"/>
@@ -753,13 +724,9 @@ td.dim{color:var(--tx2)}
     两者都不是代码逻辑 —— 所以新增原语第一次变成一件可以完全并行、不与别人冲突的任务。
   </div>
 
-  <div class="note" style="background:#fff7ed;border-color:#fed7aa;color:#7c2d12">
-    <b style="color:#9a3412">但这张表本身有个前提：它是手填的，所以它会过期。</b>
-    今天填满 4 列，是因为有人肉眼核对过 8 行。<b style="color:#7c2d12">第九个原语进来，没人会记得回来改这张表</b> ——
-    现有代码里同一类事实手抄了 4 处（首页树 / 关系导航 / 对照表 / 算法矩阵），已经吃过这个亏。
-    所以这张表要变成 <code>registry.js</code> 的渲染结果，而不是文档里的一张图：
-    一条原语记录声明自己用到哪几个动词，<code>tools/verbs.mjs</code> 扫一遍就能报「出现了第 5 个动词」或「某行是空的」。
-    详见 07 的 E2 / E3。
+  <div class="note">
+    <b>这张矩阵的机器口径在 registry.js。</b>每条原语用 <code>verbs: ['move','sum']</code> 声明自己用到哪几个动作，
+    这张表就是 8 条声明铺开的样子。手填的表会过期：改动词先改 registry，再回来对这张表 —— 对不上，就是哪一边改漏了。
   </div>
 </section>
 
@@ -784,7 +751,7 @@ td.dim{color:var(--tx2)}
         <text x="2" y="34" font-size="11" font-family="ui-monospace,monospace" font-weight="700" fill="#be185d">L5</text>
         <rect x="52" y="16" width="756" height="58" rx="9" fill="#fff" stroke="#f9a8d4"/>
         <text x="70" y="42" font-size="13.5" font-weight="600" fill="#be185d">页面</text>
-        <text x="140" y="42" font-size="12" font-family="ui-monospace,monospace" fill="#5f6780">gather.html · scatter.html · … 12 个薄壳</text>
+        <text x="140" y="42" font-size="12" font-family="ui-monospace,monospace" fill="#5f6780">gather.html · scatter.html · … 9 个薄壳</text>
         <text x="70" y="62" font-size="11.5" fill="#939bb2">每个只有一行：<tspan font-family="ui-monospace,monospace">CV.boot('gather')</tspan></text>
         <text x="828" y="42" font-size="11.5" fill="#059669">独占 · 完全并行</text>
         <text x="828" y="61" font-size="11" fill="#939bb2">每页一个文件</text>
@@ -810,8 +777,8 @@ td.dim{color:var(--tx2)}
         <text x="2" y="194" font-size="11" font-family="ui-monospace,monospace" font-weight="700" fill="#0891b2">L3</text>
         <rect x="52" y="176" width="756" height="58" rx="9" fill="#f0fdff" stroke="#a5f3fc"/>
         <text x="70" y="202" font-size="13.5" font-weight="600" fill="#0891b2">引擎</text>
-        <text x="108" y="202" font-size="12" font-family="ui-monospace,monospace" fill="#5f6780">clock · director · compile　verbs/*.js</text>
-        <text x="70" y="222" font-size="11.5" fill="#939bb2">剧本 → 帧计划；驱动唯一时间轴；按 id 查动词表。不知道任何原语</text>
+        <text x="108" y="202" font-size="12" font-family="ui-monospace,monospace" fill="#5f6780">director · compile　verbs/*.js</text>
+        <text x="70" y="222" font-size="11.5" fill="#939bb2">剧本 → 帧计划；唯一 rAF 与时间轴在 director；按 family 查动词表。不知道任何原语</text>
         <text x="828" y="202" font-size="11.5" fill="#c27803">串行</text>
         <text x="828" y="221" font-size="11" fill="#939bb2">动词可并行加</text>
       </g>
@@ -823,7 +790,7 @@ td.dim{color:var(--tx2)}
         <text x="2" y="274" font-size="11" font-family="ui-monospace,monospace" font-weight="700" fill="#2563eb">L2</text>
         <rect x="52" y="256" width="756" height="58" rx="9" fill="#f5f8ff" stroke="#bfdbfe"/>
         <text x="70" y="282" font-size="13.5" font-weight="600" fill="#2563eb">组件</text>
-        <text x="108" y="282" font-size="12" font-family="ui-monospace,monospace" fill="#5f6780">parts/ 5　nav/ 3　blocks/ 3</text>
+        <text x="108" y="282" font-size="12" font-family="ui-monospace,monospace" fill="#5f6780">parts/ ×5　nav/ ×3　blocks/ ×6</text>
         <text x="70" y="302" font-size="11.5" fill="#939bb2">32 件，三组各管一类问题：画过程 / 画关系 / 搭页面。组内互不引用</text>
         <text x="828" y="282" font-size="11.5" fill="#c27803">按组串行</text>
         <text x="828" y="301" font-size="11" fill="#939bb2">三组可并行</text>
@@ -849,7 +816,7 @@ td.dim{color:var(--tx2)}
         <text x="2" y="434" font-size="11" font-family="ui-monospace,monospace" font-weight="700" fill="#047857">L0</text>
         <rect x="52" y="416" width="756" height="58" rx="9" fill="#f0fdf7" stroke="#a7f3d0"/>
         <text x="70" y="442" font-size="13.5" font-weight="600" fill="#047857">令牌</text>
-        <text x="140" y="442" font-size="12" font-family="ui-monospace,monospace" fill="#5f6780">theme.css · theme.js</text>
+        <text x="140" y="442" font-size="12" font-family="ui-monospace,monospace" fill="#5f6780">theme.css · theme.js · defaults.js</text>
         <text x="70" y="462" font-size="11.5" fill="#939bb2">色、尺寸、缓动的唯一来源。全站只有这一处 :root</text>
         <text x="828" y="442" font-size="11.5" fill="#c27803">串行</text>
         <text x="828" y="461" font-size="11" fill="#939bb2">改一次全站变</text>
@@ -862,25 +829,48 @@ td.dim{color:var(--tx2)}
 
   <h3 style="font-size:15px;margin:30px 0 12px;font-weight:600">文件落位</h3>
 <pre><span class="c">assets/</span>
-├── <span class="k">theme/</span>     theme.css  theme.js                        <span class="c">L0  2 个 · 唯一 :root</span>
-├── <span class="k">prim/</span>      dom.js  geom.js  motion.js                 <span class="c">L1  3 个</span>
+├── <span class="k">theme/</span>     theme.css  theme.js  defaults.js              <span class="c">L0  令牌 · 唯一 :root</span>
+├── <span class="k">prim/</span>      dom.js  geom.js  motion.js                   <span class="c">L1  3 个</span>
 ├── <span class="k">parts/</span>     stage.js  cast.js  payload.js
-│             beat.js  chrome.js                           <span class="c">L2 21 件 · 画过程</span>
-├── <span class="k">nav/</span>       node.js  mini.js  edge.js                   <span class="c">L2  5 件 · 画关系（dir·dotrow 在 node.js 内）</span>
-├── <span class="k">blocks/</span>    head.js  legend.js  toc.js
-│             table.js  spec.js  demo.js                   <span class="c">L2  6 件 · 搭页面</span>
-├── <span class="k">engine/</span>    clock.js  director.js  compile.js
-│             <span class="k">verbs/</span>   move.js  copy.js  split.js  sum.js  <span class="c">L3  3 + 4 个</span>
+│             beat.js  chrome.js                             <span class="c">L2  画过程</span>
+├── <span class="k">nav/</span>       node.js  mini.js  edge.js                     <span class="c">L2  画关系（dir·dotrow 在 node.js 内）</span>
+├── <span class="k">blocks/</span>    head.js  legend.js  toc.js  table.js
+│             anatomy.js  paramEditor.js                     <span class="c">L2  搭页面（后两件仅 docs/visual.html 加载）</span>
+├── <span class="k">engine/</span>    compile.js  director.js
+│             <span class="k">verbs/</span>   move.js  copy.js  split.js  sum.js    <span class="c">L3  2 + 4 个</span>
+├── <span class="k">pages/</span>     index.css  docs.css  anatomy.css  algorithms.css  <span class="c">页面样式</span>
 ├── <span class="k">registry.js</span>                                              <span class="c">L4  1 份 · 8 条事实</span>
 ├── <span class="k">scenes/</span>    gather  scatter  broadcast  reduce
-│             allgather  allreduce  reducescatter  alltoall <span class="c">L4  8 份剧本</span>
+│             allgather  allreduce  reducescatter  alltoall  <span class="c">L4  8 份剧本</span>
 └── <span class="k">boot.js</span>                                                  <span class="c">装配 1 个</span>
 
 <span class="c">页面</span>  gather.html … alltoall.html ×8                          <span class="c">舞台动画</span>
-        index.html       关系树      layout.html     前后对照表
-        algorithms.html  算法骨架    anatomy.html    组件规范     <span class="c">L5  12 个薄壳</span>
+        index.html  关系树                                        <span class="c">L5  9 个薄壳</span>
 
-<span class="c">离线</span>  tools/serve.mjs  verify.mjs  probe.mjs  browser.mjs  arch.mjs  verbs.mjs</pre>
+<span class="c">docs/</span>   specs.html  清单与关系图    prepost.html  语义
+        algorithms.html  算法口径   visual.html     组件与动效规范
+        steps / test-cases / bugs …                              <span class="c">规范页（经 ../assets/ 用组件）</span>
+（备用）  algorithms-old.html（根，退役参考，不在验证范围）
+
+<span class="c">离线</span>  tools/serve.mjs  verify.mjs  probe.mjs  browser.mjs  arch.mjs</pre>
+
+  <h3 style="font-size:15px;margin:30px 0 12px;font-weight:600">页面 × 依赖（谁拉哪些层、怎么装配、改了谁要回归）</h3>
+  <table>
+    <colgroup><col style="width:17%"><col style="width:34%"><col style="width:26%"><col style="width:23%"></colgroup>
+    <thead><tr><th>页面</th><th>拉什么</th><th>怎么装配</th><th>回归口径</th></tr></thead>
+    <tbody>
+      <tr><td><b>8 原语页</b></td><td>theme + prim + parts + nav + blocks/legend + engine 全套 + registry + scenes + boot</td><td><code>CV.boot(id)</code> → scenes 剧本</td><td>按 AGENTS 分频</td></tr>
+      <tr><td><b>index</b></td><td>theme + prim + registry + nav + boot + index.css</td><td>boot → nav 渲染</td><td>verify index</td></tr>
+      <tr><td><b>docs/prepost.html</b> 语义</td><td>9 项：theme/docs.css、prim/dom、theme.js、registry、blocks/head·table·toc、boot</td><td><code>boot('layout')</code> → CV.pages → blocks.layoutApp</td><td>改 blocks/table.js 带上它</td></tr>
+      <tr><td><b>docs/algorithms.html</b> 算法口径</td><td>3 项：theme/docs.css、registry（最薄）</td><td>内联脚本直读 registry，不进装配层</td><td>verify docs/algorithms.html</td></tr>
+      <tr><td><b>docs/visual.html</b> 视觉</td><td>13 项：css×3、prim×2、<b>parts/cast·payload·beat·chrome</b>、blocks/legend·anatomy·paramEditor</td><td>blocks/anatomy.js 自装配（无 boot 调用）</td><td><b>与原语页共用 parts 四件：改这四件 = 8 原语页 + 本页</b></td></tr>
+      <tr><td><b>specs / steps / test-cases</b></td><td>0（自包含）</td><td>纯静态</td><td>无</td></tr>
+      <tr><td><b>algorithms-old</b>（退役）</td><td>同 prepost 一档 + algorithms.css + table.js 的 algorithmsApp</td><td><code>boot('algorithms')</code></td><td>不在验证范围</td></tr>
+    </tbody>
+  </table>
+  <div class="note" style="margin-top:14px">
+    <b>两条线的落点就在这张表里：</b>规范页与业务页互不引用，只向下共用 theme / prim / parts / blocks / registry；反向（assets 引用 docs）必须为零 —— <code>node tools/arch.mjs</code> 每次会扫（含 ../assets 归一、断链、反向依赖三查）。回归命令里 docs 规范页带路径传参：<code>verify docs/visual.html</code>。
+  </div>
 
   <div class="rules r5">
     <div class="rule">
@@ -897,7 +887,7 @@ td.dim{color:var(--tx2)}
     </div>
     <div class="rule" style="border-left-color:#059669">
       <div class="h">④ 原语事实只有一份</div>
-      <div class="b">名称、方向、前后状态、邻居、算法行，全在 <code>registry.js</code>。页面不许在自己文件里再抄一遍 —— 现有代码同一桩事实抄了 4 处，改一处漏三处。</div>
+      <div class="b">名称、方向、前后状态、邻居、算法行，全在 <code>registry.js</code>，页面不许在自己文件里再抄一遍。</div>
     </div>
     <div class="rule" style="border-left-color:#0891b2">
       <div class="h">⑤ 组件按组切开</div>
@@ -913,158 +903,13 @@ td.dim{color:var(--tx2)}
   </div>
 </section>
 
-<!-- ============ 05 页面族 ============ -->
-<section id="pages">
-  <div class="sec-h"><span class="sec-n">05</span><h2>五类页面 · 一份事实的五种投影</h2></div>
-  <p class="sec-sub">
-    现有 12 个 html 不是 12 个功能，是 <b>5 类页面</b>。分类判据只有两条：
-    <b>要不要时间轴</b>、<b>画的是不是「数据在动」</b>。这两条决定了用哪几组组件。
-  </p>
-
-  <div class="fig">
-    <svg viewBox="0 0 1100 452" role="img" aria-label="五类页面与组件组的对应矩阵">
-      <g font-size="11" font-weight="700" fill="#939bb2" letter-spacing=".08em">
-        <text x="0" y="14">页面族</text>
-        <text x="196" y="14">判据</text>
-        <text x="470" y="14">用哪几组组件</text>
-      </g>
-
-      <!-- 列头 -->
-      <g font-size="10.5" font-weight="700" fill="#5f6780" text-anchor="middle">
-        <text x="600" y="34">S</text><text x="640" y="34">C</text><text x="680" y="34">P</text>
-        <text x="720" y="34">B</text><text x="760" y="34">N</text><text x="800" y="34">Bk</text><text x="840" y="34">X</text>
-      </g>
-
-      <!-- 行 1 舞台 -->
-      <g>
-        <rect x="0" y="44" width="1100" height="66" rx="8" fill="#fffbeb" stroke="#fde68a"/>
-        <text x="14" y="68" font-size="13" font-weight="600" fill="#92400e">舞台动画</text>
-        <text x="14" y="88" font-size="10.5" fill="#a16207" font-family="ui-monospace,monospace">gather.html ×8</text>
-        <text x="196" y="68" font-size="11.5" fill="#5f6780">要时间轴 · 画数据动</text>
-        <text x="196" y="88" font-size="11.5" fill="#939bb2">SVG 绝对坐标</text>
-        <g text-anchor="middle" font-size="12">
-          <circle cx="600" cy="77" r="6" fill="#7c3aed"/><circle cx="640" cy="77" r="6" fill="#2563eb"/>
-          <circle cx="680" cy="77" r="6" fill="#0891b2"/><circle cx="720" cy="77" r="6" fill="#c27803"/>
-          <circle cx="760" cy="77" r="6" fill="#fff" stroke="#d3d8e6"/><circle cx="800" cy="77" r="6" fill="#fff" stroke="#d3d8e6"/>
-          <circle cx="840" cy="77" r="6" fill="#475569"/>
-        </g>
-        <text x="880" y="72" font-size="11.5" fill="#5f6780">21 + 4 件</text>
-        <text x="880" y="90" font-size="10.5" fill="#939bb2">唯一用到 P 组（载荷）的族</text>
-      </g>
-
-      <!-- 行 2 关系树 -->
-      <g>
-        <rect x="0" y="118" width="1100" height="66" rx="8" fill="#f0fdf7" stroke="#a7f3d0"/>
-        <text x="14" y="142" font-size="13" font-weight="600" fill="#065f46">关系树</text>
-        <text x="14" y="162" font-size="10.5" fill="#047857" font-family="ui-monospace,monospace">index.html</text>
-        <text x="196" y="142" font-size="11.5" fill="#5f6780">有入场动效 · 不画数据动</text>
-        <text x="196" y="162" font-size="11.5" fill="#939bb2">DOM 卡片 + SVG 连线</text>
-        <g text-anchor="middle" font-size="12">
-          <circle cx="600" cy="151" r="6" fill="#fff" stroke="#d3d8e6"/><circle cx="640" cy="151" r="6" fill="#fff" stroke="#d3d8e6"/>
-          <circle cx="680" cy="151" r="6" fill="#fff" stroke="#d3d8e6"/><circle cx="720" cy="151" r="6" fill="#fff" stroke="#d3d8e6"/>
-          <circle cx="760" cy="151" r="6" fill="#047857"/><circle cx="800" cy="151" r="6" fill="#fff" stroke="#d3d8e6"/>
-          <circle cx="840" cy="151" r="6" fill="#fff" stroke="#d3d8e6"/>
-        </g>
-        <text x="880" y="146" font-size="11.5" fill="#5f6780">5 件</text>
-        <text x="880" y="164" font-size="10.5" fill="#939bb2">8 节点 8 连线，布局手排</text>
-      </g>
-
-      <!-- 行 3 对照表 -->
-      <g>
-        <rect x="0" y="192" width="1100" height="66" rx="8" fill="#f5f8ff" stroke="#bfdbfe"/>
-        <text x="14" y="216" font-size="13" font-weight="600" fill="#1e40af">前后对照表</text>
-        <text x="14" y="236" font-size="10.5" fill="#2563eb" font-family="ui-monospace,monospace">layout.html</text>
-        <text x="196" y="216" font-size="11.5" fill="#5f6780">无时间轴 · 画状态，不画过程</text>
-        <text x="196" y="236" font-size="11.5" fill="#939bb2">HTML 格子，可换行可置灰</text>
-        <g text-anchor="middle" font-size="12">
-          <circle cx="600" cy="225" r="6" fill="#fff" stroke="#d3d8e6"/><circle cx="640" cy="225" r="6" fill="#2563eb"/>
-          <circle cx="680" cy="225" r="6" fill="#fff" stroke="#d3d8e6"/><circle cx="720" cy="225" r="6" fill="#fff" stroke="#d3d8e6"/>
-          <circle cx="760" cy="225" r="6" fill="#fff" stroke="#d3d8e6"/><circle cx="800" cy="225" r="6" fill="#be185d"/>
-          <circle cx="840" cy="225" r="6" fill="#fff" stroke="#d3d8e6"/>
-        </g>
-        <text x="880" y="220" font-size="11.5" fill="#5f6780">C 组要用「静态版」</text>
-        <text x="880" y="238" font-size="10.5" fill="#be123c">同一语义、两份渲染，见下</text>
-      </g>
-
-      <!-- 行 4 文档 -->
-      <g>
-        <rect x="0" y="266" width="1100" height="66" rx="8" fill="#fdf2f8" stroke="#f9a8d4"/>
-        <text x="14" y="290" font-size="13" font-weight="600" fill="#9d174d">文档 / 表格</text>
-        <text x="14" y="310" font-size="10.5" fill="#be185d" font-family="ui-monospace,monospace">algorithms.html</text>
-        <text x="196" y="290" font-size="11.5" fill="#5f6780">无时间轴 · 纯排版</text>
-        <text x="196" y="310" font-size="11.5" fill="#939bb2">没有图形，只有表与卡</text>
-        <g text-anchor="middle" font-size="12">
-          <circle cx="600" cy="299" r="6" fill="#fff" stroke="#d3d8e6"/><circle cx="640" cy="299" r="6" fill="#fff" stroke="#d3d8e6"/>
-          <circle cx="680" cy="299" r="6" fill="#fff" stroke="#d3d8e6"/><circle cx="720" cy="299" r="6" fill="#fff" stroke="#d3d8e6"/>
-          <circle cx="760" cy="299" r="6" fill="#fff" stroke="#d3d8e6"/><circle cx="800" cy="299" r="6" fill="#be185d"/>
-          <circle cx="840" cy="299" r="6" fill="#fff" stroke="#d3d8e6"/>
-        </g>
-        <text x="880" y="294" font-size="11.5" fill="#5f6780">6 件里的 4 件</text>
-        <text x="880" y="312" font-size="10.5" fill="#939bb2">表格 + 目录 + 页头</text>
-      </g>
-
-      <!-- 行 5 规格 -->
-      <g>
-        <rect x="0" y="340" width="1100" height="66" rx="8" fill="#fafbfe" stroke="#d3d8e6"/>
-        <text x="14" y="364" font-size="13" font-weight="600" fill="#334155">规格 / 活文档</text>
-        <text x="14" y="384" font-size="10.5" fill="#475569" font-family="ui-monospace,monospace">anatomy.html</text>
-        <text x="196" y="364" font-size="11.5" fill="#5f6780">有可控时间轴 · 逐件演示</text>
-        <text x="196" y="384" font-size="11.5" fill="#939bb2">真实组件小样 + 尺寸标注</text>
-        <g text-anchor="middle" font-size="12">
-          <circle cx="600" cy="373" r="6" fill="#7c3aed"/><circle cx="640" cy="373" r="6" fill="#2563eb"/>
-          <circle cx="680" cy="373" r="6" fill="#0891b2"/><circle cx="720" cy="373" r="6" fill="#c27803"/>
-          <circle cx="760" cy="373" r="6" fill="#fff" stroke="#d3d8e6"/><circle cx="800" cy="373" r="6" fill="#be185d"/>
-          <circle cx="840" cy="373" r="6" fill="#475569"/>
-        </g>
-        <text x="880" y="368" font-size="11.5" fill="#5f6780">全部 + Bk5 Bk6</text>
-        <text x="880" y="386" font-size="10.5" fill="#939bb2">组件库的自测台，不是内容页</text>
-      </g>
-
-      <text x="0" y="436" font-size="11.5" fill="#939bb2">● = 用这组　○ = 不用。<tspan font-weight="600" fill="#6d28d9">P 组（载荷）只有舞台用 —— 没有时间轴就没有「正在路上」这件事。</tspan></text>
-    </svg>
-    <div class="figcap">五类页面共 12 个 html，<b>只有 8 个是动画</b>。组件库必须同时覆盖「动」和「不动」。</div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px">
-    <div class="card">
-      <h3><span class="tag" style="background:#7c3aed">舞台</span>需要时间轴</h3>
-      <p>八个原语页。全站唯一需要「第几帧」的地方：唯一 rAF、分段进度、可拖动。</p>
-      <p class="why">约束：单屏不滚动、viewBox 等比缩放、卡片可长高不换页。</p>
-    </div>
-    <div class="card">
-      <h3><span class="tag" style="background:#047857">关系树</span>入场动效，不是动画</h3>
-      <p>首页。动效只发生在「第一次进视口」：节点错峰上浮、连线描边生长。之后完全静止，没有播放器。</p>
-      <p class="why">约束：树是 <b>8 节点 8 连线的固定图</b>。现页面把手排在 HTML 的 grid 行列上；
-      新实现改为从 registry 的 <code>rel[]</code> 用固定算法推出同样的行列（列 = 链，行 = 父节点所在行顺延），不跑自动布局。</p>
-    </div>
-    <div class="card">
-      <h3><span class="tag" style="background:#2563eb">对照表</span>状态，不是过程</h3>
-      <p>只回答「通信前每卡有什么、通信后变成什么」。中间一个动作词，两边各四行格子。</p>
-      <p class="why">约束：未变化的行整行置灰；结果卡加紫描边；空格是虚线框。</p>
-    </div>
-    <div class="card">
-      <h3><span class="tag" style="background:#be185d">文档 / 规格</span>排版与自测</h3>
-      <p>算法骨架页只有矩阵表和卡片；规格页把每个组件单独挂出来，配尺寸线和 tab。</p>
-      <p class="why">约束：规格页必须调<b>真实组件</b>渲染，不能画示意图 —— 否则规范会漂移。</p>
-    </div>
-  </div>
-
-  <div class="note" style="background:#fff7ed;border-color:#fed7aa;color:#7c2d12">
-    <b style="color:#9a3412">最难的一处取舍：对照表的格子要不要复用 <code>cast.slot</code>？</b>
-    现在的实现是<b style="color:#7c2d12">不复用</b> —— 舞台用 SVG <code>&lt;rect&gt;</code>，对照表用 HTML <code>&lt;i&gt;</code>，尺寸也不同（46 对 20）。
-    我建议保持不复用，理由只有一条：<b style="color:#7c2d12">对照表的行要能被 CSS 整行置灰、要能随宽度换行、要能放 6 个以上格子</b>，
-    SVG 这三件事都做不到。强行统一会让舞台多背一套流式布局，或让对照表失去置灰能力。
-    正确的复用层次是<b style="color:#7c2d12">语义与令牌</b>：同一份四色、同一套 <code>A/B/C/D/Σ</code> 字母、同一份 <code>registry</code> 前后状态数据；
-    渲染各写一份薄的。代价写在这里，免得以后有人以为是漏了。
-  </div>
-</section>
-
-<!-- ============ 05 ============ -->
+<!-- ============ 05 运行时 ============ -->
 <section id="runtime">
-  <div class="sec-h"><span class="sec-n">06</span><h2>运行时 · 一条时间轴</h2></div>
+  <div class="sec-h"><span class="sec-n">05</span><h2>运行时 · 一条时间轴</h2></div>
   <p class="sec-sub">
-    整个架构里最关键的取舍在这里。<b>组件做不到「有状态」，是刻意的</b> ——
+    整个架构最关键的取舍在这里：<b>组件无状态，是刻意的。</b>
     一旦每个动效自己保管定时器，暂停、倍速、跳步、切视图就都要各写一份清理逻辑，漏一处就卡住。
+    所以全站只有一个 rAF、一条时间轴。
   </p>
 
   <div class="fig">
@@ -1092,7 +937,7 @@ td.dim{color:var(--tx2)}
         <rect x="460" y="36" width="180" height="86" rx="10" fill="#f0fdff" stroke="#a5f3fc"/>
         <text x="476" y="60" font-size="11" font-family="ui-monospace,monospace" font-weight="700" fill="#0891b2">L3</text>
         <text x="504" y="60" font-size="13.5" font-weight="600">时钟</text>
-        <text x="476" y="84" font-size="12" fill="#5f6780">clock + director</text>
+        <text x="476" y="84" font-size="12" fill="#5f6780">director（含 clock）</text>
         <text x="476" y="104" font-size="11.5" fill="#939bb2">唯一的 rAF，推进 t</text>
 
         <rect x="690" y="36" width="180" height="86" rx="10" fill="#f5f8ff" stroke="#bfdbfe"/>
@@ -1125,30 +970,33 @@ td.dim{color:var(--tx2)}
   </div>
 
   <h3 style="font-size:15px;margin:28px 0 12px;font-weight:600">剧本长什么样</h3>
-<pre><span class="k">export default</span> {
-  id: <span class="n">'gather'</span>,
-  cast: [
-    { id: <span class="n">'r0'</span>, label: <span class="n">'rank 0'</span>, slots: 4, at: <span class="n">'left'</span>  },
-    { id: <span class="n">'r1'</span>, label: <span class="n">'rank 1'</span>, slots: 1, at: <span class="n">'right.0'</span> }
-  ],
-  beats: [
-    { kind: <span class="n">'wait'</span>, label: <span class="n">'三张卡各持一份'</span>, sec: 0.9 },
-    { kind: <span class="g">'move'</span>, from: <span class="n">'r1/0'</span>, to: <span class="n">'r0/3'</span>, tone: <span class="n">'B'</span>, path: <span class="n">'arc'</span>, sec: 1.2 },
-    { kind: <span class="n">'seat'</span>, target: <span class="n">'r0/3'</span>, sec: 0.35 }
-  ],
-  finale: <span class="n">'rank 0 集齐 A B C D，其余三张卡各留自己那段（复制，不是消耗）'</span>
-}</pre>
+<pre>CV.scene(<span class="n">'gather'</span>, function () {
+  return {
+    id: <span class="n">'gather'</span>,
+    preset: <span class="n">'col34'</span>,                       <span class="c">/* 布局代号，坐标由 geom.plan 统一算 */</span>
+    cards: [
+      { rank: 0, col: <span class="n">'left'</span>,  role: <span class="n">'dst'</span>, target: true },
+      { rank: 1, col: <span class="n">'right'</span>, role: <span class="n">'src'</span> }  <span class="c">/* …共 4 张 */</span>
+    ],
+    beats: [
+      { kind: <span class="n">'wait'</span>, label: <span class="n">'说明'</span>, sec: 0.6, text: <span class="n">'四张卡各持一份'</span> },
+      { kind: <span class="g">'move'</span>, label: <span class="n">'B 传递'</span>, flows: [{ from: [1, 0], to: [0, 1], letter: <span class="n">'B'</span> }] },
+      { kind: <span class="n">'wait'</span>, label: <span class="n">'收尾'</span>, sec: 2,   text: <span class="n">'rank 0 集齐 A B C D'</span> }
+    ],
+    finale: <span class="n">'rank 0 集齐 A B C D，其余三张卡各留自己那段'</span>
+  };
+});</pre>
   <p style="font-size:12.8px;color:var(--tx2);margin-top:12px">
-    四个 <code>kind</code> —— <code>move</code> / <code>copy</code> / <code>split</code> / <code>sum</code>，加上 <code>wait</code> 与 <code>seat</code> 两个表现节拍，
-    就构成了 8 个原语的全部剧本。新增原语不需要新的 <code>kind</code>。
+    节拍的 <code>kind</code> 一共 6 种：wait / seat 两个表现节拍，加 move / copy / split / sum 四个动作 —— 8 份剧本全部由它们组成。
+    剧本是纯数据：无绘制调用、无定时器，能过编译器校验，能 diff。<b>新增原语不需要新 kind。</b>
   </p>
 </section>
 
-<!-- ============ 07 扩展点 ============ -->
+<!-- ============ 06 扩展点 ============ -->
 <section id="ext">
-  <div class="sec-h"><span class="sec-n">07</span><h2>扩展点 · 加东西时要改几个文件</h2></div>
+  <div class="sec-h"><span class="sec-n">06</span><h2>扩展点 · 加东西时要改几个文件</h2></div>
   <p class="sec-sub">
-    开闭原则落到这个项目上只有一句话：<b>加东西时，新文件越多越好，改老文件越少越好</b>；
+    扩展性只看一件事：<b>加东西时，新文件越多越好，改老文件越少越好</b>；
     如果非改不可，改的必须是<b>数据</b>，不是<b>逻辑</b>。
     下面五个扩展点是这件事可执行的部分 —— 每个都写明「形状」，因为没写形状的扩展点等于没有。
   </p>
@@ -1163,7 +1011,7 @@ td.dim{color:var(--tx2)}
         <text x="14" y="50" font-size="13" font-weight="600" fill="#92400e">剧本</text>
         <text x="14" y="68" font-size="10.5" fill="#a16207" font-family="ui-monospace,monospace">scenes/*.js</text>
         <rect x="12" y="80" width="176" height="72" rx="6" fill="#fff" stroke="#fde68a"/>
-        <text x="22" y="98" font-size="10" fill="#5f6780" font-family="ui-monospace,monospace">{ cast[], beats[],</text>
+        <text x="22" y="98" font-size="10" fill="#5f6780" font-family="ui-monospace,monospace">{ cards[], beats[],</text>
         <text x="22" y="114" font-size="10" fill="#5f6780" font-family="ui-monospace,monospace">  finale }</text>
         <text x="22" y="134" font-size="9.5" fill="#939bb2">纯数据，无绘制无定时器</text>
         <text x="14" y="172" font-size="10.5" fill="#5f6780">消费者：引擎编译</text>
@@ -1193,14 +1041,14 @@ td.dim{color:var(--tx2)}
         <text x="454" y="50" font-size="13" font-weight="600" fill="#155e75">动词</text>
         <text x="454" y="68" font-size="10.5" fill="#0891b2" font-family="ui-monospace,monospace">engine/verbs/*.js</text>
         <rect x="452" y="80" width="176" height="72" rx="6" fill="#fff" stroke="#a5f3fc"/>
-        <text x="462" y="98" font-size="10" fill="#5f6780" font-family="ui-monospace,monospace">{ id,</text>
-        <text x="462" y="114" font-size="10" fill="#5f6780" font-family="ui-monospace,monospace">  plan(beat, cast)</text>
-        <text x="462" y="130" font-size="10" fill="#5f6780" font-family="ui-monospace,monospace">  → 帧计划 }</text>
-        <text x="454" y="172" font-size="10.5" fill="#5f6780">消费者：引擎按 id 查</text>
+        <text x="462" y="98" font-size="10" fill="#5f6780" font-family="ui-monospace,monospace">CV.verbs.&lt;id&gt;:</text>
+        <text x="462" y="114" font-size="10" fill="#5f6780" font-family="ui-monospace,monospace">  build(S, scene)</text>
+        <text x="462" y="130" font-size="10" fill="#5f6780" font-family="ui-monospace,monospace">  timeline · render</text>
+        <text x="454" y="172" font-size="10.5" fill="#5f6780">消费者：compile 按 family 查</text>
         <text x="454" y="192" font-size="10.5" fill="#5f6780">一个文件 = 一个动作</text>
         <rect x="452" y="206" width="176" height="30" rx="6" fill="#fff" stroke="#a5f3fc"/>
         <text x="462" y="225" font-size="10.5" fill="#155e75">加一个 → 剧本能写新 kind</text>
-        <text x="454" y="256" font-size="10" fill="#c27803">新文件 1 · 改注册 1 行</text>
+        <text x="454" y="256" font-size="10" fill="#c27803">新文件 1 · 页面 script 1 行</text>
 
         <!-- E4 -->
         <rect x="660" y="8" width="200" height="270" rx="10" fill="#f5f3ff" stroke="#c4b5fd"/>
@@ -1237,22 +1085,22 @@ td.dim{color:var(--tx2)}
       <rect x="0" y="292" width="1100" height="68" rx="9" fill="#fafbfe" stroke="#d3d8e6"/>
       <text x="16" y="314" font-size="12" font-weight="600" fill="#334155">五个扩展点里，只有 E1、E3、E5 是真正的「加文件就好」。E2 是加一行数据，E4 是改一个参数 —— 但 E4 依赖几何策略先写对。</text>
       <text x="16" y="336" font-size="11.5" fill="#939bb2">判断一个扩展点成不成立，只看一件事：<tspan font-weight="600" fill="#6d28d9">新东西进来，旧文件的 diff 是不是零行。</tspan>是，就成立；需要回去改引擎分支，那就是假的扩展点。</text>
-      <text x="16" y="354" font-size="11.5" fill="#939bb2">下面三个走查就是拿真实需求去撞这五个点，撞不过的地方照实写。</text>
+      <text x="16" y="354" font-size="11.5" fill="#939bb2">下面三条走查拿真实需求撞过这五个点，撞不过的地方照实写。</text>
     </svg>
     <div class="figcap">扩展点必须写清<b>形状</b>和<b>消费者</b>，否则只是口号。</div>
   </div>
 
-  <div style="font-size:13px;font-weight:600;margin:30px 0 12px">四种变更，各自要动几个文件</div>
+  <div style="font-size:13px;font-weight:600;margin:30px 0 12px">五种变更，各自要动几个文件</div>
   <div class="tbl">
     <table>
-      <colgroup><col style="width:170px"><col style="width:236px"><col style="width:206px"><col style="width:130px"><col></colgroup>
-      <thead><tr><th>想加什么</th><th>新文件</th><th>改已有文件</th><th>会不会撞车</th><th>现在的实现要改几处</th></tr></thead>
+      <colgroup><col style="width:180px"><col style="width:300px"><col style="width:330px"><col></colgroup>
+      <thead><tr><th>想加什么</th><th>新文件</th><th>改已有文件</th><th>会不会撞车</th></tr></thead>
       <tbody>
-        <tr><td class="nm">一个原语</td><td class="dim">scenes/x.js · x.html</td><td class="dim">registry.js 加 1 条</td><td><span class="dot" style="background:#059669"></span>不会</td><td class="dim" style="color:#be123c">4 处手抄（树 / 导航 / 对照表 / 算法矩阵）</td></tr>
-        <tr><td class="nm">一个动作</td><td class="dim">engine/verbs/x.js</td><td class="dim">verbs 索引 1 行</td><td><span class="dot" style="background:#059669"></span>不会</td><td class="dim" style="color:#be123c">改引擎分支 + 4 个剧本通读</td></tr>
-        <tr><td class="nm">一个数据块</td><td class="dim">—</td><td class="dim">剧本里 slots 改数</td><td><span class="dot" style="background:#059669"></span>不会</td><td class="dim" style="color:#c27803">能到 4 块，第 5 块溢出（见走查 C）</td></tr>
-        <tr><td class="nm">一类页面</td><td class="dim">x.html · blocks/x.js</td><td class="dim">—</td><td><span class="dot" style="background:#059669"></span>不会</td><td class="dim" style="color:#be123c">每类页面各写一套，无共用件</td></tr>
-        <tr><td class="nm">一次改色</td><td class="dim">—</td><td class="dim">theme.css 一处</td><td><span class="dot" style="background:#c27803"></span>全站一起变</td><td class="dim" style="color:#be123c">三份 <code>:root</code> 副本，漏改就花</td></tr>
+        <tr><td class="nm">一个原语</td><td class="dim">scenes/x.js · x.html</td><td class="dim">registry.js 加 1 条</td><td><span class="dot" style="background:#059669"></span>不会</td></tr>
+        <tr><td class="nm">一个动作</td><td class="dim">engine/verbs/x.js</td><td class="dim">用到它的页各加 1 行 script</td><td><span class="dot" style="background:#059669"></span>不会</td></tr>
+        <tr><td class="nm">一个数据块</td><td class="dim">—</td><td class="dim">剧本里 slots 改数</td><td><span class="dot" style="background:#059669"></span>不会</td></tr>
+        <tr><td class="nm">一类页面</td><td class="dim">x.html · blocks/x.js</td><td class="dim">—</td><td><span class="dot" style="background:#059669"></span>不会</td></tr>
+        <tr><td class="nm">一次改色</td><td class="dim">—</td><td class="dim">theme.css 一处</td><td><span class="dot" style="background:#c27803"></span>全站一起变</td></tr>
       </tbody>
     </table>
   </div>
@@ -1260,47 +1108,33 @@ td.dim{color:var(--tx2)}
   <div style="font-size:13px;font-weight:600;margin:30px 0 12px">走查 · 三个真实需求撞上去</div>
   <div class="rules" style="grid-template-columns:repeat(3,1fr)">
     <div class="rule" style="border-left-color:#0891b2">
-      <div class="h">A · 加一个动画</div>
+      <div class="h">A · 加一个表现节拍</div>
       <div class="b">
-        需求：「数据包飞过去的时候，目标格先闪一下再接住」。<br><br>
-        <b>判断：这不是新动词，是新节拍。</b>现有 <code>beat.dim</code> 管「只留相关几份」，管不了「提前预告」。<br><br>
-        做法：<code>parts/beat.js</code> 里加 <code>beat.anticipate(target, sec)</code>，剧本在 <code>seat</code> 前插一条。<br>
-        <b>代价：新文件 0，但要动 B 组</b> —— B 组是串行区。若走 E3 硬做成动词，就会污染「动作」语义（它是表现层，不是搬运层）。
+        「目标格先闪一下再接住」<b>不是新动词，是新节拍</b>：在 <code>parts/beat.js</code> 加
+        <code>beat.anticipate(target, sec)</code>，剧本在 seat 前插一条。<br>
+        表现归 B 组，搬运归动词 —— 做成动词会污染「动作」语义。
       </div>
     </div>
     <div class="rule" style="border-left-color:#047857">
       <div class="h">B · 加一个原语</div>
       <div class="b">
-        需求：加第 9 个原语。<br><br>
-        做法：<code>registry</code> 加 1 条（含 <code>rel[]</code> 边列表——All-Reduce 有两条入边，单亲的 <code>after</code> 字段写不下，所以关系必须是边的集合而不是父指针）+ 1 份剧本 + 1 个 html。<br><br>
-        <b>树的位置不手排</b> —— nav 读 <code>rel</code> 算列。这是第一次要写约 40 行列分配算法的代价，之后新增永久免费。<br><br>
-        <b>撞不过的地方：</b><code>algorithms</code> 的算法矩阵按「6 种骨架 × 8 原语」手填，第 9 行仍要人判断能不能走通 —— 这一格只能人填，不能自动生成。
+        registry 加 1 条（<code>rel[]</code> 是<b>边的集合</b>，不是单亲指针 —— All-Reduce 有两条入边）＋ 1 份剧本 ＋ 1 个薄壳。<br>
+        关系树由 <code>rel[]</code> 推列，不手排。只有算法矩阵那一格要人判断能不能走通。
       </div>
     </div>
     <div class="rule" style="border-left-color:#7c3aed">
       <div class="h">C · 加一个数据块</div>
       <div class="b">
-        需求：从 4 块变成 6 块。<br><br>
-        <code>可用宽 = 300 − 20×2 = 260</code>；<code>n 块 = n×46 + (n−1)×12</code>：<br>
-        n=4 → 220 ✓　n=5 → 278 ✗　n=6 → 336 ✗<br><br>
-        <b>所以第 5 块就溢出了。</b>三条出路：折第二排（卡片长高，已有先例）/ 缩槽到 36（字挤）/ 溢出滚动（最差）。<br><br>
-        做法：E4 把「装不下怎么办」写成参数，剧本只写 <code>slots: 6</code>。<b>但折行会改卡片高度，线上所有下落点都要重算 —— 这一步必须引擎算，不能靠改数据。</b>
+        卡内可用宽 260，n 块要 <code>n×46 + (n−1)×12</code> —— n=5 起放不下（278 &gt; 260）。<br>
+        出路写进 E4 参数：折第二排 / 缩槽 / 滚动。折行会改卡片高度，<b>全部下落点必须引擎重算</b>，不是改数据能解决的。
       </div>
     </div>
   </div>
-
-  <div class="note" style="background:#fef2f2;border-color:#fecaca;color:#7f1d1d">
-    <b style="color:#991b1b">做不到开闭的三件事，写在这里免得以后吵架：</b>
-    ① <b>改交互模型</b>（点卡片钻取、拖动重排）→ 必须动引擎，因为「谁在哪一帧被点到」是新概念；
-    ② <b>改时间语义</b>（从按秒改成弹簧/物理）→ 必须动动词，每个 <code>plan()</code> 的返回值要换；
-    ③ <b>换渲染后端</b>（SVG → Canvas）→ L2 整层重写，组件契约里的 <code>element</code> 会换成绘制指令。
-    这三件不是设计没做好，是<b style="color:#991b1b">需求类别变了</b>。把它们当成「扩展」来承诺，才是骗人。
-  </div>
 </section>
 
-<!-- ============ 08 并行边界 ============ -->
+<!-- ============ 07 并行边界 ============ -->
 <section id="split">
-  <div class="sec-h"><span class="sec-n">08</span><h2>并行边界</h2></div>
+  <div class="sec-h"><span class="sec-n">07</span><h2>并行边界</h2></div>
   <p class="sec-sub">
     架构的价值最终体现在：<b>两个人同时改，会不会撞。</b>按上面的分层，答案分三档 ——
     <b>页面 / 剧本 / 动词随便并行，组件按组并行，令牌与引擎主循环排队。</b>
@@ -1341,7 +1175,7 @@ td.dim{color:var(--tx2)}
         </tr>
         <tr>
           <td class="id">L3</td>
-          <td class="nm">engine/{clock,director,compile}</td>
+          <td class="nm">engine/{compile,director}</td>
           <td class="dim">排队，一次一人</td>
           <td><span class="dot" style="background:#d97706"></span>串行</td>
           <td class="dim">八页动效全跑一遍</td>
@@ -1372,346 +1206,18 @@ td.dim{color:var(--tx2)}
   </div>
 
   <div class="note" style="margin-top:20px">
-    <b>一句话判断：</b>只动 <code>scenes/</code>、<code>verbs/</code> 或 <code>*.html</code> → 随时开工，不会撞人。
-    动 <code>parts/</code> <code>nav/</code> <code>blocks/</code> → 先问一句「现在有别人在改同一组吗」。
-    动 <code>prim/</code> <code>theme/</code> 或引擎主循环 → 全站排队。
-    这条界线之所以清楚，是因为<b>下面四层里没有任何一个文件认识「原语」</b>　—— 它们改动的动机永远来自抽象层，不来自某一页。
-  </div>
-
-  <div class="note" style="background:#fff7ed;border-color:#fed7aa;color:#7c2d12">
-    <b style="color:#9a3412">唯一一个跨人共享的写点是 <code>registry.js</code>。</b>
-    它必须是单文件（否则又变成多处手抄），而 8 条记录挤在一个文件里，两个人同时加原语必然冲突。
-    缓解办法就一条：<b style="color:#7c2d12">一条原语严格占固定行数的连续区间，且文件按 id 字母序排列</b>。
-    这样 git 的冲突粒度落在一段，不会牵动别人的段落 —— 但不能消除冲突，只能把它压到「解一次小冲突」的量级。
-    这是这套架构里唯一没有干净解法的地方，写在这里而不是假装它不存在。
-  </div>
-</section>
-
-<!-- ============ 09 ============ -->
-<section id="accept">
-  <div class="sec-h"><span class="sec-n">09</span><h2>验收基线 · 和现在的页面保持一致</h2></div>
-  <p class="sec-sub">
-    架构可以换，<b>看起来不能换</b>。判定标准不是「我觉得像」，而是同一视口、同一时刻各截一张图叠合。
-    下面所有数值都是<b>从当前渲染后的 DOM 里读出来的</b>，不是估计值 —— 可以用它们直接写成断言。
-  </p>
-
-  <div class="fig">
-    <svg viewBox="0 0 1100 500" role="img" aria-label="当前页面元素解剖与实测尺寸">
-      <defs>
-        <marker id="ea" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-          <path d="M1 1L9 5L1 9" fill="none" stroke="#8b93aa" stroke-width="1.6" stroke-linecap="round"/>
-        </marker>
-      </defs>
-
-      <!-- 浏览器框 -->
-      <rect x="0" y="10" width="640" height="410" rx="12" fill="#ffffff" stroke="#e3e7f2"/>
-      <!-- 画布 -->
-      <rect x="14" y="100" width="612" height="230" rx="8" fill="#fbfcff" stroke="#eef1f8"/>
-      <g stroke="#eef1f8" stroke-width="1">
-        <path d="M14 150H626M14 200H626M14 250H626M14 300H626" opacity=".7"/>
-        <path d="M114 100V330M214 100V330M314 100V330M414 100V330M514 100V330" opacity=".7"/>
-      </g>
-
-      <!-- 标题区 -->
-      <text x="26" y="52" font-size="22" font-weight="700" fill="#161b2e">Reduce</text>
-      <text x="26" y="78" font-size="13" fill="#9aa1b5">↓ All-Reduce</text>
-      <g font-size="10" font-weight="700" fill="#fff" text-anchor="middle">
-        <rect x="26" y="88" width="22" height="22" rx="6" fill="#7c3aed"/><text x="37" y="103">A</text>
-        <rect x="54" y="88" width="22" height="22" rx="6" fill="#0891b2"/><text x="65" y="103">B</text>
-        <rect x="82" y="88" width="22" height="22" rx="6" fill="#059669"/><text x="93" y="103">C</text>
-        <rect x="110" y="88" width="22" height="22" rx="6" fill="#d97706"/><text x="121" y="103">D</text>
-      </g>
-      <rect x="20" y="82" width="118" height="34" rx="8" fill="none" stroke="#dfe3ee" stroke-dasharray="3 3"/>
-      <text x="626" y="52" font-size="10.5" fill="#939bb2" text-anchor="end">⚙ 时序</text>
-
-      <!-- 卡片 2（src，右） -->
-      <rect x="390" y="130" width="210" height="119" rx="10" fill="#fff" stroke="#d8dced"/>
-      <path d="M390 140a10 10 0 0 1 10-10h190a10 10 0 0 1 10 10v15H390z" fill="#0891b2"/>
-      <text x="402" y="146" font-size="10.5" font-weight="600" fill="#fff">rank 1</text>
-      <rect x="564" y="137" width="26" height="13" rx="3" fill="#fff" fill-opacity=".26"/>
-      <text x="577" y="147" font-size="7.5" fill="#fff" text-anchor="middle">src</text>
-      <g font-size="11" font-weight="700" fill="#fff" text-anchor="middle">
-        <rect x="419" y="190" width="32" height="32" rx="6" fill="#7c3aed"/><text x="435" y="211">A</text>
-        <rect x="459" y="190" width="32" height="32" rx="6" fill="#0891b2"/><text x="475" y="211">B</text>
-        <rect x="499" y="190" width="32" height="32" rx="6" fill="#059669"/><text x="515" y="211">C</text>
-        <rect x="539" y="190" width="32" height="32" rx="6" fill="#d97706"/><text x="555" y="211">D</text>
-      </g>
-
-      <!-- 卡片 1（dst，左） -->
-      <rect x="40" y="150" width="210" height="119" rx="10" fill="#fff" stroke="#d8dced"/>
-      <path d="M40 160a10 10 0 0 1 10-10h190a10 10 0 0 1 10 10v15H40z" fill="#7c3aed"/>
-      <text x="52" y="166" font-size="10.5" font-weight="600" fill="#fff">rank 0</text>
-      <rect x="214" y="157" width="26" height="13" rx="3" fill="#fff" fill-opacity=".26"/>
-      <text x="227" y="167" font-size="7.5" fill="#fff" text-anchor="middle">dst</text>
-      <g font-size="11" font-weight="700" fill="#fff" text-anchor="middle">
-        <rect x="69" y="210" width="32" height="32" rx="6" fill="#7c3aed"/><text x="85" y="231">A</text>
-        <rect x="109" y="210" width="32" height="32" rx="6" fill="#f3eeff"/>
-        <rect x="149" y="210" width="32" height="32" rx="6" fill="#f3eeff"/>
-        <rect x="189" y="210" width="32" height="32" rx="6" fill="#f3eeff"/>
-      </g>
-
-      <!-- 连线 -->
-      <path d="M388 205 C 340 200, 300 230, 256 228" fill="none" stroke="#8b93aa" stroke-width="1.3" stroke-dasharray="8 7" marker-end="url(#ea)"/>
-      <circle cx="390" cy="205" r="3.2" fill="#fff" stroke="#8b93aa" stroke-width="1.2"/>
-      <circle cx="250" cy="228" r="3.2" fill="#fff" stroke="#8b93aa" stroke-width="1.2"/>
-
-      <!-- 包 + 尾 -->
-      <rect x="358" y="206" width="9" height="9" rx="2" fill="#7c3aed" opacity=".24"/>
-      <rect x="344" y="204" width="11" height="11" rx="2.5" fill="#7c3aed" opacity=".45"/>
-      <rect x="326" y="201" width="14" height="14" rx="3" fill="#7c3aed"/>
-      <text x="333" y="211" font-size="7.5" font-weight="700" fill="#fff" text-anchor="middle">B</text>
-
-      <!-- 字幕 -->
-      <rect x="206" y="340" width="34" height="15" rx="4" fill="#7c3aed"/>
-      <text x="223" y="351" font-size="7.5" fill="#fff" text-anchor="middle">rank0</text>
-      <text x="320" y="351" font-size="10.5" fill="#363b4e" text-anchor="middle">逐段相加，累加到 2 份</text>
-      <rect x="390" y="340" width="34" height="15" rx="4" fill="#059669"/>
-      <text x="407" y="351" font-size="7.5" fill="#fff" text-anchor="middle">rank2</text>
-
-      <!-- 进度条 -->
-      <g>
-        <rect x="40" y="366" width="86" height="2.5" rx="1" fill="#8b93aa"/>
-        <rect x="132" y="366" width="86" height="2.5" rx="1" fill="#8b93aa"/>
-        <rect x="224" y="366" width="86" height="2.5" rx="1" fill="#8b93aa"/>
-        <rect x="316" y="366" width="86" height="2.5" rx="1" fill="#dfe3ee"/>
-        <rect x="408" y="366" width="86" height="2.5" rx="1" fill="#dfe3ee"/>
-        <rect x="500" y="366" width="86" height="2.5" rx="1" fill="#dfe3ee"/>
-      </g>
-      <circle cx="320" cy="384" r="10" fill="#363b4e"/>
-      <rect x="316" y="379" width="3" height="10" rx="1" fill="#fff"/>
-      <rect x="321" y="379" width="3" height="10" rx="1" fill="#fff"/>
-      <path d="M282 379L276 384L282 389Z" fill="#363b4e"/>
-      <path d="M358 379L364 384L358 389Z" fill="#363b4e"/>
-
-      <!-- 编号徽章 -->
-      <g font-size="9" font-weight="700" fill="#fff" text-anchor="middle">
-        <circle cx="20" cy="124" r="8" fill="#7c3aed"/><text x="20" y="127">1</text>
-        <circle cx="28" cy="166" r="8" fill="#7c3aed"/><text x="28" y="169">2</text>
-        <circle cx="60" cy="200" r="8" fill="#7c3aed"/><text x="60" y="203">3</text>
-        <circle cx="258" cy="132" r="8" fill="#7c3aed"/><text x="258" y="135">4</text>
-        <circle cx="286" cy="248" r="8" fill="#7c3aed"/><text x="286" y="251">5</text>
-        <circle cx="312" cy="184" r="8" fill="#7c3aed"/><text x="312" y="187">6</text>
-        <circle cx="188" cy="348" r="8" fill="#7c3aed"/><text x="188" y="351">7</text>
-        <circle cx="28" cy="367" r="8" fill="#7c3aed"/><text x="28" y="370">8</text>
-      </g>
-
-      <!-- 右侧清单 -->
-      <g font-size="9" font-weight="700" fill="#fff" text-anchor="middle">
-        <circle cx="656" cy="42" r="8" fill="#7c3aed"/><text x="656" y="45">1</text>
-        <circle cx="656" cy="92" r="8" fill="#7c3aed"/><text x="656" y="95">2</text>
-        <circle cx="656" cy="142" r="8" fill="#7c3aed"/><text x="656" y="145">3</text>
-        <circle cx="656" cy="192" r="8" fill="#7c3aed"/><text x="656" y="195">4</text>
-        <circle cx="656" cy="242" r="8" fill="#7c3aed"/><text x="656" y="245">5</text>
-        <circle cx="656" cy="292" r="8" fill="#7c3aed"/><text x="656" y="295">6</text>
-        <circle cx="656" cy="342" r="8" fill="#7c3aed"/><text x="656" y="345">7</text>
-        <circle cx="656" cy="392" r="8" fill="#7c3aed"/><text x="656" y="395">8</text>
-      </g>
-      <g font-size="13" font-weight="600" fill="#161b2e">
-        <text x="672" y="46">舞台 viewBox</text>
-        <text x="672" y="96">卡片</text>
-        <text x="672" y="146">数据槽</text>
-        <text x="672" y="196">头部角标</text>
-        <text x="672" y="246">连线</text>
-        <text x="672" y="296">数据包</text>
-        <text x="672" y="346">字幕</text>
-        <text x="672" y="396">控制条</text>
-      </g>
-      <g font-size="11.5" fill="#5f6780" font-family="ui-monospace,monospace">
-        <text x="672" y="63">1130 × 680 · 等比缩放不裁切</text>
-        <text x="672" y="113">300 × 170 · rx 14 · 头 36</text>
-        <text x="672" y="163">46 × 46 · rx 8 · 间距 12</text>
-        <text x="672" y="213">28/30·36 × 18 · 白 26% 透明</text>
-        <text x="672" y="263">虚线 8 7 · #8b93aa · 两端端口圆</text>
-        <text x="672" y="313">20 × 20 · 尾 24 / 20 / 16 递减</text>
-        <text x="672" y="363">内联 chip · 底部居中</text>
-        <text x="672" y="413">段数 = 步骤数 · 三段按钮</text>
-      </g>
-      <g font-size="11" fill="#939bb2" font-family="ui-monospace,monospace">
-        <text x="672" y="463">字号　字母 15 · rank 15 · 角标 10</text>
-        <text x="672" y="481">四色　A #7c3aed　B #0891b2　C #059669　D #d97706</text>
-      </g>
-    </svg>
-    <div class="figcap">一张页面 = 舞台 + 卡 + 槽 + 线 + 包 + 字幕 + 控制条。数字是实测值，可直接写成断言</div>
-  </div>
-
-  <div class="tbl" style="margin-top:24px">
-    <table>
-      <colgroup><col style="width:66px"><col style="width:286px"><col style="width:300px"><col></colgroup>
-      <thead><tr><th>编号</th><th>断言</th><th>期望值</th><th>怎么量</th></tr></thead>
-      <tbody>
-        <tr><td class="id">V1</td><td>卡片尺寸与圆角</td><td class="nm">300 × 170 · rx 14</td><td class="dim">终态取所有 card rect</td></tr>
-        <tr><td class="id">V2</td><td>槽尺寸与间距</td><td class="nm">46 × 46 · rx 8 · Δx = 58</td><td class="dim">同一行相邻槽 x 差</td></tr>
-        <tr><td class="id">V3</td><td>四条数据色</td><td class="nm">#7c3aed #0891b2 #059669 #d97706</td><td class="dim">rect fill 去重集合</td></tr>
-        <tr><td class="id">V4</td><td>空槽底色</td><td class="nm">#f7f8fc（接收中「···」为 #f3eeff）</td><td class="dim">占位槽 fill</td></tr>
-        <tr><td class="id">V5</td><td>卡片头高度与角标</td><td class="nm">头 36 · 角标高 18（角色 28/30 宽 · 文字 36 宽）</td><td class="dim">头部 rect height</td></tr>
-        <tr><td class="id">V6</td><td>连线样式</td><td class="nm">dash 8 7 · stroke #c3cadb</td><td class="dim">path stroke-dasharray</td></tr>
-        <tr><td class="id">V7</td><td>字号三档</td><td class="nm">字母 15 · rank 15 · 角标 10</td><td class="dim">text font-size 属性</td></tr>
-        <tr><td class="id">V8</td><td>字幕含内联彩色标签</td><td class="nm">rankN 为实色底白字 chip</td><td class="dim">字幕节点内 rect + text</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div style="font-size:13px;font-weight:600;margin:34px 0 14px">另外四类页面也各有基线</div>
-  <div class="tbl">
-    <table>
-      <colgroup><col style="width:66px"><col style="width:130px"><col style="width:150px"><col style="width:300px"><col></colgroup>
-      <thead><tr><th>编号</th><th>页面</th><th>元素</th><th>实测值</th><th>怎么量</th></tr></thead>
-      <tbody>
-        <tr><td class="id">W1</td><td class="dim">index</td><td class="nm">节点卡</td><td class="nm">282 × 64 · rx 14</td><td class="dim">.node 的 offsetWidth / borderRadius</td></tr>
-        <tr><td class="id">W2</td><td class="dim">index</td><td class="nm">rank 点</td><td class="nm">5 × 5 圆 · 间距 3</td><td class="dim">.ranks i 的尺寸与相邻 x 差</td></tr>
-        <tr><td class="id">W3</td><td class="dim">index</td><td class="nm">关系连线</td><td class="nm">竖 20 × 34 · 横 76 × 20</td><td class="dim">.conn-v / .conn-h 内 svg 尺寸</td></tr>
-        <tr><td class="id">W4</td><td class="dim">index</td><td class="nm">图规模</td><td class="nm">8 节点 · 8 连线</td><td class="dim">.node / .conn 计数</td></tr>
-        <tr><td class="id">W5</td><td class="dim">layout</td><td class="nm">单元格</td><td class="nm">28 × 28 · rx 7 · 字 11.5</td><td class="dim">.cell 尺寸与 font-size</td></tr>
-        <tr><td class="id">W6</td><td class="dim">layout</td><td class="nm">rank 行</td><td class="nm">358 × 46 · rx 12</td><td class="dim">.row 尺寸</td></tr>
-        <tr><td class="id">W7</td><td class="dim">algorithms</td><td class="nm">表格</td><td class="nm">884 宽 · 表头 11.5px</td><td class="dim">table 宽度与 th 字号</td></tr>
-        <tr><td class="id">W8</td><td class="dim">anatomy</td><td class="nm">目录 / 示例盒</td><td class="nm">152 × 367 rx12 · 884 × 230 rx14</td><td class="dim">.toc / .demo 尺寸</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="note">
-    <b>W5 和 V2 是同一件事的两份答案，这是故意留的。</b>
-    舞台的槽 46、对照表的格 28 —— 差 1.6 倍。前面 05 说过为什么不复用渲染层；
-    但<b>字母、四色、空槽的虚线与「Σ」这个字必须逐字一致</b>，否则读者在两个页面看到的是两套语言。
-    这类「同一语义、两种尺寸」的地方，验收也只比语义不比尺寸。
-    另：V6 的连线灰是 <code>#c3cadb</code>（kit.js 实测值，v2 勘误）；<code>#8b93aa</code> 属于首页网格与整份包一族，别拿它比对舞台连线。
-    2026-10-30 实现探针轮实测勘误：V5 角标（角色徽章 28/30×18、文字徽章 36×18，「36×18」并非全部角标）、
-    V4（#f3eeff 是「接收中」态不是终态第二排）、W1（实测 282×64）、W5（实测 28×28 rx7 字11.5）、
-    W7（表头无 text-transform，「大写」是观感不作断言）。
-  </div>
-
-  <div style="font-size:13px;font-weight:600;margin:30px 0 14px">八个页面各自长什么样</div>
-  <div class="fig">
-    <svg viewBox="0 0 1100 400" role="img" aria-label="八个原语页的构件差异">
-      <text x="0" y="12" font-size="11.5" fill="#939bb2">● = 有　— = 无　文字 = 头部徽章的实际内容　　这张表决定引擎要提供哪几种能力，缺一项就有页会退化成别的样子</text>
-
-      <g font-size="11.5" fill="#939bb2" font-weight="600">
-        <text x="118" y="48" text-anchor="middle">布局</text>
-        <text x="290" y="48" text-anchor="middle">双排槽</text>
-        <text x="400" y="48" text-anchor="middle">Σ 角标</text>
-        <text x="510" y="48" text-anchor="middle">计算框</text>
-        <text x="620" y="48" text-anchor="middle">头部徽章</text>
-        <text x="730" y="48" text-anchor="middle">轮次字幕</text>
-        <text x="840" y="48" text-anchor="middle">对角连线</text>
-        <text x="960" y="48" text-anchor="middle">终局一句话</text>
-      </g>
-      <line x1="0" y1="58" x2="1100" y2="58" stroke="#e3e7f2"/>
-
-      <g font-size="12.5" fill="#161b2e" font-weight="600">
-        <text x="0" y="84">gather</text>
-        <text x="0" y="122">scatter</text>
-        <text x="0" y="160">broadcast</text>
-        <text x="0" y="198">reduce</text>
-        <text x="0" y="236">allgather</text>
-        <text x="0" y="274">allreduce</text>
-        <text x="0" y="312">reducescatter</text>
-        <text x="0" y="350">alltoall</text>
-      </g>
-      <g font-size="11" fill="#5f6780">
-        <text x="118" y="84" text-anchor="middle">1 + 3 竖列</text>
-        <text x="118" y="122" text-anchor="middle">1 + 3 竖列</text>
-        <text x="118" y="160" text-anchor="middle">1 + 3 竖列</text>
-        <text x="118" y="198" text-anchor="middle">1 + 3 竖列</text>
-        <text x="118" y="236" text-anchor="middle">2 × 2</text>
-        <text x="118" y="274" text-anchor="middle">2 × 2</text>
-        <text x="118" y="312" text-anchor="middle">2 × 2</text>
-        <text x="118" y="350" text-anchor="middle">2 × 2</text>
-      </g>
-
-      <g text-anchor="middle">
-        <g fill="#7c3aed" font-size="13">
-          <text x="290" y="86">—</text><text x="290" y="124">—</text><text x="290" y="162">—</text>
-          <text x="290" y="200">●</text><text x="290" y="238">—</text><text x="290" y="276">●</text>
-          <text x="290" y="314">●</text><text x="290" y="352">●</text>
-
-          <text x="400" y="86">—</text><text x="400" y="124">—</text><text x="400" y="162">—</text>
-          <text x="400" y="200">●</text><text x="400" y="238">—</text><text x="400" y="276">●</text>
-          <text x="400" y="314">●</text><text x="400" y="352">—</text>
-
-          <text x="510" y="86">—</text><text x="510" y="124">—</text><text x="510" y="162">—</text>
-          <text x="510" y="200">●</text><text x="510" y="238">—</text><text x="510" y="276">●</text>
-          <text x="510" y="314">●</text><text x="510" y="352">—</text>
-
-          <text x="730" y="86">—</text><text x="730" y="124">—</text><text x="730" y="162">—</text>
-          <text x="730" y="200">—</text><text x="730" y="238">●</text><text x="730" y="276">—</text>
-          <text x="730" y="314">—</text><text x="730" y="352">—</text>
-
-          <text x="840" y="86">—</text><text x="840" y="124">—</text><text x="840" y="162">—</text>
-          <text x="840" y="200">—</text><text x="840" y="238">—</text><text x="840" y="276">—</text>
-          <text x="840" y="314">—</text><text x="840" y="352">●</text>
-        </g>
-      </g>
-
-      <g font-size="10.5" fill="#5f6780" text-anchor="middle" font-family="ui-monospace,monospace">
-        <text x="620" y="87">src/dst</text>
-        <text x="620" y="125">src/dst</text>
-        <text x="620" y="163">src/dst</text>
-        <text x="620" y="201">src/dst</text>
-        <text x="620" y="239">n/4</text>
-        <text x="620" y="277">n 段</text>
-        <text x="620" y="315">n 段</text>
-        <text x="620" y="353">n/4</text>
-      </g>
-
-      <g font-size="10.5" fill="#939bb2">
-        <text x="960" y="86" text-anchor="middle">rank0 集齐四片</text>
-        <text x="960" y="124" text-anchor="middle">每人一片</text>
-        <text x="960" y="162" text-anchor="middle">三家各一份</text>
-        <text x="960" y="200" text-anchor="middle">rank0 四段 Σ</text>
-        <text x="960" y="238" text-anchor="middle">四家各有四片</text>
-        <text x="960" y="276" text-anchor="middle">四家各有 Σ</text>
-        <text x="960" y="314" text-anchor="middle">每家一段 Σ</text>
-        <text x="960" y="352" text-anchor="middle">每家各一段</text>
-      </g>
-    </svg>
-    <div class="figcap">八个页面不是八种动画，是同一批构件的八种组合 —— 表格里每一列对应引擎的一个能力</div>
-  </div>
-
-  <p style="font-size:12.8px;color:var(--tx2);margin-top:14px;line-height:1.9">
-    <b>这些列落在哪些组件上：</b>双排槽 = <code>cast.row</code> + <code>geom.plan</code>；Σ 角标与头部徽章 = <code>cast.badge</code>；
-    轮次字幕 = <code>chrome.cap</code>；对角连线 = <code>payload.edge</code> 的直线中心交叉（早期 bend 方案已删除，见 AGENTS 三）；终局一句话 = 剧本的 <code>finale</code> 字段。
-    <b>只有「计算框」没有独立组件</b> —— 它是 <code>beat.fuse</code> 合并动作的伴生块，离开合并就没有意义，单独成件反而是多余的抽象。
-  </p>
-
-  <div style="font-size:13px;font-weight:600;margin:30px 0 14px">哪些必须一致、哪些可以不一样、哪些现在就不统一</div>
-  <div class="rules">
-    <div class="rule" style="border-left-color:#059669">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px">必须一致 · 0 差异</div>
-      <div style="font-size:12.5px;color:var(--tx2);line-height:1.85">
-        卡片与槽的尺寸圆角 · 四条数据色 · 虚线弧与端口圆 · 数据包带递减尾巴 ·
-        落位弹跳（不回弹、无涟漪）· 卡片长高而非换页 · 字幕内联彩色标签 ·
-        右上齿轮 + 底部三段按钮
-      </div>
-    </div>
-    <div class="rule" style="border-left-color:#0891b2">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px">允许不同 · 不参与比对</div>
-      <div style="font-size:12.5px;color:var(--tx2);line-height:1.85">
-        文件名与目录 · DOM 层级与类名 · 加载方式 · 每帧重绘还是局部更新 ·
-        组件拆到多细 · 参数存在哪
-      </div>
-    </div>
-    <div class="rule" style="border-left-color:#d97706">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px">现在不统一 · 新实现定一个</div>
-      <div style="font-size:12.5px;color:var(--tx2);line-height:1.85">
-        顶部图例有的左对齐有的居中 · 关系写法混用「↓ Scatter」与「Reduce → All-Reduce」·
-        进度条段数不完全等于步骤数 · alltoall 终态四卡未齐平 · 字幕放四个 rank 标签时过挤 ·
-        <b>同一个「原语关系」在首页画成节点连线、在原语页左上角画成小卡，两套代码</b> ·
-        <b>页头有三套：index 的 hero、layout/algorithms/anatomy 的 .hd、原语页的 h1</b>
-      </div>
-    </div>
-  </div>
-
-  <div class="note">
-    <b>怎么判定「一致」：</b>固定视口 1180 × 800、deviceScaleFactor 1，在进度 0.30 / 0.60 / 0.99 三个时刻各截一张，
-    新实现与现页面叠合比。差异只允许出现在第二列清单里 —— 出现在第一列任意一条，就是不通过。
-    第三列不是缺陷清单，是<b>当前没有唯一答案的地方</b>，新实现必须先选定一个，再写进断言。
+    <b>一句话判断：</b>只动 <code>scenes/</code>、<code>verbs/</code> 或 <code>*.html</code> → 随时开工，不会撞人；
+    动 <code>parts/</code> <code>nav/</code> <code>blocks/</code> → 三组可并行，组内先打招呼；
+    动 <code>prim/</code>、<code>theme/</code> 或引擎主循环 → 全站排队，改完八页全跑一遍。
+    唯一共享写点是 <code>registry.js</code>：一条原语固定连续行区间、按 id 排序，把冲突压在段内不牵动别人。
+    这条界线之所以清楚，是因为<b>下面四层里没有任何一个文件认识「原语」</b>。
   </div>
 </section>
 
 <div style="margin-top:64px;padding-top:22px;border-top:1px solid var(--line2);font-size:12px;color:var(--tx3);line-height:1.9">
-  设计依据：内容源 <code>分布式通信原语详解.md</code> 的 8 个原语与选型关系；
-  视觉基线取自 <b>12 个真实页面</b>的渲染结果 —— 8 个原语页（gather / scatter / broadcast / reduce / allgather / allreduce / reducescatter / alltoall）
-  与 4 个结构页（index / layout / algorithms / anatomy），尺寸与色值均为浏览器实测。
-  &nbsp;·&nbsp; 本页只描述设计，不含实现，也不对应现有文件结构。
+  本页是组件库与代码架构的标准：01–03 定模型与零件，04 定分层与文件落位，05 定运行时，06–07 定扩展与并行边界。<br>
+  验证用例以 <code>docs/test-cases.html</code> 为准（96 条）；规范文件清单与关系图见 <code>docs/specs.html</code>；动态步骤与文案口径见 <code>docs/steps.html</code>；组件真值看 <code>docs/visual.html</code>。<br>
+  内容依据：内容源《分布式通信原语详解》的 8 个原语与选型关系，只作参考 —— 与实现冲突时以实现为准。
 </div>
 
 </div>

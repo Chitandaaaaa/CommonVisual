@@ -1,6 +1,6 @@
 /* CommonVisual · index 页探针（v2 契约版，可在旧页自检）
    ------------------------------------------------------------
-   testing.html 4.1–4.4 + 蓝图 W1–W4。纯 DOM + fetch，不依赖 CV.lastMount。
+   test-cases.html 4.1–4.4 + 蓝图 W1–W4。纯 DOM + fetch，不依赖 CV.lastMount。
    口径（2026-10-30 按旧页实测修正）：节点顺序按原语树序
    （broadcast→scatter→gather→allgather→reduce→allreduce→reducescatter→
    alltoall），不与对照表序比 —— 两处顺序本就不同，4.1 已改口径。
@@ -73,7 +73,7 @@ export async function check(pg) {
       `node=${data.nodes.length} conn=${data.conns.length}`);
   }
 
-  /* 4.4 三个文档入口可达 */
+  /* 4.4 两个文档入口可达（2026-10-31 hero 收为两条：docs/prepost.html · docs/visual.html）*/
   {
     const links = data.docs.concat(data.btn ? [data.btn] : []);
     const stats = [];
@@ -82,8 +82,8 @@ export async function check(pg) {
         try { return (await fetch(u)).status; } catch (e) { return 0; }
       }, h));
     }
-    ok('4.4 三个文档入口可达',
-      data.docs.length === 3 && stats.every(s => s === 200),
+    ok('4.4 两个文档入口可达',
+      data.docs.length === 2 && stats.every(s => s === 200),
       `${data.docs.join(' ')} → ${stats.join(',')}`);
   }
 
