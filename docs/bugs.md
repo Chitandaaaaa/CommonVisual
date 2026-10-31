@@ -20,9 +20,9 @@ node tools/verify.mjs index gather scatter broadcast reduce allgather allreduce 
 | 日期 | 页面 | 症状 / 断言 | 复现 | 状态 |
 |---|---|---|---|---|
 | 2026-10-31 | 全站原语页（齿轮） | 「保存到代码」写 `assets/scenes/pages-base.js`，但该文件不存在也未被任何页面引入 —— 保存后刷新即回原值，功能无效 | 齿轮改倍数 → 保存到代码 → 刷新页面 | 已修（2026-11-01 建文件 + 接入 8 页薄壳；serve.mjs 端点写盘 → 全新页面 `CV.pageOvRead` 读回、编译真生效，已实测） |
-| 2026-10-31 | allreduce | 3.42「轮后每卡 4 块全 Σᴀ²」、3.43「中段出现计算框（两轮）」采样锚点未定稿（testing.html 已标紫条，此处入账统一跟踪） | `node tools/verify.mjs allreduce --no-shot` | 待时序标准定稿 |
-| 2026-10-31 | reducescatter | 3.51「第 1 轮合并结束的帧状态」采样锚点未定稿（同上） | `node tools/verify.mjs reducescatter --no-shot` | 待时序标准定稿 |
-| 2026-10-31 | index | W1 节点卡断言 282×64，实测 282×**63**：1px 平台渲染差（校准值出自他机，本机 Windows 实测 63） | `node tools/verify.mjs index --no-shot` | 待复核（按本机重校或断言放宽 1px） |
+| 2026-10-31 | allreduce | 3.42「轮后每卡 4 块全 Σᴀ²」、3.43「中段出现计算框（两轮）」采样锚点未定稿（testing.html 已标紫条，此处入账统一跟踪） | `node tools/verify.mjs allreduce --no-shot` | 已了结（2026-11-01 时序标准定稿，采样改 win 现算、紫条转绿；3.42 同日再扩双采样，见下行） |
+| 2026-10-31 | reducescatter | 3.51「第 1 轮合并结束的帧状态」采样锚点未定稿（同上） | `node tools/verify.mjs reducescatter --no-shot` | 已了结（2026-11-01 同上，采样改 win.r1merge.e 现算） |
+| 2026-10-31 | index | W1 节点卡断言 282×64，实测 282×**63**：1px 平台渲染差（校准值出自他机，本机 Windows 实测 63） | `node tools/verify.mjs index --no-shot` | 已放宽（2026-11-01 断言改高 63–64、容 ±1px 平台行高差——.node 未写 line-height，治本要动 index.css 版式，不做） |
 | 2026-10-31 | anatomy | 组件样式双份：页面抄 `theme/stage-page.css` 一份值（.slot-tx / .calc-tx 等），改真源必须手动同步，无机制保证 | 改 stage-page.css 后开 anatomy 对照 | 技术债（暂不修） |
 | 2026-10-31 | allreduce | 第 2 轮飞行期间上排从 Σ² 回退成普通字母（浓色），合并过半才重新亮 Σ —— 与「这一轮已是 2 份中间结果」的叙事相悖（steps.html §13-④，随解说页签落地核实） | 播到第 2 轮起飞 → 合并过半看上排字母 | 已修（2026-11-01 Σ 判定改认「已持有份数」，sum.js overlayAllreduce；probe 实测 r2 飞行中点全 Σᴀ²、r2merge 早段逐段升 Σ⁴；3.42 扩双采样重校全绿） |
 | 2026-10-31 | allgather | 一轮的 4 块落位弹跳按 seatGap 0.50 错峰，末块弹到 s+4.65、越过轮界（轮长 4.15）约 0.5s —— 下一轮已起飞时上一轮还有块在弹（解说表按轮界截断，代码行为越界） | 逐帧看第 1 轮 seatStart 后 2 秒 | 待修（错峰缩短或轮末 hold 加长，需重校 V 契约） |
