@@ -47,7 +47,7 @@
     var SCHEMA = {
       '03-card': {
         label: '卡片动态',
-        anchor: 'sub-03-2',
+        anchor: 'sub-03-5',   /* 03 的第 5 个 h3 =「动态 · 卡片长高与数据块增减」（2026-11-01 拆 tab 后顺延） */
         groups: [
           { label: '耗时', keys: ['cardDur', 'blockDur'] },
           { label: '节奏', keys: ['blockGap'] }
@@ -60,7 +60,7 @@
       },
       '05-packet': {
         label: '数据包·动态',
-        anchor: 'sub-05-3',
+        anchor: 'sub-05-4',   /* 05 的第 4 个 h3 =「动态 · 数据包怎么飞」（2026-11-01 拆 tab 后顺延） */
         groups: [
           { label: '耗时', keys: ['packDur', 'packFade'] },
           { label: '特效', keys: ['packLead', 'trailDist', 'trailScale'] }
@@ -75,7 +75,7 @@
       },
       '07-calc': {
         label: '方框动态',
-        anchor: 'sub-07-2',
+        anchor: 'sub-07-3',   /* 07 的第 3 个 h3 =「动态 · 方框长出与收回」（2026-11-01 拆 tab 后顺延） */
         groups: [
           { label: '耗时', keys: ['growDur', 'holdDur', 'shrinkDur'] }
         ],

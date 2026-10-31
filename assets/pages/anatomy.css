@@ -31,24 +31,7 @@
   font-size: 17px; font-weight: 600; letter-spacing: -.1px;
 }
 
-/* 桌面 / 窄屏切换：标题行末尾的胶囊开关 */
-.tab {
-  display: flex; gap: 2px; padding: 2px;
-  border-radius: 999px;
-  background: #eaedf6;
-}
-.tab button {
-  border: 0; background: none; cursor: pointer;
-  font-family: var(--sans); font-size: 11.5px; line-height: 1;
-  color: var(--tx-3);
-  padding: 5px 12px; border-radius: 999px;
-  transition: color .15s, background .15s;
-}
-.tab button:hover { color: var(--tx-2); }
-.tab button.on {
-  background: #fff; color: var(--tx);
-  box-shadow: 0 1px 2px rgba(20, 26, 46, .09);
-}
+/* 桌面 / 窄屏与动画模式一律小二级标题堆叠（2026-11-01 拆 tab，胶囊开关样式已删） */
 .sec-hd h2 em {
   font-style: normal;
   font-family: var(--mono); font-size: 11px; font-weight: 400;
@@ -67,7 +50,7 @@
   display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap;
 }
 
-/* 子标题行：同一节里再分块时，让这块也挂自己的 tab */
+/* 子标题行：同一节里再分块时的块头（原挂 tab，现纯标题） */
 .sec > .sub-hd { margin-top: 28px; }
 .sub-hd {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -456,8 +439,6 @@
 
 @media (max-width: 860px) {
   .todo { grid-template-columns: repeat(2, 1fr); }
-  /* 四态 tab（单个/两个/四个/曲线）再窄一档就放不进一行 —— 让标题与 tab 各占一行 */
-  .sub-hd { flex-wrap: wrap; row-gap: 8px; }
 }
 @media (max-width: 640px) {
   .todo { grid-template-columns: 1fr; }

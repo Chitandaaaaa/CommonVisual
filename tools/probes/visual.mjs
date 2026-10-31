@@ -1,11 +1,10 @@
 /* CommonVisual · visual 页探针（v2 契约版；原 anatomy 页，2026-10-31 移入 docs/）
    ------------------------------------------------------------
-   test-cases.html 4.8–4.13（2026-10-31 原 4.12–4.17 随页退役顺延，更早拆分史见 git）
-   + 2.14 的 visual 半截（cv.params.v1 持久化）+ 蓝图 W8。
-   口径（2026-10-30 按旧页实测修正，现 4.12）：本页只有 03 节有「动态」
-   tab 组（一排变两排 ↔ 两排变一排）；07 的动态是自动播放、无 tab。
-   探针按「存在动态 tab 就考」写，若给 07 也加了 tab 会自动被考。
-   W 真值（2026-10-30 待自检确认）：.toc 152×367 r12；.demo 884×230 r14。
+   test-cases.html 4.8–4.13（4.12 / 4.13 于 2026-11-01 随页去 tab 改版改写：
+   tab 全拆 → 小二级标题堆叠、动态常播）+ 2.14 的 visual 半截（cv.params.v1 持久化）+ 蓝图 W8。
+   调试台锚点（theme.js SCHEMA，2026-11-01 拆 tab 后顺延）：
+   03-card→sub-03-5 · 05-packet→sub-05-4 · 07-calc→sub-07-3（08 / 09 不变）。
+   W 真值（2026-11-01 拆 tab 改版后重测）：.toc 152×367 r12；.demo 884×230 r14。
    */
 export async function check(pg) {
   const out = [];
@@ -79,8 +78,9 @@ export async function check(pg) {
       `toc=${d.toc} demo=${d.demo}`);
   }
 
-  /* 4.12 / 4.13 动态 tab 切换内容真的变；切回复原、旧 rAF 已停
-     （2026-10-31 拆自旧 4.12：变化与复原+rAF 守恒各自独立判）*/
+  /* 4.12 / 4.13（2026-11-01 随页去 tab 改版改写）：
+     4.12 tab 拆净 + 动态子块常驻（03 / 05 的「动态」子块各有非空 svg、rAF 在跑）；
+     4.13 参数变更 → 动态容器整体重建（打标节点脱离文档）、rAF 不增 */
   {
     await pg.evaluate(() => {
       window.__rafLast = new Map();
@@ -90,60 +90,49 @@ export async function check(pg) {
         cb(ts);
       });
     });
-    const tab = await pg.evaluate(() => {
+    await pg.waitForTimeout(400);                     /* 等几帧：让现有循环都从包装器过一遍 */
+    const dynSvgCount = (secId) => pg.evaluate((id) => {
       const q = (s, r) => [...(r || document).querySelectorAll(s)];
-      for (const hd of q('.sub-hd')) {
-        const h3 = hd.querySelector('h3');
-        if (!h3 || !/动态/.test(h3.textContent)) continue;
-        const tab = hd.querySelector('.tab');
-        if (!tab || tab.querySelectorAll('button').length < 2) continue;
-        /* DOM 节点没法跨 evaluate 拿回来，打标记再用选择器点 */
-        hd.setAttribute('data-probe-dyn', '1');
-        return { where: h3.textContent, n: tab.querySelectorAll('button').length };
-      }
-      return null;
+      const sec = document.getElementById(id);
+      if (!sec) return 0;
+      const h3 = q('h3', sec).find(x => /动态/.test(x.textContent));
+      const box = h3 && h3.closest('.sub-hd') ? h3.closest('.sub-hd').nextElementSibling : null;
+      return box ? q('svg', box).filter(v => v.childNodes.length > 0).length : 0;
+    }, secId);
+    const tabs = await pg.evaluate(() => document.querySelectorAll('.tab').length);
+    const n03 = await dynSvgCount('card');
+    const n05 = await dynSvgCount('packet');
+    /* 活跃 rAF 循环计数：规范页多节同时在动（03 两个场景 + 05 四模式 + 07/09 各一），
+       只判下限与守恒 —— 重建前后旧的停了新的才起，计数不增。 */
+    const loops = () => pg.evaluate(() => {
+      const now = performance.now();
+      let n = 0;
+      for (const [, t] of window.__rafLast) if (now - t < 500) n++;
+      return n;
     });
-    if (!tab) {
-      ok('4.12 tab 切换内容真的变', false, '没找到动态 tab 组');
-      ok('4.13 切回复原、rAF 不增', false, '没找到动态 tab 组');
-    } else {
-      const fp = () => pg.evaluate(() => {
-        const hd = document.querySelector('[data-probe-dyn]');
-        const box = hd && hd.nextElementSibling;
-        return box ? { n: box.innerHTML.length, svg: box.querySelectorAll('svg').length } : null;
-      });
-      /* 活跃 rAF 循环计数：规范页多节同时在动，无法点名某一个回调，
-         但「切 tab 前后循环数守恒（旧的停了新的才起）」是可判的 ——
-         若旧循环不停，切过去后计数会 +1。 */
-      const loops = () => pg.evaluate(() => {
-        const now = performance.now();
-        let n = 0;
-        for (const [, t] of window.__rafLast) if (now - t < 500) n++;
-        return n;
-      });
-      const f0 = await fp();
-      await pg.waitForTimeout(300);                     /* 等一帧：让现有循环都从包装器过一遍 */
-      const n0 = await loops();
-      const clickTab = (nth) => pg.evaluate((n) => {
-        const btn = document.querySelectorAll('[data-probe-dyn] .tab button')[n];
-        btn.click();                                    /* 考的就是 onclick 处理器 */
-      }, nth);
-      await clickTab(1);
-      await pg.waitForTimeout(700);
-      const f1 = await fp();
-      const n1 = await loops();
-      await clickTab(0);
-      await pg.waitForTimeout(700);
-      const f2 = await fp();
-      const n2 = await loops();
-      const changed = f0 && f1 && (f0.n !== f1.n || f0.svg !== f1.svg);
-      const restored = f0 && f2 && f0.svg === f2.svg;
-      const noLeak = n1 <= n0 && n2 <= n0;
-      ok('4.12 tab 切换内容真的变', changed,
-        `${tab.where} svg ${f0 && f0.svg}→${f1 && f1.svg}`);
-      ok('4.13 切回复原、rAF 不增', restored && noLeak,
-        `复原=${restored} rAF ${n0}→${n1}→${n2} svg ${f2 && f2.svg}`);
-    }
+    const n0 = await loops();
+    ok('4.12 tab 拆净、动态子块常驻',
+      tabs === 0 && n03 >= 1 && n05 >= 2 && n0 >= 4,
+      `tab=${tabs} 03动态svg=${n03} 05动态svg=${n05} rAF≈${n0}`);
+
+    /* 4.13：给 05-packet 改一键 → 05 动态容器整体重建；重建前后 rAF 不增 */
+    await pg.evaluate(() => {
+      const sec = document.getElementById('packet');
+      const h3 = [...sec.querySelectorAll('h3')].find(x => /动态/.test(x.textContent));
+      const svg = h3.closest('.sub-hd').nextElementSibling.querySelector('svg');
+      svg.setAttribute('data-probe-mark', '1');
+    });
+    await pg.evaluate(() => { CV.params.set('05-packet', 'packLead', 0.3); });
+    await pg.waitForTimeout(700);                     /* 计数窗是 500ms：等旧循环的心跳老化出窗，否则取消的旧循环还在计数里 */
+    const r = await pg.evaluate(() => {
+      const m = document.querySelector('svg[data-probe-mark]');
+      return { rebuilt: !m || !m.isConnected };
+    });
+    const n1 = await loops();
+    await pg.evaluate(() => { CV.params.reset(); });
+    await pg.waitForTimeout(200);
+    ok('4.13 参数变更 → 动态子块重建', r.rebuilt && n1 <= n0,
+      `重建=${r.rebuilt} rAF ${n0}→${n1}`);
   }
 
   /* 2.14-visual 参数持久化（cv.params.v1）*/

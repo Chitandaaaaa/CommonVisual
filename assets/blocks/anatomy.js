@@ -14,8 +14,12 @@
 
    已定稿的三个基础组件：
      ① 完整数据（whole）  一份 = 4 个数据块
-     ② 数据块（slot）     卡里的一个缓冲槽，三态
+     ② 数据块（slot）     卡里的一个缓冲槽，四态 own / done / waiting / empty
      ③ rank 卡片（card）  白底 + 彩色标题条 + 角色徽章
+
+   版式（2026-11-01 改版）：全页不用 tab —— 桌面/窄屏两态与动画模式
+   都拆成小二级标题（.sub-hd + h3）纵向堆叠，右侧子目录自动收录；
+   动态 demo 堆叠常播（重画前必停旧 rAF）。
    ============================================================ */
 (function () {
   'use strict';
@@ -56,35 +60,22 @@
     return s;
   }
 
-  /* 标题行右侧的多选切换：点了就地重画这一节的图。
-     host 可以是 .sec 整节，也可以是节内的 .sub-hd（子块各管各的）。
-     addTab 是「桌面 / 窄屏」这个最常见的两态，单独的 addTabs 给别的一组标签用。 */
-  function addTabs(host, labels, render) {
-    var hd = host.classList.contains('sub-hd') ? host : host.querySelector('.sec-hd');
-    var tab = h('div', 'tab', hd);
-    var btns = labels.map(function (t, i) {
-      var b = h('button', null, tab);
-      b.textContent = t;
-      b.onclick = function () { pick(i); };
-      return b;
-    });
-    function pick(i) {
-      btns.forEach(function (b, k) { b.className = k === i ? 'on' : ''; });
-      render(i);
-    }
-    pick(0);
-  }
-
-  function addTab(host, render) {
-    addTabs(host, ['桌面', '窄屏'], function (i) { render(!!i); });
+  /* 子块：一个小二级标题 + 一个内容容器（2026-11-01 起全页无 tab）。
+     尺寸两态（桌面/窄屏）与动画模式一律纵向堆叠、各自常播；
+     右侧「本节子目录」自动收录这些 h3（编号 = 节号.出现序，调试台锚点据此对号）。 */
+  function subBlock(s, title) {
+    var hd = h('div', 'sub-hd', s);
+    h('h3', null, hd).textContent = title;
+    return h('div', 'sub-body', s);
   }
 
   /* ── 三个滤镜全站只建一份 ──
      drawCard / drawPacket / drawCalc 里写死了 url(#fCard) / #fGlow / #fTrail，
-     所以不能每个 demo 各带一份 defs：本页 22 个 demo 会产生 22 个同 id 的 <filter>
+     所以不能每个 demo 各带一份 defs：本页几十个 demo 会产生几十个同 id 的 <filter>
      （非法 HTML，且 url(#fCard) 恒解析到文档里第一个，前一个 demo 被 removeChild
      之后引用会漂到下一个）。改为挂一个 0 尺寸的隐藏 svg 放唯一一份定义，
-     参数与 gather.html 逐字一致，观感不变。 */
+     参数与 parts/stage.js 建场时写的逐字一致（2026-11-01 修齐：
+     fGlow / fTrail 的 flood-color 曾写 #1a1f36，真实现是 #2a3352）。 */
   (function sharedFilters() {
     var fs = el('svg', { width: 0, height: 0, 'aria-hidden': 'true', focusable: 'false' });
     fs.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
@@ -92,9 +83,9 @@
     var f = el('filter', { id: 'fCard', x: '-40%', y: '-40%', width: '180%', height: '190%' }, d);
     el('feDropShadow', { dx: 0, dy: 6, stdDeviation: 12, 'flood-color': '#2a3352', 'flood-opacity': '.1' }, f);
     var fg = el('filter', { id: 'fGlow', x: '-90%', y: '-90%', width: '280%', height: '280%' }, d);
-    el('feDropShadow', { dx: 0, dy: 0, stdDeviation: 8, 'flood-color': '#1a1f36', 'flood-opacity': '.22' }, fg);
+    el('feDropShadow', { dx: 0, dy: 0, stdDeviation: 8, 'flood-color': '#2a3352', 'flood-opacity': '.22' }, fg);
     var ft = el('filter', { id: 'fTrail', x: '-90%', y: '-90%', width: '280%', height: '280%' }, d);
-    el('feDropShadow', { dx: 0, dy: 0, stdDeviation: 5, 'flood-color': '#1a1f36', 'flood-opacity': '.14' }, ft);
+    el('feDropShadow', { dx: 0, dy: 0, stdDeviation: 5, 'flood-color': '#2a3352', 'flood-opacity': '.14' }, ft);
     document.body.appendChild(fs);
   })();
 
@@ -287,16 +278,13 @@
       }
     }
 
-    function render(nr) {
-      var old = s.querySelector('.demo');
-      if (old) s.removeChild(old);
-
+    function draw(host, nr) {
       var m = nr ? M.narrow : M.desktop;
       var sl = nr ? G.narrow.slot : G.desktop.slot;
       var pad = Math.round(sl.sw * 0.24);            /* 11 / 6 */
       var bw = 4 * sl.sw + 3 * sl.gap + 2 * pad;     /* 242 / 127 */
       var bh = sl.sh + 2 * pad;                      /* 68 / 37 */
-      var g = demo(s, m.w, m.h, '一份完整数据（左）与它的归约结果（右），标出块间距、内边距与整体长宽');
+      var g = demo(host, m.w, m.h, '一份完整数据（左）与它的归约结果（右），标出块间距、内边距与整体长宽');
 
       CV.drawLegend(g, { x: m.bx, y: m.by, slot: sl, items: DATA });
 
@@ -336,44 +324,135 @@
       }
     }
 
-    addTab(s, render);
+    /* 桌面 / 窄屏各画一张，纵向堆叠（2026-11-01 拆 tab） */
+    draw(subBlock(s, '桌面 · 块 46 · 间距 12'), false);
+    draw(subBlock(s, '窄屏 · 块 25 · 间距 5'), true);
+
+    /* 虚线框自身的规格（此前只标了块间距与整体长宽，框没标）+ 颜色令牌出处 */
+    var sp = h('p', 'specs', s);
+    sp.innerHTML =
+      '<b>虚线框</b> rx 14 · 白 72% · 描边 #c1cadf 1.5 · 虚线 4 3 · 内边距 pad = 0.24 × 块宽（<code>blocks/legend.js</code>）<br>' +
+      '<b>颜色即令牌</b> 四色与 TONE（deep / ink / wire / slotBg / slotHot）唯一来源 <code>theme.js</code>，任何文件不许自写色值';
   })();
 
   /* ══════════════════════════════════════════════════════════
      02 数据块
+     ------------------------------------------------------------
+     四态口径与实现一一对应（move.js overlayRing 的四态机）：
+       own     自己那段 —— 出生即在、永不腾空
+       done    已收到   —— 渲染与 own 完全相同，区别只在语义与落位弹跳
+       waiting 传输中   —— 淡紫底 + 「···」
+       empty   空       —— 灰底虚线，等着被填
      ══════════════════════════════════════════════════════════ */
   (function () {
     var s = sec('slot', '02', '数据块', 'slot');
 
-    function render(nr) {
-      var old = s.querySelector('.demo');
-      if (old) s.removeChild(old);
+    /* ── 尺寸与几何：桌面 46 / 窄屏 25 并排一张图（样式与断点无关） ── */
+    (function () {
+      var b = subBlock(s, '尺寸与几何 · 桌面 46 / 窄屏 25');
+      var g = demo(b, 430, 172,
+        '数据块尺寸与几何：桌面 46 与窄屏 25 并排，各带块宽与间距标注');
 
-      var sz = nr ? G.narrow.slot.sw : G.desktop.slot.sw;
-      var xs = nr ? [40, 82, 124] : [40, 126, 212];
-      var capY = 12, topY = 24, labY = topY + sz + 18, dimY = labY + 14;
-      /* 说明行要落在尺寸数字之后再留 18px，否则两者会叠在一起。
-         画布只有 276 宽，一句写完要 293px —— 右端会被画布裁掉，所以拆两行。 */
-      var noteY = dimY + 14 + (nr ? 18 : 20);
-      var g = demo(s, 276, nr ? 140 : 166,
-        '数据块的三种状态，' + (nr ? '窄屏 25' : '桌面 46') + ' 真实尺寸');
+      var D = G.desktop.slot, N = G.narrow.slot;
 
-      capTx(g, 40, capY, (nr ? '窄屏 ' : '桌面 ') + sz + ' × ' + sz);
+      /* 桌面一对：46 + 间距 12 */
+      capTx(g, 40, 22, '桌面 · 块 46');
+      CV.setSlot(CV.drawSlot(g, 40, 36, D.sw, D.sh), DATA[0], {});
+      CV.setSlot(CV.drawSlot(g, 40 + D.sw + D.gap, 36, D.sw, D.sh), DATA[1], {});
+      gapH(g, 40 + D.sw, 40 + D.sw + D.gap, 36 + D.sh / 2, 158, 36 + D.sh / 2, '间距 12', 'start');
+      dimH(g, 40, 40 + D.sw, 104, '46');
 
-      var slots = xs.map(function (x) { return CV.drawSlot(g, x, topY, sz, sz); });
-      CV.setSlot(slots[0], DATA[0], {});
-      CV.setSlot(slots[1], null, { active: true });
-      CV.setSlot(slots[2], null, {});
-      ['有数据', '传输中', '空'].forEach(function (tx, i) {
-        subTx(g, slots[i].cx, labY, tx);
+      /* 窄屏一对：25 + 间距 5 */
+      capTx(g, 280, 22, '窄屏 · 块 25');
+      CV.setSlot(CV.drawSlot(g, 280, 36, N.sw, N.sh), DATA[0], {});
+      CV.setSlot(CV.drawSlot(g, 280 + N.sw + N.gap, 36, N.sw, N.sh), DATA[1], {});
+      gapH(g, 280 + N.sw, 280 + N.sw + N.gap, 36 + N.sh / 2, 350, 36 + N.sh / 2, '间距 5', 'start');
+      dimH(g, 280, 280 + N.sw, 104, '25');
+
+      subTx(g, 40, 132, '圆角 8 · 空槽描边 1.3 虚线 4 3 · 实块无描边', '#939bb2', 10, 'start');
+      subTx(g, 40, 150, '字母 = 0.33 × 块高 mono 白字（46→15 / 25→8）· 样式与断点无关，窄屏只是缩小', '#939bb2', 10, 'start');
+    })();
+
+    /* ── 四态：own / done / waiting / empty（move.js 四态机的渲染面） ── */
+    (function () {
+      var b = subBlock(s, '四态 · own / done / waiting / empty');
+      var g = demo(b, 560, 178,
+        '数据块四态：own 自己那段、done 已收到（与 own 同样式）、waiting 传输中占位、empty 空槽');
+      var xs = [40, 170, 300, 430], y = 30;
+
+      CV.setSlot(CV.drawSlot(g, xs[0], y, 46, 46), DATA[0], {});
+      CV.setSlot(CV.drawSlot(g, xs[1], y, 46, 46), DATA[0], {});   /* 刻意同款：done 与 own 同渲染 */
+      CV.setSlot(CV.drawSlot(g, xs[2], y, 46, 46), null, { active: true });
+      CV.setSlot(CV.drawSlot(g, xs[3], y, 46, 46), null, {});
+
+      ['① own · 自己那段', '② done · 已收到', '③ waiting · 传输中', '④ empty · 空']
+        .forEach(function (t, i) { subTx(g, xs[i] + 23, y + 68, t, '#5f6780', 10); });
+
+      [['fill=数据色 · 白字', '有 data-l · 出生即在'],
+       ['与 own 全同（勿另造）', '落位弹一下（见 08）'],
+       ['#f3eeff · 边 #a78bfa', '「···」· 无 data-l'],
+       ['#f7f8fc · 虚线边 4 3', '无字 · 无 data-l']]
+        .forEach(function (r, i) {
+          subTx(g, xs[i] + 23, y + 86, r[0], '#939bb2', 8.5);
+          subTx(g, xs[i] + 23, y + 100, r[1], '#939bb2', 8.5);
+        });
+
+      subTx(g, 40, 162, '①② 刻意同款，区别只在语义与落位弹跳 · waiting / empty 无 data-l（不参与聚焦）', '#939bb2', 9.5, 'start');
+    })();
+
+    /* ── 预留隐藏 hidden：数据没到，位先占住 ── */
+    (function () {
+      var b = subBlock(s, '预留隐藏 · hidden');
+      var g = demo(b, 540, 140,
+        '预留隐藏：槽已画好但整体透明，紫色虚线框只是本图标注，实际什么都没有');
+
+      /* 左：不可见的槽 —— 虚线框只是标注，不是实现 */
+      el('rect', { x: 60, y: 34, width: 46, height: 46, rx: 8, fill: 'none',
+        stroke: '#c9b6f7', 'stroke-width': 1.2, 'stroke-dasharray': '4 3' }, g);
+      subTx(g, 83, 102, '预留中', '#5f6780', 10);
+      subTx(g, 83, 118, '实际不可见（opacity 0）', '#939bb2', 8.5);
+
+      /* 中：数据落位 */
+      el('line', { x1: 132, y1: 57, x2: 226, y2: 57, stroke: '#b8c0d4', 'stroke-width': 1, 'stroke-dasharray': '3 3' }, g);
+      el('path', { d: 'M 232 57 L 224 54 L 224 60 Z', fill: '#b8c0d4' }, g);
+      subTx(g, 179, 48, '数据落位', '#939bb2', 9);
+
+      /* 右：淡入后 */
+      CV.setSlot(CV.drawSlot(g, 240, 34, 46, 46), DATA[0], {});
+      subTx(g, 263, 102, '落位后', '#5f6780', 10);
+      subTx(g, 263, 118, 'hidden 改 false 淡入', '#939bb2', 8.5);
+
+      subTx(g, 330, 44, 'gather / scatter 目标卡就绪前、', '#939bb2', 9.5, 'start');
+      subTx(g, 330, 62, '「动态」第二排空槽淡入都在用 ——', '#939bb2', 9.5, 'start');
+      subTx(g, 330, 80, '它是 empty 的显示开关，不是第五种样式', '#939bb2', 9.5, 'start');
+    })();
+
+    /* ── 块上的变体：下标 / 上标 / 浓度 ── */
+    (function () {
+      var b = subBlock(s, '块上的变体 · 下标 / 上标 / 浓度');
+      var g = demo(b, 560, 158,
+        '数据块的三个变体：sub 右下下标、count 右上上标、toneFor 浓度随折进份数加深');
+
+      /* ① sub：右下小下标（alltoall 标第几片） */
+      CV.setSlot(CV.drawSlot(g, 40, 40, 46, 46), { letter: 'A', color: DATA[0].color, sub: 2 }, {});
+      subTx(g, 63, 110, 'sub · 右下下标', '#5f6780', 10);
+      subTx(g, 63, 126, 'alltoall 标第几片', '#939bb2', 8.5);
+
+      /* ② count：右上份数（Σ 写法 → 09） */
+      CV.setSlot(CV.drawSlot(g, 145, 40, 46, 46), { letter: 'Σ', sub: 'A', count: 4, color: SIGMA }, {});
+      subTx(g, 168, 110, 'count · 右上上标', '#5f6780', 10);
+      subTx(g, 168, 126, '已折进几份 · 写法见 09', '#939bb2', 8.5);
+
+      /* ③ toneFor：折进 n 份的浓度（1 份原色 → 4 份深紫） */
+      [1, 2, 3, 4].forEach(function (n, i) {
+        CV.setSlot(CV.drawSlot(g, 260 + i * 62, 40, 46, 46), { letter: 'A', color: CV.toneFor(0, n) }, {});
+        subTx(g, 283 + i * 62, 26, 'n=' + n, '#939bb2', 9);
       });
-      dimH(g, 40, 40 + sz, dimY, String(sz));
+      subTx(g, 367, 110, 'toneFor · 浓度', '#5f6780', 10);
+      subTx(g, 367, 126, '每折 1 份向 deep 收 1/3', '#939bb2', 8.5);
 
-      subTx(g, 40, noteY, '块内字母 ' + Math.round(sz * 0.33) + 'px = 0.33 × 块高，mono 居中', '#939bb2', 10, 'start');
-      subTx(g, 40, noteY + 14, '状态标签距块 18（三态同尺寸）', '#939bb2', 10, 'start');
-    }
-
-    addTab(s, render);
+      subTx(g, 40, 148, 'toneRich（reduce 累加器）：每份步进 0.19 → #190d33 · 上标 0.52em 600', '#939bb2', 9.5, 'start');
+    })();
   })();
 
   /* ══════════════════════════════════════════════════════════
@@ -381,7 +460,6 @@
      ══════════════════════════════════════════════════════════ */
   (function () {
     var s = sec('card', '03', 'rank 卡片', 'card');
-    var mainBox = h('div', null, s);
     var cp = function (k) { return CV.params.get('03-card', k); };   /* 卡片动态参数：卡片伸缩 / 单块时长 / 块间隔 */
 
     /* 徽章几何，与 CV.drawCard 里的 badgeGeo 同一套规则 */
@@ -522,6 +600,25 @@
       dimV(g, 240, y, y + ch, String(ch));
 
       subTx(g, x1, 232, '窄屏一张卡只放一个块：四个块要 115px，内容区只有 114px', '#939bb2', 9, 'start');
+    }
+
+    /* ── 发送中变暗：CV.beat.dim(card, on) —— 传播中唯一的全卡可视信号 ──
+       自己的包在天上就整卡降到 .6，落位回 1（gather 页的 overlayGather 同一条路径）。 */
+    function drawDim(host) {
+      var A = demo(host, 620, 178,
+        '发送中的卡片整体降到 60% 不透明度：左边的卡正常，右边的卡正在发送');
+      var c1 = CV.drawCard(A, {
+        key: 0, geo: { x: 60, y: 44, w: 180, h: 106 }, color: DATA[0].color,
+        title: 'rank 0', role: 'src', hdr: 30, titleSize: 11.5, badgeSize: 8.5
+      });
+      var c2 = CV.drawCard(A, {
+        key: 1, geo: { x: 360, y: 44, w: 180, h: 106 }, color: DATA[1].color,
+        title: 'rank 1', role: 'src', hdr: 30, titleSize: 11.5, badgeSize: 8.5
+      });
+      CV.beat.dim(c2, true);                     /* 整卡 opacity .6 —— 与 gather 页同一条写入路径 */
+      subTx(A, 150, 30, '平时 · opacity 1', '#5f6780', 10);
+      subTx(A, 450, 30, '发送中 · opacity .6', '#5f6780', 10);
+      subTx(A, 40, 172, 'CV.beat.dim(card, on)：包起飞即变暗、落位回 1 —— 数据正在离开谁，一眼可辨', '#939bb2', 9.5, 'start');
     }
 
     /* ── 动态拆成两个场景：一排变两排 / 两排变一排 ──
@@ -672,45 +769,36 @@
       });
     }
 
-    var curStop = null;
+    /* 结构：桌面 / 窄屏各一张，纵向堆叠（2026-11-01 拆 tab） */
+    var bDesk = subBlock(s, '结构 · 桌面 300×170');
+    drawDesk(demo(bDesk, 838, 560, 'rank 卡片结构：dst 目标卡与 src 源卡，以及装四个数据块时的块间距与留白'));
+    var spT = h('p', 'specs', bDesk);
+    spT.innerHTML =
+      '<b>描边</b> target 目标卡 #c9b6f7 · 1.8，普通卡 #e3e7f0 · 1 —— 等着被填的卡一眼可辨<br>' +
+      '<b>卡内三处字号</b>（标题 / 徽章 / 块内字母）都写在 SVG 属性上，CSS 不许再写（见 13 施工约定）';
 
-    /* 结构：桌面 / 窄屏（静态，不带动画） */
-    function renderStr(i) {
-      if (curStop) { curStop(); curStop = null; }
-      var nr = i === 1;
-      mainBox.innerHTML = '';
-      if (nr) drawNarrow(demo(mainBox, 500, 250, '窄屏 rank 卡片：146×126，一张卡只放一个数据块'));
-      else drawDesk(demo(mainBox, 838, 560, 'rank 卡片结构：dst 目标卡与 src 源卡，以及装四个数据块时的块间距与留白'));
-    }
-    addTabs(s, ['桌面', '窄屏'], renderStr);
+    var bNr = subBlock(s, '结构 · 窄屏 146×126');
+    drawNarrow(demo(bNr, 500, 250, '窄屏 rank 卡片：146×126，一张卡只放一个数据块'));
 
     /* 徽章 badge：与时间无关，按桌面画一次 */
-    var sub = h('h3', null, s);
-    sub.textContent = '徽章 badge · 标题条右上角';
-    var badgeBox = h('div', null, s);
-    drawBadges(demo(badgeBox, 520, 126, '角色徽章与进度徽章的尺寸'), false);
+    var bBadge = subBlock(s, '徽章 badge · 标题条右上角');
+    drawBadges(demo(bBadge, 520, 126, '角色徽章与进度徽章的尺寸'), false);
 
-    /* 动态：拆成两个场景，各自独立播放 */
-    var dynSub = h('div', 'sub-hd', s);
-    h('h3', null, dynSub).textContent = '动态 · 卡片长高与数据块增减';
-    var dynBox = h('div', null, s);
-    var stopDyn = null, dynMode = 0;
-    function renderDyn(i) {
-      dynMode = i;
-      if (stopDyn) { stopDyn(); stopDyn = null; }
-      dynBox.innerHTML = '';
-      if (i === 0) stopDyn = drawSplit(dynBox);
-      else stopDyn = drawMerge(dynBox);
-    }
-    addTabs(dynSub, ['一排变两排', '两排变一排'], renderDyn);
+    /* 发送中变暗：beat.dim（此前只在引擎注释里，未成文） */
+    var bDim = subBlock(s, '发送中变暗 · beat.dim');
+    drawDim(bDim);
 
-    /* 参数调试台改了「卡片动态」任意键（或重置全部）→ 停掉旧 rAF、重建 demo，实时生效。
+    /* 动态：两个场景堆叠常播（一排变两排 / 两排变一排，互为倒放） */
+    var bDyn = subBlock(s, '动态 · 卡片长高与数据块增减');
+    var dynStops = [drawSplit(bDyn), drawMerge(bDyn)];
+
+    /* 参数调试台改了「卡片动态」任意键（或重置全部）→ 停掉旧 rAF、重建两个场景，实时生效。
        守纪律：重画前必 cancelAnimationFrame，否则多几条循环叠着跑。 */
     CV.params.onChange(function (ch) {
-      if ((ch.section === '03-card' || ch.section === '*') && stopDyn) {
-        stopDyn(); stopDyn = null;
-        dynBox.innerHTML = '';
-        stopDyn = dynMode === 0 ? drawSplit(dynBox) : drawMerge(dynBox);
+      if (ch.section === '03-card' || ch.section === '*') {
+        dynStops.forEach(function (f) { f(); });
+        bDyn.innerHTML = '';
+        dynStops = [drawSplit(bDyn), drawMerge(bDyn)];
       }
     });
   })();
@@ -803,6 +891,49 @@
 
     subTx(B, 10, 190, '连线颜色取自数据：按段走各段色；整份流取源色（broadcast）或目标色（reduce）；宽窄两套走线一致', '#939bb2', 9.5, 'start');
     subTx(B, 10, 206, '带 data-l 的连线与箭头随聚焦褪色；整份数据的流不带 data-l，但它内部的小方块要带', '#939bb2', 9.5, 'start');
+
+    /* ── 连线的四种状态（move.js render / ringWires 的真值，2026-11-01 补） ──
+       idle / flying / 余晖是 gather / scatter 族一条流的一生；
+       ring 特例 = allgather / allreduce 的一条边多轮复用：色取最近开跑的轮次，
+       该轮完毕不回灰，保持本轮的色、透明 .45，等下一轮来改写。 */
+    var bSt = subBlock(s, '连线的四种状态');
+    var C = demo(bSt, 780, 246, '连线四态：idle 待飞、flying 飞行、到达余晖、ring 页特例');
+    var PXs = [30, 220, 410, 600];
+    var CAP4 = [
+      ['idle · 待飞', '#c3cadb · 宽 2 · 虚线 8 7'],
+      ['flying · 飞行', '数据色 · 2.6 · 9 7 · 虚线流动'],
+      ['到达余晖', '数据色 · 1.8 · 透明 .4'],
+      ['ring 页特例', '本轮色 · 1.8 · 透明 .45']
+    ];
+    PXs.forEach(function (px, i) {
+      var sx = px + 24, sy = 84, tx = px + 148, ty = 124;
+      var mid = 'st' + i;
+      CV.drawMarker(C.querySelector('defs'), mid);
+      var wire = CV.drawWire(C, { d: wireS(sx, sy, tx, ty), markerId: mid });
+      el('circle', { cx: sx, cy: sy, r: 3.5, fill: '#c3cadb' }, C);
+      el('circle', { cx: tx, cy: ty, r: 3.5, fill: '#c3cadb' }, C);
+      var col = DATA[0].color;
+      function paint(c, w2, dash, op) {
+        wire.path.setAttribute('stroke', c);
+        wire.path.setAttribute('stroke-width', w2);
+        wire.path.setAttribute('stroke-dasharray', dash);
+        wire.path.setAttribute('opacity', op);
+        var mk = C.querySelector('#' + mid + ' path');
+        if (mk) mk.setAttribute('fill', c);
+      }
+      if (i === 0) paint('#c3cadb', '2', '8 7', '1');
+      else if (i === 1) {
+        paint(col, '2.6', '9 7', '1');
+        var pkt = CV.drawPacket(C, { letter: 'A', color: col });
+        CV.placePacket(pkt, wire, 0.5);          /* 飞行中：包压在线上，虚线正向前流动 */
+      }
+      else if (i === 2) paint(col, '1.8', '8 7', '.4');
+      else paint(col, '1.8', '8 7', '.45');
+      capTx(C, px, 176, CAP4[i][0]);
+      subTx(C, px, 192, CAP4[i][1], '#939bb2', 9, 'start');
+    });
+    subTx(C, 30, 220, '飞行中虚线向前流动：dashoffset = −e × 110（速度感）；落到终点定格 −110 不归零，虚线不在包底下回跳', '#939bb2', 9.5, 'start');
+    subTx(C, 30, 236, 'marker 随流染色 · 包沿前 8% 行程渐显（见 05）· 余晖是「刚送完」的记忆，ring 特例是「这条边还在被用」的记忆', '#939bb2', 9.5, 'start');
   })();
 
   /* ══════════════════════════════════════════════════════════
@@ -811,9 +942,9 @@
   (function () {
     var s = sec('packet', '05', '数据包', 'packet');
 
-    /* ── 上：单色包的解剖 ── */
-    h('h3', null, s).textContent = '单色包 .pkt · 一次只搬一段';
-    var A = demo(s, 620, 226, '单色数据包：24px 主体 + 两段拖尾，标出退后距离与透明度');
+    /* ── 单色包的解剖 ── */
+    var b1 = subBlock(s, '单色包 .pkt · 一次只搬一段');
+    var A = demo(b1, 620, 226, '单色数据包：24px 主体 + 两段拖尾，标出退后距离与透明度');
     var dA = A.querySelector('defs');
     CV.drawMarker(dA, 'pk1');
 
@@ -836,15 +967,14 @@
     subTx(A, 60, 192, '拖尾 = 主体的色块缩小再降透明度：20×20×.8 / 16×16×.6，退后 24 / 46px（图上 24 + 22），55% / 28%', '#939bb2', 9.5, 'start');
     subTx(A, 60, 212, '不画底板、不带字母；三段同属一个 .pkt，只有一份 data-l —— 整组一起飞、一起聚焦', '#939bb2', 9.5, 'start');
 
-    /* ── 下：整份包（桌面 / 窄屏两套尺寸，各挂一个 tab） ── */
-    var sub = h('div', 'sub-hd', s);
-    h('h3', null, sub).textContent = '整份包 .pkt.batch · 一次搬一「份」';
-    var body = h('div', 'sub-body', s);
+    var sp1 = h('p', 'specs', b1);
+    sp1.innerHTML =
+      '<b>trailScale</b> 拖尾浓度倍数（规范 05 · 调试台「特效」）：0 = 无拖尾、1 = 基线，两段拖尾透明度同乘<br>' +
+      '<b>入场</b> 起飞后前 8% 行程线性渐显（opacity = e ÷ 0.08），写在 JS 不交 CSS —— 不跟逐帧定位抢同一属性';
 
-    addTab(sub, function (nr) {
-      body.innerHTML = '';
-      drawBatch(body, nr);
-    });
+    /* ── 整份包：桌面 / 窄屏各一张，纵向堆叠（2026-11-01 拆 tab） ── */
+    drawBatch(subBlock(s, '整份包 .pkt.batch · 桌面'), false);
+    drawBatch(subBlock(s, '整份包 .pkt.batch · 窄屏'), true);
 
     function drawBatch(host, nr) {
       var geo = nr ? G.narrow : G.desktop;
@@ -930,26 +1060,17 @@
        整份一起走一条线、一个落点，不是拆成 2 条 / 4 条线各飞一次。
        动的是真页面的那套：CV.placePacket 按「弧长」取点摆主体，
        两段拖尾沿同一条路径往回退 24 / 46 —— 曲线模式下拖尾会跟着拐弯。 */
-    var subFly = h('div', 'sub-hd', s);
-    h('h3', null, subFly).textContent = '动态 · 数据包怎么飞';
-    var flyBody = h('div', 'sub-body', s);
-    var stopFly = null;
-    var flyMode = 0;
+    /* ── 动态：四个模式堆叠常播（单个 / 两个 / 四个 / 曲线）── */
+    var flyBody = subBlock(s, '动态 · 数据包怎么飞（四模式常播）');
+    var flyStops = [0, 1, 2, 3].map(function (m) { return drawFly(flyBody, m); });
 
-    addTabs(subFly, ['单个', '两个', '四个', '曲线'], function (mode) {
-      flyMode = mode;
-      if (stopFly) { stopFly(); stopFly = null; }   /* 先停旧的 rAF，否则切几次 tab 就多几条循环 */
-      flyBody.innerHTML = '';
-      stopFly = drawFly(flyBody, mode);
-    });
-
-    /* 参数调试台改了「数据包·动态」任意键（或重置全部）→ 停掉旧 rAF、重建 demo，实时生效。
-       守纪律：切 tab / 重画前必 cancelAnimationFrame，否则多几条循环叠着跑。 */
+    /* 参数调试台改了「数据包·动态」任意键（或重置全部）→ 停掉旧 rAF、按新时长重建，实时生效。
+       守纪律：重画前必 cancelAnimationFrame，否则多几条循环叠着跑。 */
     CV.params.onChange(function (ch) {
-      if ((ch.section === '05-packet' || ch.section === '*') && stopFly) {
-        stopFly(); stopFly = null;
+      if (ch.section === '05-packet' || ch.section === '*') {
+        flyStops.forEach(function (f) { f(); });
         flyBody.innerHTML = '';
-        stopFly = drawFly(flyBody, flyMode);
+        flyStops = [0, 1, 2, 3].map(function (m) { return drawFly(flyBody, m); });
       }
     });
 
@@ -1096,17 +1217,13 @@
   (function () {
     var s = sec('controls', '06', '控制条', 'controls');
 
-    /* ── 上：真组件 —— 不是 SVG，就是那套真的 DOM，而且是能按的那一份：
+    /* ── 真组件 —— 不是 SVG，就是那套真的 DOM，而且是能按的那一份：
        直接 CV.createControls({ root })，和原语页用的是同一份代码（只把「整页」换成「这个框」）。
-       所以播放 / 暂停、上一步 / 下一步、拖进度条、字幕跟着换，全是真的。 ── */
-    var sub = h('div', 'sub-hd', s);
-    h('h3', null, sub).textContent = '结构 · 字幕 / 分段进度条 / 按钮组（可以按）';
-    var body = h('div', null, s);
-    var curCtl = null;
+       所以播放 / 暂停、上一步 / 下一步、拖进度条、字幕跟着换，全是真的。
+       桌面 / 窄屏各挂一份实例，堆叠常播（2026-11-01 拆 tab）。 ── */
 
     /* 时间轴照抄 gather 的 6 步 —— 段等宽、时长不等这件事在下面那张图里讲，
-       这里用同一组 t，播放时就能亲眼看到「第三步走得比第一步久」。
-       必须写在 addTab 之前：addTab 会**同步**渲染第一屏，那会儿 STEPS 还没赋值。 */
+       这里用同一组 t，播放时就能亲眼看到「第三步走得比第一步久」。 */
     function rk(i) { return '<em class="rk r' + i + '">rank' + i + '</em>'; }
     function seg(i) { return '<em class="c' + 'ABCD'[i] + '">' + 'ABCD'[i] + '</em>'; }
     var STEPS = [
@@ -1118,13 +1235,10 @@
       { t: 0.74, text: rk(0) + ' 集齐 ' + seg(0) + ' ' + seg(1) + ' ' + seg(2) + ' ' + seg(3) }
     ];
 
-    addTab(sub, function (nr) {
-      if (curCtl) { curCtl.destroy(); curCtl = null; }   /* 换尺寸就换一份实例，旧的 rAF 要停 */
-      body.innerHTML = '';
-      drawBar(body, nr);
-    });
+    drawBar(subBlock(s, '结构 · 桌面（可以按）'), false, true);
+    drawBar(subBlock(s, '结构 · 窄屏'), true, false);
 
-    function drawBar(host, nr) {
+    function drawBar(host, nr, withShared) {
       var w = h('div', 'ctl-demo' + (nr ? ' nr' : ''), host);
 
       var cap = h('div', 'caption', w);
@@ -1156,7 +1270,7 @@
       /* 读数行：t / v / 第几段 —— 播放时这两个数不同步走，正是本节要讲的事 */
       var read = h('p', 'ctl-read', w);
 
-      var api = curCtl = CV.createControls({
+      var api = CV.createControls({
         root: w,
         steps: STEPS,
         duration: 9000,
@@ -1173,8 +1287,7 @@
       api.setPlaying(true);
 
       /* 数字全部来自 stage.css（含 860px 那条媒体查询），不是估的 */
-      var sp = h('p', 'specs', host);
-      sp.innerHTML = (nr
+      var base = (nr
         ? '<b>进度条</b> 轨道高 16 · 段高 3 · 段间 5 · 圆角 2 —— 两套尺寸都不变，只有下面的按钮和字变小<br>' +
           '<b>按钮</b> 步进 26（图标 26 · 撑满）· 播放 44 圆（图标 25）· 键距 20 · 行距 12<br>' +
           '<b>字幕</b> 12.5px · 数据字母与 rank 胶囊同桌面（17×17）· 长句优先用 STEPS 的 short 文案<br>' +
@@ -1184,11 +1297,13 @@
           '<b>按钮</b> 步进 30（图标 26）· 播放 48 圆（图标 25）· 键距 26 · 行距 14<br>' +
           '<b>字幕</b> 13.5px · 数据字母 17×17 圆角 4 · rank 胶囊 min 17 + 左右 5<br>' +
           '<b>位置</b> 固定在视口底部（左右 30 · 下 24）—— 上面这个框只是本页的示意框<br>' +
-          '<b>交互</b> 循环常开（没有倍速、没有循环开关）· Space 播放暂停 · ← → 步进 · R 回开头') +
-        '<br><b>上面这份是真的组件</b> <code>CV.createControls({ root })</code> —— 原语页用的是同一个函数，' +
+          '<b>交互</b> 循环常开（没有倍速、没有循环开关）· Space 播放暂停 · ← → 步进 · R 回开头');
+      var shared = '<b>上面这份是真的组件</b> <code>CV.createControls({ root })</code> —— 原语页用的是同一个函数，' +
           '只是把「整页」换成了「这个框」：播放/暂停、步进、点或拖进度条、字幕跟着换，全部生效<br>' +
         '<b>为什么读数里 t 和 v 越走越不同</b> 段是等宽的（v 走直线），时间不是（t 各步长短不一）—— ' +
           '下面那张图说的就是这件事；全局快捷键只在原语页生效，这里不抢整页的 Space / ← →';
+      var sp = h('p', 'specs', host);
+      sp.innerHTML = base + (withShared ? '<br>' + shared : '');
     }
 
     /* ── 下：段等宽，时间不等 —— 这套换算才是控制条的核心 ── */
@@ -1237,21 +1352,14 @@
   (function () {
     var s = sec('calc', '07', '计算方框', 'calc chip');
 
-    var sub = h('div', 'sub-hd', s);
-    h('h3', null, sub).textContent = '卡片在下方长高，两排位置不动';
-    var body = h('div', null, s);
-    addTabs(sub, ['桌面', '窄屏'], function (i) {
-      body.innerHTML = '';
-      draw(body, i === 1);
-    });
+    /* 静态两张图讲几何（长多少、方框在哪儿居中），纵向堆叠（2026-11-01 拆 tab） */
+    draw(subBlock(s, '静态 · 桌面'), false);
+    draw(subBlock(s, '静态 · 窄屏'), true);
 
-    /* ── 07.2 动态：只演「方框那一层」（h2 ↔ h3）──
-       原来它是 07.1 的第三个 tab，和「桌面/窄屏」两张静态图挤在一起：
-       静态图讲几何（长多少、方框在哪儿居中），动态讲时间（长多久、亮多久、收多久），
-       两者量纲不同，而且三段耗时要在调试台里逐秒调 —— 单独成一节才好对着调。 */
-    var dynSub = h('div', 'sub-hd', s);
-    h('h3', null, dynSub).textContent = '动态 · 方框长出与收回';
-    var dynBox = h('div', null, s);
+    /* ── 动态：只演「方框那一层」（h2 ↔ h3）──
+       静态图讲几何，动态讲时间（长多久、亮多久、收多久）：
+       两者量纲不同，而且三段耗时要在调试台里逐秒调 —— 单独一块才好对着调。 */
+    var dynBox = subBlock(s, '动态 · 方框长出与收回');
     var stopDyn = null;
     function playDyn() {
       if (stopDyn) { stopDyn(); stopDyn = null; }
@@ -2010,6 +2118,27 @@
       '<b>它同时是重建的边界</b> 回开头 / 切断点时 <code>buildStage()</code> 只做「六层各 ' +
         '<code>innerHTML = \'\'</code> 再按同一顺序重画」，不动页面上别的东西';
 
+    /* ── 公共 defs：网格 + 滤镜三件（2026-11-01 补）──
+       stage.js 建场时写进 defs，全站只此一份；本页为了不加载引擎抄了一份。
+       此前副本的 fGlow / fTrail flood-color 写成 #1a1f36，与真实现 #2a3352 不符，已修齐。 */
+    var bDefs = subBlock(s, '公共 defs · 网格与滤镜三件套');
+    var A2 = demo(bDefs, 580, 200, '背景网格 40×40 与三个滤镜的参数：全站唯一一份，stage.js 建场时写入');
+    var gx = 40, gy = 36;
+    for (var gi = 0; gi <= 3; gi++) {
+      el('line', { x1: gx + gi * 40, y1: gy, x2: gx + gi * 40, y2: gy + 120, stroke: '#8b93aa', 'stroke-opacity': '.1', 'stroke-width': 1 }, A2);
+      el('line', { x1: gx, y1: gy + gi * 40, x2: gx + 120, y2: gy + gi * 40, stroke: '#8b93aa', 'stroke-opacity': '.1', 'stroke-width': 1 }, A2);
+    }
+    dimH(A2, gx, gx + 40, gy + 136, '40');
+    capTx(A2, 220, 52, '网格 gGrid · lBg 最底层');
+    subTx(A2, 220, 72, 'pattern 40×40 · 线 #8b93aa · 透明 .1', '#939bb2', 9.5, 'start');
+    capTx(A2, 220, 110, '滤镜三件 · feDropShadow');
+    subTx(A2, 220, 130, 'fCard 卡片投影：dy 6 · σ 12 · #2a3352 .1', '#939bb2', 9.5, 'start');
+    subTx(A2, 220, 148, 'fGlow 包体发光：σ 8 · #2a3352 .22', '#939bb2', 9.5, 'start');
+    subTx(A2, 220, 166, 'fTrail 拖尾：σ 5 · #2a3352 .14', '#939bb2', 9.5, 'start');
+    var spD = h('p', 'specs', bDefs);
+    spD.innerHTML = '<b>唯一来源</b> stage.js 建场时写入 defs，重建时绝不清 defs（gGrid 被每页引用）；' +
+      '本页为不加载引擎抄了一份 —— <b>改一边必须改另一边</b>（本轮已修齐 flood-color 统一 #2a3352）';
+
     /* 图二：顺序错一步的后果 —— 用最直观的一组：卡片白底 vs 数据块。
        先画块再画卡，四个块会被白底整个吃掉，卡片看起来是空的。 */
     h('h3', null, s).textContent = '顺序错一步，画面就是错的';
@@ -2111,7 +2240,8 @@
       '断点 860px：<code>&lt; 860</code> 用窄屏一套；切换时重建舞台，再按当前进度重绘。',
       '下标分工：数据块挂 <code>data-l</code>（聚焦），卡片挂 <code>data-card</code>（置灰）。整份数据的连线与箭头不带 <code>data-l</code>，但整份包内部的小方块要带。',
       '新增原语 = 薄壳 HTML 调 <code>CV.boot(\'&lt;id&gt;\')</code>，剧本写进 <code>scenes/&lt;id&gt;.js</code>，终态登记 <code>registry.js</code>；绘制与时序展开由引擎/动词层接管。',
-      '动效只调函数：落位用 <code>CV.spawnPulse</code>，融合用 <code>CV.createMerge</code>，聚焦用 <code>CV.attachFocus</code>。参数写在 <code>theme/stage-page.css</code> 里，本页为了不加载它抄了一份 —— <b>改一边必须改另一边</b>。唯一例外是 <code>reduce</code> 的融合：它的整份包外层已有位移 transform，再叠一层会变黑块，所以用 <code>CV.cubicBezier</code> 逐点复刻同一条曲线（<code>POP_EASE</code>，真源在 <code>prim/motion.js</code>）。'
+      '动效只调函数：落位用 <code>CV.spawnPulse</code>，融合用 <code>CV.createMerge</code>，聚焦用 <code>CV.attachFocus</code>。参数写在 <code>theme/stage-page.css</code> 里，本页为了不加载它抄了一份 —— <b>改一边必须改另一边</b>。唯一例外是 <code>reduce</code> 的融合：它的整份包外层已有位移 transform，再叠一层会变黑块，所以用 <code>CV.cubicBezier</code> 逐点复刻同一条曲线（<code>POP_EASE</code>，真源在 <code>prim/motion.js</code>）。',
+      '全局 <code>pageSpeed</code> 是所有页内时长的乘数：调试台调 2×，全站快一倍（「送达淡出」这类秒数都会除以它）。本页写下的数字都是 1× 基线。'
     ].forEach(function (x) { h('li', null, ol).innerHTML = x; });
 
     h('h3', null, s).textContent = '本轮已按本页对齐（2026-10-27）';
@@ -2125,6 +2255,22 @@
       ['Reduce 计算态回收', '方框边淡出边收窄', '已改「先灭、再收」两步']
     ].forEach(function (x) {
       var li = h('li', null, ul2);
+      h('b', null, li).textContent = x[0];
+      var code = h('code', null, li);
+      code.textContent = x[1];
+      h('span', null, li).textContent = x[2];
+    });
+
+    h('h3', null, s).textContent = '本轮已按本页对齐（2026-11-01）';
+    var ul3 = h('ul', 'todo flat', s);
+    [
+      ['数据块状态', '三态（有数据 / 传输中 / 空）', '已改四态 own / done / waiting / empty，逐态标色值'],
+      ['连线状态', '只画静态解剖', '已补 idle / 飞行 / 余晖 / ring 特例四态数值'],
+      ['发送中变暗', 'beat.dim 未成文', '已入 03（.6，传播中唯一全卡信号）'],
+      ['滤镜 flood', 'fGlow / fTrail #1a1f36', '已修齐 #2a3352（与 stage.js 一致）'],
+      ['版式', '桌面/窄屏与动画模式用 tab', '已全拆：小二级标题堆叠，动画常播']
+    ].forEach(function (x) {
+      var li = h('li', null, ul3);
       h('b', null, li).textContent = x[0];
       var code = h('code', null, li);
       code.textContent = x[1];
