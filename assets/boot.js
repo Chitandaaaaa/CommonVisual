@@ -77,14 +77,19 @@
     /* 导演挂载 */
     var api = CV.director.mount(scene);
 
-    /* 时序齿轮：八页原语都接（scene.gear 声明；family 页的行由各自动词给出） */
+    /* 时序齿轮：八页原语都接（scene.gear 声明；family 页的行由各自动词给出）。
+       「逐动作解说」页签的高亮走控制条的逐帧钩子（全局只有一个 rAF）。 */
     if (scene.gear && CV.chrome.gear) {
-      CV.chrome.gear({
+      var gearApi = CV.chrome.gear({
         page: id,
+        scene: scene,
         name: reg.en + ' 时序',
         getCh: api.getCh,
         onChange: function () { api.reload(); }
       });
+      if (gearApi && api.controls.onPaint) {
+        api.controls.onPaint(function (v) { gearApi.frame(v); });
+      }
     }
 
     return api;

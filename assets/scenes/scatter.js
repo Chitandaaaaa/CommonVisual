@@ -32,6 +32,18 @@ CV.scene('scatter', (function () {
 
     gear: true,
 
+    /* 逐动作解说的静止行文案（docs/steps.html） */
+    narr: {
+      rest: {
+        intro: '四槽卡四格 A B C D；三张单槽卡各 1 个空格但看不见；3 条弧线灰色',
+        ready: '四槽卡仍 A B C D；三张单槽卡各 1 个空格',
+        send1: '四槽卡：A、C、D + 1 空格；r1 有 B',
+        send2: '四槽卡：A、D + 2 空格',
+        send3: '四槽卡只剩 A',
+        tail: '四槽卡只剩 A；三张单槽卡各 1 段 B / C / D；3 条弧线余辉'
+      }
+    },
+
     beats: [
       { id: 'intro', kind: 'wait', label: '说明', sec: 0.6,
         text: rk(0) + ' 持有 ' + seg(0) + ' ' + seg(1) + ' ' + seg(2) + ' ' + seg(3) },

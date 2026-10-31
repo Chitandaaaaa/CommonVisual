@@ -12,6 +12,14 @@ CV.scene('reducescatter', (function () {
     family: 'split',
     gear: true,
 
+    /* 逐动作解说的静止行文案（docs/steps.html） */
+    narr: {
+      rest: {
+        intro: '四张四槽卡各 4 格 A B C D；8 条直连灰色',
+        tail: 'r0 只剩 ΣA⁴、r1 只剩 ΣB⁴、r2 只剩 ΣC⁴、r3 只剩 ΣD⁴'
+      }
+    },
+
     cards: [
       { rank: 0, badgeText: '4 段' },
       { rank: 1, badgeText: '4 段' },

@@ -109,7 +109,9 @@
       pick: { a: '二叉树 / 环形', n: '环上要先把数据绕满，最后才收拢' },
       rel: [{ to: 'allreduce', axis: 'h' }],
       pre:  [ { c: W, flag: '第 1 份' }, { c: W, flag: '第 2 份' }, { c: W, flag: '第 3 份' }, { c: W, flag: '第 4 份' } ],
-      post: [ { c: S4, flag: '四段各自的和', hot: true }, { c: W, dim: true }, { c: W, dim: true }, { c: W, dim: true } ]
+      /* 源卡送完即清空（消耗）——与动画、探针 3.26/3.29、steps.html 一致；
+         旧口径「原样变暗」是错的（2026-10-31 对齐） */
+      post: [ { c: S4, flag: '四段各自的和', hot: true }, { empty: true, flag: '已交出' }, { empty: true, flag: '已交出' }, { empty: true, flag: '已交出' } ]
     },
     {
       id: 'reducescatter', en: 'Reduce-Scatter', cn: '归约分散', dir: 'N → N',

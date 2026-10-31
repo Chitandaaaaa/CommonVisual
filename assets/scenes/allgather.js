@@ -49,6 +49,14 @@ CV.scene('allgather', (function () {
 
     gear: true,
 
+    /* 逐动作解说的静止行文案（docs/steps.html）；轮内收包/块数由 flows 现推 */
+    narr: {
+      rest: {
+        intro: '四张卡各 1 块（A / B / C / D）+ 3 个空格；4 条环边灰色',
+        tail: '四张卡四格满 A B C D；4 条环边余辉'
+      }
+    },
+
     /* 四条边固定（箭头按「边」建，颜色逐帧跟当前轮次走） */
     wires: [
       { key: 'e0', a: 0, b: 1 },

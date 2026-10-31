@@ -13,6 +13,17 @@ CV.scene('allreduce', (function () {
     sumType: 'exchange',
     gear: true,
 
+    /* 逐动作解说的静止行文案（docs/steps.html） */
+    narr: {
+      rest: {
+        intro: '四张四槽卡各 4 格 A B C D；6 条直连灰色',
+        expand: '四张双排卡，上排各 4 块',
+        gap: '四张双排卡上排各 4 块 Σ²（色调更浓）',
+        fin: '四张卡上排都是 ΣA⁴ ΣB⁴ ΣC⁴ ΣD⁴',
+        collapse: '四张卡各 4 格 Σ⁴'
+      }
+    },
+
     cards: [
       { rank: 0, badgeText: '4 段' },
       { rank: 1, badgeText: '4 段' },

@@ -12,6 +12,14 @@ CV.scene('alltoall', (function () {
     parts: 4,
     gear: true,
 
+    /* 逐动作解说的静止行文案（docs/steps.html）；步间状态由引擎现推 */
+    narr: {
+      rest: {
+        intro: '四张卡上排 A0–A3（各带下标）、下排 4 个空格；6 条直连灰色',
+        tail: '四张卡上排空、下排 A B C D（来源全换）'
+      }
+    },
+
     cards: [
       { rank: 0, badgeText: '4 片' },
       { rank: 1, badgeText: '4 片' },

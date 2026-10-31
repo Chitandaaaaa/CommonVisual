@@ -90,9 +90,9 @@
 <div class="wrap">
 
   <h1>CommonVisual · 验证用例清单</h1>
-  <div class="sub">96 条：通用 3 ＋ 全站通用 20 ＋ 原语页 60 ＋ index 与规范页 13。已实现 96 条，待补 0 条（第 2/3/4 组在 <code>tools/probes/</code>，随 verify.mjs 跑）。<b>结构断言每次改完都跑；截图与人工观感留到提交前和每日定时。</b></div>
+  <div class="sub">98 条：通用 3 ＋ 全站通用 22 ＋ 原语页 60 ＋ index 与规范页 13。已实现 98 条，待补 0 条（第 2/3/4 组在 <code>tools/probes/</code>，随 verify.mjs 跑）。<b>结构断言每次改完都跑；截图与人工观感留到提交前和每日定时。</b></div>
   <div class="rule-top">以本页为准 · 改本页需同步 AGENTS.md 一 与 MEMORY.md</div>
-  <div class="lead">本页只列<b>用例</b>——能判「过或不过」的验证动作，每条写明<b>作用在哪个页面</b>与<b>通过标准</b>。2026-10-31 拆分重排：17 处「一条用例捆绑多个验证」的用例就地拆开、编号顺延（83 → 100 条），旧编号映射见页末。同日规范重组：algorithms 页退役（4 条随页移除）、layout / anatomy 移入 docs/ 改名 prepost / visual（4.12–4.17 顺延为 4.8–4.13），100 → 96 条。<b>左侧红条</b>＝口径已按实现对齐的条目（历史轮次见页末），补断言以红条文案为准；<b>橙条</b>＝本轮拆分新增的行；<b>紫条</b>＝待处理条目（清单见下）。</div>
+  <div class="lead">本页只列<b>用例</b>——能判「过或不过」的验证动作，每条写明<b>作用在哪个页面</b>与<b>通过标准</b>。2026-10-31 拆分重排：17 处「一条用例捆绑多个验证」的用例就地拆开、编号顺延（83 → 100 条），旧编号映射见页末。同日规范重组：algorithms 页退役（4 条随页移除）、layout / anatomy 移入 docs/ 改名 prepost / visual（4.12–4.17 顺延为 4.8–4.13），100 → 96 条；同日「逐动作解说」页签落地，补 2.22 / 2.23（96 → 98 条）。<b>左侧红条</b>＝口径已按实现对齐的条目（历史轮次见页末），补断言以红条文案为准；<b>橙条</b>＝本轮拆分新增的行；<b>紫条</b>＝待处理条目（清单见下）。</div>
     <div class="boundary warn"><b>待处理（2026-10-31 第二轮登记）—— 第一轮的 7 条已全部了结或拆分；当前门禁只剩 3 条紫，均非页面缺陷。</b><br>
       ① <b>采样锚点待时序标准定稿（3 条，先按现状跑红）</b>：3.42 allreduce（字幕第 0 段「逐段待相加」被合并段正则误匹配、采到开场帧；定稿后改 <code>win.r0merge</code> 现算）· 3.43 allreduce（同 3.42 锚点；改 <code>win.r0merge</code>/<code>win.r1merge</code>）· 3.51 reducescatter（−20 刻度提前量采到 Σʙ² 折算中——恰是「边换段边折算」的正常相；定稿后采样用 <code>win.merge1.e</code> 不减提前量）。<br>
       ② <b>第一轮登记 → 本轮已了结</b>：口径 2 条定案 —— reduce 初始态每卡整份 4 块（并入 3.23，对齐 allreduce 同款）、V4 空槽两态合法（#f7f8fc 空闲 / #f3eeff 接收中）；捆绑 5 条已拆（旧 3.23 → 3.25+3.26、旧 3.25 → 3.28 口径一并定案、旧 3.37/3.38 → 3.42/3.43 保留紫条、旧 3.45 → 3.50+3.51）。<br>
@@ -104,7 +104,7 @@
     <thead><tr><th style="width:30px">#</th><th style="width:150px">组</th><th>覆盖</th><th style="width:180px">什么时候跑</th><th style="width:150px">状态</th></tr></thead>
     <tbody>
       <tr><td class="mono">1</td><td><b>通用用例</b></td><td>截图比对、桌面观感、窄屏排版</td><td><span class="pill neutral">提交前 / 每日 09:30</span></td><td><span class="pill yes">3 已实现</span></td></tr>
-      <tr><td class="mono">2</td><td><b>全站通用（结构）</b></td><td>播放器、参数、聚焦、无残留、时序、导航、共享层</td><td><span class="pill yes">每次改完</span></td><td><span class="pill yes">20 已实现</span></td></tr>
+      <tr><td class="mono">2</td><td><b>全站通用（结构）</b></td><td>播放器、参数、聚焦、无残留、时序、导航、共享层、逐动作解说</td><td><span class="pill yes">每次改完</span></td><td><span class="pill yes">22 已实现</span></td></tr>
       <tr><td class="mono">3</td><td><b>原语页用例</b></td><td>8 页，每页 6–9 条：挂载 → 初始 → 过程 → 终态</td><td><span class="pill yes">每次改完</span></td><td><span class="pill yes">60 已实现</span></td></tr>
       <tr><td class="mono">4</td><td><b>静态页用例</b></td><td>index ＋ docs 规范页 prepost / visual</td><td><span class="pill yes">每次改完</span></td><td><span class="pill yes">13 已实现</span></td></tr>
     </tbody>
@@ -173,6 +173,8 @@
         <tr class="new"><td class="c-no"><span class="n">2.19</span></td><td class="c-p" data-l="页面">全部页</td><td><span class="t">控件方法签名</span></td><td class="c-v" data-l="断言"><code>controls</code> 的 seek / t / setPlaying / isPlaying / retime / paintChrome 存在、<code>duration</code> 为数字。<b>〔拆自旧 2.15〕</b></td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/_common.mjs</span>（仅 v2 跑）</td></tr>
         <tr class="new"><td class="c-no"><span class="n">2.20</span></td><td class="c-p" data-l="页面">全部页</td><td><span class="t">图层与 DOM 齐全</span></td><td class="c-v" data-l="断言">六图层（lBg / lCards / lChips / lWires / lFx / lLabels）与控件 7 id（stage / segs / scrub / play / prev / next / capText）全部在 DOM。<b>〔拆自旧 2.15〕</b></td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/_common.mjs</span>（仅 v2 跑）</td></tr>
         <tr class="new"><td class="c-no"><span class="n">2.21</span></td><td class="c-p" data-l="页面">全部页</td><td><span class="t">registry 契约</span></td><td class="c-v" data-l="断言"><code>CV.registry</code> ≥ 8 条、按 id 有序、每条含 id/en/cn/dir/pre/post/rel/verbs 字段（蓝图 §01 事实表契约）。<b>〔旧 2.15 多验出的部分，写明成条〕</b></td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/_common.mjs</span>（仅 v2 跑）</td></tr>
+        <tr class="new"><td class="c-no"><span class="n">2.22</span></td><td class="c-p" data-l="页面">8 原语页</td><td><span class="t">逐动作解说生成闭合</span></td><td class="c-v" data-l="断言"><code>CV.narrate(scene, ch)</code> 不抛错、行数 &gt; 0：动作词全部在 <code>CV.NARR_LEX</code> 词表内（表外动作生成器直接报错）、每行 结束 ≥ 开始、末行结束 = 动画总时长（docs/steps.html §12.1）。<b>〔2026-10-31 随解说页签新增〕</b></td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/_common.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">2.23</span></td><td class="c-p" data-l="页面">8 原语页 <span class="mono">①</span></td><td><span class="t">解说页签行表与高亮跟随</span></td><td class="c-v" data-l="断言">齿轮面板切到「逐动作解说」：行表渲染（组行 &gt; 0、面板宽 ≈620）、同刻行合并开始格；seek 到飞行中点后命中 <code>[开始, 结束)</code> 的行带 <code>on</code> 高亮。<b>〔随解说页签新增〕</b> <span class="mono">①</span>sum/split/alltoall 四页探针 gear:false，暂只在 choreo 四页跑（同 2.13 已知缺口）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/_common.mjs</span></td></tr>
       </tbody>
     </table>
     <div class="boundary warn"><b>为什么单列一组：</b>这 20 条都跨页，不属于任何单个原语。重构时它们该最先绿——播放器坏了两页看不出来，但它坏了 8 页一起坏。</div>
@@ -318,7 +320,7 @@
 
   <div class="foot">
     唯一来源。改本页后同步 <code>AGENTS.md</code> 一节与 <code>MEMORY.md</code> 的验证小节。<br>
-    <b>2026-10-31 规范重组：</b>根 algorithms.html 退役为 algorithms-old.html（备用，4.8–4.11 四条随页移除、不迁移到新规范页）；layout → docs/prepost.html、anatomy → docs/visual.html 改名移动，原 4.12–4.17 顺延为 4.8–4.13，4.4 收为两个文档入口；100 → 96 条。algorithms-old 不在验证范围。<br>
+    <b>2026-10-31 规范重组：</b>根 algorithms.html 退役为 algorithms-old.html（备用，4.8–4.11 四条随页移除、不迁移到新规范页）；layout → docs/prepost.html、anatomy → docs/visual.html 改名移动，原 4.12–4.17 顺延为 4.8–4.13，4.4 收为两个文档入口；100 → 96 条；同日「逐动作解说」页签落地，补 2.22 / 2.23（96 → 98 条）。algorithms-old 不在验证范围。<br>
     <b>2026-10-31 拆分重排：</b>17 处「一条用例捆绑多个验证」就地拆开、编号顺延，83 → 100 条。拆分点：旧 2.1→2.1+2.2、旧 2.5→2.6+2.7+2.8、旧 2.15→2.18–2.21、旧 3.2→3.2+3.3、旧 3.16→3.17+3.18、旧 3.23→3.25+3.26、旧 3.30→3.33+3.34（探针早已分两条）、旧 3.31→3.35+3.36、旧 3.45→3.50+3.51、旧 3.51→3.57+3.58、旧 4.9→4.9–4.11、旧 4.10→4.12–4.14、旧 4.12→4.16+4.17；V9 删除（与 2.3 重复）。未列出的行编号各自顺延。<br>
     历史：红条 7 条（旧 3.2 / 3.3 / 3.39 / 3.47 / 3.49 / 3.50 / 3.52 → 现 3.2 / 3.3 / 3.4 / 3.44 / 3.53 / 3.55 / 3.56 / 3.59）口径按实现对齐（b1c2da0）；2026-10-30 实现探针轮全部 83 条实现，再对齐 7 条（旧 3.30 / 3.35 / 3.37 / 4.1 / 4.5 / 4.7 / 4.12 → 现 3.33 / 3.34 / 3.40 / 3.42 / 4.1 / 4.5 / 4.7 / 4.16 / 4.17）；2026-10-31 v2 首跑 7 红（旧 3.21 / 3.23 / 3.25 / V4、3.37 / 3.38 / 3.45）均为探针按旧页标定 —— 本轮口径定案（3.23 / 3.24 / 3.28 / V4）或拆分，采样锚点 3 条（现 3.42 / 3.43 / 3.51）待时序标准定稿。
   </div>

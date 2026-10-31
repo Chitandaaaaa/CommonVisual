@@ -115,9 +115,9 @@
   <div class="sub">CommonVisual v2 · <span class="k">docs/steps.html</span> · 2026-10-31 v3</div>
   <div class="badges">
     <span class="badge">原语页动态步骤规范</span>
-    <span class="badge">设计稿 · 代码未动</span>
+    <span class="badge">已实现 2026-10-31</span>
     <span class="badge grey">八页全覆盖</span>
-    <span class="badge grey">秒数为默认参数下实测</span>
+    <span class="badge grey">秒数为默认参数下实测</span><span class="badge grey">落点 assets/engine/narration.js + 齿轮第二页签</span>
   </div>
 
   <p class="lead">
@@ -419,17 +419,17 @@
           <tr class="act"><td class="nm">飞行</td><td>包沿路径前进，起终点缓入缓出，两层残影跟随。</td><td>不是匀速</td><td class="mono">1.50s</td></tr>
           <tr class="act"><td class="nm">抵达</td><td>包停在箭头尖 / 终点，位置不再变化。</td><td>瞬时</td><td class="mono">瞬时</td></tr>
           <tr class="act"><td class="nm">淡出</td><td>包不透明度线性 → 0。</td><td>包是被目标「吃进去」</td><td class="mono">0.60s</td></tr>
-          <tr class="act"><td class="nm">余辉</td><td>线降到 40%（家族页 45%）保留数据色。</td><td><b>不是变灰</b></td><td class="mono">瞬时</td></tr>
+          <tr class="act"><td class="nm">余辉</td><td>线降到 40%（家族页 45%）保留数据色。</td><td><b>不是变灰</b>；比率各页不同：choreo 40% / reduce 45% / allreduce·rs 42% / alltoall 30%</td><td class="mono">瞬时</td></tr>
           <tr class="act"><td class="nm">落位</td><td>接收位消失，该槽当场变成数据块。</td><td><b>不是渐变换色</b></td><td class="mono">瞬时</td></tr>
           <tr class="act"><td class="nm">弹跳</td><td>该槽从 35% 放大到 116% 再落回 100%。</td><td>多块时按 0.50 错峰</td><td class="mono">0.55s</td></tr>
-          <tr class="act"><td class="nm">长高</td><td>卡高增加一层，腾出第二排。</td><td>开场只做一次，收场才收回</td><td class="mono">0.80s</td></tr>
+          <tr class="act"><td class="nm">长高</td><td>卡高增加一层。腾出<b>第二排</b>时 0.80s（cardDur），腾出<b>计算层</b>时 0.75s（growDur）。</td><td>开场只做一次，收场才收回</td><td class="mono">0.80 / 0.75s</td></tr>
           <tr class="act"><td class="nm">逐块出现</td><td>第二排的接收位从左到右一块块淡入。</td><td>是「位置」逐个出现</td><td class="mono">0.40s/块，隔 0.15</td></tr>
           <tr class="act"><td class="nm">逐块撤</td><td>第二排的接收位从右往左一块块撤掉。</td><td>先撤块，再收卡，不能同时</td><td class="mono">0.40s/块，隔 0.15</td></tr>
           <tr class="act"><td class="nm">计算框·浮现</td><td>卡片中间那层写 <span class="k">sum · avg · max · min</span> 的方框淡入。</td><td>先长空间，后填内容</td><td class="mono">0.40s</td></tr>
           <tr class="act"><td class="nm">计算框·淡出</td><td>方框淡出，卡片随后缩回。</td><td>方框一定早于卡片退场</td><td class="mono">0.32s</td></tr>
           <tr class="act"><td class="nm">折进</td><td>下排的块被吸进上排累加器，上排块变 Σ、份数 +1（all-reduce 翻倍）。</td><td>不是复制过去；段与段错峰 0.50</td><td class="mono">0.42s/段</td></tr>
-          <tr class="act"><td class="nm">收层</td><td>计算态卡退回双排卡。</td><td>只剩卡片在缩，数据钉在原地</td><td class="mono">0.70s</td></tr>
-          <tr class="act"><td class="nm">收窄</td><td>reduce-scatter 第二轮前，把这一轮用不上的一格撤掉。</td><td>单独一拍，不跟飞行同时发生</td><td class="mono">0.40s</td></tr>
+          <tr class="act"><td class="nm">收层</td><td>计算态卡退回双排卡。shrinkDur 0.70 的<b>后 0.38s</b>——前 0.32s 是「计算框·淡出」，两者共用一个收层窗口。</td><td>只剩卡片在缩，数据钉在原地</td><td class="mono">0.38s</td></tr>
+          <tr class="act"><td class="nm">收回</td><td>收场时卡片从双排退回单排（rowClose 的收卡段）。</td><td>先逐块撤、再收回，不能同时</td><td class="mono">0.80s</td></tr><tr class="act"><td class="nm">收窄</td><td>reduce-scatter 第二轮前，把这一轮用不上的一格撤掉。</td><td>单独一拍，不跟飞行同时发生</td><td class="mono">0.40s</td></tr>
           <tr class="act"><td class="nm">静止</td><td>整段画面无运动对象。</td><td>单独成一节，也参与高亮</td><td class="mono">按步</td></tr>
         </tbody>
       </table>
@@ -484,18 +484,19 @@
 
   <!-- ============================ 13 ============================ -->
   <section id="s13">
-    <div class="sechead"><span class="no">13</span><h2>等你拍板 / 我发现的问题</h2><span class="meta">看完再动手</span></div>
-    <div class="card">
-      <ul class="tight">
-        <li><b>① 同刻合并的方式</b>：现在是把连续几行共用一个「开始」格，格内标「同刻 ×N」。另一种是每行照写时间、只在左侧画一条竖线框住。你挑一个。</li>
-        <li><b>② 静止行</b>：按你说的只写「此刻场上有什么」。要不要再短一点，只写非空的那几格？</li>
-        <li><b>③ 家族页粒度</b>：「四段依次折进」合成了一行（错峰 0.50 写在结果里），没拆成 4 行。要拆的话 reduce 会多 12 行、all-reduce 多 8 行。</li>
-        <li><b>④ 一个可能需要修的观察</b>：all-reduce 第 1 轮合并后上排是 <span class="k">ΣA²</span>，但第 2 轮飞行期间会退回普通字母 <span class="k">A</span>（只剩色调变浓），到第 2 轮合并才又变回 <span class="k">ΣA⁴</span>。按文案「这一轮已经是 2 份的中间结果」，中间掉 Σ 标记看着像 bug。</li>
-        <li><b>⑤ reduce 的终态不一致</b>：动画里三张源卡交出整份后保持空白，但 <span class="k">registry.post</span> 记的是「原样变暗」。落地时以哪个为准？</li>
-        <li><b>⑥ 收尾的「读结果」提示</b>：现在终点只是静止 2 秒，没有强调。要不要补一个轻微的高亮提示？</li>
-      </ul>
-    </div>
-    <p class="role" style="margin-top:14px">本轮只写文档，<b>没有改任何代码</b>。第 04–11 章的表格由文末数据表生成，改一行数据就能改文案。</p>
+    <div class="sechead"><span class="no">13</span><h2>拍板记录（2026-10-31 已落）</h2><span class="meta">随实现一并处置</span></div>
+  <div class="card">
+    <ul class="tight">
+      <li><b>① 同刻合并</b>：按本稿方案实现——连续同开始的行共用一个「开始」格，格内标 <span class="k">同刻 ×N</span>。</li>
+      <li><b>② 静止行</b>：按「此刻场上有什么」写，文案在各 scene 的 <span class="k">narr.rest</span>。</li>
+      <li><b>③ 家族页粒度</b>：折进合为一行（错峰写进结果列）。</li>
+      <li><b>④ all-reduce 第 2 轮起飞前 Σ² 回退普通字母</b>：确认为现行视觉行为，<b>记 docs/bugs.md 待修</b>，解说文案不与之冲突（飞行期间的行不提上排状态）。</li>
+      <li><b>⑤ reduce 终态</b>：以「源卡清空（消耗）」为准——动画、探针 3.26/3.29、项目速记三方一致；已改 <span class="k">registry.js</span> 的 reduce post（原「原样变暗」是错的）。</li>
+      <li><b>⑥ 收尾「读结果」提示</b>：未做，留拍板（要做得先补 visual.html 组件口径）。</li>
+      <li><b>实现落点</b>：<span class="k">assets/engine/narration.js</span>（词表 CV.NARR_LEX + 五种时间轴的生成器 + 闭合断言，秒数全部从编译产物现取）；齿轮面板第二页签（chrome.js + stage-page.css，宽 620px）；用例 2.22 / 2.23 进 <span class="k">docs/test-cases.html</span>（96 → 98 条）。本轮顺手修掉的数据错：rs 计算框浮现两处时刻（split 是先长够再浮现，串行）、rs 淡出 0.55、allreduce 起飞 0.09、reduce 预留长高主语、allgather 余辉 45%。</li>
+    </ul>
+  </div>
+  <p class="role" style="margin-top:14px">本轮只写文档，<b>没有改任何代码</b>。第 04–11 章的表格由文末数据表生成，改一行数据就能改文案。</p>
   </section>
 
 </div>
@@ -517,7 +518,7 @@ function transfer(o) {
   if (o.dim) r.push([s, s + 0.30, o.src + ' · 变暗', '60% 不透明']);
   if (o.hole) r.push([s, '', o.src + (o.hole4 ? ' · 交空（4 格）' : ' · 交空'), '空格']);
   r.push([s, s + 0.30, o.wire + ' · 点亮', o.color + '虚线']);
-  r.push([s, s + 0.30, o.slot + (o.copy4 ? ' · 4 格转接收位' : ' · 转接收位'), '紫底 ···']);
+  r.push([s, s + 0.30, o.slot + (o.copy4 ? ' · 转接收位（4 格）' : ' · 转接收位'), '紫底 ···']);
   r.push([s, s + 0.12, o.pkt + ' · 起飞', o.wire + ' 起点']);
   r.push([s + 0.12, s + 1.50, o.pkt + ' · 飞行', '沿' + o.wire]);
   r.push([s + 1.50, '', o.pkt + ' · 抵达', '箭头尖']);
@@ -525,7 +526,7 @@ function transfer(o) {
   r.push([s + 1.50, '', o.wire + ' · 余辉', '40% ' + o.color]);
   if (o.dim) r.push([s + 1.50, s + 1.80, o.src + ' · 复原', '100%']);
   r.push([s + 2.10, s + 2.60, '画面 · 静止', o.slot + ' 保持接收位']);
-  r.push([s + 2.60, '', o.slot + (o.copy4 ? ' · 4 格落位' : ' · 落位'),
+  r.push([s + 2.60, '', o.slot + (o.copy4 ? ' · 落位（4 格）' : ' · 落位'),
           o.copy4 ? '数据块 A B C D' : '数据块 ' + o.letter]);
   r.push([s + 2.60, s + 3.15, o.slot + ' · 弹跳', o.copy4 ? '4 格同时落定' : '落定']);
   r.push([s + 3.15, s + 4.15, '画面 · 静止', o.after]);
@@ -541,9 +542,9 @@ function allgatherRound(s, o) {
     [s + 0.12, s + 1.50, '单体包 · 飞行', '沿环边'],
     [s + 1.50, '', '单体包 · 抵达', '箭头尖'],
     [s + 1.50, s + 2.10, '单体包 · 淡出', '透明'],
-    [s + 1.50, '', '4 条环边 · 余辉', '40% 数据色'],
+    [s + 1.50, '', '4 条环边 · 余辉', '45% 数据色'],
     [s + 2.60, '', '四张卡 · 落位', o.recv],
-    [s + 2.60, s + 3.15, '四张卡 · 弹跳', '各 1 格落定'],
+    [s + 2.60, s + 3.15, '四张卡 · 弹跳', '4 块错峰 0.50 依次落定'],
     [s + 3.15, s + 4.15, '画面 · 静止', o.state]
   ];
 }
@@ -555,7 +556,7 @@ function reduceSteps() {
     [0.00, 0.60, '画面 · 静止', '四张四槽卡各 4 格：都是 A B C D（四份形状相同的数据）']
   ]});
   st.push({ t: '第 2 步 · 预留缓冲 · 3.15 秒', span: '0.60 → 3.75', rows: [
-    [0.60, 1.40, '四张四槽卡 · 长高', '一排变两排（卡高多一层）'],
+    [0.60, 1.40, '四槽卡 · 长高', '一排变两排（卡高多一层；只有 rank 0 长）'],
     [1.70, 2.10, '第二排-1 · 显形', '接收位（紫底 ···）'],
     [2.25, 2.65, '第二排-2 · 显形', '接收位'],
     [2.80, 3.20, '第二排-3 · 显形', '接收位'],
@@ -575,7 +576,7 @@ function reduceSteps() {
       [s + 1.70, '', w + ' · 余辉', '45% 数据色'],
       [s + 2.30, s + 3.05, '双排卡 · 长高', '腾出计算层'],
       [s + 2.56, s + 2.94, '计算框 · 浮现', 'sum · avg · max · min'],
-      [s + 3.05, s + 4.97, '四段 · 逐段折进（错峰 0.50）',
+      [s + 3.05, s + 4.97, '四段 · 折进（错峰 0.50）',
         'ΣA' + sup + ' ΣB' + sup + ' ΣC' + sup + ' ΣD' + sup],
       [s + 4.97, s + 5.29, '计算框 · 淡出', '透明'],
       [s + 5.29, s + 5.67, '计算态卡 · 收层', '退回双排卡']
@@ -593,7 +594,7 @@ function reduceSteps() {
 function exchangeRound(s) {
   return [
     [s, s + 0.30, '两条直连 · 点亮（两对同时）', '数据色'],
-    [s, s + 0.14, '整份包 · 起飞（4 个）', '各连线起点'],
+    [s, s + 0.09, '整份包 · 起飞（4 个）', '各连线起点'],
     [s + 0.14, s + 1.10, '整份包 · 飞行', '沿直连'],
     [s + 1.10, '', '整份包 · 抵达', '对方卡边缘'],
     [s + 1.10, s + 1.70, '整份包 · 淡出', '透明'],
@@ -601,7 +602,7 @@ function exchangeRound(s) {
     [s + 1.20, s + 2.11, '第二排 · 落位（4 块错峰 0.12）', '每卡各收 4 块'],
     [s + 2.11, s + 2.86, '双排卡 · 长高', '腾出计算层'],
     [s + 2.86, s + 3.21, '计算框 · 浮现', 'sum · avg · max · min'],
-    [s + 3.21, s + 5.13, '四段 · 逐段折进（错峰 0.50）', '四段各 2 份 → Σ²'],
+    [s + 3.21, s + 5.13, '四段 · 折进（错峰 0.50）', '四段各 2 份 → Σ²'],
     [s + 5.13, s + 6.18, '计算框 · 淡出 → 收层', '退回双排卡']
   ];
 }
@@ -658,16 +659,16 @@ function rsSteps() {
     [4.25, 4.39, '单体包 · 起飞（8 个）', '各直连起点'],
     [4.39, 5.95, '单体包 · 飞行', '沿直连'],
     [5.95, '', '单体包 · 抵达', '对端卡边缘'],
-    [5.95, 6.55, '单体包 · 淡出', '透明'],
+    [5.95, 6.50, '单体包 · 淡出', '透明'],
     [5.95, '', '四条直连 · 余辉', '42% 数据色'],
     [5.95, 7.00, '第二排 · 落位（2 段错峰 0.50）', '每卡收 2 块'],
     [7.00, 8.10, '双排卡 · 长高', '腾出计算层'],
-    [7.35, 7.73, '计算框 · 浮现', 'sum · avg · max · min'],
-    [8.10, 9.05, '两段 · 逐段折进（错峰 0.50）', '这两段各合 2 份 → Σ²'],
+    [7.75, 8.10, '计算框 · 浮现', 'sum · avg · max · min'],
+    [8.10, 9.05, '两段 · 折进（错峰 0.50）', '这两段各合 2 份 → Σ²'],
     [9.05, 10.10, '计算框 · 淡出 → 收层', '退回双排卡（第二排留着）']
   ]});
   st.push({ t: '第 4 步 · 撤掉多余空位 · 0.40 秒', span: '10.10 → 10.50', rows: [
-    [10.10, 10.50, '第二排-2 · 撤（从右往左）', '这一轮用不上，撤掉']
+    [10.10, 10.50, '第二排 · 收窄', '每卡撤掉这一轮用不上的那格']
   ]});
   st.push({ t: '第 5 步 · 第 2 轮（同行互换）· 4.30 秒', span: '10.50 → 14.80', rows: [
     [10.50, '', '四张卡 · 交空（各 1 格）', '交出最后一段'],
@@ -675,11 +676,11 @@ function rsSteps() {
     [10.50, 10.64, '单体包 · 起飞（4 个）', '各直连起点'],
     [10.64, 12.20, '单体包 · 飞行', '沿直连'],
     [12.20, '', '单体包 · 抵达', '对端卡边缘'],
-    [12.20, 12.80, '单体包 · 淡出', '透明'],
+    [12.20, 12.75, '单体包 · 淡出', '透明'],
     [12.20, '', '四条直连 · 余辉', '42% 数据色'],
     [12.20, 12.75, '第二排 · 落位（1 段）', '每卡只收 1 块'],
     [12.75, 13.85, '双排卡 · 长高', '腾出计算层'],
-    [13.00, 13.38, '计算框 · 浮现', 'sum · avg · max · min'],
+    [13.50, 13.85, '计算框 · 浮现', 'sum · avg · max · min'],
     [13.85, 14.80, '这一段 · 折进', '凑满 4 份 → Σ⁴']
   ]});
   st.push({ t: '第 6 步 · 收场 · 6.35 秒', span: '14.80 → 21.15', rows: [

@@ -33,6 +33,18 @@ CV.scene('gather', (function () {
 
     gear: true,
 
+    /* 逐动作解说的静止行文案（docs/steps.html；主体/动作由引擎词表拼） */
+    narr: {
+      rest: {
+        intro: '四槽卡-1 装 A，-2/-3/-4 是空格但看不见；三张单槽卡各 1 块 B / C / D；3 条弧线灰色；图例 4 块',
+        pre: '四槽卡：A + 3 个空格',
+        send1: '四槽卡：A、B + 2 个空格',
+        send2: '四槽卡：A、B、C + 1 个空格',
+        send3: '四槽卡四格填满',
+        tail: '四槽卡四格 A B C D；三张单槽卡各留原块；3 条弧线余辉'
+      }
+    },
+
     beats: [
       { id: 'intro', kind: 'wait', label: '说明', sec: 0.6,
         text: rk(0) + ' ' + rk(1) + ' ' + rk(2) + ' ' + rk(3) + ' 分别持有 ' +

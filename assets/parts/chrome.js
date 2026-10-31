@@ -54,6 +54,7 @@
 
     var t = 0, playing = false, rafId = null, lastTs = 0;
     var segFills = [];
+    var paintHooks = [];
 
     function stepEnd(i) { return i + 1 < steps.length ? steps[i + 1].t : 1; }
 
@@ -93,6 +94,9 @@
         var narrow = window.innerWidth < 860;
         cap.innerHTML = (narrow && st.short) ? st.short : st.text;
       }
+
+      /* 逐帧钩子（齿轮「逐动作解说」的高亮走这里，不另起 rAF） */
+      for (var hi = 0; hi < paintHooks.length; hi++) paintHooks[hi](v);
     }
 
     function setPlaying(v) {
@@ -187,6 +191,7 @@
       tToV: tToV,
       vToT: vToT,
       paintChrome: paintChrome,
+      onPaint: function (fn) { paintHooks.push(fn); },
       destroy: function () { setPlaying(false); }
     };
   };
@@ -284,10 +289,11 @@
     return String(Math.round((v || 0) * 1000) / 1000);
   }
 
-  /* o = { page, getCh(), onChange(), name } */
+  /* o = { page, scene, getCh(), onChange(), name } */
   CV.chrome.gear = function (o) {
     o = o || {};
     var page = o.page;
+    var sceneRef = o.scene || null;   /* 解说生成要用剧本；boot 传入，避免 parts 反向依赖装配层 */
     var getCh = o.getCh;
     var onChange = o.onChange || function () {};
     var hd = document.querySelector('.hd');
@@ -308,6 +314,12 @@
     document.body.appendChild(pop);
 
     var rowsBox, totalEl, savedEl;
+
+    /* ── 逐动作解说页签状态（docs/steps.html §12.2）── */
+    var tab = 'seq';                    /* 'seq' = 时序（默认，探针兼容） | 'narr' */
+    var narrRows = [], narrEls = [], narrOn = [], narrCh = null, narrErr = null;
+    var narrScroll = null, followBtn = null;
+    var follow = true, followTimer = null;
 
     function ovRaw() { return CV.pageOvRaw(page); }
     function ovAll() { return CV.pageOvRead(page); }
@@ -420,6 +432,173 @@
       return row;
     }
 
+    /* ── 逐动作解说页签状态（docs/steps.html §12.2）── */
+    var tab = 'seq';                    /* 'seq' = 时序（默认，探针兼容） | 'narr' */
+    var narrRows = [], narrEls = [], narrOn = [], narrCh = null, narrErr = null;
+    var narrGroups = [];
+    var narrScroll = null, followBtn = null;
+    var follow = true, followTimer = null;
+
+    function buildNarrData(ch) {
+      narrCh = ch;
+      narrRows = []; narrEls = []; narrOn = []; narrGroups = []; narrErr = null;
+      try {
+        var d = CV.narrate(sceneRef, ch);
+        narrRows = d.flat;
+        narrGroups = d.groups;
+      } catch (e) {
+        narrErr = e.message;
+      }
+    }
+
+    function setFollow(v) {
+      follow = v;
+      if (followBtn) {
+        followBtn.textContent = v ? '跟随播放 · 开' : '跟随播放 · 关';
+        followBtn.classList.toggle('on', v);
+      }
+    }
+
+    function pauseFollow() {
+      if (!follow) return;
+      setFollow(false);
+      clearTimeout(followTimer);
+      followTimer = setTimeout(function () { setFollow(true); }, 2000);
+    }
+
+    /* 命中 [开始, 结束) 的行亮；瞬时行（结束空）从开始起亮 0.15 秒。
+       只在命中集合变化时改 class，不逐帧写 DOM。 */
+    function frame(t) {
+      if (pop.hidden || tab !== 'narr' || !narrRows.length) return;
+      var ch = getCh();
+      if (ch !== narrCh) return;        /* 重编译后下一次 render() 会重建 */
+      var sec = t * ch.total;
+      var firstOn = -1;
+      for (var i = 0; i < narrRows.length; i++) {
+        var r = narrRows[i];
+        var on = sec >= r.s - 1e-4 && (r.e === null ? sec < r.s + 0.15 : sec < r.e);
+        if (on && firstOn < 0) firstOn = i;
+        if (on !== narrOn[i]) {
+          narrOn[i] = on;
+          if (narrEls[i]) narrEls[i].classList.toggle('on', on);
+        }
+      }
+      if (follow && firstOn >= 0 && narrScroll) {
+        var tr = narrEls[firstOn];
+        var cr = narrScroll.getBoundingClientRect();
+        var rr = tr.getBoundingClientRect();
+        if (rr.top < cr.top + 4 || rr.bottom > cr.bottom - 4) {
+          tr.scrollIntoView({ block: 'nearest' });
+        }
+      }
+    }
+
+    function renderNarr(ch) {
+      if (narrCh !== ch) buildNarrData(ch);
+
+      var box = el('div', 'gear-narr');
+      var bar = el('div', 'gear-narr-bar');
+      bar.appendChild(el('span', 'gear-narr-tip', '结束留空＝瞬时 · 高亮＝正在播 · 滚动即暂停跟随 2 秒'));
+      followBtn = el('button', 'gear-narr-follow' + (follow ? ' on' : ''));
+      followBtn.type = 'button';
+      followBtn.textContent = follow ? '跟随播放 · 开' : '跟随播放 · 关';
+      followBtn.addEventListener('click', function () { setFollow(!follow); });
+      bar.appendChild(followBtn);
+      box.appendChild(bar);
+
+      var body = el('div', 'gear-narr-body');
+      narrScroll = body;
+      body.addEventListener('wheel', pauseFollow, { passive: true });
+      body.addEventListener('touchmove', pauseFollow, { passive: true });
+
+      if (narrErr) {
+        body.appendChild(el('div', 'gear-narr-err', narrErr));
+      } else {
+        var table = document.createElement('table');
+        table.className = 'na';
+        var cg = document.createElement('colgroup');
+        ['na-c1', 'na-c2', 'na-c3', 'na-c4', 'na-c5'].forEach(function (cn) {
+          cg.appendChild(document.createElement('col')).className = cn;
+        });
+        table.appendChild(cg);
+        var thead = document.createElement('thead');
+        var hr = document.createElement('tr');
+        ['编号', '开始', '结束', '解说', '结果'].forEach(function (tx) {
+          hr.appendChild(document.createElement('th')).textContent = tx;
+        });
+        thead.appendChild(hr);
+        table.appendChild(thead);
+
+        var tbody = document.createElement('tbody');
+        var flat = 0;
+        if (narrGroups.length) {
+          narrGroups.forEach(function (g, gi) {
+            var trh = document.createElement('tr');
+            trh.className = 'na-grp';
+            var tdh = document.createElement('td');
+            tdh.colSpan = 5;
+            var bl = document.createElement('b');
+            bl.textContent = g.label;
+            tdh.appendChild(bl);
+            var sp = document.createElement('i');
+            sp.className = 'na-span';
+            sp.textContent = fmt(g.s) + ' → ' + fmt(g.e) + ' · ' + fmt(g.e - g.s) + ' 秒';
+            tdh.appendChild(sp);
+            trh.appendChild(tdh);
+            tbody.appendChild(trh);
+
+            var rows = g.rows, i = 0;
+            while (i < rows.length) {
+              var j = i;
+              while (j + 1 < rows.length && rows[j + 1][0] === rows[i][0]) j++;
+              var span = j - i + 1;
+              for (var k = i; k <= j; k++) {
+                var r = rows[k];
+                var tr = document.createElement('tr');
+                tr.className = 'na-row' + (r[2] === '画面 · 静止' ? ' na-rest' : '');
+                var no = document.createElement('td');
+                no.className = 'na-no';
+                no.textContent = (gi + 1) + '.' + (k + 1);
+                tr.appendChild(no);
+                if (k === i) {
+                  var st = document.createElement('td');
+                  st.className = 'na-t na-st' + (span > 1 ? ' na-sim' : '');
+                  if (span > 1) st.rowSpan = span;
+                  st.appendChild(document.createTextNode(fmt(r[0])));
+                  if (span > 1) {
+                    st.appendChild(document.createElement('br'));
+                    var sm = document.createElement('i');
+                    sm.className = 'na-same';
+                    sm.textContent = '同刻 ×' + span;
+                    st.appendChild(sm);
+                  }
+                  tr.appendChild(st);
+                }
+                var en = document.createElement('td');
+                en.className = 'na-t' + (r[1] === null ? ' na-blank' : '');
+                if (r[1] !== null) en.textContent = fmt(r[1]);
+                tr.appendChild(en);
+                tr.appendChild(document.createElement('td')).className = 'na-what';
+                tr.lastChild.textContent = r[2];
+                tr.appendChild(document.createElement('td')).className = 'na-res';
+                tr.lastChild.textContent = r[3];
+                tr.setAttribute('data-i', String(flat));
+                narrEls[flat] = tr;
+                narrOn[flat] = false;
+                flat++;
+                tbody.appendChild(tr);
+              }
+              i = j + 1;
+            }
+          });
+        }
+        table.appendChild(tbody);
+        body.appendChild(table);
+      }
+      box.appendChild(body);
+      pop.appendChild(box);
+    }
+
     function render() {
       var ch = getCh();
       pop.innerHTML = '';
@@ -433,6 +612,23 @@
       x.addEventListener('click', function () { toggle(false); });
       head.appendChild(x);
       pop.appendChild(head);
+
+      /* 页签：时序（原样）｜逐动作解说（docs/steps.html） */
+      var tabs = el('div', 'gear-tabs');
+      [['seq', '时序'], ['narr', '逐动作解说']].forEach(function (tp) {
+        var b = el('button', 'gear-tab' + (tab === tp[0] ? ' on' : ''), tp[1]);
+        b.type = 'button';
+        b.setAttribute('data-tab', tp[0]);
+        b.addEventListener('click', function (e) {
+          e.stopPropagation();   /* render() 会重建 innerHTML，被点按钮变游离节点，
+                                    不拦的话「点外部关闭」监听会误关面板 */
+          if (tab !== tp[0]) { tab = tp[0]; render(); }
+        });
+        tabs.appendChild(b);
+      });
+      pop.appendChild(tabs);
+
+      if (tab === 'narr') { renderNarr(ch); return; }
 
       pop.appendChild(el('div', 'gear-tip',
         '编号＝进度条第几段 · 有规范值调倍数 · 自定义填秒 · 改完自动存到本机'));
@@ -535,8 +731,15 @@
     });
     window.addEventListener('resize', function () { if (!pop.hidden) place(); });
 
+    /* 开发期断言（steps.html §12.1）：解说生成不闭合/词表外动作 → 控制台直接报错 */
+    if (sceneRef) {
+      try { CV.narrate(sceneRef, getCh()); }
+      catch (e) { console.error('narration(' + page + '): ' + e.message); }
+    }
+
     return { open: function () { toggle(true); }, close: function () { toggle(false); },
-             rerender: function () { if (!pop.hidden) render(); } };
+             rerender: function () { if (!pop.hidden) render(); },
+             frame: frame };
   };
   CV.gear = CV.chrome.gear;
 })(window.CV = window.CV || {});

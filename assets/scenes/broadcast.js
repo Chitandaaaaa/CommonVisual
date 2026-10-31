@@ -27,6 +27,18 @@ CV.scene('broadcast', (function () {
 
     gear: true,
 
+    /* 逐动作解说的静止行文案（docs/steps.html） */
+    narr: {
+      rest: {
+        intro: 'r0 四格 A B C D；r1 / r2 / r3 各 4 个空格但看不见；3 条弧线灰色',
+        ready: 'r0 满 A B C D；其余三张各 4 个空格',
+        send1: 'r0 与 r1 都是 A B C D',
+        send2: 'r0 / r1 / r2 都是 A B C D',
+        send3: '四张卡都是 A B C D',
+        tail: '四张卡各 4 格满 A B C D；3 条弧线余辉'
+      }
+    },
+
     beats: [
       { id: 'intro', kind: 'wait', label: '说明', sec: 0.6,
         text: rk(0) + ' 持有整份 ' + whole() },

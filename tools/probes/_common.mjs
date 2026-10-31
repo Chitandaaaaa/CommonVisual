@@ -453,6 +453,25 @@ export async function commonChecks(pg, cfg) {
     ok('2.16 时序不重叠无空档', true, 'SKIP(本页无 getCh，v2 复检)');
   }
 
+  /* ── 2.22 逐动作解说生成闭合（docs/steps.html §12.1：
+     词表内动作 + 每步末行=步末 + 末行结束=总时长；生成器自身会先抛错）── */
+  if (ch) {
+    const nv = await pg.evaluate(() => {
+      const M = window.CV && window.CV.lastMount;
+      if (!M || !M.scene || typeof window.CV.narrate !== 'function') return { err: 'narrate api 缺失' };
+      try {
+        const d = window.CV.narrate(M.scene, M.getCh());
+        return { n: d.flat.length, groups: d.groups.length, total: d.total,
+                 last: d.groups[d.groups.length - 1].e };
+      } catch (e) { return { err: e.message }; }
+    });
+    ok('2.22 解说生成闭合（词表内·末行=总时长）',
+      !nv.err && nv.n > 0 && Math.abs(nv.last - nv.total) < 1e-3,
+      nv.err ? nv.err : `${nv.groups} 步 ${nv.n} 行 total=${(+nv.total).toFixed(2)}`);
+  } else {
+    ok('2.22 解说生成闭合（词表内·末行=总时长）', true, 'SKIP(本页无 getCh)');
+  }
+
   /* ── 2.12 聚焦 hover 与钉住 ── */
   {
     await seek(pg, 0, 300);
@@ -576,6 +595,38 @@ export async function commonChecks(pg, cfg) {
     const back = await scan(pg);
     ok('2.13c ↺ 回基线', back.dur === dur0 && back.segs.length === before.segs.length,
       `dur=${back.dur} (want ${dur0})`);
+
+    /* 2.23 逐动作解说页签：行表渲染 + 同刻合并 + 高亮跟随（docs/steps.html §12.2）
+       （sum/split/alltoall 家族探针 gear:false，此条暂只在 choreo 四页跑——同 2.13 的已知缺口） */
+    {
+      await pg.click('.gear-tab[data-tab="narr"]');
+      await pg.waitForTimeout(200);
+      let narrOk = false, narrD = '面板未打开';
+      if (ch) {
+        const trKey = Object.keys(ch.win).find(k => ch.winKind[k] === 'transfer');
+        if (trKey) {
+          const w0 = ch.win[trKey];
+          const mid = sc((w0.s + (w0.travelEnd != null ? w0.travelEnd : (w0.s + w0.e) / 2)) / 2, ch.total);
+          await seek(pg, mid, 250);
+        }
+        const narr = await pg.evaluate(() => {
+          const pop = document.querySelector('.gear-pop');
+          if (!pop || pop.hidden) return null;
+          const rows = [...pop.querySelectorAll('.na-row')];
+          return {
+            rows: rows.length,
+            on: rows.filter(r => r.classList.contains('on')).length,
+            sim: pop.querySelectorAll('.na-same').length,
+            grp: pop.querySelectorAll('.na-grp').length,
+            err: !!pop.querySelector('.gear-narr-err'),
+            w: pop.getBoundingClientRect().width
+          };
+        });
+        narrOk = !!narr && !narr.err && narr.rows > 0 && narr.grp > 0 && narr.on > 0 && narr.w > 500;
+        narrD = narr ? `rows=${narr.rows} grp=${narr.grp} on=${narr.on} sim=${narr.sim} w=${Math.round(narr.w)}` : narrD;
+      }
+      ok('2.23 解说页签行表与高亮跟随', narrOk, narrD);
+    }
     await pg.keyboard.press('Escape');
 
     /* 2.14 持久化：LS 有记录 → 刷新仍生效 → 清掉回基线 */

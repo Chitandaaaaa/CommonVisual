@@ -13,6 +13,14 @@ CV.scene('reduce', (function () {
     sumType: 'accumulate',
     gear: true,
 
+    /* 逐动作解说的静止行文案（docs/steps.html） */
+    narr: {
+      rest: {
+        intro: '四张四槽卡各 4 格：都是 A B C D（四份形状相同的数据）',
+        collapse: '四槽卡四格 ΣA⁴ ΣB⁴ ΣC⁴ ΣD⁴；三张源卡空着'
+      }
+    },
+
     cards: [
       { rank: 0, col: 'left',  role: 'dst', target: true },
       { rank: 1, col: 'right', role: 'src' },
