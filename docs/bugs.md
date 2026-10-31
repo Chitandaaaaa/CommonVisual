@@ -19,7 +19,7 @@ node tools/verify.mjs index gather scatter broadcast reduce allgather allreduce 
 
 | 日期 | 页面 | 症状 / 断言 | 复现 | 状态 |
 |---|---|---|---|---|
-| 2026-10-31 | 全站原语页（齿轮） | 「保存到代码」写 `assets/scenes/pages-base.js`，但该文件不存在也未被任何页面引入 —— 保存后刷新即回原值，功能无效 | 齿轮改倍数 → 保存到代码 → 刷新页面 | 待修 |
+| 2026-10-31 | 全站原语页（齿轮） | 「保存到代码」写 `assets/scenes/pages-base.js`，但该文件不存在也未被任何页面引入 —— 保存后刷新即回原值，功能无效 | 齿轮改倍数 → 保存到代码 → 刷新页面 | 已修（2026-11-01 建文件 + 接入 8 页薄壳；serve.mjs 端点写盘 → 全新页面 `CV.pageOvRead` 读回、编译真生效，已实测） |
 | 2026-10-31 | allreduce | 3.42「轮后每卡 4 块全 Σᴀ²」、3.43「中段出现计算框（两轮）」采样锚点未定稿（testing.html 已标紫条，此处入账统一跟踪） | `node tools/verify.mjs allreduce --no-shot` | 待时序标准定稿 |
 | 2026-10-31 | reducescatter | 3.51「第 1 轮合并结束的帧状态」采样锚点未定稿（同上） | `node tools/verify.mjs reducescatter --no-shot` | 待时序标准定稿 |
 | 2026-10-31 | index | W1 节点卡断言 282×64，实测 282×**63**：1px 平台渲染差（校准值出自他机，本机 Windows 实测 63） | `node tools/verify.mjs index --no-shot` | 待复核（按本机重校或断言放宽 1px） |

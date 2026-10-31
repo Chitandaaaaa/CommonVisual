@@ -114,7 +114,7 @@ CommonVisual/
 │   ├── boot.js             CV.boot：建页壳 → 挂导航 → 导演挂剧本 → 需要时挂齿轮
 │   ├── registry.js         终态唯一事实（pre / post / rel / verbs）
 │   ├── rounds.js           轮次口径（几轮 / 每轮哪些边 / 轮内相 —— 算法数据层）
-│   ├── scenes/             8 个原语页剧本（纯数据）
+│   ├── scenes/             8 个原语页剧本（纯数据）+ pages-base.js（每页时序基线，「保存到代码」写回目标）
 │   ├── engine/
 │   │   ├── compile.js      剧本 → 时间轴（choreo / family 两条路径）
 │   │   ├── narration.js    逐动作解说：词表 + 行生成器（喂齿轮第二页签）
