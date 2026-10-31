@@ -5,7 +5,7 @@
 
 ## 一、项目速览
 
-CommonVisual 是零构建的静态可视化站点，用逐步动画讲清 8 种分布式通信原语（gather / scatter / broadcast / reduce / allgather / allreduce / reducescatter / alltoall）。技术栈是纯 HTML + CSS + 原生 JS：全局命名空间 `window.CV` + defer 脚本，不用框架、不用 ESM、不用打包——「双击 html 就能看」是硬需求（file:// 下 ESM 被 CORS 拦）。核心入口是根目录 9 个 HTML（8 原语页 + index），每页是薄壳、只调 `CV.boot('<id>')`，内容全在 `assets/scenes/<id>.js` 纯数据剧本里；**规范页在 `docs/`**（prepost / algorithms / visual / specs / steps / test-cases），经 `../assets/` 引用底层组件——规范与业务代码两条线互不依赖，都只向下用组件。单一事实源是 `assets/registry.js`（每条原语的 pre / post 语义 + algo + rel + verbs），公共层 `assets/engine/`（compile / director / verbs）、`parts/`、`prim/`、`theme/` 被八页共用。唯一 dev 依赖 playwright-core，`tools/` 用无头 Chrome 跑几何断言与截图；仓库没有 build、没有 lint。
+CommonVisual 是零构建的静态可视化站点，用逐步动画讲清 8 种分布式通信原语（gather / scatter / broadcast / reduce / allgather / allreduce / reducescatter / alltoall）。技术栈是纯 HTML + CSS + 原生 JS：全局命名空间 `window.CV` + defer 脚本，不用框架、不用 ESM、不用打包——「双击 html 就能看」是硬需求（file:// 下 ESM 被 CORS 拦）。核心入口是根目录 9 个 HTML（8 原语页 + index），每页是薄壳、只调 `CV.boot('<id>')`，内容全在 `assets/scenes/<id>.js` 纯数据剧本里；**规范页在 `docs/`**（prepost / algorithms / visual / specs / steps / test-cases），经 `../assets/` 引用底层组件——规范与业务代码两条线互不依赖，都只向下用组件。单一事实源是 `assets/registry.js`（每条原语的 pre / post 语义 + algo + rel + verbs），轮次口径在 `assets/rounds.js`（算法数据层，几轮 / 每轮哪些边 / 轮内相），公共层 `assets/engine/`（compile / director / verbs）、`parts/`、`prim/`、`theme/` 被八页共用。唯一 dev 依赖 playwright-core，`tools/` 用无头 Chrome 跑几何断言与截图；仓库没有 build、没有 lint。
 
 ## 二、关键命令
 
@@ -36,7 +36,8 @@ node tools/probe.mjs gather 310:"(()=>{ ... })()"  # 写断言前量真值（十
 - **跨页零引用**：8 个页面 JS 互不引用，要复用就下沉公共层；公共层改动必须 8 页回归（用 probe，不用全截图）。
 - **只有引擎碰时间**：时间轴编译一次，播放 / seek / 循环只是改 t 的推进方式；组件不自组合。
 - **不硬编码**：尺寸、颜色、耗时走 theme 令牌与 `defaults.js`；scrub 用 0–1000 刻度、`controls.seek()` 用 0–1，换算交给页面 `getCh()`。
-- **口径有出处**：文案与动态步骤看 `docs/steps.html`，组件真值看 `docs/visual.html`，算法口径看 `docs/algorithms.html`，用例清单以 `docs/test-cases.html` 为准（96 条＝通用 3 + 全站 20 + 原语页 60 + index 4 + 规范页 9，只有能判「过 / 不过」的验证动作才占编号）；改验证规则先改那一页，再同步本文件。
+- **口径有出处**：文案与动态步骤看 `docs/steps.html`，组件真值看 `docs/visual.html`，算法口径看 `docs/algorithms.html`，用例清单以 `docs/test-cases.html` 为准（98 条＝通用 3 + 全站 22 + 原语页 60 + index 4 + 规范页 9，只有能判「过 / 不过」的验证动作才占编号）；改验证规则先改那一页，再同步本文件。
+- **解说文案改法**：动作词只能出自 `assets/engine/narration.js` 的 `CV.NARR_LEX`（表外动作生成器直接抛错）；静止行的「场上有什么」写在各 scene 的 `narr.rest`；秒数永远从编译产物现取，不许手写。
 - **收尾五件事**：probe 回归 → README 页面表 / 目录树同步 → 新原语补四件套（薄壳 HTML + scenes 剧本 + registry 登记 + probes 断言）→ `.workbuddy/memory/` 当日日志（长期约定进 MEMORY.md）→ commit 正文写清「为什么这么改」。
 
 ## 四、边界与禁区

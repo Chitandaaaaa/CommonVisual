@@ -764,7 +764,7 @@ td.dim{color:var(--tx2)}
         <text x="2" y="114" font-size="11" font-family="ui-monospace,monospace" font-weight="700" fill="#c27803">L4</text>
         <rect x="52" y="96" width="756" height="58" rx="9" fill="#fff" stroke="#fde68a"/>
         <text x="70" y="122" font-size="13.5" font-weight="600" fill="#c27803">事实与剧本</text>
-        <text x="152" y="122" font-size="12" font-family="ui-monospace,monospace" fill="#5f6780">registry.js　scenes/*.js ×8</text>
+        <text x="152" y="122" font-size="12" font-family="ui-monospace,monospace" fill="#5f6780">registry.js　rounds.js　scenes/*.js ×8</text>
         <text x="70" y="142" font-size="11.5" fill="#939bb2">纯数据：一条原语的全部事实 + 一份节拍序列。可 JSON 化、可 diff、可自动校验</text>
         <text x="828" y="122" font-size="11.5" fill="#059669">独占 · 9 份并行</text>
         <text x="828" y="141" font-size="11" fill="#939bb2">registry 一行一原语</text>
@@ -840,6 +840,7 @@ td.dim{color:var(--tx2)}
 │             <span class="k">verbs/</span>   move.js  copy.js  split.js  sum.js    <span class="c">L3  2 + 4 个</span>
 ├── <span class="k">pages/</span>     index.css  docs.css  anatomy.css  algorithms.css  <span class="c">页面样式</span>
 ├── <span class="k">registry.js</span>                                              <span class="c">L4  1 份 · 8 条事实</span>
+├── <span class="k">rounds.js</span>                                                <span class="c">L4  轮次口径 · 算法数据层</span>
 ├── <span class="k">scenes/</span>    gather  scatter  broadcast  reduce
 │             allgather  allreduce  reducescatter  alltoall  <span class="c">L4  8 份剧本</span>
 └── <span class="k">boot.js</span>                                                  <span class="c">装配 1 个</span>
@@ -862,7 +863,7 @@ td.dim{color:var(--tx2)}
       <tr><td><b>8 原语页</b></td><td>theme + prim + parts + nav + blocks/legend + engine 全套 + registry + scenes + boot</td><td><code>CV.boot(id)</code> → scenes 剧本</td><td>按 AGENTS 分频</td></tr>
       <tr><td><b>index</b></td><td>theme + prim + registry + nav + boot + index.css</td><td>boot → nav 渲染</td><td>verify index</td></tr>
       <tr><td><b>docs/prepost.html</b> 语义</td><td>9 项：theme/docs.css、prim/dom、theme.js、registry、blocks/head·table·toc、boot</td><td><code>boot('layout')</code> → CV.pages → blocks.layoutApp</td><td>改 blocks/table.js 带上它</td></tr>
-      <tr><td><b>docs/algorithms.html</b> 算法口径</td><td>3 项：theme/docs.css、registry（最薄）</td><td>内联脚本直读 registry，不进装配层</td><td>verify docs/algorithms.html</td></tr>
+      <tr><td><b>docs/algorithms.html</b> 算法口径</td><td>4 项：theme/docs.css、registry、rounds（最薄）</td><td>内联脚本直读 registry + rounds，不进装配层</td><td>verify docs/algorithms.html</td></tr>
       <tr><td><b>docs/visual.html</b> 视觉</td><td>13 项：css×3、prim×2、<b>parts/cast·payload·beat·chrome</b>、blocks/legend·anatomy·paramEditor</td><td>blocks/anatomy.js 自装配（无 boot 调用）</td><td><b>与原语页共用 parts 四件：改这四件 = 8 原语页 + 本页</b></td></tr>
       <tr><td><b>specs / steps / test-cases</b></td><td>0（自包含）</td><td>纯静态</td><td>无</td></tr>
       <tr><td><b>algorithms-old</b>（退役）</td><td>同 prepost 一档 + algorithms.css + table.js 的 algorithmsApp</td><td><code>boot('algorithms')</code></td><td>不在验证范围</td></tr>
@@ -887,7 +888,7 @@ td.dim{color:var(--tx2)}
     </div>
     <div class="rule" style="border-left-color:#059669">
       <div class="h">④ 原语事实只有一份</div>
-      <div class="b">名称、方向、前后状态、邻居、算法行，全在 <code>registry.js</code>，页面不许在自己文件里再抄一遍。</div>
+      <div class="b">名称、方向、前后状态、邻居、算法行，全在 <code>registry.js</code>；轮次口径（几轮、每轮哪些边）在 <code>rounds.js</code>。页面不许在自己文件里再抄一遍。</div>
     </div>
     <div class="rule" style="border-left-color:#0891b2">
       <div class="h">⑤ 组件按组切开</div>

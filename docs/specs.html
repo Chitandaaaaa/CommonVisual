@@ -105,13 +105,13 @@
         </tr>
         <tr>
           <td class="mono">4</td><td class="nm">通信原语算法</td><td class="mono">docs/algorithms.html</td>
-          <td>每条原语 5 行口径：通信前 / 骨架 / 轮次 / 终态 / 锚点。registry 管两头、scenes 管每一拍，本页管中间</td>
-          <td><span class="pill fix">🔧 占位稿</span>&nbsp;通信前 / 终态 / 骨架已从 registry 现渲染；轮次 / 锚点待时序标准定稿收编；与备用页合并是后续待办</td>
+          <td>每条原语 5 行口径：通信前 / 骨架 / 轮次 / 终态 / 锚点。registry 管两头、scenes 管每一拍、rounds.js 管轮次，本页管中间</td>
+          <td><span class="pill fix">🔧 占位稿</span>&nbsp;通信前 / 终态 / 骨架从 registry、轮次从 rounds.js（算法数据层首件，2026-10-31 建）现渲染；锚点待 win 命名统一后并入；与备用页合并是后续待办</td>
         </tr>
         <tr>
           <td class="mono">5</td><td class="nm">通信原语步骤</td><td class="mono">docs/steps.html</td>
-          <td>名词表 + 逐动作文案 + 面板设计稿</td>
-          <td><span class="pill fix">🔧 草案 v3</span>&nbsp;名词表 + 八页逐动作文案全覆盖（8d22533），待定稿 · 自 docs/action.html 改名</td>
+          <td>名词表 + 逐动作文案 + 面板口径</td>
+          <td><span class="pill ok">✓ 已实现</span>&nbsp;词表落 <code>assets/engine/narration.js</code>（CV.NARR_LEX），齿轮面板第二页签随稿落地；§13 拍板结论见该页（2026-10-31）</td>
         </tr>
         <tr>
           <td class="mono">6</td><td class="nm">通信原语视觉</td><td class="mono">docs/visual.html</td>
@@ -259,8 +259,9 @@
           <text class="sub" x="828" y="104">1:1 组件真值 · 调试台</text>
         </g>
 
-        <!-- 一一对应：3→7、5→8（灰）；6→9（紫＝对应且写回） -->
+        <!-- 一一对应：3→7、4→rounds、5→8（灰）；6→9（紫＝对应且写回） -->
         <line class="edge" x1="340" y1="116" x2="340" y2="262" marker-end="url(#arw)"/>
+        <line class="edge" x1="526" y1="116" x2="526" y2="262" marker-end="url(#arw)"/>
         <line class="edge" x1="712" y1="116" x2="712" y2="262" marker-end="url(#arw)"/>
         <line class="wb" x1="898" y1="116" x2="898" y2="262" marker-end="url(#arwP)"/>
         <line class="wb" x1="824" y1="116" x2="762" y2="262" marker-end="url(#arwP)"/>
@@ -277,9 +278,11 @@
           <text class="sub" x="269" y="326">pre · post · algo · rel</text>
         </g>
         <g class="node">
-          <rect class="miss" x="442" y="266" width="168" height="72" rx="8"/>
-          <text class="miss" x="456" y="298">算法的数据层待建</text>
-          <text class="sub" x="456" y="318">轮次 · 锚点，尚无文件</text>
+          <rect class="box" x="442" y="266" width="168" height="72" rx="8"/>
+          <circle class="dot-o" cx="460" cy="282" r="4"/>
+          <text class="f" x="472" y="286">rounds.js</text>
+          <text class="cn" x="456" y="308" font-size="12">轮次口径 · 算法数据层</text>
+          <text class="sub" x="456" y="326">已建 · 锚点待并入</text>
         </g>
         <g class="node">
           <rect class="box" x="627" y="266" width="170" height="72" rx="8"/>
@@ -330,7 +333,7 @@
         <text class="lbl" x="364" y="538">保存到代码 · 运行时唯一写回</text>
         <text class="lbl" x="930" y="538" text-anchor="end">编号 = 第 01 章清单序号</text>
       </svg>
-      <figcaption><b>读法：</b>顶层 #2–#6 五份规范说了算；下一层 #7–#9 是各自的实现——语义(#3) ↔ registry.js(#7)、步骤(#5) ↔ defaults.js(#8)、视觉(#6) ↔ pages-base.js(#9)，一条竖线一条对应；算法(#4)的数据层（轮次 / 锚点）还没建（红虚框）。紫虚线既是 #9 对 #6 的对应，也是运行时<b>唯一</b>能写回的地方（调试台「保存到代码」，defaults.js 同被写回）。守护层判过不过、失败只记账；已删除与退役的文档不在图内，去向见第 01 章清单。</figcaption>
+      <figcaption><b>读法：</b>顶层 #2–#6 五份规范说了算；下一层 #7–#9 是各自的实现——语义(#3) ↔ registry.js(#7)、算法(#4) ↔ rounds.js、步骤(#5) ↔ defaults.js(#8)、视觉(#6) ↔ pages-base.js(#9)，一条竖线一条对应；算法数据层已建首件 rounds.js（轮次口径，橙点＝锚点待 win 命名统一后并入）。紫虚线既是 #9 对 #6 的对应，也是运行时<b>唯一</b>能写回的地方（调试台「保存到代码」，defaults.js 同被写回）。守护层判过不过、失败只记账；已删除与退役的文档不在图内，去向见第 01 章清单。</figcaption>
     </figure>
   </section>
 
