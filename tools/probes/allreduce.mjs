@@ -93,14 +93,24 @@ export async function check(pg) {
 
   /* 3.42 横向轮后：每卡上排 4 块全是 2 份 Σᴀ²（口径按实现修正）
      〔2026-11-01 采样改 win.r1merge.e 现算——旧字幕正则被第 0 段
-       「逐段待相加」误匹配、采到开场帧，已废〕 */
+       「逐段待相加」误匹配、采到开场帧，已废〕
+     〔2026-11-01 扩双采样：Σ 判定改认「已持有份数」（sum.js
+       overlayAllreduce），第 2 轮飞行中点不得回退成普通字母
+       （bugs.md 2026-10-31 记、同日修）〕 */
   {
+    const sigRow = (s) => {
+      const rows = [0, 1, 2, 3].map(r => byCard(s, r).filter(x => x.l));
+      return {
+        ok: rows.every(l => l.length === 4 && l.every(x => /^Σ[A-D]2$/.test(x.t))),
+        d: rows.map(l => l.length + '块[' + l.map(x => x.t).join('') + ']').join(' ')
+      };
+    };
     await seek(pg, A.after1, 500);
-    const s = await scan(pg);
-    const rows = [0, 1, 2, 3].map(r => byCard(s, r).filter(x => x.l));
-    const ok37 = rows.every(l => l.length === 4 && l.every(x => /^Σ[A-D]2$/.test(x.t)));
-    ok('3.42 横向轮后每卡 4 块全 Σᴀ²', ok37,
-      rows.map(l => l.length + '块[' + l.map(x => x.t).join('') + ']').join(' '));
+    const a1 = sigRow(await scan(pg));
+    await seek(pg, A.r2, 300);
+    const a2 = sigRow(await scan(pg));
+    ok('3.42 横向轮后及第 2 轮飞行中每卡 4 块全 Σᴀ²', a1.ok && a2.ok,
+      `轮后 ${a1.d} / r2飞行 ${a2.d}`);
   }
 
   /* 3.43 两轮合并段各出现计算框

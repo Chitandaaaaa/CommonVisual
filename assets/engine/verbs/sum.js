@@ -636,18 +636,22 @@
       var topY = S.cards[r].geo.y + L.hdr + pT;
       var botY = topY + rowStep;
 
-      /* ③ 上排累加器：份数翻倍不是加一（1→2→4），过半切 Σ */
+      /* ③ 上排累加器：份数翻倍不是加一（1→2→4）。Σ 判定认「已持有
+         ≥2 份」（lvl0）而不是只认本轮折进过半——否则第 2 轮一起飞
+         e 归零，上排会从 Σ² 回退成普通字母（bugs.md 2026-10-31）；
+         本轮折进过半（e≥0.5）升份数 lvl0→lvl1。 */
       S.chips[r].forEach(function (s, i) {
         var e = st.merge > 0 ? mergeE(st.merge, i) : 0;
         var col = e > 0 ? CV.mix(CV.toneFor(i, lvl0), CV.toneFor(i, lvl1), e) : CV.toneFor(i, lvl0);
-        var sig = e >= 0.5 && lvl1 >= 2;
+        var sig = lvl0 >= 2 || e >= 0.5;
+        var count = e >= 0.5 ? lvl1 : lvl0;
         var letter = sig ? 'Σ' : DATA[i].letter;
         moveSlot(s, topY);
-        var key = letter + '|' + col + '|' + (sig ? lvl1 : '');
+        var key = letter + '|' + col + '|' + (sig ? count : '');
         if (EX.paintKey['c' + r + i] !== key) {
           EX.paintKey['c' + r + i] = key;
           CV.cast.set(s, sig
-            ? { letter: 'Σ', sub: DATA[i].letter, count: lvl1, color: col }
+            ? { letter: 'Σ', sub: DATA[i].letter, count: count, color: col }
             : { letter: letter, color: col }, {});
         }
         var pk = 'p' + r + i + '_' + q;
