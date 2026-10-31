@@ -11,7 +11,7 @@ CV.scene('gather', (function () {
     overlay: 'gather',          /* 槽位读法：目标卡 count 从 1 起跳 */
     wireStyle: 'gather',        /* 源卡左缘 → 目标卡右缘，落点按槽位分布 */
     target: 0,                  /* 汇聚到 rank 0 */
-    preAt: 'pre',               /* 「预留缓冲」这一步开始时，空槽才显形 */
+    preAt: 'open',              /* 「预留缓冲」这一步开始时，空槽才显形 */
 
     cards: [
       { rank: 0, col: 'left',  role: 'dst', target: true },
@@ -37,10 +37,10 @@ CV.scene('gather', (function () {
     narr: {
       rest: {
         intro: '四槽卡-1 装 A，-2/-3/-4 是空格但看不见；三张单槽卡各 1 块 B / C / D；3 条弧线灰色；图例 4 块',
-        pre: '四槽卡：A + 3 个空格',
-        send1: '四槽卡：A、B + 2 个空格',
-        send2: '四槽卡：A、B、C + 1 个空格',
-        send3: '四槽卡四格填满',
+        open: '四槽卡：A + 3 个空格',
+        r1: '四槽卡：A、B + 2 个空格',
+        r2: '四槽卡：A、B、C + 1 个空格',
+        r3: '四槽卡四格填满',
         tail: '四槽卡四格 A B C D；三张单槽卡各留原块；3 条弧线余辉'
       }
     },
@@ -50,14 +50,14 @@ CV.scene('gather', (function () {
         text: rk(0) + ' ' + rk(1) + ' ' + rk(2) + ' ' + rk(3) + ' 分别持有 ' +
               seg(0) + ' ' + seg(1) + ' ' + seg(2) + ' ' + seg(3) },
 
-      { id: 'pre', kind: 'wait', label: '预留缓冲', sec: 0.6,
+      { id: 'open', kind: 'wait', label: '预留缓冲', sec: 0.6,
         text: rk(0) + ' 预留 <b>4 份</b> 缓冲' },
 
-      { id: 'send1', kind: 'move', label: 'B 传递', text: rk(1) + ' 发送 ' + seg(1),
+      { id: 'r1', kind: 'move', label: 'B 传递', text: rk(1) + ' 发送 ' + seg(1),
         flows: [{ from: [1, 0], to: [0, 1], letter: 'B', color: 1 }] },
-      { id: 'send2', kind: 'move', label: 'C 传递', text: rk(2) + ' 发送 ' + seg(2),
+      { id: 'r2', kind: 'move', label: 'C 传递', text: rk(2) + ' 发送 ' + seg(2),
         flows: [{ from: [2, 0], to: [0, 2], letter: 'C', color: 2 }] },
-      { id: 'send3', kind: 'move', label: 'D 传递', text: rk(3) + ' 发送 ' + seg(3),
+      { id: 'r3', kind: 'move', label: 'D 传递', text: rk(3) + ' 发送 ' + seg(3),
         flows: [{ from: [3, 0], to: [0, 3], letter: 'D', color: 3 }] },
 
       { id: 'tail', kind: 'wait', label: '收尾', sec: 2,

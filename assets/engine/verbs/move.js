@@ -419,7 +419,7 @@
     var caps = scene.captions;
     var PLAN = [{ id: 'intro', s: 0, e: TM.init, text: caps[0] }];
     R.forEach(function (rd, q) {
-      PLAN.push({ id: 'r' + q, s: rd.start, e: rd.done, text: caps[q + 1] });
+      PLAN.push({ id: 'r' + (q + 1), s: rd.start, e: rd.done, text: caps[q + 1] });
     });
     PLAN.push({ id: 'tail', s: TOTAL - 0.6, e: TOTAL, text: caps[P4 + 1] });
 

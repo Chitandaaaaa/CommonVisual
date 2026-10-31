@@ -2,15 +2,32 @@
    CommonVisual v2 · L4 轮次声明（算法数据层首件）
    ------------------------------------------------------------
    CV.rounds = 每条原语的轮次口径：几轮（公式）、每轮动哪些边、
-   轮内分几个相。它把动词里写死的展开逻辑抄成纯数据表——逐字
-   转录、不重新选骨架：
-     · choreo 四页 ← scenes/<id>.js 的 beats（send1… / r0…）
+   轮内分几个相、验证采样哪些锚点。它把动词里写死的展开逻辑
+   抄成纯数据表——逐字转录、不重新选骨架：
+     · choreo 四页 ← scenes/<id>.js 的 beats（r1…）
      · family 四页 ← engine/verbs/{sum,split,move}.js 的展开代码
    edges 是 [from, to] 的卡号对；phases 是齿轮行的轮内相名。
-   消费者：docs/algorithms.html（渲染「轮次」行）。锚点（验哪
-   一帧）是 win 名表的引用，键已存在（如 win.r0merge.e），待
-   时序标准统一命名后并入本文件；探针对账、齿轮「第 k 轮」
-   分组标签是后续接线对象。
+
+   ── 时序标准 · win 键命名（2026-11-01 定稿）──
+   每一拍的 win 键 = 「第几轮 + 轮内相」，三条规则：
+   ① 轮号 1 起：键里的数字 = 文案里的「第 k 轮/第 k 步」。
+     alltoall 步号跟段号错位由文案解决（步说「第 1 步」、段照写 A0）。
+   ② 相名全局唯一（同一语义不许有第二个拼法）：
+     intro 开场说明 · open 预留（一排变两排/接收位亮出）·
+     fly 飞行/传递 · seat 落位弹跳 · calc 撑开计算层 ·
+     merge 逐段折进 · down 轮间收层 · collapse 收场 ·
+     tail 终态展示。
+   ③ 键语法：轮内拍 r<k><相>（r1fly / r1merge…），choreo/move 的
+     整轮拍裸 r<k>（r1/r2/r3）；无轮号的整页拍只有
+     intro / open / collapse / tail 四个。
+   键的居住地：verbs 的 PLAN/raw 与 scenes 的 beats（win 由
+   compile 现建）；齿轮行的时长键（row('fly1',…) 等）是另一套
+   命名空间（localStorage 持久化），不随本标准改名。
+   anchors 是 win 引用字符串（'<键>.<s|e>'），验证探针按它采样，
+   docs/algorithms.html「锚点」行据本表现渲染。
+
+   消费者：docs/algorithms.html（轮次/锚点两行）。探针对账、
+   齿轮「第 k 轮」分组标签是后续接线对象。
    ============================================================ */
 (function (CV) {
   'use strict';
@@ -25,7 +42,8 @@
         { edges: [[2, 0]] },
         { edges: [[3, 0]] }
       ],
-      src: 'scenes/gather.js send1–send3'
+      anchors: ['r1.e', 'r2.e', 'r3.e', 'tail.e'],
+      src: 'scenes/gather.js beats r1–r3'
     },
     scatter: {
       formula: 'N − 1',
@@ -36,7 +54,8 @@
         { edges: [[0, 2]] },
         { edges: [[0, 3]] }
       ],
-      src: 'scenes/scatter.js send1–send3'
+      anchors: ['r1.e', 'r2.e', 'r3.e', 'tail.e'],
+      src: 'scenes/scatter.js beats r1–r3'
     },
     broadcast: {
       formula: 'N − 1',
@@ -47,7 +66,8 @@
         { edges: [[0, 2]] },
         { edges: [[0, 3]] }
       ],
-      src: 'scenes/broadcast.js send1–send3'
+      anchors: ['r1.e', 'r2.e', 'r3.e', 'tail.e'],
+      src: 'scenes/broadcast.js beats r1–r3'
     },
     allgather: {
       formula: 'N − 1',
@@ -58,6 +78,7 @@
         { edges: [[0, 1], [1, 3], [3, 2], [2, 0]] },
         { edges: [[0, 1], [1, 3], [3, 2], [2, 0]] }
       ],
+      anchors: ['r1.e', 'r2.e', 'r3.e', 'tail.e'],
       src: 'scenes/allgather.js ROUND_FLOWS'
     },
     reduce: {
@@ -69,6 +90,7 @@
         { edges: [[2, 0]] },
         { edges: [[3, 0]] }
       ],
+      anchors: ['r1calc.e', 'r2calc.e', 'r3calc.e', 'tail.e'],
       src: 'engine/verbs/sum.js timelineReduce（accumulate）'
     },
     allreduce: {
@@ -79,6 +101,7 @@
         { edges: [[0, 1], [2, 3]] },
         { edges: [[0, 2], [1, 3]] }
       ],
+      anchors: ['r1merge.e', 'r2merge.e', 'tail.e'],   /* 3.42 采 r1merge.e */
       src: 'engine/verbs/sum.js ROUNDS_DEF（exchange）'
     },
     reducescatter: {
@@ -89,6 +112,7 @@
         { edges: [[0, 2], [1, 3]] },
         { edges: [[0, 1], [2, 3]] }
       ],
+      anchors: ['r1merge.e', 'r2merge.e', 'tail.e'],   /* 3.51 采 r1merge.e */
       src: 'engine/verbs/split.js EMIT / RECV / PARTNER'
     },
     alltoall: {
@@ -101,6 +125,7 @@
         { edges: [[0, 2], [1, 2], [3, 2]] },
         { edges: [[0, 3], [1, 3], [2, 3]] }
       ],
+      anchors: ['r1.e', 'r2.e', 'r3.e', 'r4.e', 'tail.e'],
       src: 'engine/verbs/move.js R / flows（alltoall）'
     }
   };

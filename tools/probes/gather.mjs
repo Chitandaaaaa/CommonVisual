@@ -56,7 +56,7 @@ export async function check(pg) {
 
   /* 3.4 预留后显形 3 个空槽 */
   {
-    const mid = sc((W.pre.s + Math.min(W.pre.e, W.send1.s)) / 2, T);
+    const mid = sc((W.open.s + Math.min(W.open.e, W.r1.s)) / 2, T);
     await seek(pg, mid, 350);
     const s = await scan(pg);
     const c0 = byCard(s, 0);
@@ -68,7 +68,7 @@ export async function check(pg) {
 
   /* 3.5 同一时刻只有一个包在途：窗口解析 + 三个飞行中点抽样 */
   {
-    const fls = ['send1', 'send2', 'send3'].map(k => W[k]);
+    const fls = ['r1', 'r2', 'r3'].map(k => W[k]);
     let maxOv = 0;
     const pts = [];
     for (let i = 0; i < 200; i++) {
@@ -92,7 +92,7 @@ export async function check(pg) {
 
   /* 3.6 传递中源卡变暗 0.6 */
   {
-    const w = W.send1;
+    const w = W.r1;
     const midFly = sc((w.s + w.travelEnd) / 2, T);
     await seek(pg, midFly, 300);
     const s1 = await scan(pg);

@@ -84,11 +84,11 @@
     var c = scene.captions;
     var raw = [
       { id: 'intro', s: 0, e: TM.init, text: c[0] },
-      { id: 'pre', s: TM.init, e: TM.init + TM.prealloc, text: c[1] }
+      { id: 'open', s: TM.init, e: TM.init + TM.prealloc, text: c[1] }
     ];
     flows.forEach(function (f, k) {
-      raw.push({ id: 'fly' + k, s: f.start, e: f.popEnd, text: c[2 + k * 2] });
-      raw.push({ id: 'calc' + k, s: f.popEnd, e: f.end, text: c[3 + k * 2] });
+      raw.push({ id: 'r' + (k + 1) + 'fly', s: f.start, e: f.popEnd, text: c[2 + k * 2] });
+      raw.push({ id: 'r' + (k + 1) + 'calc', s: f.popEnd, e: f.end, text: c[3 + k * 2] });
     });
     raw.push({ id: 'collapse', s: COLLAPSE_AT, e: TOTAL, text: c[8] });
 
@@ -445,15 +445,15 @@
     var c = scene.captions;
     var raw = [
       { id: 'intro', s: 0, e: EXPAND_AT, text: c[0] },
-      { id: 'expand', s: EXPAND_AT, e: ROUNDS[0].start, text: c[1] },
-      { id: 'r0fly', s: ROUNDS[0].start, e: ROUNDS[0].popStart, text: c[2] },
-      { id: 'r0pop', s: ROUNDS[0].popStart, e: ROUNDS[0].calcStart, text: c[3] },
-      { id: 'r0calc', s: ROUNDS[0].calcStart, e: ROUNDS[0].mergeStart, text: c[4] },
-      { id: 'r0merge', s: ROUNDS[0].mergeStart, e: ROUNDS[0].end, text: c[5] },
-      { id: 'r1fly', s: ROUNDS[1].start, e: ROUNDS[1].popStart, text: c[6] },
-      { id: 'r1calc1', s: ROUNDS[1].popStart, e: ROUNDS[1].mergeStart, text: c[7] },
-      { id: 'r1merge', s: ROUNDS[1].mergeStart, e: ROUNDS[1].end, text: c[8] },
-      { id: 'fin', s: ROUNDS[1].end, e: COLLAPSE_AT, text: c[9] },
+      { id: 'open', s: EXPAND_AT, e: ROUNDS[0].start, text: c[1] },
+      { id: 'r1fly', s: ROUNDS[0].start, e: ROUNDS[0].popStart, text: c[2] },
+      { id: 'r1seat', s: ROUNDS[0].popStart, e: ROUNDS[0].calcStart, text: c[3] },
+      { id: 'r1calc', s: ROUNDS[0].calcStart, e: ROUNDS[0].mergeStart, text: c[4] },
+      { id: 'r1merge', s: ROUNDS[0].mergeStart, e: ROUNDS[0].end, text: c[5] },
+      { id: 'r2fly', s: ROUNDS[1].start, e: ROUNDS[1].popStart, text: c[6] },
+      { id: 'r2calc', s: ROUNDS[1].popStart, e: ROUNDS[1].mergeStart, text: c[7] },
+      { id: 'r2merge', s: ROUNDS[1].mergeStart, e: ROUNDS[1].end, text: c[8] },
+      { id: 'tail', s: ROUNDS[1].end, e: COLLAPSE_AT, text: c[9] },
       { id: 'collapse', s: COLLAPSE_AT, e: TOTAL, text: c[10] }
     ];
 

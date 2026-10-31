@@ -43,7 +43,7 @@ export async function check(pg) {
 
   /* 3.11 同一时刻只有一个包在途 */
   {
-    const fls = ['send1', 'send2', 'send3'].map(k => W[k]);
+    const fls = ['r1', 'r2', 'r3'].map(k => W[k]);
     let maxOv = 0;
     for (let i = 0; i < 200; i++) {
       const t = i / 199 * T;
@@ -61,7 +61,7 @@ export async function check(pg) {
 
   /* 3.12 源卡逐段腾空 */
   {
-    const w1 = W.send1;
+    const w1 = W.r1;
     await seek(pg, sc((w1.s + w1.travelEnd) / 2, T), 300);
     const s1 = await scan(pg);
     const c0a = byCard(s1, 0);
@@ -93,6 +93,6 @@ export async function check(pg) {
 
 /* 第 3 趟飞行中点（秒） */
 function w3mid(W, T) {
-  const w = W.send3;
+  const w = W.r3;
   return (w.s + w.travelEnd) / 2;
 }

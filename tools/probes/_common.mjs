@@ -18,9 +18,9 @@
    槽位归属卡片一律按「几何包含」判定：槽画在 #lChips 层，
    不在卡片 g 里，closest() 拿不到。
 
-   时间轴窗口：getCh() 可用时所有刻度现算（choreo 的 win 键沿用
-   PLAN 的 id：intro/pre/send1…、r0…、fly1/merge1…）。v1 已删，
-   各页一律走 getCh，不再读旧表。
+   时间轴窗口：getCh() 可用时所有刻度现算。win 键按时序标准
+   （assets/rounds.js 头注释）：整页拍 intro/open/collapse/tail、
+   轮内拍 r<轮号 1 起><相>（r1fly/r1merge…）、choreo 整轮拍 r1…。
 
    期望值出处（2026-10-30 在旧页 1440×900 各量 2 次一致）：
      V1 卡 300×170 rx14；V2 槽 46×46 rx8 Δx58；V3 四色

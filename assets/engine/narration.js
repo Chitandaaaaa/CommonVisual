@@ -247,8 +247,8 @@
         rows.push([b0, b0 + RS.blockDur, '第二排-' + (k + 1) + ' · 显形',
           k === 0 ? '接收位（紫底 ···）' : '接收位']);
       }
-      if (scene.narr.rest.expand) {
-        rows.push(rest(x + RS.open, end, scene.narr.rest.expand));
+      if (scene.narr.rest.open) {
+        rows.push(rest(x + RS.open, end, scene.narr.rest.open));
       }
       return rows;
     }
@@ -278,7 +278,7 @@
       [rest(R[0].end, R[1].start, scene.narr.rest.gap)]));
     out.push(G('第 5 步 · 第 2 轮（纵向互换）', R[1].start, R[1].end, roundRows(R[1], 1)));
     out.push(G('第 6 步 · 终点展示', R[1].end, CH.COLLAPSE_AT,
-      [rest(R[1].end, CH.COLLAPSE_AT, scene.narr.rest.fin)]));
+      [rest(R[1].end, CH.COLLAPSE_AT, scene.narr.rest.tail)]));
 
     var c = CH.COLLAPSE_AT;
     out.push(G('第 7 步 · 收场', c, CH.total, [
@@ -312,13 +312,13 @@
 
     out.push(G('第 1 步 · 说明', 0, AT.intro.e, [rest(0, AT.intro.e, scene.narr.rest.intro)]));
 
-    var p = AT.reserve.s, rows = [[p, p + RS.cardDur, '四张四槽卡 · 长高（同时）', '一排变两排']];
+    var p = AT.open.s, rows = [[p, p + RS.cardDur, '四张四槽卡 · 长高（同时）', '一排变两排']];
     for (var k = 0; k < 4; k++) {
       var b0 = p + RS.cardDur + 0.3 + k * RS.step;
       rows.push([b0, b0 + RS.blockDur, '第二排-' + (k + 1) + ' · 显形',
         k === 0 ? '接收位（紫底 ···）' : '接收位']);
     }
-    out.push(G('第 2 步 · 预留两排', p, AT.reserve.e, rows));
+    out.push(G('第 2 步 · 预留两排', p, AT.open.e, rows));
 
     function roundRows(q, fly, seat, calc, merge) {
       var n = CH.RECV[q][0].length;
@@ -339,17 +339,17 @@
       ];
     }
 
-    var r1 = roundRows(0, AT.fly1, AT.seat1, AT.calc1, AT.merge1);
-    r1.push([AT.down1.s, AT.down1.e, '计算框 · 淡出 → 收层', '退回双排卡（第二排留着）']);
-    out.push(G('第 3 步 · 第 1 轮（同列互换）', AT.fly1.s, AT.down1.e, r1));
+    var r1 = roundRows(0, AT.r1fly, AT.r1seat, AT.r1calc, AT.r1merge);
+    r1.push([AT.r1down.s, AT.r1down.e, '计算框 · 淡出 → 收层', '退回双排卡（第二排留着）']);
+    out.push(G('第 3 步 · 第 1 轮（同列互换）', AT.r1fly.s, AT.r1down.e, r1));
 
-    out.push(G('第 4 步 · 收窄', AT.slim.s, AT.slim.e,
-      [[AT.slim.s, AT.slim.e, '第二排 · 收窄', '每卡撤掉这一轮用不上的那格']]));
+    out.push(G('第 4 步 · 收窄', AT.r2open.s, AT.r2open.e,
+      [[AT.r2open.s, AT.r2open.e, '第二排 · 收窄', '每卡撤掉这一轮用不上的那格']]));
 
-    var r2 = roundRows(1, AT.fly2, AT.seat2, AT.calc2, AT.merge2);
-    out.push(G('第 5 步 · 第 2 轮（同行互换）', AT.fly2.s, AT.merge2.e, r2));
+    var r2 = roundRows(1, AT.r2fly, AT.r2seat, AT.r2calc, AT.r2merge);
+    out.push(G('第 5 步 · 第 2 轮（同行互换）', AT.r2fly.s, AT.r2merge.e, r2));
 
-    var w = AT.shrink.s;
+    var w = AT.collapse.s;
     out.push(G('第 6 步 · 收场', w, CH.total, [
       [w, w + CH.CALC_DOWN, '计算框 · 淡出 → 收层', '退回双排卡'],
       [w + CH.CALC_DOWN, w + CH.CALC_DOWN + RS.blocks, '第二排 · 逐块撤（从右往左）', '接收位撤光'],

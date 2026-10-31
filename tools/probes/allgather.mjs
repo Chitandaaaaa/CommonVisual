@@ -1,7 +1,7 @@
 /* CommonVisual · allgather 页探针（v2 契约版，可在旧页自检）
    ------------------------------------------------------------
    test-cases.html 3.30–3.38（2026-10-31 拆分重排：旧 3.30 补拆清单行 → 3.33+3.34、旧 3.31 拆为 3.35+3.36，后续顺延）。
-   窗口由 getCh 现算（旧页已挂；win 键 r0/r1/r2）。
+   窗口由 getCh 现算（win 键按时序标准 r1/r2/r3，见 assets/rounds.js 头注释）。
    真值（2026-10-30 旧页 1440×900 两次一致）：
      每轮飞行中点：4 条边同时高亮（各带不同字母）、4 个包同飞 ——
      「每轮四条边同时发」是实现的口径，轮与轮严格串行（scrub 140 实测）。
@@ -23,7 +23,7 @@ export async function check(pg) {
   const T = ch.total;
 
   const byCard = (s, r) => s.slots.filter(x => x.card === r).sort((a, b) => a.y - b.y || a.x - b.x);
-  const rounds = ['r0', 'r1', 'r2'].map(k => ch.win[k]).filter(Boolean);
+  const rounds = ['r1', 'r2', 'r3'].map(k => ch.win[k]).filter(Boolean);
 
   /* 卡片中心（由快照卡框算），用于把连线端点判到卡 */
   function cardCenterOf(s, r) {

@@ -3,7 +3,7 @@
    test-cases.html 3.46–3.53（2026-10-31 拆分重排：旧 3.45 拆为 3.50 不变式 +
    3.51 结束帧，其余顺延）。旧页未挂 getCh：终态与扫描与旧版一致；
    3.51 的「第 1 轮合并结束」刻度用 OLD.reducescatter.afterMerge1=438
-   （TOTAL 21.25s，2026-10-30 实测）；v2 挂 getCh 后用 win.merge1 现算
+   （TOTAL 21.25s，2026-10-30 实测）；v2 挂 getCh 后用 win.r1merge 现算
    （紫条续记：−20 提前量待时序标准定稿后去掉）。
    全页断言共用同一次扫描（步 30，60→1000），不再逐条 seek。
    真值（2026-10-30 旧页 1440×900）：
@@ -67,12 +67,12 @@ export async function check(pg) {
 
     /* 3.51 第 1 轮合并结束的帧状态（拆自旧 3.45②）：
        被换出的列已空，留下列是 2 份 Σᴀ²。
-       〔紫条续记：−20 刻度提前量按旧页标定保留，v2 上采到 Σʙ² 折算中——
-         恰是「边换段边折算」的正常相；时序标准定稿后用 win.merge1.e 不减提前量〕 */
+       〔2026-11-01 采样改 win.r1merge.e 现算、不减提前量（时序标准定稿，
+         见 assets/rounds.js 头注释）；旧 −20 刻度按旧页标定，已废〕 */
     const s = await scan(pg);
     let aEnd;
-    if (s.ch && s.ch.win && s.ch.win.merge1) {
-      aEnd = Math.round((s.ch.win.merge1.e / s.ch.total) * 1000) - 20;
+    if (s.ch && s.ch.win && s.ch.win.r1merge) {
+      aEnd = Math.round((s.ch.win.r1merge.e / s.ch.total) * 1000);
     } else {
       aEnd = OLD.reducescatter.afterMerge1;
     }

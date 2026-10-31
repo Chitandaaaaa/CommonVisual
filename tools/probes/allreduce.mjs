@@ -1,11 +1,12 @@
 /* CommonVisual · allreduce 页探针（v2 契约版，可在旧页自检）
    ------------------------------------------------------------
-   test-cases.html 3.39–3.45（2026-10-31 拆分重排顺延，原 3.34–3.40；
-   3.42/3.43 采样锚点紫条续记——时序标准定稿后改 win 现算）。
-   旧页未挂 getCh：自检用 OLD.allreduce
+   test-cases.html 3.39–3.45（2026-10-31 拆分重排顺延，原 3.34–3.40）。
+   3.42/3.43 采样 2026-11-01 改 win 名表现算（时序标准定稿，见
+   assets/rounds.js 头注释）：飞行中点 = r1fly/r2fly 的 45%、
+   计算框采样 = r1merge/r2merge 窗口 40%（框全亮段）、
+   第 1 轮合并结束 = r1merge.e。旧页未挂 getCh：自检用 OLD.allreduce
    实测刻度（TOTAL 21.52s；第1/2轮飞行中点 225/544；第1轮合并结束
-   455；两轮计算框中点 367/688 —— 2026-10-30 实测）。v2 挂 getCh 后
-   按字幕锚点（/第 1 轮|第 2 轮/、/相加|合并|折/）现算。
+   455；两轮计算框中点 367/688 —— 2026-10-30 实测，仅旧页回退用）。
    真值（2026-10-30 旧页）：第1轮飞行中点 4 条在飞线配对 {0-1,2-3}；
    第1轮合并结束每卡上排 4 块全是 Σᴀ²（口径按实现修正，不是「2 块」）；
    终态 16 块全 Σᴀ⁴、无残留原始块。
@@ -45,30 +46,18 @@ export async function check(pg) {
 
   const byCard = (s, r) => s.slots.filter(x => x.card === r).sort((a, b) => a.y - b.y || a.x - b.x);
 
-  /* 采样刻度：v2 走字幕锚点，旧页走实测表 */
+  /* 采样刻度：v2 走 win 名表现算（时序标准），旧页走实测表 */
   async function anchors() {
     const s = await scan(pg);
-    if (s.ch) {
-      const t = s.ch.t, txt = s.ch.text;
-      const roundAt = (re) => {
-        for (let k = 0; k < t.length; k++) {
-          if (re.test(txt[k])) {
-            const b = k + 1 < t.length ? t[k + 1] : 1;
-            return Math.round((t[k] + (b - t[k]) * 0.45) * 1000);
-          }
-        }
-        return null;
+    if (s.ch && s.ch.win) {
+      const W = s.ch.win, total = s.ch.total;
+      const at = (w, f) => w ? Math.round(((w.s + (w.e - w.s) * f) / total) * 1000) : null;
+      return {
+        r1: at(W.r1fly, 0.45),                       /* 第 1 轮飞行中点 */
+        r2: at(W.r2fly, 0.45),                       /* 第 2 轮飞行中点 */
+        calcMid: [at(W.r1merge, 0.4), at(W.r2merge, 0.4)],  /* 折进中段，框全亮 */
+        after1: W.r1merge ? Math.round((W.r1merge.e / total) * 1000) : null
       };
-      const merges = [];
-      let after1 = null;
-      for (let k = 0; k < t.length && merges.length < 2; k++) {
-        if (/相加|合并|折/.test(txt[k])) {
-          const b = k + 1 < t.length ? t[k + 1] : 1;
-          merges.push(Math.round((t[k] + (b - t[k]) * 0.55) * 1000));
-          if (merges.length === 1) after1 = Math.round((b - 0.02) * 1000);
-        }
-      }
-      return { r1: roundAt(/第 1 轮/), r2: roundAt(/第 2 轮/), calcMid: merges, after1 };
     }
     const O = OLD.allreduce;
     return { r1: O.r1Fly, r2: O.r2Fly, calcMid: O.calcMid, after1: O.afterR1Merge };
@@ -103,8 +92,8 @@ export async function check(pg) {
   }
 
   /* 3.42 横向轮后：每卡上排 4 块全是 2 份 Σᴀ²（口径按实现修正）
-     〔紫条续记：采样锚点被字幕第 0 段「逐段待相加」误匹配、采到开场帧；
-       时序标准定稿后改 win.r0merge 现算〕 */
+     〔2026-11-01 采样改 win.r1merge.e 现算——旧字幕正则被第 0 段
+       「逐段待相加」误匹配、采到开场帧，已废〕 */
   {
     await seek(pg, A.after1, 500);
     const s = await scan(pg);
@@ -115,8 +104,8 @@ export async function check(pg) {
   }
 
   /* 3.43 两轮合并段各出现计算框
-     〔紫条续记：同 3.42 的锚点误匹配（两轮中点被算到开场段）；
-       时序标准定稿后窗口改用 win 现算〕 */
+     〔2026-11-01 采样点改 win.r1merge/r2merge 窗口 40% 现算（框全亮段）
+       ——旧字幕正则把两轮中点算到开场段，已废〕 */
   {
     let max1 = 0, max2 = 0;
     const mids = A.calcMid;

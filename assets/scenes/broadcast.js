@@ -11,7 +11,7 @@ CV.scene('broadcast', (function () {
     overlay: 'copy',            /* 槽位读法：源卡常满；目标行就绪前隐藏 → 占位 → 整份填满 */
     wireStyle: 'scatter',
     target: 0,                  /* 源 rank */
-    preAt: 'ready',
+    preAt: 'open',
 
     cards: [
       { rank: 0, col: 'left',  role: 'src', target: true },
@@ -31,10 +31,10 @@ CV.scene('broadcast', (function () {
     narr: {
       rest: {
         intro: 'r0 四格 A B C D；r1 / r2 / r3 各 4 个空格但看不见；3 条弧线灰色',
-        ready: 'r0 满 A B C D；其余三张各 4 个空格',
-        send1: 'r0 与 r1 都是 A B C D',
-        send2: 'r0 / r1 / r2 都是 A B C D',
-        send3: '四张卡都是 A B C D',
+        open: 'r0 满 A B C D；其余三张各 4 个空格',
+        r1: 'r0 与 r1 都是 A B C D',
+        r2: 'r0 / r1 / r2 都是 A B C D',
+        r3: '四张卡都是 A B C D',
         tail: '四张卡各 4 格满 A B C D；3 条弧线余辉'
       }
     },
@@ -43,14 +43,14 @@ CV.scene('broadcast', (function () {
       { id: 'intro', kind: 'wait', label: '说明', sec: 0.6,
         text: rk(0) + ' 持有整份 ' + whole() },
 
-      { id: 'ready', kind: 'wait', label: '接收位就绪', sec: 0.6,
+      { id: 'open', kind: 'wait', label: '接收位就绪', sec: 0.6,
         text: rk(1) + rk(2) + rk(3) + ' 接收位就绪' },
 
-      { id: 'send1', kind: 'copy', label: '广播给 B', text: rk(0) + ' 广播整份给 ' + rk(1),
+      { id: 'r1', kind: 'copy', label: '广播给 B', text: rk(0) + ' 广播整份给 ' + rk(1),
         flows: [{ from: [0, 0], to: [1, 0], whole: 0 }] },
-      { id: 'send2', kind: 'copy', label: '广播给 C', text: rk(0) + ' 广播整份给 ' + rk(2),
+      { id: 'r2', kind: 'copy', label: '广播给 C', text: rk(0) + ' 广播整份给 ' + rk(2),
         flows: [{ from: [0, 0], to: [2, 0], whole: 0 }] },
-      { id: 'send3', kind: 'copy', label: '广播给 D', text: rk(0) + ' 广播整份给 ' + rk(3),
+      { id: 'r3', kind: 'copy', label: '广播给 D', text: rk(0) + ' 广播整份给 ' + rk(3),
         flows: [{ from: [0, 0], to: [3, 0], whole: 0 }] },
 
       { id: 'tail', kind: 'wait', label: '收尾', sec: 2,

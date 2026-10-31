@@ -94,20 +94,23 @@
     ROWS.forEach(function (r, i) { r.no = i + 1; });
 
     var c = scene.captions;
+    /* 键名按时序标准（assets/rounds.js 头注释）：r<轮号 1 起><相>；
+       整页拍 intro/open/collapse/tail 不带轮号。齿轮行的时长键
+       （row('fly1',…)）是另一套命名空间（localStorage 持久化），不改。 */
     var PLAN = [
       { id: 'intro',   sec: ROWS[0].sec,  text: c[0] },
-      { id: 'reserve', sec: ROWS[1].sec,  text: c[1] },
-      { id: 'fly1',    sec: ROWS[2].sec,  text: c[2] },
-      { id: 'seat1',   sec: ROWS[3].sec,  text: c[3] },
-      { id: 'calc1',   sec: ROWS[4].sec,  text: c[4] },
-      { id: 'merge1',  sec: ROWS[5].sec,  text: c[5] },
-      { id: 'down1',   sec: ROWS[6].sec,  text: c[6] },
-      { id: 'slim',    sec: ROWS[7].sec,  text: c[7] },
-      { id: 'fly2',    sec: ROWS[8].sec,  text: c[8] },
-      { id: 'seat2',   sec: ROWS[9].sec,  text: c[9] },
-      { id: 'calc2',   sec: ROWS[10].sec, text: c[10] },
-      { id: 'merge2',  sec: ROWS[11].sec, text: c[11] },
-      { id: 'shrink',  sec: ROWS[12].sec, text: c[12] },
+      { id: 'open',    sec: ROWS[1].sec,  text: c[1] },
+      { id: 'r1fly',   sec: ROWS[2].sec,  text: c[2] },
+      { id: 'r1seat',  sec: ROWS[3].sec,  text: c[3] },
+      { id: 'r1calc',  sec: ROWS[4].sec,  text: c[4] },
+      { id: 'r1merge', sec: ROWS[5].sec,  text: c[5] },
+      { id: 'r1down',  sec: ROWS[6].sec,  text: c[6] },
+      { id: 'r2open',  sec: ROWS[7].sec,  text: c[7] },
+      { id: 'r2fly',   sec: ROWS[8].sec,  text: c[8] },
+      { id: 'r2seat',  sec: ROWS[9].sec,  text: c[9] },
+      { id: 'r2calc',  sec: ROWS[10].sec, text: c[10] },
+      { id: 'r2merge', sec: ROWS[11].sec, text: c[11] },
+      { id: 'collapse', sec: ROWS[12].sec, text: c[12] },
       { id: 'tail',    sec: ROWS[13].sec, text: c[13] }
     ];
 
@@ -230,14 +233,14 @@
     var DEEP = CV.TONE.deep;
 
     function mergeE(q, idx, sec) {
-      var w = AT[q === 0 ? 'merge1' : 'merge2'];
+      var w = AT[q === 0 ? 'r1merge' : 'r2merge'];
       return clamp(((sec - w.s) - idx * MGAP) / FUSE, 0, 1);
     }
 
     /* 计算层进度：撑开与淡入串行（先长够 h3、方框再浮出） */
     function calcPhase(sec) {
-      var ups = [AT.calc1, AT.calc2];
-      var downs = [AT.down1, { s: AT.shrink.s, e: AT.shrink.s + CH.CALC_DOWN }];
+      var ups = [AT.r1calc, AT.r2calc];
+      var downs = [AT.r1down, { s: AT.collapse.s, e: AT.collapse.s + CH.CALC_DOWN }];
       var RU = CV.dur('grow') / CH.CALC_UP;
       var RF = CH.CALC_FADE / CH.CALC_DOWN;
       for (var i = 0; i < ups.length; i++) {
@@ -262,7 +265,7 @@
     function partState(r, i, sec) {
       var n = 1, sending = false, gone = false;
       for (var q = 0; q < 2; q++) {
-        var fly = AT[q === 0 ? 'fly1' : 'fly2'];
+        var fly = AT[q === 0 ? 'r1fly' : 'r2fly'];
         var idxE = CH.EMIT[q][r].indexOf(i);
         var idxR = CH.RECV[q][r].indexOf(i);
         if (idxE >= 0) {
@@ -284,12 +287,12 @@
       if (inA && inB) return 1;
       if (inB) return 1;
       if (!inA) return 0;
-      return 1 - CV.easeInOutQuad(clamp((sec - AT.slim.s) / CH.BLOCKD, 0, 1));
+      return 1 - CV.easeInOutQuad(clamp((sec - AT.r2open.s) / CH.BLOCKD, 0, 1));
     }
 
     /* ① 预留 = 一排变两排；⑥ 收场（方框先没 → 第二排撤 → 卡片收回） */
-    var op = CV.rowOpen(sec - AT.reserve.s, 4);
-    var cl = CV.rowClose(sec - AT.shrink.s - CH.CALC_DOWN, 4);
+    var op = CV.rowOpen(sec - AT.open.s, 4);
+    var cl = CV.rowClose(sec - AT.collapse.s - CH.CALC_DOWN, 4);
     var cf = calcPhase(sec);
 
     var C = verbs.split.heights(L);
@@ -330,7 +333,7 @@
         }
         if (!st.gone) left++;
 
-        var qNow = sec >= AT.fly2.s ? 1 : 0;
+        var qNow = sec >= AT.r2fly.s ? 1 : 0;
         var idxR = CH.RECV[qNow][r].indexOf(i);
         if (idxR >= 0) {
           var key = 'm' + qNow + r + i;
@@ -343,8 +346,8 @@
       for (var j = 0; j < 4; j++) {
         var rs = EX.recvRow[r][j];
         moveSlot(rs, y2);
-        var qc = sec >= AT.fly2.s ? 1 : 0;
-        var fw = AT[qc === 0 ? 'fly1' : 'fly2'];
+        var qc = sec >= AT.r2fly.s ? 1 : 0;
+        var fw = AT[qc === 0 ? 'r1fly' : 'r2fly'];
         var inFlight = sec >= fw.s && sec < fw.e && CH.RECV[qc][r].indexOf(j) >= 0;
         CV.cast.set(rs, null, { active: inFlight });
         rs.g.style.opacity = (recvAlpha(r, j, sec) * op.v[j] * cl.v[j]).toFixed(3);
@@ -365,7 +368,7 @@
 
     /* 落位的块：弹出 → 逐段上折 → 消失 */
     EX.ghosts.forEach(function (gh) {
-      var fly = AT[gh.q === 0 ? 'fly1' : 'fly2'];
+      var fly = AT[gh.q === 0 ? 'r1fly' : 'r2fly'];
       var landT = fly.e + gh.idx * SEATG;
       var rowY2 = R[gh.r].y + IN.y2;
 
@@ -386,8 +389,8 @@
 
     /* 连线 & 数据包：端点每帧按当前卡框重算（卡片会长高收窄） */
     for (var q = 0; q < 2; q++) {
-      var fw = AT[q === 0 ? 'fly1' : 'fly2'];
-      var mw = AT[q === 0 ? 'merge1' : 'merge2'];
+      var fw = AT[q === 0 ? 'r1fly' : 'r2fly'];
+      var mw = AT[q === 0 ? 'r1merge' : 'r2merge'];
       for (var r = 0; r < 4; r++) {
         var k2 = q + '_' + r;
         var w = S.wires[k2], p = S.pkts[k2];

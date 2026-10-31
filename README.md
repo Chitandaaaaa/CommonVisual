@@ -28,7 +28,7 @@
 | [`reducescatter.html`](reducescatter.html) | 归约分散 —— 递归减半两轮，每卡先长出第二排接收位，之后每轮「传递 → 落位 → 计算 → 合并」，段数 4→2→1 |
 | [`alltoall.html`](alltoall.html) | 全互换 —— 上排待发、下排已收，按目的地分四步，12 条直连消息 |
 | [`docs/prepost.html`](docs/prepost.html) | **通信原语语义（前后对照表）** —— 八个原语各自「通信前 / 通信后」每张卡的缓冲区，没变化的行置灰；数据来自 `registry.js` 的 pre / post |
-| [`docs/algorithms.html`](docs/algorithms.html) | **算法口径** —— 每条原语五行：通信前 / 骨架 / 轮次 / 终态 / 锚点（轮次自 `assets/rounds.js` 现渲染；锚点待时序标准定稿收编） |
+| [`docs/algorithms.html`](docs/algorithms.html) | **算法口径** —— 每条原语五行：通信前 / 骨架 / 轮次 / 终态 / 锚点（轮次与锚点自 `assets/rounds.js` 现渲染） |
 | [`docs/visual.html`](docs/visual.html) | **组件与动效规范** —— 一图一节、1:1 像素示例，右侧参数调试台实时改 |
 | [`algorithms-old.html`](algorithms-old.html) | 退役备用 —— 旧「实现方式」页：六类骨架矩阵、八种骨架、All-Reduce 三条路线、NCCL 选型（不在验证范围，内容待并入算法口径） |
 
@@ -82,7 +82,7 @@ engine/verbs/      copy / move / sum / split 四个动词 —— 绘制与逐帧
 - `parts/` 舞台部件 —— `cast`（rank 卡 / 槽 / 数据块）、`payload`（连线 / 箭头 / 数据包）、`beat`（落位脉冲 / 融合）、`chrome`（时序齿轮面板 / 悬停聚焦 / 保存到代码）、`stage`（舞台骨架与图层）
 - `prim/` 基础 —— `dom`（h/el/cubicBezier）、`geom`（几何常量）、`motion`（弹跳曲线 POP_EASE、`specVal`/`dur` 读规范值）
 - `registry.js` **终态唯一事实** —— 每页的 `pre / post / rel / verbs`，关系导航、对照表、规范页、探针都读它，不解析动画终态
-- `rounds.js` **轮次口径（算法数据层）** —— 每条原语几轮、每轮动哪些边、轮内分几个相；逐字转录自动词展开与剧本 beats，`docs/algorithms.html` 现渲染
+- `rounds.js` **轮次口径（算法数据层）** —— 每条原语几轮、每轮动哪些边、轮内分几个相、验证采样哪些锚点（win 引用）；逐字转录自动词展开与剧本 beats，`docs/algorithms.html` 现渲染；win 键命名标准在其头注释
 - `theme/defaults.js` 参数基线（规范页调试台「保存到代码」写入；读取顺序：代码基线 ← localStorage 临时改动）
 - `nav/` 页角关系导航；`blocks/` 文档页内容块（head / table / toc / legend / anatomy / paramEditor）
 
@@ -98,7 +98,7 @@ CommonVisual/
 │   ├── architecture.html   架构标准：组件库与代码架构（分层 / 组件 / 扩展点）
 │   ├── specs.html          规范清单与关系图（11 条）
 │   ├── prepost.html      语义：前后数据布局对照表（registry 投影，原根 layout.html）
-│   ├── algorithms.html     算法口径：每原语五行（通信前/骨架/轮次/终态/锚点；轮次已收编，锚点待定稿）
+│   ├── algorithms.html     算法口径：每原语五行（通信前/骨架/轮次/终态/锚点；轮次与锚点均已收编）
 │   ├── visual.html         组件与动效规范：1:1 真值 + 参数调试台（原根 anatomy.html）
 │   ├── steps.html          原语动态步骤规范：名词表 + 逐动作解说文案（原 docs/action.html）
 │   ├── test-cases.html     验证用例清单（96 条，含旧编号映射）
@@ -113,7 +113,7 @@ CommonVisual/
 ├── assets/
 │   ├── boot.js             CV.boot：建页壳 → 挂导航 → 导演挂剧本 → 需要时挂齿轮
 │   ├── registry.js         终态唯一事实（pre / post / rel / verbs）
-│   ├── rounds.js           轮次口径（几轮 / 每轮哪些边 / 轮内相 —— 算法数据层）
+│   ├── rounds.js           轮次口径（几轮 / 每轮哪些边 / 轮内相 / 锚点 —— 算法数据层，win 键命名标准见头注释）
 │   ├── scenes/             8 个原语页剧本（纯数据）+ pages-base.js（每页时序基线，「保存到代码」写回目标）
 │   ├── engine/
 │   │   ├── compile.js      剧本 → 时间轴（choreo / family 两条路径）

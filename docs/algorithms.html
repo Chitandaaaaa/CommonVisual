@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>CommonVisual · 通信原语算法口径</title>
-<meta name="description" content="八个集合通信原语的算法口径表：每页五行——通信前 / 骨架 / 轮次 / 终态 / 锚点。通信前、终态、骨架从 registry 现渲染，轮次从 rounds.js 现渲染；锚点待时序标准定稿后收编。">
+<meta name="description" content="八个集合通信原语的算法口径表：每页五行——通信前 / 骨架 / 轮次 / 终态 / 锚点。通信前、终态、骨架从 registry 现渲染，轮次与锚点从 rounds.js 现渲染（win 键命名见 rounds.js 头注释的时序标准）。">
 <link rel="stylesheet" href="../assets/theme/theme.css">
 <link rel="stylesheet" href="../assets/pages/docs.css">
 <style>
@@ -44,7 +44,7 @@
     </a>
     <h1>通信原语 · 算法口径</h1>
     <p class="lead">每条原语五行口径：<b>通信前 → 骨架 → 轮次 → 终态 → 锚点</b>。registry 管两头（pre / post），scenes 管每一拍，rounds.js 管轮次；本页把三段口径拼成表。通信前、终态、骨架从 <code>assets/registry.js</code>、轮次从 <code>assets/rounds.js</code> 现渲染，不另抄一份。</p>
-    <div class="note"><b>数据层（2026-10-31）：</b>轮次已由 <code>assets/rounds.js</code> 收编——算法数据层首件，逐字转录自动词展开与剧本 beats，不另选骨架。锚点是 win 名表的引用，键已存在（如 allreduce 的 <code>win.r0merge.e</code>），统一命名后并入 rounds.js。八种骨架的定义与 All-Reduce 三条路线、NCCL 选型目前留在备用页 <a href="../algorithms-old.html">algorithms-old.html</a>（退役参考，非验证对象），合并进本页是<b>后续待办</b>。</div>
+    <div class="note"><b>数据层（2026-10-31 建，2026-11-01 收编锚点）：</b>轮次与锚点均由 <code>assets/rounds.js</code> 收编——算法数据层，逐字转录自动词展开与剧本 beats，不另选骨架。锚点是 win 名表的引用（<code>&lt;键&gt;.s / &lt;键&gt;.e</code>），键名按时序标准（win 键命名三条规则见 rounds.js 头注释）。八种骨架的定义与 All-Reduce 三条路线、NCCL 选型目前留在备用页 <a href="../algorithms-old.html">algorithms-old.html</a>（退役参考，非验证对象），合并进本页是<b>后续待办</b>。</div>
   </header>
 
   <main id="app"></main>
@@ -90,6 +90,14 @@
       '<div class="pick">' + r.pattern + '</div>' +
       '<div class="why">出处：' + r.src + '</div>';
   }
+  /* 锚点 = win 引用字符串（'<键>.<s|e>'），探针采样与 3.42/3.43/3.51 同源 */
+  function anchorsText(id) {
+    var r = (window.CV && CV.rounds) ? CV.rounds[id] : null;
+    if (!r || !r.anchors || !r.anchors.length)
+      return '<span class="pill-todo">待补</span><span class="why">rounds.js 缺 anchors。</span>';
+    return r.anchors.map(function (a) { return '<code>win.' + a + '</code>'; }).join('　') +
+      '<div class="why">采样锚点 = win 名表引用（win 键命名规则见 rounds.js 头注释）；探针按此现算刻度。</div>';
+  }
 
   var html = '';
   CV.REG_ORDER.forEach(function (id) {
@@ -102,7 +110,7 @@
         '<div class="pick"><b>常用实现：</b>' + p.pick.a + ' —— ' + p.pick.n + '</div></td></tr>' +
       '<tr><th>轮次</th><td>' + roundsText(id) + '</td></tr>' +
       '<tr><th>终态</th><td>' + sidesText(p.post) + '</td></tr>' +
-      '<tr><th>锚点</th><td><span class="pill-todo">待补</span><span class="why">采样锚点 = win 名表引用（键已存在，如 win.r0merge.e / win.merge1.e）；命名统一（rNmerge ↔ mergeN）后随时序标准定稿并入 rounds.js（test-cases 3.42 / 3.43 / 3.51 紫条同源）。</span></td></tr>' +
+      '<tr><th>锚点</th><td>' + anchorsText(id) + '</td></tr>' +
       '</table></section>';
   });
   html += '<p class="legend">骨架图例：实心 = NCCL 常见默认 · 空格 = 也可以用（看规模与包大小）· × = 这条路走不通。六列依次：' + COLS.join(' · ') + '。</p>';

@@ -45,7 +45,7 @@ export async function check(pg) {
   /* 3.17 / 3.18 三次广播依次进行 + 整份流以批包飞行
      （2026-10-31 拆自旧 3.16：串行不变式与批包语义各自独立判）*/
   {
-    const fls = ['send1', 'send2', 'send3'].map(k => W[k]);
+    const fls = ['r1', 'r2', 'r3'].map(k => W[k]);
     let maxOv = 0;
     for (let i = 0; i < 200; i++) {
       const t = i / 199 * T;
@@ -66,7 +66,7 @@ export async function check(pg) {
 
   /* 3.19 接收卡收到前是空槽（可见、全空、不是「无元素」）*/
   {
-    const w = W.send1;
+    const w = W.r1;
     await seek(pg, sc((w.s + w.travelEnd) / 2, T), 300);
     const s = await scan(pg);
     const c1 = byCard(s, 1);
