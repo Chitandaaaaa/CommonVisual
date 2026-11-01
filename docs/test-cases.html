@@ -90,9 +90,9 @@
 <div class="wrap">
 
   <h1>CommonVisual · 验证用例清单</h1>
-  <div class="sub">98 条：通用 3 ＋ 全站通用 22 ＋ 原语页 60 ＋ index 与规范页 13。已实现 98 条，待补 0 条（第 2/3/4 组在 <code>tools/probes/</code>，随 verify.mjs 跑）。<b>结构断言每次改完都跑；截图与人工观感留到提交前和每日定时。</b></div>
+  <div class="sub">106 条：通用 3 ＋ 全站通用 26 ＋ 原语页 60 ＋ index 与规范页 17。已实现 106 条，待补 0 条（第 2/3/4 组在 <code>tools/probes/</code>，随 verify.mjs 跑）。<b>结构断言每次改完都跑；截图与人工观感留到提交前和每日定时。</b></div>
   <div class="rule-top">以本页为准 · 改本页需同步 AGENTS.md 一 与 MEMORY.md</div>
-  <div class="lead">本页只列<b>用例</b>——能判「过或不过」的验证动作，每条写明<b>作用在哪个页面</b>与<b>通过标准</b>。2026-10-31 拆分重排：17 处「一条用例捆绑多个验证」的用例就地拆开、编号顺延（83 → 100 条），旧编号映射见页末。同日规范重组：algorithms 页退役（4 条随页移除）、layout / anatomy 移入 docs/ 改名 prepost / visual（4.12–4.17 顺延为 4.8–4.13），100 → 96 条；同日「逐动作解说」页签落地，补 2.22 / 2.23（96 → 98 条）。<b>左侧红条</b>＝口径已按实现对齐的条目（历史轮次见页末），补断言以红条文案为准；<b>橙条</b>＝本轮拆分新增的行；<b>紫条</b>＝待处理条目（清单见下）。</div>
+  <div class="lead">本页只列<b>用例</b>——能判「过或不过」的验证动作，每条写明<b>作用在哪个页面</b>与<b>通过标准</b>。2026-10-31 拆分重排：17 处「一条用例捆绑多个验证」的用例就地拆开、编号顺延（83 → 100 条），旧编号映射见页末。同日规范重组：algorithms 页退役（4 条随页移除）、layout / anatomy 移入 docs/ 改名 prepost / visual（4.12–4.17 顺延为 4.8–4.13），100 → 96 条；同日「逐动作解说」页签落地，补 2.22 / 2.23（96 → 98 条）。2026-11-01 补 2.24–2.26（defaults / pages-base / rounds 三件数据层落地）与 4.14–4.17（steps.html 入册，含 8 页引擎对账），99 → 106 条（页头旧写 98 系未及更正的实数 99）。<b>左侧红条</b>＝口径已按实现对齐的条目（历史轮次见页末），补断言以红条文案为准；<b>橙条</b>＝本轮拆分新增的行；<b>紫条</b>＝待处理条目（清单见下）。</div>
     <div class="boundary warn"><b>待处理（2026-10-31 第二轮登记）—— 第一轮的 7 条与第二轮的 3 条紫条均已了结；当前门禁 0 条紫。</b><br>
       ① <b>采样锚点待时序标准定稿（3 条）→ 已了结（2026-11-01）</b>：时序标准定稿，win 键命名三条规则（轮号 1 起 · 相名全局唯一 · r&lt;k&gt;&lt;相&gt; 语法）落在 <code>assets/rounds.js</code> 头注释，win 键全站统一改名（旧 <code>win.r0merge</code>/<code>win.merge1</code>/<code>send1</code> → 新 <code>r1merge</code>/<code>r1</code> 等全量对照见该注释）。3.42/3.43 allreduce 采样改 <code>win.r1merge.e</code> / <code>r1merge</code>/<code>r2merge</code> 窗口现算，3.51 reducescatter 改 <code>win.r1merge.e</code> 不减提前量 —— verify 实测三条全绿。<br>
       ② <b>第一轮登记 → 本轮已了结</b>：口径 2 条定案 —— reduce 初始态每卡整份 4 块（并入 3.23，对齐 allreduce 同款）、V4 空槽两态合法（#f7f8fc 空闲 / #f3eeff 接收中）；捆绑 5 条已拆（旧 3.23 → 3.25+3.26、旧 3.25 → 3.28 口径一并定案、旧 3.37/3.38 → 3.42/3.43 保留紫条、旧 3.45 → 3.50+3.51）。<br>
@@ -104,9 +104,9 @@
     <thead><tr><th style="width:30px">#</th><th style="width:150px">组</th><th>覆盖</th><th style="width:180px">什么时候跑</th><th style="width:150px">状态</th></tr></thead>
     <tbody>
       <tr><td class="mono">1</td><td><b>通用用例</b></td><td>截图比对、桌面观感、窄屏排版</td><td><span class="pill neutral">提交前 / 每日 09:30</span></td><td><span class="pill yes">3 已实现</span></td></tr>
-      <tr><td class="mono">2</td><td><b>全站通用（结构）</b></td><td>播放器、参数、聚焦、无残留、时序、导航、共享层、逐动作解说</td><td><span class="pill yes">每次改完</span></td><td><span class="pill yes">22 已实现</span></td></tr>
+      <tr><td class="mono">2</td><td><b>全站通用（结构）</b></td><td>播放器、参数、聚焦、无残留、时序、导航、共享层、逐动作解说、数据层契约</td><td><span class="pill yes">每次改完</span></td><td><span class="pill yes">26 已实现</span></td></tr>
       <tr><td class="mono">3</td><td><b>原语页用例</b></td><td>8 页，每页 6–9 条：挂载 → 初始 → 过程 → 终态</td><td><span class="pill yes">每次改完</span></td><td><span class="pill yes">60 已实现</span></td></tr>
-      <tr><td class="mono">4</td><td><b>静态页用例</b></td><td>index ＋ docs 规范页 prepost / visual</td><td><span class="pill yes">每次改完</span></td><td><span class="pill yes">13 已实现</span></td></tr>
+      <tr><td class="mono">4</td><td><b>静态页用例</b></td><td>index ＋ docs 规范页 prepost / visual / steps</td><td><span class="pill yes">每次改完</span></td><td><span class="pill yes">17 已实现</span></td></tr>
     </tbody>
   </table>
   </div>
@@ -114,7 +114,7 @@
   <!-- ===================== 01 ===================== -->
   <section>
     <div class="sechead"><span class="no">01</span><h2>通用用例 · 每页都跑</h2><span class="meta">3 条 · 提交前 / 每日 09:30</span></div>
-    <div class="role">与具体原语无关，11 页逐页执行（8 原语页 + index + docs 两张规范页）。<b>要出图，慢</b>（每页四张截图 + 两次窄屏重排），所以不跟每次改动跑。</div>
+    <div class="role">与具体原语无关，11 页逐页执行（8 原语页 + index + prepost / visual 两张动画规范页；steps.html 是纯静态稿，四帧全同属预期、不进截图比对——它的结构断言在 4.14–4.17）。<b>要出图，慢</b>（每页四张截图 + 两次窄屏重排），所以不跟每次改动跑。</div>
     <table class="spec">
       <colgroup><col style="width:6%"><col style="width:10%"><col style="width:16%"><col style="width:50%"><col style="width:18%"></colgroup>
       <thead><tr><th class="c-no">序号</th><th>页面</th><th>用例</th><th class="c-v">断言什么 · 通过标准</th><th>状态 / 脚本</th></tr></thead>
@@ -146,7 +146,7 @@
 
   <!-- ===================== 02 ===================== -->
   <section>
-    <div class="sechead"><span class="no">02</span><h2>全站通用 · 播放器与交互</h2><span class="meta">20 条 · 每次改完跑 · 已实现 20</span></div>
+    <div class="sechead"><span class="no">02</span><h2>全站通用 · 播放器与交互</h2><span class="meta">26 条 · 每次改完跑 · 已实现 26</span></div>
     <div class="role">之前 55 条全在查「画面里的数据块」，<b>没查过播放器和参数系统</b>——而这正是重构最容易悄悄弄坏的地方。2.9 / 2.16 要实播一轮或扫全时间轴，单页约 10 秒，其余毫秒级。</div>
     <table class="spec">
       <colgroup><col style="width:6%"><col style="width:12%"><col style="width:16%"><col style="width:48%"><col style="width:18%"></colgroup>
@@ -175,9 +175,12 @@
         <tr class="new"><td class="c-no"><span class="n">2.21</span></td><td class="c-p" data-l="页面">全部页</td><td><span class="t">registry 契约</span></td><td class="c-v" data-l="断言"><code>CV.registry</code> ≥ 8 条、按 id 有序、每条含 id/en/cn/dir/pre/post/rel/verbs 字段（蓝图 §01 事实表契约）。<b>〔旧 2.15 多验出的部分，写明成条〕</b></td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/_common.mjs</span>（仅 v2 跑）</td></tr>
         <tr class="new"><td class="c-no"><span class="n">2.22</span></td><td class="c-p" data-l="页面">8 原语页</td><td><span class="t">逐动作解说生成闭合</span></td><td class="c-v" data-l="断言"><code>CV.narrate(scene, ch)</code> 不抛错、行数 &gt; 0：动作词全部在 <code>CV.NARR_LEX</code> 词表内（表外动作生成器直接报错）、每行 结束 ≥ 开始、末行结束 = 动画总时长（docs/steps.html §12.1）。<b>〔2026-10-31 随解说页签新增〕</b></td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/_common.mjs</span></td></tr>
         <tr class="new"><td class="c-no"><span class="n">2.23</span></td><td class="c-p" data-l="页面">8 原语页 <span class="mono">①</span></td><td><span class="t">解说页签行表与高亮跟随</span></td><td class="c-v" data-l="断言">齿轮面板切到「逐动作解说」：行表渲染（组行 &gt; 0、面板宽 ≈660）、同刻行合并开始格；seek 到飞行中点后命中 <code>[开始, 结束)</code> 的行带 <code>on</code> 高亮；跟随开启时命中行滚动到列表中部附近（docs/steps.html §12.2）。<b>〔随解说页签新增〕</b> <span class="mono">①</span>reduce/allreduce/alltoall 三页探针 gear:false，暂只在 choreo 四页 + reducescatter 跑（同 2.13 已知缺口）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/_common.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">2.24</span></td><td class="c-p" data-l="页面">8 原语页</td><td><span class="t">参数基线契约（defaults.js）</span></td><td class="c-v" data-l="断言"><code>CV_PARAM_DEFAULTS</code> 是对象；组与键全部被 <code>CV.params.schema()</code> 认识、值全为有限数字（≥5 组 ≥20 键）。组/键对不上＝「保存到代码」写入了旧键，或 SCHEMA 改名没同步 defaults。只比形状不比值——localStorage 本机改动合法地盖在基线上，比值会误红。<b>〔2026-11-01 随 defaults.js 首次落盘新增〕</b></td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/_common.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">2.25</span></td><td class="c-p" data-l="页面">8 原语页</td><td><span class="t">「保存到代码」数据面自洽</span></td><td class="c-v" data-l="断言"><code>CV_PAGE_DEFAULTS</code> 在场（pages-base.js 载入未丢，compile.js 读它当每页时序基线）；<code>CV.params.exportTokens()</code> 生成的 defaults.js 文本可解析、且与 <code>CV.params.raw()</code> 逐键相等（含本机改动——固化的就是「含调过」的当前值）。写盘闭环的只读半截，探针不真写盘。<b>〔2026-11-01 随 pages-base.js 落地新增〕</b></td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/_common.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">2.26</span></td><td class="c-p" data-l="页面">8 原语页</td><td><span class="t">rounds 声明契约</span></td><td class="c-v" data-l="断言"><code>CV.rounds</code> 八条＝registry id 集；本页条目 formula / pattern / phases / rounds / anchors / src 齐全；edges 全是 0–3 的卡号对、轮数 2–4；anchors 语法合法且全部命中本页编译产物 <code>ch.win</code> 的键——锚点是 3.42 / 3.43 / 3.51 的采样标准，键不在轴上＝采样必错。<b>〔2026-11-01 随时序标准定稿新增〕</b>rounds.js 只挂在 docs/algorithms.html，探针在 Node 侧自评、不注入页面。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/_common.mjs</span></td></tr>
       </tbody>
     </table>
-    <div class="boundary warn"><b>为什么单列一组：</b>这 20 条都跨页，不属于任何单个原语。重构时它们该最先绿——播放器坏了两页看不出来，但它坏了 8 页一起坏。</div>
+    <div class="boundary warn"><b>为什么单列一组：</b>这 26 条都跨页，不属于任何单个原语。重构时它们该最先绿——播放器坏了两页看不出来，但它坏了 8 页一起坏。</div>
   </section>
 
   <!-- ===================== 03 ===================== -->
@@ -273,7 +276,7 @@
   <!-- ===================== 04 ===================== -->
   <section>
     <div class="sechead"><span class="no">04</span><h2>静态页用例 · index 与 docs 规范页</h2><span class="meta">13 条 · 每次改完跑 · 已实现 13</span></div>
-    <div class="role">index（根）与两张 docs 规范页（prepost / visual），只查结构与链接、不查时序，几秒跑完，<b>每次改完都跑</b>。规范页带路径传参：<code>node tools/verify.mjs docs/prepost.html docs/visual.html</code>。</div>
+    <div class="role">index（根）与三张 docs 规范页（prepost / visual / steps），只查结构与链接、不查时序，几秒跑完，<b>每次改完都跑</b>。规范页带路径传参：<code>node tools/verify.mjs docs/prepost.html docs/visual.html docs/steps.html</code>。</div>
     <table class="spec">
       <colgroup><col style="width:6%"><col style="width:10%"><col style="width:16%"><col style="width:50%"><col style="width:18%"></colgroup>
       <thead><tr><th class="c-no">序号</th><th>页面</th><th>用例</th><th class="c-v">断言什么 · 通过标准</th><th>状态 / 脚本</th></tr></thead>
@@ -291,6 +294,10 @@
         <tr><td class="c-no"><span class="n">4.11</span></td><td class="c-p" data-l="页面">docs/visual.html</td><td><span class="t">每节示例都能挂载</span></td><td class="c-v" data-l="断言">每节示例画布非空，无挂载失败。<b>〔自 4.15 顺延〕</b></td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/visual.mjs</span></td></tr>
         <tr class="new"><td class="c-no"><span class="n">4.12</span></td><td class="c-p" data-l="页面">docs/visual.html</td><td><span class="t">tab 拆净、动态子块常驻</span></td><td class="c-v" data-l="断言">全页不再有 .tab 切换器；03 与 05 的「动态」子块（03.5 / 05.4）各自挂非空 svg 且活跃 rAF 循环在跑（堆叠常播，与本页其余常驻动画同口径）。<b>〔2026-11-01 随页去 tab 改版改写；原「tab 切换内容真的变」随 tab 机制退役〕</b></td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/visual.mjs</span></td></tr>
         <tr class="new"><td class="c-no"><span class="n">4.13</span></td><td class="c-p" data-l="页面">docs/visual.html</td><td><span class="t">参数变更 → 动态子块重建</span></td><td class="c-v" data-l="断言">改 05-packet 任一键，05.4 容器整体重建（打标节点脱离文档）；重建前后活跃 rAF 循环数不增（重画前必停旧循环）。<b>〔2026-11-01 改写；原「切回复原、rAF 不增」〕</b></td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/visual.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">4.14</span></td><td class="c-p" data-l="页面">docs/steps.html</td><td><span class="t">章节与目录对齐</span></td><td class="c-v" data-l="断言">8 个原语节按 <code>p-gather…p-alltoall</code> 序生成、全页 13 节；<code>#toc</code> 10 条（8 原语节 + s12/s13）锚点全部可达；每节 sechead meta 与 pghead 都给出「步 / 节 / 秒」。<b>〔2026-11-01 随 steps.html 入册新增〕</b>本页纯静态、无挂载，头部 dur=null 属预期。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/steps.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">4.15</span></td><td class="c-p" data-l="页面">docs/steps.html</td><td><span class="t">解说表时间自洽</span></td><td class="c-v" data-l="断言">8 张解说表逐表：每行 开始 ≤ 结束（瞬时行结束＝空）；首组从 0.00 起、组间首尾相接、末组结束＝节 meta 秒数；开始格 rowspan＝连续同刻行数；编号 i.k 连续、换组归 1。纯稿内自查、不依赖引擎。<b>〔2026-11-01 新增〕</b></td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/steps.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">4.16</span></td><td class="c-p" data-l="页面">docs/steps.html</td><td><span class="t">总览与各节一致</span></td><td class="c-v" data-l="断言"><code>#overview</code> 8 行，每行的方向 / 步 / 节 / 秒与对应节 pghead / sechead 逐值相等。<b>〔2026-11-01 新增〕</b></td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/steps.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">4.17</span></td><td class="c-p" data-l="页面">docs/steps.html</td><td><span class="t">与引擎对账（手写稿漂移主闸门）</span></td><td class="c-v" data-l="断言">开 8 个原语页取 <code>CV.narrate</code> 现值，与稿内表 1:1 比：步数、行数、总秒、每行起止（±0.005）；文案语义不比（引擎为准、稿是转写）。<b>〔2026-11-01 新增〕</b>立项当日即抓到首例：allgather 手写稿 13.95s vs 编译产物 18.45s（轮末静止段每轮 +1.5s 稿未跟上），同日同步。探针开 8 个子页，本条约 20 秒。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/steps.mjs</span></td></tr>
       </tbody>
     </table>
   </section>
@@ -302,7 +309,7 @@
       <dt>首次使用</dt>
       <dd>仓库根目录 <code>npm i</code>（装 playwright-core）。浏览器默认自动探测 Chrome / Edge 常规安装位；特殊位置用环境变量 <code>CV_CHROME</code> 指定，playwright-core 位置用 <code>CV_PLAYWRIGHT_CORE</code> 指定。工具不写死任何一台机器的路径。</dd>
       <dt>每次改完</dt>
-      <dd><code>node tools/verify.mjs &lt;页面…&gt; --no-shot</code> 跑第 2、3、4 组，不出图 → 11 页实测约 2 分钟（含播放回绕 / 齿轮重载 / 窄屏切换这些交互用例）。改哪页就传哪页；docs 规范页带路径：<code>verify docs/prepost.html</code>。</dd>
+      <dd><code>node tools/verify.mjs &lt;页面…&gt; --no-shot</code> 跑第 2、3、4 组，不出图 → 12 页实测约 2 分钟（含播放回绕 / 齿轮重载 / 窄屏切换这些交互用例）。改哪页就传哪页；docs 规范页带路径：<code>verify docs/prepost.html</code>。</dd>
       <dt>提交前 / 定时</dt>
       <dd>去掉 <code>--no-shot</code>，连第 1 组的四张截图一起出（11 页约 3–4 分钟）；每日 09:30 由定时任务跑这一版。</dd>
       <dt>量真值</dt>
@@ -320,7 +327,7 @@
 
   <div class="foot">
     唯一来源。改本页后同步 <code>AGENTS.md</code> 一节与 <code>MEMORY.md</code> 的验证小节。<br>
-    <b>2026-10-31 规范重组：</b>根 algorithms.html 退役为 algorithms-old.html（备用，4.8–4.11 四条随页移除、不迁移到新规范页）；layout → docs/prepost.html、anatomy → docs/visual.html 改名移动，原 4.12–4.17 顺延为 4.8–4.13，4.4 收为两个文档入口；100 → 96 条；同日「逐动作解说」页签落地，补 2.22 / 2.23（96 → 98 条）。algorithms-old 不在验证范围。<br>
+    <b>2026-10-31 规范重组：</b>根 algorithms.html 退役为 algorithms-old.html（备用，4.8–4.11 四条随页移除、不迁移到新规范页）；layout → docs/prepost.html、anatomy → docs/visual.html 改名移动，原 4.12–4.17 顺延为 4.8–4.13，4.4 收为两个文档入口；100 → 96 条；同日「逐动作解说」页签落地，补 2.22 / 2.23（96 → 98 条）。algorithms-old 不在验证范围。<br><b>2026-11-01 数据层三件入册：</b>补 2.24 参数基线契约、2.25「保存到代码」数据面自洽、2.26 rounds 声明契约；补 4.14–4.17（steps.html 入册，4.17 为手写稿对账引擎的主闸门），99 → 106 条。同日按对账结果同步 steps.html 手写稿 12 处时间列与 rounds.js reduce 锚点（tail.e → collapse.e）。<br>
     <b>2026-10-31 拆分重排：</b>17 处「一条用例捆绑多个验证」就地拆开、编号顺延，83 → 100 条。拆分点：旧 2.1→2.1+2.2、旧 2.5→2.6+2.7+2.8、旧 2.15→2.18–2.21、旧 3.2→3.2+3.3、旧 3.16→3.17+3.18、旧 3.23→3.25+3.26、旧 3.30→3.33+3.34（探针早已分两条）、旧 3.31→3.35+3.36、旧 3.45→3.50+3.51、旧 3.51→3.57+3.58、旧 4.9→4.9–4.11、旧 4.10→4.12–4.14、旧 4.12→4.16+4.17；V9 删除（与 2.3 重复）。未列出的行编号各自顺延。<br>
     历史：红条 7 条（旧 3.2 / 3.3 / 3.39 / 3.47 / 3.49 / 3.50 / 3.52 → 现 3.2 / 3.3 / 3.4 / 3.44 / 3.53 / 3.55 / 3.56 / 3.59）口径按实现对齐（b1c2da0）；2026-10-30 实现探针轮全部 83 条实现，再对齐 7 条（旧 3.30 / 3.35 / 3.37 / 4.1 / 4.5 / 4.7 / 4.12 → 现 3.33 / 3.34 / 3.40 / 3.42 / 4.1 / 4.5 / 4.7 / 4.16 / 4.17）；2026-10-31 v2 首跑 7 红（旧 3.21 / 3.23 / 3.25 / V4、3.37 / 3.38 / 3.45）均为探针按旧页标定 —— 本轮口径定案（3.23 / 3.24 / 3.28 / V4）或拆分，采样锚点 3 条（现 3.42 / 3.43 / 3.51）待时序标准定稿。
   </div>

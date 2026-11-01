@@ -11,8 +11,8 @@ CommonVisual 是零构建的静态可视化站点，用逐步动画讲清 8 种�
 
 ```bash
 npm i                                              # 首次：装 playwright-core（唯一依赖）；浏览器路径特殊时用 CV_CHROME / CV_PLAYWRIGHT_CORE
-node tools/verify.mjs gather --no-shot             # 每次改完：结构断言 + 报错回显（单页 5–15 秒，11 页约 2 分钟）
-node tools/verify.mjs gather scatter reduce ...    # 提交前 / 每日 09:30 定时：去掉 --no-shot 加截图比对（11 页 3–4 分钟）
+node tools/verify.mjs gather --no-shot             # 每次改完：结构断言 + 报错回显（单页 5–15 秒，12 页约 2 分钟）
+node tools/verify.mjs gather scatter reduce ...    # 提交前 / 每日 09:30 定时：去掉 --no-shot 加截图比对（11 页 3–4 分钟；steps.html 纯静态稿不进截图比对）
 node tools/probe.mjs gather 310:"(()=>{ ... })()"  # 写断言前量真值（十几秒）；刻度是 0–1000 的 scrub
 ```
 
@@ -20,7 +20,7 @@ node tools/probe.mjs gather 310:"(()=>{ ... })()"  # 写断言前量真值（十
 
 | 什么时候 | 跑什么 |
 |---|---|
-| 每次改完 | `verify <改到的页> --no-shot`（第 2/3/4 组 93 条结构断言）；**改公共层例外**：当次传 8 原语页 + index + docs/prepost.html + docs/visual.html |
+| 每次改完 | `verify <改到的页> --no-shot`（第 2/3/4 组 103 条结构断言）；**改公共层例外**：当次传 8 原语页 + index + docs/prepost.html + docs/visual.html + docs/steps.html |
 | 提交前 / 09:30 定时 | 去掉 `--no-shot`：截图比对 + 人工观感（第 1 组 3 条） |
 | 写断言前 | probe 量真值，再落成 `tools/probes/<页>.mjs`（与页面同名即自动配对） |
 
@@ -36,7 +36,7 @@ node tools/probe.mjs gather 310:"(()=>{ ... })()"  # 写断言前量真值（十
 - **跨页零引用**：8 个页面 JS 互不引用，要复用就下沉公共层；公共层改动必须 8 页回归（用 probe，不用全截图）。
 - **只有引擎碰时间**：时间轴编译一次，播放 / seek / 循环只是改 t 的推进方式；组件不自组合。
 - **不硬编码**：尺寸、颜色、耗时走 theme 令牌与 `defaults.js`；scrub 用 0–1000 刻度、`controls.seek()` 用 0–1，换算交给页面 `getCh()`。
-- **口径有出处**：文案与动态步骤看 `docs/steps.html`，组件真值看 `docs/visual.html`，算法口径看 `docs/algorithms.html`，用例清单以 `docs/test-cases.html` 为准（98 条＝通用 3 + 全站 22 + 原语页 60 + index 4 + 规范页 9，只有能判「过 / 不过」的验证动作才占编号）；改验证规则先改那一页，再同步本文件。
+- **口径有出处**：文案与动态步骤看 `docs/steps.html`，组件真值看 `docs/visual.html`，算法口径看 `docs/algorithms.html`，用例清单以 `docs/test-cases.html` 为准（106 条＝通用 3 + 全站 26 + 原语页 60 + index 4 + 规范页 13，只有能判「过 / 不过」的验证动作才占编号）；改验证规则先改那一页，再同步本文件。
 - **解说文案改法**：动作词只能出自 `assets/engine/narration.js` 的 `CV.NARR_LEX`（表外动作生成器直接抛错）；静止行的「场上有什么」写在各 scene 的 `narr.rest`；秒数永远从编译产物现取，不许手写。
 - **收尾五件事**：probe 回归 → README 页面表 / 目录树同步 → 新原语补四件套（薄壳 HTML + scenes 剧本 + registry 登记 + probes 断言）→ `.workbuddy/memory/` 当日日志（长期约定进 MEMORY.md）→ commit 正文写清「为什么这么改」。
 

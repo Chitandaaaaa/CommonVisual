@@ -1,8 +1,9 @@
 /* ============================================================
    CommonVisual v2 · 探针公共层
    ------------------------------------------------------------
-   第 2 组全站通用 20 条（2.1–2.21，2026-10-31 拆分重排）+ 蓝图 §09 的
-   V1–V8 几何断言，做成 commonChecks(pg, cfg) 供 8 个原语页复用；
+   第 2 组全站通用 26 条（2.1–2.26，2026-10-31 拆分重排 +
+   2026-11-01 补 2.24–2.26）+ 蓝图 §09 的 V1–V8 几何断言，
+   做成 commonChecks(pg, cfg) 供 8 个原语页复用；
    页面专属断言（第 3 组）在各页探针里追加。
 
    配对规则（verify.mjs）：页面 <p>.html ↔ tools/probes/<p>.mjs，
@@ -30,6 +31,16 @@
      V6 空闲线 #c3cadb + dash 8 7（alltoall 例外 6 6）；V7 字号
      槽15/标题15/角标10；V8 字幕 rank chip 实色底白字。
    ============================================================ */
+
+import fs from 'node:fs';
+/* rounds.js 模块级载入一次（2.26 用）：它只被 docs/algorithms.html
+   引用、原语页上没有，探针在 Node 侧自评，不往页面里注入 */
+const ROUNDS = (() => {
+  const src = fs.readFileSync(new URL('../../assets/rounds.js', import.meta.url), 'utf8');
+  const w = {};
+  new Function('window', src)(w);
+  return w.CV.rounds;
+})();
 
 export const PAL = [
   { r: 0, letter: 'A', color: '#7c3aed' },
@@ -242,6 +253,81 @@ export async function commonChecks(pg, cfg) {
     ok('2.20 图层与 DOM 齐全', api.layers && api.dom, `layers=${api.layers} dom=${api.dom}`);
     ok('2.21 registry 契约', !!api.reg && api.reg.n >= 8 && api.reg.sorted && api.reg.full,
       api.reg ? `n=${api.reg.n} sorted=${api.reg.sorted} full=${api.reg.full}` : 'registry 缺失');
+  }
+
+  /* ── 2.24 参数基线契约（assets/theme/defaults.js，规范 #8 落地 2026-11-01）
+     defaults 的组/键必须全部被 theme.js 的 SCHEMA 认识、值必须是有限数字。
+     组/键对不上 = 「保存到代码」写了旧键，或 SCHEMA 改名没同步 defaults。
+     只比形状不比值 —— localStorage 本机改动合法地盖在基线上，比值会误红。── */
+  const dfl = await pg.evaluate(() => {
+    const t = window.CV_PARAM_DEFAULTS;
+    const sc = window.CV && window.CV.params && window.CV.params.schema();
+    if (!t || typeof t !== 'object') return { has: false, sc: !!sc };
+    let n = 0, bad = '';
+    outer:
+    for (const g of Object.keys(t)) {
+      if (!sc[g]) { bad = `组「${g}」不在 schema`; break; }
+      for (const k of Object.keys(t[g])) {
+        if (!sc[g].keys || !(k in sc[g].keys)) { bad = `${g}.${k} 不在 schema`; break outer; }
+        if (typeof t[g][k] !== 'number' || !isFinite(t[g][k])) { bad = `${g}.${k}=${t[g][k]}`; break outer; }
+        n++;
+      }
+    }
+    return { has: true, groups: Object.keys(t).length, n, bad };
+  });
+  ok('2.24 参数基线契约（defaults ⊆ schema）',
+    dfl.has && dfl.groups >= 5 && dfl.n >= 20 && !dfl.bad,
+    dfl.has ? `组=${dfl.groups} 键=${dfl.n}${dfl.bad ? ' ✗' + dfl.bad : ''}`
+      : `CV_PARAM_DEFAULTS 缺失（schema=${dfl.sc}）`);
+
+  /* ── 2.25 「保存到代码」数据面自洽（规范 #8/#9 写盘闭环的只读半截）
+     exportTokens() 生成的 defaults.js 文本必须可解析、且与当前运行时值
+     逐键相等（含 localStorage 改动 —— 固化的就是「含调过」的当前值）；
+     pages-base.js 的 CV_PAGE_DEFAULTS 必须在场（compile.js 读它当每页基线）。── */
+  const sv = await pg.evaluate(() => {
+    const P = window.CV && window.CV.params;
+    if (!P || typeof P.exportTokens !== 'function') return { api: false };
+    const m = /^window\.CV_PARAM_DEFAULTS\s*=\s*([\s\S]+?);\s*$/.exec(P.exportTokens());
+    let same = false, perr = '';
+    try {
+      same = JSON.stringify(JSON.parse(m ? m[1] : '')) === JSON.stringify(P.raw());
+    } catch (e) { perr = e.message; }
+    return { api: true, m: !!m, same, perr,
+      pageD: !!(window.CV_PAGE_DEFAULTS && typeof window.CV_PAGE_DEFAULTS === 'object') };
+  });
+  ok('2.25 保存到代码·数据面自洽', sv.api && sv.pageD && sv.m && sv.same,
+    sv.api ? (sv.same ? `tokens↔raw 一致 pageD=${sv.pageD}`
+      : `tokens 解析失败（${sv.perr}）或与 raw() 不一致，pageD=${sv.pageD}`)
+      : 'CV.params.exportTokens 缺失');
+
+  /* ── 2.26 rounds 轮次声明契约（assets/rounds.js，时序标准 2026-11-01 定稿）
+     本页条目：字段齐全、edges 是 0–3 的卡号对、轮数 2–4、anchors 语法合法
+     且全部命中本页编译产物 ch.win 的键 —— 锚点是探针采样标准（3.42/3.43/
+     3.51 都按它采），键不在轴上 = 采样必错。── */
+  if (ch) {
+    const rd = await pg.evaluate(() => ({
+      regIds: (window.CV.registry || []).map(r => r.id),
+      winKeys: Object.keys(window.CV.lastMount.getCh().win)
+    }));
+    const ent = ROUNDS[cfg.page];
+    const isStr = (v) => typeof v === 'string' && v.length > 0;
+    const fieldsOk = !!ent && isStr(ent.formula) && isStr(ent.pattern) && isStr(ent.src) &&
+      Array.isArray(ent.phases) && ent.phases.length > 0 &&
+      Array.isArray(ent.rounds) && ent.rounds.length > 0 &&
+      Array.isArray(ent.anchors) && ent.anchors.length > 0;
+    const edgesOk = fieldsOk && ent.rounds.every(r => Array.isArray(r.edges) && r.edges.length > 0 &&
+      r.edges.every(e => Array.isArray(e) && e.length === 2 &&
+        e.every(n => Number.isInteger(n) && n >= 0 && n <= 3)));
+    const ancOk = fieldsOk && ent.anchors.every(a => /^(r\d+[a-z]*|intro|open|collapse|tail)\.(s|e)$/.test(a));
+    const missing = fieldsOk ? ent.anchors.filter(a => !rd.winKeys.includes(a.split('.')[0])) : [];
+    ok('2.26 rounds 声明契约（键全·边合法·锚点在轴上）',
+      fieldsOk && edgesOk && ancOk && missing.length === 0 &&
+      Object.keys(ROUNDS).length === 8 &&
+      Object.keys(ROUNDS).sort().join() === rd.regIds.sort().join(),
+      `${cfg.page}: rounds=${ent ? ent.rounds.length : '∅'} anchors=${ent ? ent.anchors.length : '∅'} ` +
+      `winKeys=${rd.winKeys.join(',')}${missing.length ? ' 缺锚点:' + missing.join(',') : ''}`);
+  } else {
+    ok('2.26 rounds 声明契约（键全·边合法·锚点在轴上）', true, 'SKIP(本页无 getCh)');
   }
 
   /* ── V1–V8（几何基线，刻度 0 一次快照全量）── */

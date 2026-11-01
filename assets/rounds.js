@@ -90,7 +90,7 @@
         { edges: [[2, 0]] },
         { edges: [[3, 0]] }
       ],
-      anchors: ['r1calc.e', 'r2calc.e', 'r3calc.e', 'tail.e'],
+      anchors: ['r1calc.e', 'r2calc.e', 'r3calc.e', 'collapse.e'],
       src: 'engine/verbs/sum.js timelineReduce（accumulate）'
     },
     allreduce: {
