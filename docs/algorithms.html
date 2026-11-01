@@ -81,11 +81,22 @@
       原语关系树
     </a>
     <h1>通信原语 · 算法口径</h1>
-    <p class="lead">每条原语五行口径：<b>通信前 → 骨架 → 轮次 → 终态 → 锚点</b>。registry 管两头（pre / post），scenes 管每一拍，rounds.js 管轮次；本页把三段口径拼成表。通信前、终态、骨架从 <code>assets/registry.js</code>、轮次从 <code>assets/rounds.js</code> 现渲染，不另抄一份。</p>
-    <div class="note"><b>数据层（2026-10-31 建，2026-11-01 收编锚点）：</b>轮次与锚点均由 <code>assets/rounds.js</code> 收编——算法数据层，逐字转录自动词展开与剧本 beats，不另选骨架。锚点是 win 名表的引用（<code>&lt;键&gt;.s / &lt;键&gt;.e</code>），键名按时序标准（win 键命名三条规则见 rounds.js 头注释）。八种骨架的定义、All-Reduce 三条路线与 NCCL 选型已于 2026-11-01 收编进本页下部三章（<b>#4 定稿</b>，总览矩阵不搬——与每原语「骨架」行同源 registry.algo）；备用页 algorithms-old.html 同日退役删除。</div>
+    <p class="lead">每条原语五行口径：<b>通信前 → 骨架 → 轮次 → 终态 → 锚点</b>。registry 管两头（pre / post），scenes 管每一拍，rounds.js 管轮次与锚点；本页只把口径拼成表——通信前、终态、骨架从 <code>assets/registry.js</code>，轮次与锚点从 <code>assets/rounds.js</code> 现渲染，不另抄一份。</p>
+    <div class="note"><b>数据层：</b>轮次与锚点由 <code>assets/rounds.js</code> 现渲染——算法数据层，逐字转录自动词展开与剧本 beats，不另选骨架。锚点是 win 名表的引用（<code>&lt;键&gt;.s / &lt;键&gt;.e</code>），键名按时序标准（win 键命名三条规则见 rounds.js 头注释）。八种骨架的定义、All-Reduce 三条路线与 NCCL 选型见本页下部三章。</div>
   </header>
 
   <main id="app"></main>
+
+  <section class="sec" id="changelog">
+    <div class="sec-hd"><h2>变更日志</h2><p>只追加 · 正文只留现行为规范，删除与退役的东西在这里留一行去向。</p></div>
+    <table class="tbl">
+      <thead><tr><th style="width:110px">日期</th><th>变更</th></tr></thead>
+      <tbody>
+        <tr><td><b>2026-11-01</b></td><td>#4 定稿：下部三章（八种骨架 / All-Reduce 三条路线 / NCCL 选型）自 blocks/table.js 的 algorithmsApp 收编为页内数据——属算法域事实、不是单条原语的事实，所以不进 registry；总览矩阵不搬，与每原语「骨架」行同源 registry.algo。备用页 algorithms-old.html 同日退役删除，assets/pages/algorithms.css 随之删除。rounds.js 锚点随 win 键命名统一并入。</td></tr>
+        <tr><td><b>2026-10-31</b></td><td>rounds.js 算法数据层建立：轮次口径（几轮 / 每轮哪些边 / 轮内相）收编于此，本页轮次行改由其现渲染。</td></tr>
+      </tbody>
+    </table>
+  </section>
 
   <footer class="ft">
     <p>两头语义在 <a href="prepost.html" style="color:inherit">前后对照表</a>，零件尺寸在 <a href="visual.html" style="color:inherit">组件与动效规范</a>。</p>
@@ -128,13 +139,12 @@
       '<div class="pick">' + r.pattern + '</div>' +
       '<div class="why">出处：' + r.src + '</div>';
   }
-  /* 锚点 = win 引用字符串（'<键>.<s|e>'），探针采样与 3.42/3.43/3.51 同源 */
+  /* 锚点 = win 引用字符串（'<键>.<s|e>'），探针采样与 3.42/3.43/3.51 同源；图例统一在表尾 .legend 说，行内不重复 */
   function anchorsText(id) {
     var r = (window.CV && CV.rounds) ? CV.rounds[id] : null;
     if (!r || !r.anchors || !r.anchors.length)
       return '<span class="pill-todo">待补</span><span class="why">rounds.js 缺 anchors。</span>';
-    return r.anchors.map(function (a) { return '<code>win.' + a + '</code>'; }).join('　') +
-      '<div class="why">采样锚点 = win 名表引用（win 键命名规则见 rounds.js 头注释）；探针按此现算刻度。</div>';
+    return r.anchors.map(function (a) { return '<code>win.' + a + '</code>'; }).join('　');
   }
 
   var html = '';
@@ -153,7 +163,8 @@
       '<tr><th>锚点</th><td>' + anchorsText(id) + '</td></tr>' +
       '</table></section>';
   });
-  html += '<p class="legend">骨架图例：实心 = NCCL 常见默认 · 空格 = 也可以用（看规模与包大小）· × = 这条路走不通。六列依次：' + COLS.join(' · ') + '。</p>';
+  html += '<p class="legend">骨架图例：实心 = NCCL 常见默认 · 空格 = 也可以用（看规模与包大小）· × = 这条路走不通。六列依次：' + COLS.join(' · ') +
+    '。锚点 = win 名表引用（<code>win.&lt;键&gt;.s / .e</code>），键命名规则见 rounds.js 头注释，探针按此现算刻度。</p>';
 
   /* ── 下部三章（2026-11-01 自 blocks/table.js 的 algorithmsApp 收编为页内数据，
           属算法域事实，不是单条原语的事实——所以不进 registry）── */

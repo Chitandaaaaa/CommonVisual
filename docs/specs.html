@@ -80,7 +80,7 @@
 
   <!-- ============================ 01 ============================ -->
   <section>
-    <div class="sechead"><span class="no">01</span><h2>规范文件清单</h2><span class="meta">12 条在册 · 3 件已删除</span></div>
+    <div class="sechead"><span class="no">01</span><h2>规范文件清单</h2><span class="meta">12 条在册</span></div>
     <p class="role">十二条一组、从宏观排到微观：<b>1–2 总纲</b>，<b>3–6 内容规范</b>（语义 / 算法 / 步骤 / 视觉），<b>7–9 数据与参数</b>，<b>10–11 守护</b>，<b>12 元规范</b>。原则：<b>规范是规范、业务代码是业务代码，两条线互不依赖</b>——都只向下引用 <code>assets/</code> 的底层组件，底层组件符合 architecture 约束。实现代码不在表内——它被规范约束，不是规范。</p>
 
     <table>
@@ -91,7 +91,7 @@
         <tr>
           <td class="mono">1</td><td class="nm">规范总览</td><td class="mono">docs/specs.html</td>
           <td>本页：12 条规范在哪、缺什么、谁说了算（含关系图与变更元规范）</td>
-          <td><span class="pill ok">✅ 在用</span>&nbsp;（本页）</td>
+          <td><span class="pill ok">✅ 在用</span>&nbsp;（本页，含关系图与变更日志）</td>
         </tr>
         <tr>
           <td class="mono">2</td><td class="nm">代码架构</td><td class="mono">docs/architecture.html</td>
@@ -101,22 +101,22 @@
         <tr>
           <td class="mono">3</td><td class="nm">通信原语语义</td><td class="mono">docs/prepost.html</td>
           <td>前后数据布局对照（registry pre / post 的投影）：通信前是什么、通信后变成什么</td>
-          <td><span class="pill ok">✅ 在用</span>&nbsp;2026-10-31 自根 layout.html 移入，定为规范</td>
+          <td><span class="pill ok">✅ 在用</span></td>
         </tr>
         <tr>
           <td class="mono">4</td><td class="nm">通信原语算法</td><td class="mono">docs/algorithms.html</td>
           <td>每条原语 5 行口径：通信前 / 骨架 / 轮次 / 终态 / 锚点。registry 管两头、scenes 管每一拍、rounds.js 管轮次与锚点，本页管中间</td>
-          <td><span class="pill ok">✅ 在用</span>&nbsp;2026-11-01 定稿：八种骨架 / All-Reduce 三条路线 / NCCL 选型三章收编进本页下部（备用页 algorithms-old.html 同日退役删除，总览矩阵不搬——与每原语「骨架」行同源 registry.algo）；通信前 / 终态 / 骨架从 registry、轮次与锚点从 rounds.js（算法数据层，2026-10-31 建；2026-11-01 锚点随 win 命名统一并入）现渲染</td>
+          <td><span class="pill ok">✅ 在用</span>&nbsp;通信前 / 终态 / 骨架从 registry 现渲染，轮次与锚点从 rounds.js 现渲染</td>
         </tr>
         <tr>
           <td class="mono">5</td><td class="nm">通信原语步骤</td><td class="mono">docs/steps.html</td>
           <td>名词表 + 逐动作文案 + 面板口径</td>
-          <td><span class="pill ok">✓ 已实现</span>&nbsp;词表落 <code>assets/engine/narration.js</code>（CV.NARR_LEX），齿轮面板第二页签随稿落地；§13 拍板结论见该页（2026-10-31）</td>
+          <td><span class="pill ok">✓ 已实现</span>&nbsp;词表落 <code>assets/engine/narration.js</code>（CV.NARR_LEX），齿轮面板第二页签</td>
         </tr>
         <tr>
           <td class="mono">6</td><td class="nm">通信原语视觉</td><td class="mono">docs/visual.html</td>
           <td>组件动效 1:1 真值 + 参数调试台；定为纯规范，产品页不引用它当实现</td>
-          <td><span class="pill ok">✅ 在用</span>&nbsp;2026-10-31 自根 anatomy.html 移入</td>
+          <td><span class="pill ok">✅ 在用</span></td>
         </tr>
         <tr>
           <td class="mono">7</td><td class="nm">通信原语语义配置</td><td class="mono">assets/registry.js</td>
@@ -126,61 +126,37 @@
         <tr>
           <td class="mono">8</td><td class="nm">通信原语动效参数</td><td class="mono">assets/theme/defaults.js</td>
           <td>动效耗时的唯一数值来源</td>
-          <td><span class="pill ok">✅ 在用</span>&nbsp;2026-11-01 首次落盘（6 组 23 参数）并接入 12 页（theme.js 前加载）；改基线走调试台「保存到代码」直写，见第 03 章</td>
+          <td><span class="pill ok">✅ 在用</span>&nbsp;6 组 23 参数，theme.js 前加载；改基线走调试台「保存到代码」直写，见第 03 章</td>
         </tr>
         <tr>
           <td class="mono">9</td><td class="nm">通信原语时序编排</td><td class="mono">assets/scenes/pages-base.js</td>
           <td>每页时序基线，齿轮「保存到代码」的写回目标</td>
-          <td><span class="pill ok">✅ 在用</span>&nbsp;2026-11-01 建文件并接入 8 页薄壳（空表起步，值靠保存积累）；写盘→刷新→读回生效已实测，bugs.md 已销账</td>
+          <td><span class="pill ok">✅ 在用</span>&nbsp;空表起步，值靠「保存到代码」积累</td>
         </tr>
         <tr>
           <td class="mono">10</td><td class="nm">测试用例</td><td class="mono">docs/test-cases.html</td>
-          <td>96 条用例，判「过 / 不过」</td>
-          <td><span class="pill ok">✅ 已重排</span>&nbsp;83→100→96（algorithms 页退役去 4 条）；3 条采样锚点紫条（3.42/3.43/3.51）2026-11-01 随时序标准定稿转绿</td>
+          <td>106 条用例，判「过 / 不过」</td>
+          <td><span class="pill ok">✅ 在用</span></td>
         </tr>
         <tr>
           <td class="mono">11</td><td class="nm">Bug 列表</td><td class="mono">docs/bugs.md</td>
           <td>回归失败只记账、不改代码</td>
-          <td><span class="pill ok">✅ 正常</span>&nbsp;自 docs/BUGS.md 更名</td>
+          <td><span class="pill ok">✅ 正常</span></td>
         </tr>
         <tr>
           <td class="mono">12</td><td class="nm">变更元规范</td><td class="mono">docs/specs.html 第 03 章</td>
           <td>两份基线文件的唯一合法改法与伴随义务——规范体系自身怎么变</td>
-          <td><span class="pill ok">✅ 在用</span>&nbsp;2026-11-01 随 defaults.js 首次落盘成文</td>
+          <td><span class="pill ok">✅ 在用</span></td>
         </tr>
       </tbody>
     </table>
 
-    <p class="role" style="margin-top:18px">已删除的历史文档——各留一行去向，防止旧链接找错门：</p>
-    <table>
-      <thead>
-        <tr><th style="width:130px">文档</th><th style="width:280px">原路径</th><th>删除时间 · 现在看哪里</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="nm">架构标准</td><td class="mono">docs/arch-standard.md / .html</td>
-          <td><span class="pill off">🗑 已删除</span>&nbsp;2026-10-31 · 内容停在 v1 已失效；并行判据看「改公共层必须全量回归」纪律 + 本页关系图</td>
-        </tr>
-        <tr>
-          <td class="nm">代码地图</td><td class="mono">docs/architecture.md</td>
-          <td><span class="pill off">🗑 已删除</span>&nbsp;2ef6a4a 随 v1 整套删除；结构以 README 目录树为准</td>
-        </tr>
-        <tr>
-          <td class="nm">待办清单</td><td class="mono">docs/待办-动画页面与参数配置.md</td>
-          <td><span class="pill off">🗑 已删除</span>&nbsp;2ef6a4a 随 v1 整套删除；现行事项看 bugs.md 与 test-cases.html</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="note blue">
-      <b>v1 已全部删除（2026-10-31）：</b>旧 <span class="mono">assets/cv/*</span>（kit / controls / tokens / pages …）与旧版 12 页不再存在；v2 已提为根目录，后续一律只改根目录。
-    </div>
+    <p class="role" style="margin-top:18px">已删除的历史文档不在表内，去向见页尾变更日志。</p>
   </section>
 
   <!-- ============================ 02 ============================ -->
   <section>
     <div class="sechead"><span class="no">02</span><h2>关系图</h2><span class="meta">三层 · 顶层规范（#2–#6）说了算，下层实现（#7–#9）一一对应，守护（#10–#11）判过不过</span></div>
-    <p class="role">绿点 = 在用，橙点 = 占位 / 要改，红虚线框 = 缺失，紫虚线 = 运行时写回。盒角小数字 = 第 01 章清单的编号，图与清单一一对应。</p>
 
     <figure class="fig">
       <svg id="spec-relations" viewBox="0 0 1000 560" role="img" aria-label="CommonVisual 规范文件关系图：顶层 2–6 五份规范，下层 7–9 三份数据与参数一一对应实现，守护层判过不过" xmlns="http://www.w3.org/2000/svg">
@@ -269,29 +245,29 @@
           <text class="cn" x="269" y="308" font-size="12">语义配置 · 唯一事实表</text>
           <text class="sub" x="269" y="326">pre · post · algo · rel</text>
         </g>
-        <g class="node">
-          <rect class="box" x="442" y="266" width="168" height="72" rx="8"/>
-          <circle class="dot-o" cx="460" cy="282" r="4"/>
-          <text class="f" x="472" y="286">rounds.js</text>
-          <text class="cn" x="456" y="308" font-size="12">轮次 · 锚点 · 算法数据层</text>
-          <text class="sub" x="456" y="326">已建 · 含锚点（2026-11-01 并入）</text>
-        </g>
-        <g class="node">
-          <rect class="box" x="627" y="266" width="170" height="72" rx="8"/>
-          <text class="num" x="789" y="282" text-anchor="end">8</text>
-          <circle class="dot-o" cx="645" cy="282" r="4"/>
-          <text class="f" x="657" y="286">defaults.js</text>
-          <text class="cn" x="641" y="308" font-size="12">动效参数 · 耗时基线</text>
-          <text class="sub" x="641" y="326">还是空 { }（要修）</text>
-        </g>
-        <g class="node">
-          <rect class="miss" x="813" y="266" width="170" height="72" rx="8"/>
-          <text class="num" x="975" y="282" text-anchor="end">9</text>
-          <circle class="dot-r" cx="831" cy="282" r="4"/>
-          <text class="f miss" x="843" y="286">pages-base.js</text>
-          <text class="cn" x="827" y="308" font-size="12">时序编排 · 每页基线</text>
-          <text class="sub miss" x="827" y="326">文件不存在</text>
-        </g>
+          <g class="node">
+            <rect class="box" x="442" y="266" width="168" height="72" rx="8"/>
+            <circle class="dot-g" cx="460" cy="282" r="4"/>
+            <text class="f" x="472" y="286">rounds.js</text>
+            <text class="cn" x="456" y="308" font-size="12">轮次 · 锚点 · 算法数据层</text>
+            <text class="sub" x="456" y="326">已建 · 轮次 + 锚点</text>
+          </g>
+          <g class="node">
+            <rect class="box" x="627" y="266" width="170" height="72" rx="8"/>
+            <text class="num" x="789" y="282" text-anchor="end">8</text>
+            <circle class="dot-g" cx="645" cy="282" r="4"/>
+            <text class="f" x="657" y="286">defaults.js</text>
+            <text class="cn" x="641" y="308" font-size="12">动效参数 · 耗时基线</text>
+            <text class="sub" x="641" y="326">6 组 23 参数 · 在用</text>
+          </g>
+          <g class="node">
+            <rect class="box" x="813" y="266" width="170" height="72" rx="8"/>
+            <text class="num" x="975" y="282" text-anchor="end">9</text>
+            <circle class="dot-g" cx="831" cy="282" r="4"/>
+            <text class="f" x="843" y="286">pages-base.js</text>
+            <text class="cn" x="827" y="308" font-size="12">时序编排 · 每页基线</text>
+            <text class="sub" x="827" y="326">空表 · 值靠「保存到代码」积累</text>
+          </g>
 
         <!-- registry → test-cases：断言期望有出处 -->
         <line class="edge" x1="270" y1="338" x2="215" y2="424" marker-end="url(#arw)"/>
@@ -303,7 +279,7 @@
           <rect class="box" x="70" y="428" width="230" height="60" rx="8"/>
           <text class="num" x="292" y="444" text-anchor="end">10</text>
           <circle class="dot-g" cx="88" cy="446" r="4"/>
-          <text class="cn" x="100" y="450">验证用例 · 96 条</text>
+          <text class="cn" x="100" y="450">验证用例 · 106 条</text>
           <text class="f" x="84" y="470">test-cases.html</text>
         </g>
         <g class="node">
@@ -325,7 +301,7 @@
         <text class="lbl" x="364" y="538">保存到代码 · 运行时唯一写回</text>
         <text class="lbl" x="930" y="538" text-anchor="end">编号 = 第 01 章清单序号</text>
       </svg>
-      <figcaption><b>读法：</b>顶层 #2–#6 五份规范说了算；下一层 #7–#9 是各自的实现——语义(#3) ↔ registry.js(#7)、算法(#4) ↔ rounds.js、步骤(#5) ↔ defaults.js(#8)、视觉(#6) ↔ pages-base.js(#9)，一条竖线一条对应；算法数据层已建首件 rounds.js（轮次 + 锚点口径，win 键命名标准在其头注释；2026-11-01 锚点并入）。紫虚线既是 #9 对 #6 的对应，也是运行时<b>唯一</b>能写回的地方（调试台「保存到代码」，defaults.js 同被写回）。守护层判过不过、失败只记账；已删除与退役的文档不在图内，去向见第 01 章清单。</figcaption>
+      <figcaption><b>读法：</b>顶层 #2–#6 五份规范说了算，下层 #7–#9 一一对应；紫虚线既是 #9 对 #6 的对应，也是运行时<b>唯一</b>能写回的地方（调试台「保存到代码」，defaults.js 同被写回）。守护层判过不过、失败只记账；已删除与退役的文档不在图内，去向见页尾变更日志。</figcaption>
     </figure>
   </section>
 
@@ -351,6 +327,24 @@
       </tbody>
     </table>
     <p class="role" style="margin-top:14px">两条共同的伴随义务：① 基线即公共层——改完跑 verify 全量（8 原语页 + index + docs/prepost.html + docs/visual.html，先 --no-shot，提交前去 --no-shot 加截图比对）；② 本页 01 章状态列同步，涉及页面表 / 目录树时同步 README。几何变了先回 #6 / #5 规范正文对口径，再动代码。</p>
+  </section>
+
+  <!-- ============================ 变更日志 ============================ -->
+  <section>
+    <div class="sechead"><span class="no">附</span><h2>变更日志</h2><span class="meta">只追加 · 正文只留现行为规范，删除与退役的东西在这里留一行去向</span></div>
+    <table>
+      <thead><tr><th style="width:110px">日期</th><th>变更</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="mono">2026-11-01</td>
+          <td>#4 算法口径定稿：八种骨架 / All-Reduce 三条路线 / NCCL 选型三章收编进 algorithms.html 下部（自 blocks/table.js 的 algorithmsApp 收编为页内数据）；备用页 algorithms-old.html 同日退役删除，assets/pages/algorithms.css 随之删除；总览矩阵不搬——与每原语「骨架」行同源 registry.algo。rounds.js 锚点随 win 键命名统一并入。defaults.js 首次落盘（6 组 23 参数）并接入 12 页，#12 元规范随之成文。pages-base.js 建文件并接入 8 页薄壳，写盘→刷新→读回实测通过，bugs.md 对应项销账。test-cases 补 2.24–2.26 与 4.14–4.17（99→106 条），3 条采样锚点（3.42/3.43/3.51）随时序标准定稿转绿。本页正文去冗余：状态列只留现状、已删除文档表并入本日志、关系图状态与 01 章对齐。</td>
+        </tr>
+        <tr>
+          <td class="mono">2026-10-31</td>
+          <td>v1 全部删除：旧 <span class="mono">assets/cv/*</span>（kit / controls / tokens / pages …）与旧版 12 页不再存在，v2 提为根目录，后续一律只改根目录。历史文档删除三件——<b>架构标准</b> docs/arch-standard.md / .html（内容停在 v1 已失效；并行判据看「改公共层必须全量回归」纪律 + 本页关系图）、<b>代码地图</b> docs/architecture.md（2ef6a4a 随 v1 整套删除；结构以 README 目录树为准）、<b>待办清单</b> docs/待办-动画页面与参数配置.md（2ef6a4a；现行事项看 bugs.md 与 test-cases.html）。prepost 自根 layout.html 移入定为规范（#3），visual 自根 anatomy.html 移入（#6），docs/BUGS.md 更名 bugs.md（#11）。steps 词表落 assets/engine/narration.js、齿轮面板第二页签随稿落地，拍板结论见 steps.html §13（#5）。rounds.js 算法数据层建立（#4）。test-cases 拆分重排 83→100 条，algorithms 页退役去 4 条→96，解说页签落地补 2.22/2.23→98。</td>
+        </tr>
+      </tbody>
+    </table>
   </section>
 
 </div>
