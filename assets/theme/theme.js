@@ -50,12 +50,14 @@
         anchor: 'sub-03-5',   /* 03 的第 5 个 h3 =「动态 · 卡片长高与数据块增减」（2026-11-01 拆 tab 后顺延） */
         groups: [
           { label: '耗时', keys: ['cardDur', 'blockDur'] },
-          { label: '节奏', keys: ['blockGap'] }
+          { label: '节奏', keys: ['blockGap', 'rowLull', 'rowPause'] }
         ],
         keys: {
           cardDur:  { label: '卡片伸缩', unit: 's', def: 0.8,  min: 0.3, max: 3,   step: 0.05 },
           blockDur: { label: '单块时长', unit: 's', def: 0.4,  min: 0.1, max: 1.5, step: 0.05 },
-          blockGap: { label: '块间隔',   unit: 's', def: 0.15, min: 0,   max: 0.6, step: 0.01 }
+          blockGap: { label: '块间隔',   unit: 's', def: 0.15, min: 0,   max: 0.6, step: 0.01 },
+          rowLull:  { label: '长够→放块', unit: 's', def: 0.3,  min: 0,   max: 1,   step: 0.05 },
+          rowPause: { label: '撤完→收卡', unit: 's', def: 0.25, min: 0,   max: 1,   step: 0.05 }
         }
       },
       '05-packet': {
@@ -77,12 +79,14 @@
         label: '方框动态',
         anchor: 'sub-07-3',   /* 07 的第 3 个 h3 =「动态 · 方框长出与收回」（2026-11-01 拆 tab 后顺延） */
         groups: [
-          { label: '耗时', keys: ['growDur', 'holdDur', 'shrinkDur'] }
+          { label: '耗时', keys: ['growDur', 'holdDur', 'shrinkDur'] },
+          { label: '衔接', keys: ['calcFade'] }
         ],
         keys: {
           growDur:   { label: '卡片伸长', unit: 's', def: 0.75, min: 0.1, max: 2, step: 0.05 },
           holdDur:   { label: '方框展示', unit: 's', def: 0.95, min: 0.2, max: 4, step: 0.05 },
-          shrinkDur: { label: '卡片缩回', unit: 's', def: 0.7,  min: 0.1, max: 2, step: 0.05 }
+          shrinkDur: { label: '卡片缩回', unit: 's', def: 0.7,  min: 0.1, max: 2, step: 0.05 },
+          calcFade:  { label: '方框过渡', unit: 's', def: 0.35, min: 0,   max: 1.5, step: 0.05 }
         }
       },
       '08-seat': {

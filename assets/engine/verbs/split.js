@@ -47,7 +47,7 @@
     var GROW_D = CV.dur('grow');
     var HOLD_D = CV.dur('hold');
     var SHRINK_D = CV.dur('shrink');
-    var CALC_FADE = 0.35;
+    var CALC_FADE = CV.specNum('calcFade', 0.35);   /* 方框过渡 = 规范 07 的 calcFade */
     var CALC_UP = GROW_D + CALC_FADE;
     var CALC_DOWN = CALC_FADE + SHRINK_D;
     var BLOCKD = CV.dur('blockDur');

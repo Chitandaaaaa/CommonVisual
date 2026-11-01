@@ -26,27 +26,29 @@
   };
 
   /* ── 一排 ↔ 两排（规范 03）────────────────────────
-     开（一排变两排）：卡片绕中心上下变宽 cardDur → 衔接 0.3s → 第二排空块逐块淡入
-     收（两排变一排）：第二排从右往左逐块淡出 → 衔接 0.25s → 卡片收回
-     「先长够再放块 / 撤完再收卡」两段衔接是页面编排，固定 0.3 / 0.25，不进参数表。 */
+     开（一排变两排）：卡片绕中心上下变宽 cardDur → 衔接 rowLull → 第二排空块逐块淡入
+     收（两排变一排）：第二排从右往左逐块淡出 → 衔接 rowPause → 卡片收回
+     「先长够再放块 / 撤完再收卡」两段衔接已入规范 03-calc（2026-11-01 包 C：
+     rowLull 0.3 / rowPause 0.25，调试台可调）。 */
   function rowSpec() {
     function g(k, d) {
       var v = CV.params.get('03-card', k);
       return (typeof v === 'number') ? v : d;
     }
-    return { cardDur: g('cardDur', 0.8), blockDur: g('blockDur', .4), blockGap: g('blockGap', .15) };
+    return { cardDur: g('cardDur', 0.8), blockDur: g('blockDur', .4), blockGap: g('blockGap', .15),
+             lull: g('rowLull', .3), pause: g('rowPause', .25) };
   }
 
   CV.rowSpan = function (n) {
     var S = rowSpec(), step = S.blockDur + S.blockGap;
     var blocks = (n - 1) * step + S.blockDur;
-    return { open: S.cardDur + 0.3 + blocks, close: blocks + 0.25 + S.cardDur,
+    return { open: S.cardDur + S.lull + blocks, close: blocks + S.pause + S.cardDur,
              blocks: blocks, cardDur: S.cardDur, step: step };
   };
 
   /* T = 这一步开始以来的秒数。g = 卡片高度进度 0→1，v[i] = 第 i 块的可见度 */
   CV.rowOpen = function (T, n) {
-    var S = rowSpec(), step = S.blockDur + S.blockGap, b0 = S.cardDur + 0.3, v = [];
+    var S = rowSpec(), step = S.blockDur + S.blockGap, b0 = S.cardDur + S.lull, v = [];
     for (var i = 0; i < n; i++) {
       var s0 = b0 + i * step;
       v.push(CV.easeInOutQuad(seg01(T, s0, s0 + S.blockDur)));
@@ -57,7 +59,7 @@
   /* 倒放：块先从右往左逐个撤走，全撤完才收卡片。g = 1→0 */
   CV.rowClose = function (T, n) {
     var S = rowSpec(), step = S.blockDur + S.blockGap;
-    var goneAt = (n - 1) * step + S.blockDur, shrinkAt = goneAt + 0.25, v = [];
+    var goneAt = (n - 1) * step + S.blockDur, shrinkAt = goneAt + S.pause, v = [];
     for (var i = 0; i < n; i++) {
       var s0 = (n - 1 - i) * step;
       v.push(T <= s0 ? 1 : 1 - CV.easeInOutQuad(seg01(T, s0, s0 + S.blockDur)));

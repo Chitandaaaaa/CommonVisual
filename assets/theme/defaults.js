@@ -5,7 +5,9 @@ window.CV_PARAM_DEFAULTS = {
   "03-card": {
     "cardDur": 0.8,
     "blockDur": 0.4,
-    "blockGap": 0.15
+    "blockGap": 0.15,
+    "rowLull": 0.3,
+    "rowPause": 0.25
   },
   "05-packet": {
     "packDur": 1.5,
@@ -17,7 +19,8 @@ window.CV_PARAM_DEFAULTS = {
   "07-calc": {
     "growDur": 0.75,
     "holdDur": 0.95,
-    "shrinkDur": 0.7
+    "shrinkDur": 0.7,
+    "calcFade": 0.35
   },
   "08-seat": {
     "popDur": 0.55,

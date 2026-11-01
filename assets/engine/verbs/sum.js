@@ -40,6 +40,10 @@
        飞是编排秒直接填；淡出/弹跳/撑开/收回走规范 of 行（k 杆整窗缩放），
        落位延迟是全站同默认 0.50（steps 2.6），复合值（折进=max(逐段和, 方框展示)）直接填秒。
        串行律：抵达 → 淡出完 → 停 0.5 → 才弹（popStart = arrive + fade + delay）。 */
+    /* 预留/折进保持 abs 行（2026-11-01 包 C 决策点）：sec 是公式
+       （RS.open = cardDur+rowLull+blocks、merge = max(逐段和, 展示)），
+       of 数组表达不了——每次编译都从 03/07/09 章参数现算，调试台改完
+       reload 即跟变，不 of 化也不会焊死。 */
     var rInit = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.6 });
     var rPre  = CV.timeRow(scene.id, { key: 'pre', label: '预留缓冲', sec: RS.open });
     var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '传递', sec: 1.7 });
@@ -381,7 +385,7 @@
     var GROW = CV.specVal('growDur') || 0.75;
     var HOLD = CV.specVal('holdDur') || 0.95;
     var SHRINK = CV.specVal('shrinkDur') || 0.7;
-    var CALC_FADE = 0.35;
+    var CALC_FADE = CV.specNum('calcFade', 0.35);   /* 方框过渡 = 规范 07 的 calcFade */
 
     /* 齿轮行：说明/预留/终点/收场独立，一轮的八段两轮共用（轮间隔也在组里）。
        弹跳行＝整段窗口的 of 行（单颗 popDur + 3×同批错峰 popStagger，全来自
