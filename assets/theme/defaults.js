@@ -21,7 +21,8 @@ window.CV_PARAM_DEFAULTS = {
   },
   "08-seat": {
     "popDur": 0.55,
-    "seatGap": 0.5
+    "seatGap": 0.5,
+    "popStagger": 0.12
   },
   "09-merge": {
     "fuseDur": 0.42,

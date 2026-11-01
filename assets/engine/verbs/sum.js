@@ -16,17 +16,7 @@
   var DATA = null;
   function P(i) { return DATA[i]; }
 
-  var POP_EASE = CV.cubicBezier(.2, .9, .3, 1.45);
-  function popOf(q) {
-    if (q <= 0) return { k: 0.35, o: 0 };
-    if (q >= 1) return { k: 1, o: 1 };
-    if (q < 0.55) {
-      var e = POP_EASE(q / 0.55);
-      return { k: 0.35 + (1.16 - 0.35) * e, o: Math.min(1, e) };
-    }
-    var e2 = POP_EASE((q - 0.55) / 0.45);
-    return { k: 1.16 + (1 - 1.16) * e2, o: 1 };
-  }
+  /* 弹跳曲线读全局单源 CV.beat.popAt（parts/beat.js 的 CV.POP_CURVE） */
 
   function moveSlot(s, y) {
     if (s.y === y) return;
@@ -47,11 +37,12 @@
     var HOLD = CV.specVal('holdDur') || 0.95;
 
     /* 齿轮行：说明/预留/收场独立，折一份的五段三趟共用。
-       规范值（撑开/收回）走倍数；编排值（飞、弹）与复合值（折进=max(逐段和, 方框展示)）直接填秒。 */
+       飞是编排秒直接填；弹跳/撑开/收回走规范 of 行（k 杆整窗缩放），
+       复合值（折进=max(逐段和, 方框展示)）直接填秒。 */
     var rInit = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.6 });
     var rPre  = CV.timeRow(scene.id, { key: 'pre', label: '预留缓冲', sec: RS.open });
     var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '传递', sec: 1.7 });
-    var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳', sec: 0.6 });
+    var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳', of: 'popDur' });
     var rGrow = CV.timeRow(scene.id, { key: 'grow', label: '撑开计算层', of: 'growDur' });
     var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '逐段折进', sec: Math.max(SEG + 3 * GAP, HOLD) });
     var rShr  = CV.timeRow(scene.id, { key: 'shrink', label: '收回计算层', of: 'shrinkDur' });
@@ -299,7 +290,7 @@
       var list = EX.ghost[f.from];
       var on = sec >= f.arrive && sec < f.mergeEnd;
       var p = (on && sec >= f.growEnd) ? (sec - f.growEnd) / TM.merge : 0;
-      var pop = popOf(clamp((sec - f.arrive) / TM.pop, 0, 1));
+      var pop = CV.beat.popAt(clamp((sec - f.arrive) / TM.pop, 0, 1));
 
       list.forEach(function (s, i) {
         if (!on) {
@@ -378,7 +369,6 @@
   verbs.sum.timelineAllreduce = function (scene) {
     var SEG = CV.specVal('fuseDur') || 0.55;
     var MGAP = CV.specVal('mergeGap') || 0.5;
-    var POPD = CV.specVal('popDur') || 0.55;
     var RS = CV.rowSpan(4);
     var GROW = CV.specVal('growDur') || 0.75;
     var HOLD = CV.specVal('holdDur') || 0.95;
@@ -386,12 +376,14 @@
     var CALC_FADE = 0.35;
 
     /* 齿轮行：说明/预留/终点/收场独立，一轮的六段两轮共用（轮间隔也在组里）。
-       弹跳行管整段窗口（3×错峰 + 单块弹跳）；撑开/收回走规范倍数，
-       方框浮现的 0.35s 固定衔接不进面板。 */
+       弹跳行＝整段窗口的 of 行（单颗 popDur + 3×同批错峰 popStagger，全来自
+       规范 08，k 杆整窗缩放，动画逐帧从这行的分量取秒——不是写死字面量）；
+       撑开/收回走规范倍数，方框浮现的 0.35s 固定衔接不进面板。 */
     var rInit = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.9 });
     var rExp  = CV.timeRow(scene.id, { key: 'expand', label: '预留两排', sec: RS.open + 0.25 });
     var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '飞行', sec: 1.1 });
-    var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳', sec: 3 * 0.12 + Math.max(0.5, POPD) });
+    var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳',
+      of: ['popDur', 'popStagger', 'popStagger', 'popStagger'], specLabel: '弹跳+错峰' });
     var rGrow = CV.timeRow(scene.id, { key: 'grow', label: '撑开计算层', of: 'growDur' });
     var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '逐段折进', sec: Math.max(SEG + 3 * MGAP, HOLD) });
     var rDwn  = CV.timeRow(scene.id, { key: 'down', label: '收层收回', of: 'shrinkDur' });
@@ -401,13 +393,15 @@
     rInit.no = 1; rExp.no = 2; rFin.no = 10; rCol.no = 11;
 
     var TM = {
-      init: rInit.sec, fly: rFly.sec, land: 0.1, pop: 0.5, stag: 0.12,
+      init: rInit.sec, fly: rFly.sec, land: 0.1,
+      pop: rPop.subs[0].sec,          /* 单颗弹跳 = popDur × k（跟 k 杆与 08 调试台） */
+      stag: rPop.subs[1].sec,         /* 同批错峰 = popStagger × k */
       growCalc: rGrow.sec,
       merge: rMrg.sec,
       calcDown: CALC_FADE + rDwn.sec,
       gap: rGap.sec
     };
-    var POP_SPAN = rPop.sec;
+    var POP_SPAN = rPop.sec;          /* 整段窗口 = 单颗 + 3×错峰，k 杆整窗缩放 */
 
     function mkRound(start) {
       var r = { start: start };
@@ -690,7 +684,7 @@
             return;
           }
           var popP = clamp((sec - R.popStart - i * TM.stag) / TM.pop, 0, 1);
-          var pop = popOf(popP);
+          var pop = CV.beat.popAt(popP);
           var e = st.merge > 0 ? mergeE(st.merge, i) : 0;
           var k = pop.k * (1 - 0.30 * e);
           moveSlot(s, botY);

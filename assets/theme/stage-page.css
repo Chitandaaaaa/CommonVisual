@@ -338,14 +338,13 @@ body {
 /* 隐藏时别让透明的数据块挡住鼠标（否则空白处也会触发聚焦） */
 #stage .ghost-g[opacity="0"] { pointer-events: none; }
 
-/* 落位弹跳 + 涟漪 */
+/* 落位弹跳 + 涟漪
+   @keyframes slotPop 不在这里：弹跳曲线全站单源（parts/beat.js 的
+   CV.POP_CURVE），开机由它生成注入。.slot-pop 里的 .55s / cubic-bezier
+   只是兜底缺省——beat.seat 每次落位都会现写 animationDuration，
+   帧内缓动以注入的 keyframes 为准。 */
 .slot-g { transform-box: fill-box; transform-origin: center; }
 .slot-pop { animation: slotPop .55s cubic-bezier(.2, .9, .3, 1.45); }
-@keyframes slotPop {
-  0%   { transform: scale(.35); opacity: 0; }
-  55%  { transform: scale(1.16); opacity: 1; }
-  100% { transform: scale(1); }
-}
 /* 涟漪用 scale 展开而不是改 r，这样与数据块尺寸无关，宽窄屏比例一致 */
 .ring {
   fill: none;                     /* 必须显式设 none，否则 SVG 默认用黑色填充成实心圆 */

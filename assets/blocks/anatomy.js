@@ -1764,6 +1764,10 @@
       var v = CV.params.get('08-seat', 'seatGap');
       return typeof v === 'number' ? v : .5;
     }
+    function popStagger() {
+      var v = CV.params.get('08-seat', 'popStagger');
+      return typeof v === 'number' ? v : .12;
+    }
     function nx2(v) { return v.toFixed(2).replace(/^0\./, '.'); }
 
     var sp = h('p', 'specs', s);
@@ -1771,9 +1775,12 @@
       return '<b>关键帧</b> <code>0%</code> scale(.35) opacity 0 → <code>55%</code> scale(1.16) opacity 1 → ' +
         '<code>100%</code> scale(1) · 时长 <code>' + nx2(seatDur()) + 's</code> · 每段都吃同一条缓动<br>' +
       '<b>多块落位两口径</b> 顺序到达的批（all-to-all 一步收的块）用错峰弹：第 k 个比第 k−1 个晚 <code>' + nx2(seatGap()) + 's</code> 起跳 ' +
-        '（规范 08 · <code>seatGap</code>），页面用 <code>CV.seatAt(i, base)</code> 算每个块的时刻，<b>不是</b> setTimeout：' +
+        '（规范 08 · <code>seatGap</code>＝顺序到达），页面用 <code>CV.seatAt(i, base, gap)</code> 算每个块的时刻，<b>不是</b> setTimeout：' +
         '进度条要能来回拖，定时器拖不回来；' +
-        '同飞的批（all-gather / reduce-scatter，2026-11-01 拍板）则齐弹——同到同弹，弹跳不拉错峰窗口<br>' +
+        '同飞的批（all-gather / reduce-scatter，2026-11-01 拍板）则齐弹——同到同弹，弹跳不拉错峰窗口；' +
+        '互换批（all-reduce 一轮四块）的窗口带同批错峰 <code>' + nx2(popStagger()) + 's</code>' +
+        '（规范 08 · <code>popStagger</code>，<code>0</code>＝齐弹）——' +
+        '这些秒页面在时序面板以倍数杆整窗配置（弹跳 + 错峰一起缩放）<br>' +
       '<b>不属于 08 的间隔</b> 两趟传递之间停多久仍是每页自己排的节奏；' +
         '「抵达→淡出→落位延迟→弹跳」的顺序与默认值归 <code>steps 2.6</code>（衔接带）管——' +
         '落位延迟全站默认 0.50s，不是每页自排<br>' +

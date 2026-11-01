@@ -2,8 +2,9 @@
    CommonVisual v2 · L1 运动
    ------------------------------------------------------------
    只做「时间 → 进度」的数学，不碰 DOM：
-   · 缓动曲线（easeInOutQuad 在 dom.js；落位过冲曲线在这里）
-   · 落位弹跳 popOf / 批内错峰 seatAt
+   · 缓动曲线（easeInOutQuad 在 dom.js；落位过冲曲线在 parts/beat.js 的
+     CV.POP_CURVE / CV.beat.popAt —— 全站单源，这里不再有副本）
+   · 批内错峰 seatAt
    · 一排↔两排 rowOpen / rowClose / rowSpan（规范 03）
    · 规范秒的记号表 dur()：剧本里写记号，编译时换成秒
    ============================================================ */
@@ -13,23 +14,13 @@
   function seg01(T, a, b) { return b <= a ? 1 : CV.clamp((T - a) / (b - a), 0, 1); }
   CV.seg01 = seg01;
 
-  /* 落位弹跳曲线：0.35 → 1.16（过冲）→ 1，与 CSS .slot-pop 同一条 cubic-bezier */
-  var POP_EASE = CV.cubicBezier(.2, .9, .3, 1.45);
-  CV.popOf = function (q) {
-    if (q <= 0) return { k: 0.35, o: 0 };
-    if (q >= 1) return { k: 1, o: 1 };
-    if (q < 0.55) {
-      var e = POP_EASE(q / 0.55);
-      return { k: 0.35 + (1.16 - 0.35) * e, o: Math.min(1, e) };
-    }
-    var e2 = POP_EASE((q - 0.55) / 0.45);
-    return { k: 1.16 + (1 - 1.16) * e2, o: 1 };
-  };
-
-  /* 一批块依次落位：第 i 个的时刻 = base + i × 规范 seatGap。
-     用「时刻」比 sec，不用 setTimeout —— 进度条能来回拖，定时器拖不回来。 */
-  CV.seatAt = function (i, base) {
-    var g = CV.params ? CV.params.get('08-seat', 'seatGap') : undefined;
+  /* 一批块依次落位：第 i 个的时刻 = base + i × 错峰间隔。
+     gap 不传读规范 08 的 seatGap；传了就用调用方算好的（如 seatGap × k，
+     k 杆缩放后动画与窗口同源）。用「时刻」比 sec，不用 setTimeout ——
+     进度条能来回拖，定时器拖不回来。 */
+  CV.seatAt = function (i, base, gap) {
+    var g = (typeof gap === 'number') ? gap
+          : (CV.params ? CV.params.get('08-seat', 'seatGap') : undefined);
     if (typeof g !== 'number') g = 0.5;
     return base + i * Math.max(0, g);
   };

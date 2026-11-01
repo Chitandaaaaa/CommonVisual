@@ -397,19 +397,24 @@
 
   verbs.move.timeline = function (scene) {
     var P4 = scene.parts || 4;
-    var SEAT = CV.dur('seatGap');
-    var POP = CV.dur('pop');
-    /* 齿轮行：说明/收尾独立，一步的三段四步共用（错峰+弹跳合成一个落位窗口，
-       块位错峰的节奏仍按规范 seatGap，行只管这一步何时算走完）。 */
+    /* 齿轮行：说明/收尾独立，一步的三段四步共用。落位窗口是 of 行
+       （单颗 popDur + 3×seatGap 顺序到达错峰，分量全来自规范 08），
+       k 杆整窗缩放，动画的错峰间隔与单颗秒都从这行的分量现取——
+       不是写死字面量（P4 全站恒 4；改 parts 时 of 数组要跟着拼）。 */
     var rIntro = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.9 });
     var rFly   = CV.timeRow(scene.id, { key: 'fly', label: '飞行', sec: 0.95 });
-    var rSeat  = CV.timeRow(scene.id, { key: 'seat', label: '落位窗口', sec: (P4 - 1) * SEAT + POP });
+    var rSeat  = CV.timeRow(scene.id, { key: 'seat', label: '落位窗口',
+      of: ['popDur', 'seatGap', 'seatGap', 'seatGap'], specLabel: '弹跳+错峰' });
     var rGap   = CV.timeRow(scene.id, { key: 'gap', label: '步间停顿', sec: 0.4 });
     var rTail  = CV.timeRow(scene.id, { key: 'tail', label: '收尾', sec: 0.6 });
     rIntro.no = 1; rTail.no = P4 + 2;
 
     var TM = { init: rIntro.sec, fly: rFly.sec, gap: rGap.sec };
-    var STAG = (P4 - 1) * SEAT;
+    /* 顺序到达错峰（规范 08 双口径）：第 i 块比第 i−1 块晚 seatGap×k 起跳，
+       最后一块弹跳收尾 == 窗口末（of 分量之和 == 行秒，恒自洽） */
+    var SEATK = rSeat.subs[1].sec;    /* seatGap × k */
+    var POPK  = rSeat.subs[0].sec;    /* popDur × k（单颗动画秒） */
+    var STAG = (P4 - 1) * SEATK;
 
     var R = [];
     for (var q = 0; q < P4; q++) {
@@ -439,6 +444,7 @@
           rows: [rFly, rSeat, rGap] },
         rTail],
       rounds: R,
+      seat: rSeat,   /* 落位窗口行（of 分量），narration 与 overlay 从这里取错峰/单颗秒 */
       flows: R.map(function (rd) {
         var list = [];
         for (var s = 0; s < P4; s++) if (s !== rd.q) list.push({ from: s, to: rd.q, seg: rd.q });
@@ -500,6 +506,8 @@
     var seenM = verbs.move.seenMap();
     var R = CH.rounds;
     var P4 = scene.parts || 4;
+    var SEATK = CH.seat.subs[1].sec;   /* 错峰间隔 = seatGap × k（落位行分量） */
+    var POPK  = CH.seat.subs[0].sec;   /* 单颗弹跳秒 = popDur × k */
     var L = S.L;
     var c0 = L.slot;
     var totalW = P4 * c0.sw + (P4 - 1) * c0.gap;
@@ -521,14 +529,14 @@
 
       /* 下排：轮到自己当接收方的第 r 步才一次填满，一块一块落 */
       S.extra.downRow[r].forEach(function (s, i) {
-        var at = CV.seatAt(i, R[r].arrive);
+        var at = CV.seatAt(i, R[r].arrive, SEATK);
         if (sec < at) {
           CV.cast.set(s, null, sec >= R[r].start ? { active: true } : {});
           delete seenM['d' + r + i];
         } else {
           CV.cast.set(s, { letter: DATA[i].letter, color: DATA[i].color, sub: r }, {});
           var key = 'd' + r + i;
-          if (!seenM[key]) { seenM[key] = 1; CV.beat.seat(S.layers.fx, s); }
+          if (!seenM[key]) { seenM[key] = 1; CV.beat.seat(S.layers.fx, s, null, POPK); }
         }
       });
 

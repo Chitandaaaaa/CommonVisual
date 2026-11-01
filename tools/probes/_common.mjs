@@ -853,6 +853,95 @@ export async function commonChecks(pg, cfg) {
     await pg.waitForTimeout(600);
   }
 
+  /* ── 2.29 弹跳行不是假规范行（2026-11-01 收编包 A：allreduce 0.91 写死字面量的教训）
+     行声明（of 行 sec = 分量和 × k）与动画取秒必须同源：改 k 或改 08 调试台，
+     行秒、分量秒、动画窗口三者同步变——不同步就是哪处又写了死秒。 ── */
+  if (ch) {
+    const r29 = await pg.evaluate(() => {
+      const M = window.CV.lastMount;
+      function popRow(rows) {
+        for (const r of rows || []) {
+          if (r.type === 'group') { const f = popRow(r.rows); if (f) return f; }
+          else if (r.mode === 'spec' && [].concat(r.of || []).indexOf('popDur') >= 0) return r;
+        }
+        return null;
+      }
+      /* 动画窗口秒：reduce 走 flows / allreduce 走 rounds.popEnd / alltoall 走
+         rounds.done / choreo 走 transfer 拍的 seatStart / split 走 win.r1seat */
+      function popSpan(c) {
+        if (c.flows && c.flows[0] && typeof c.flows[0].popEnd === 'number')
+          return c.flows[0].popEnd - c.flows[0].arrive;
+        if (c.rounds && c.rounds[0]) {
+          const r = c.rounds[0];
+          if (typeof r.popEnd === 'number') return r.popEnd - r.popStart;
+          if (typeof r.done === 'number' && typeof r.arrive === 'number')
+            return r.done - r.arrive;
+        }
+        if (c.win) {
+          for (const k of Object.keys(c.win)) {
+            const w = c.win[k];
+            if (typeof w.seatStart === 'number') return w.seatEnd - w.seatStart;
+          }
+          if (c.win.r1seat) return c.win.r1seat.e - c.win.r1seat.s;
+        }
+        return null;
+      }
+      const c0 = M.getCh();
+      const row0 = popRow(c0.rows);
+      if (!row0) return { err: '本页无 of popDur 的 spec 行' };
+      const k0 = { row: row0.sec, span: popSpan(c0),
+                   subs: row0.subs.map(s => s.sec), total: c0.total };
+      CV.pageOvSave(M.scene.id, { [row0.store]: 2 });   /* k 杆倍数 2 */
+      M.reload();
+      const c1 = M.getCh();
+      const row1 = popRow(c1.rows);
+      const k2 = { row: row1.sec, span: popSpan(c1), k: row1.k,
+                   subs: row1.subs.map(s => s.sec), total: c1.total };
+      CV.pageOvClear(M.scene.id);
+      M.reload();
+      const c2 = M.getCh();
+      const row2 = popRow(c2.rows);
+      return { k0, k2, back: row2.sec, backTotal: c2.total };
+    });
+    let kOk = !r29.err && r29.k0.span != null &&
+      near(r29.k2.row, r29.k0.row * 2, 5e-3) &&
+      near(r29.k2.span, r29.k0.span * 2, 5e-3) &&
+      r29.k2.subs.length === r29.k0.subs.length &&
+      r29.k2.subs.every((s, i) => near(s, r29.k0.subs[i] * 2, 5e-3)) &&
+      near(r29.back, r29.k0.row, 5e-3);
+    /* 08 调试台半截：改 popDur 规范值 → 行秒跟变（k 倍数之上），改完还原 */
+    let sOk = false, sD = '';
+    if (kOk) {
+      const s29 = await pg.evaluate(() => {
+        const M = window.CV.lastMount;
+        function popRow(rows) {
+          for (const r of rows || []) {
+            if (r.type === 'group') { const f = popRow(r.rows); if (f) return f; }
+            else if (r.mode === 'spec' && [].concat(r.of || []).indexOf('popDur') >= 0) return r;
+          }
+          return null;
+        }
+        const row0 = popRow(M.getCh().rows);
+        const from = CV.params.get('08-seat', 'popDur');
+        CV.params.set('08-seat', 'popDur', +(from + 0.2).toFixed(2));
+        M.reload();
+        const row1 = popRow(M.getCh().rows);
+        CV.params.set('08-seat', 'popDur', from);   /* 还原（含本机改动） */
+        M.reload();
+        const row2 = popRow(M.getCh().rows);
+        return { v0: row0.sec, k: row1.k, v1: row1.sec, back: row2.sec };
+      });
+      sOk = !!s29 && near(s29.v1, (s29.v0 + 0.2 * s29.k), 5e-3) &&
+        near(s29.back, s29.v0, 5e-3);
+      sD = s29 ? ` popDur+0.2: ${s29.v0.toFixed(2)}→${s29.v1.toFixed(2)}(k=${s29.k})→${s29.back.toFixed(2)}` : ' spec半截eval失败';
+    }
+    ok('2.29 弹跳行不是假规范行（k 杆与 08 调试台同步变）', !r29.err && kOk && sOk,
+      r29.err ? r29.err
+        : `行 ${r29.k0.row.toFixed(2)}→k2 ${r29.k2.row.toFixed(2)} 窗 ${r29.k0.span && r29.k0.span.toFixed(2)}→${r29.k2.span && r29.k2.span.toFixed(2)} 还原 ${r29.back.toFixed(2)}${sD}`);
+  } else {
+    ok('2.29 弹跳行不是假规范行（k 杆与 08 调试台同步变）', true, 'SKIP(本页无 getCh)');
+  }
+
   return { res, t0: s0, ch };
 }
 

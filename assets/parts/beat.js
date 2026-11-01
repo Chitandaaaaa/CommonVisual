@@ -13,6 +13,49 @@
   /* ---------- B1 落位弹跳：色块弹跳（涟漪环可选，默认关） ---------- */
   CV.beat = CV.beat || {};
 
+  /* 弹跳曲线全站唯一的一份：CSS @keyframes 与 JS 逐帧采样都由它生成
+     （visual 08 的组件口径，规范页/动词页不许再复制第二份）。
+     stops 的 k = scale、o = opacity；bez 是 ease 的四个控制点，
+     keyframes 里按段写 animation-timing-function，与 JS 分段采样同式。 */
+  CV.POP_CURVE = {
+    stops: [{ t: 0, k: .35, o: 0 }, { t: .55, k: 1.16, o: 1 }, { t: 1, k: 1, o: 1 }],
+    bez: [.2, .9, .3, 1.45],
+    ease: null
+  };
+  CV.POP_CURVE.ease = CV.cubicBezier(CV.POP_CURVE.bez[0], CV.POP_CURVE.bez[1],
+                                      CV.POP_CURVE.bez[2], CV.POP_CURVE.bez[3]);
+
+  /* 按进度 q∈[0,1] 采弹跳曲线：相邻 stops 之间过 ease，o 钳 1（透明度不过冲） */
+  CV.beat.popAt = function (q) {
+    var S = CV.POP_CURVE.stops, i = 0;
+    q = q < 0 ? 0 : (q > 1 ? 1 : q);
+    if (q <= S[0].t) return { k: S[0].k, o: S[0].o };
+    if (q >= S[S.length - 1].t) return { k: S[S.length - 1].k, o: S[S.length - 1].o };
+    while (i < S.length - 2 && q > S[i + 1].t) i++;
+    var a = S[i], b = S[i + 1];
+    var e = CV.POP_CURVE.ease((q - a.t) / (b.t - a.t));
+    return { k: a.k + (b.k - a.k) * e, o: Math.min(1, a.o + (b.o - a.o) * e) };
+  };
+  /* 旧记号：动词层历史上叫 CV.popOf（motion.js 原件已并入这里） */
+  CV.popOf = CV.beat.popAt;
+
+  /* 开机由 POP_CURVE 生成 @keyframes slotPop：CSS 里不再留静态关键帧，
+     改曲线只动这一处（幂等，重复注入先删旧节点） */
+  (function () {
+    var bez = CV.POP_CURVE.bez, tf = 'animation-timing-function: cubic-bezier(' +
+      bez.join(',') + ');';
+    var decl = CV.POP_CURVE.stops.map(function (s) {
+      return '  ' + Math.round(s.t * 100) + '% { transform: scale(' + s.k + '); opacity: ' +
+        s.o + ';' + (s.t >= 1 ? '' : ' ' + tf) + ' }';
+    }).join('\n');
+    var old = document.querySelector('style[data-cv-pop]');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var st = document.createElement('style');
+    st.setAttribute('data-cv-pop', '1');
+    st.textContent = '@keyframes slotPop {\n' + decl + '\n}';
+    document.head.appendChild(st);
+  })();
+
   CV.beat.SHOW_RING = false;
 
   CV.beat.seat = function (popLayer, slot, color, durSec) {

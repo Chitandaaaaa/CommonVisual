@@ -18,7 +18,7 @@
   CV.NARR_LEX = {
     '变暗': '0.30s', '复原': '0.30s', '交空': '瞬时', '显形': '0.32s',
     '转接收位': '0.30s', '点亮': '0.30s', '起飞': '行程前 8%', '飞行': '按编排',
-    '抵达': '瞬时', '淡出': '0.60s（split 0.55）', '余辉': '瞬时',
+    '抵达': '瞬时', '淡出': '0.60s（packFade）', '余辉': '瞬时',
     '落位': '瞬时', '弹跳': '0.55s', '长高': '0.80s / 0.75s',
     '逐块出现': '0.40s/块 隔 0.15', '逐块撤': '0.40s/块 隔 0.15',
     '浮现': '0.35–0.38s', '折进': '0.42s/段 错峰 0.50',
@@ -328,7 +328,7 @@
         [fly.s, fly.s + take, '单体包 · 起飞（' + 4 * CH.EMIT[q][0].length + ' 个）', '各直连起点'],
         [fly.s + take, fly.e, '单体包 · 飞行', '沿直连'],
         [fly.e, null, '单体包 · 抵达', '对端卡边缘'],
-        [fly.e, fly.e + 0.55, '单体包 · 淡出', '透明'],      /* split 硬编码 0.55 */
+        [fly.e, fly.e + spec('packFade', 0.6), '单体包 · 淡出', '透明'],   /* split 读规范 packFade */
         [fly.e, null, '四条直连 · 余辉', '42% 数据色'],
         [fly.e, seat.e, '第二排 · 落位（' + n + ' 段' + (n > 1 ? '同时' : '') + '）', '每卡收 ' + n + ' 块'],
         [calc.s, calc.s + GROW, '双排卡 · 长高', '腾出计算层'],
@@ -362,7 +362,7 @@
   /* CH.rounds[].{start,arrive,done}，落位窗口 = done − arrive */
   function buildAtoa(scene, CH) {
     var out = [], R = CH.rounds, P4 = scene.parts || 4;
-    var SEATG = CV.dur('seatGap');
+    var SEATG = CH.seat.subs[1].sec;   /* 错峰间隔 = seatGap × k（落位行分量） */
 
     out.push(G('第 1 步 · 说明', 0, R[0].start, [rest(0, R[0].start, scene.narr.rest.intro)]));
 

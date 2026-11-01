@@ -16,17 +16,7 @@
 
   var DATA = null;
 
-  var POP_EASE = CV.cubicBezier(.2, .9, .3, 1.45);
-  function popOf(q) {
-    if (q <= 0) return { k: 0.35, o: 0 };
-    if (q >= 1) return { k: 1, o: 1 };
-    if (q < 0.55) {
-      var e = POP_EASE(q / 0.55);
-      return { k: 0.35 + (1.16 - 0.35) * e, o: Math.min(1, e) };
-    }
-    var e2 = POP_EASE((q - 0.55) / 0.45);
-    return { k: 1.16 + (1 - 1.16) * e2, o: 1 };
-  }
+  /* 弹跳曲线读全局单源 CV.beat.popAt（parts/beat.js 的 CV.POP_CURVE） */
 
   function moveSlot(s, y) {
     if (s.y === y) return;
@@ -51,7 +41,6 @@
   ];
 
   verbs.split.timeline = function (scene) {
-    var POP = CV.dur('pop');
     var FUSE = CV.dur('fuse');
     var MGAP = CV.dur('gap');
     var RS = CV.rowSpan(4);
@@ -62,11 +51,15 @@
     var CALC_UP = GROW_D + CALC_FADE;
     var CALC_DOWN = CALC_FADE + SHRINK_D;
     var BLOCKD = CV.dur('blockDur');
+    var PACKFADE = CV.specVal('packFade') || 0.6;   /* 包淡出 = 规范 05 的 packFade */
 
     var N1 = RECV[0][0].length, N2 = RECV[1][0].length;
     /* 落位窗口 = 单颗弹跳时长：同轮各段同飞同弹（2026-11-01 拍板，规范 08
-       双口径），不再按段序错峰——旧窗口 (N−1)×seatGap+pop 随齐弹退役 */
-    var SEAT1 = POP, SEAT2 = POP;
+       双口径），不再按段序错峰——旧窗口 (N−1)×seatGap+pop 随齐弹退役。
+       of 行接 k 杆：窗口秒从行现取，ghost 弹跳与行同一来源（不另写 specVal）。 */
+    var rSeat1 = CV.timeRow(scene.id, { key: 'seat1', label: '落位', of: 'popDur' });
+    var rSeat2 = CV.timeRow(scene.id, { key: 'seat2', label: '落位', of: 'popDur' });
+    var POP = rSeat1.sec;   /* ghost 弹跳秒 = 落位行秒（齐弹：窗口即单颗） */
     var MRG1 = Math.max((N1 - 1) * MGAP + FUSE, HOLD_D);
     var MRG2 = Math.max((N2 - 1) * MGAP + FUSE, HOLD_D);
 
@@ -80,13 +73,13 @@
       row('intro',   '说明', 1.1),
       row('reserve', '预留两排', RS.open),
       row('fly1',    '飞行', 1.7),
-      row('seat1',   '落位', SEAT1),
+      rSeat1,
       row('calc1',   '撑开', CALC_UP),
       row('merge1',  '折进', MRG1),
       row('down1',   '收层', CALC_DOWN),
       CV.timeRow(scene.id, { key: 'slim', label: '卡片收窄', of: 'blockDur' }),
       row('fly2',    '飞行', 1.7),
-      row('seat2',   '落位', SEAT2),
+      rSeat2,
       row('calc2',   '撑开', CALC_UP),
       row('merge2',  '折进', MRG2),
       row('shrink',  '收层收卡', CALC_DOWN + RS.close),
@@ -144,7 +137,7 @@
 
     return { total: TOTAL, steps: steps, win: win, rows: PANEL_ROWS,
              AT: AT, EMIT: EMIT, RECV: RECV, PARTNER: PARTNER,
-             POP: POP, FUSE: FUSE, MGAP: MGAP,
+             POP: POP, FUSE: FUSE, MGAP: MGAP, PACKFADE: PACKFADE,
              CALC_FADE: CALC_FADE, CALC_UP: CALC_UP, CALC_DOWN: CALC_DOWN, BLOCKD: BLOCKD,
              at: function (sec) { return TOTAL ? sec / TOTAL : 0; } };
   };
@@ -242,7 +235,7 @@
   verbs.split.overlay = function (S, scene, CH, sec) {
     var L = S.L, layer = S.layers;
     var EX = S.extra;
-    var AT = CH.AT, FUSE = CH.FUSE, MGAP = CH.MGAP, POP = CH.POP;
+    var AT = CH.AT, FUSE = CH.FUSE, MGAP = CH.MGAP, POP = CH.POP, PACKFADE = CH.PACKFADE;
     var c0 = L.slot;
     var DEEP = CV.TONE.deep;
 
@@ -393,7 +386,7 @@
         return;
       }
       var e = mergeE(gh.q, gh.idx, sec);
-      var pop = popOf(clamp((sec - landT) / POP, 0, 1));
+      var pop = CV.beat.popAt(clamp((sec - landT) / POP, 0, 1));
       var k = pop.k * (1 - 0.30 * e);
       gh.outer.setAttribute('opacity', String(pop.o * (1 - e)));
       gh.outer.setAttribute('transform',
@@ -415,7 +408,7 @@
         w.len = w.path.getTotalLength();
 
         var flying = sec >= fw.s && sec < fw.e;
-        var fading = sec >= fw.e && sec < fw.e + 0.55;
+        var fading = sec >= fw.e && sec < fw.e + PACKFADE;
 
         if (flying) {
           var lead = Math.min(0.32, (p.half || 0) / (w.len || 1));
@@ -428,7 +421,7 @@
           w.marker.setAttribute('fill', col);
         } else if (fading) {
           CV.payload.place(p, w, 1);
-          CV.payload.fadeOut(p, sec - fw.e, 0.55);
+          CV.payload.fadeOut(p, sec - fw.e, PACKFADE);
           w.path.setAttribute('stroke', col);
           w.path.setAttribute('stroke-width', '1.8');
           w.path.setAttribute('stroke-dasharray', '8 7');

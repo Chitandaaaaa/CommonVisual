@@ -78,8 +78,8 @@ engine/verbs/      copy / move / sum / split 四个动词 —— 绘制与逐帧
 
 支撑层：
 
-- `parts/` 舞台部件 —— `cast`（rank 卡 / 槽 / 数据块）、`payload`（连线 / 箭头 / 数据包）、`beat`（落位脉冲 / 融合）、`chrome`（时序齿轮面板 / 悬停聚焦 / 保存到代码）、`stage`（舞台骨架与图层）
-- `prim/` 基础 —— `dom`（h/el/cubicBezier）、`geom`（几何常量）、`motion`（弹跳曲线 POP_EASE、`specVal`/`dur` 读规范值）
+- `parts/` 舞台部件 —— `cast`（rank 卡 / 槽 / 数据块）、`payload`（连线 / 箭头 / 数据包）、`beat`（落位脉冲 / 融合 / 弹跳曲线单源 `POP_CURVE`）、`chrome`（时序齿轮面板 / 悬停聚焦 / 保存到代码）、`stage`（舞台骨架与图层）
+- `prim/` 基础 —— `dom`（h/el/cubicBezier）、`geom`（几何常量）、`motion`（错峰 seatAt / 一排两排 rowSpan、`specVal`/`dur` 读规范值）
 - `registry.js` **终态唯一事实** —— 每页的 `pre / post / rel / verbs`，关系导航、对照表、规范页、探针都读它，不解析动画终态
 - `rounds.js` **轮次口径（算法数据层）** —— 每条原语几轮、每轮动哪些边、轮内分几个相、验证采样哪些锚点（win 引用）；逐字转录自动词展开与剧本 beats，`docs/algorithms.html` 现渲染；win 键命名标准在其头注释
 - `theme/defaults.js` 参数基线（规范页调试台「保存到代码」写入；读取顺序：代码基线 ← localStorage 临时改动）
@@ -99,7 +99,7 @@ CommonVisual/
 │   ├── algorithms.html     算法口径：每原语五行（通信前/骨架/轮次/终态/锚点；轮次与锚点均已收编）
 │   ├── visual.html         组件与动效规范：1:1 真值 + 参数调试台（原根 anatomy.html）
 │   ├── steps.html          原语动态步骤规范：名词表 + 逐动作解说文案（原 docs/action.html）
-│   ├── test-cases.html     验证用例清单（110 条，含旧编号映射）
+│   ├── test-cases.html     验证用例清单（111 条，含旧编号映射）
 │   └── bugs.md             缺陷台账（回归与人工验证统一追加）
 ├── tools/
 │   ├── serve.mjs           开发服务 + 「保存到代码」写盘端点（POST /__cv/save，白名单两个基线文件）
@@ -130,7 +130,7 @@ CommonVisual/
 
 ## 验证
 
-验证纪律（先 probe 后截图、验收分频、CDP 坑）见 [`AGENTS.md`](AGENTS.md)；用例清单是 [`docs/test-cases.html`](docs/test-cases.html)（110 条：通用 3 + 全站通用 28 + 原语页 62 + index 与规范页 17，全部已实现）。一图流：
+验证纪律（先 probe 后截图、验收分频、CDP 坑）见 [`AGENTS.md`](AGENTS.md)；用例清单是 [`docs/test-cases.html`](docs/test-cases.html)（111 条：通用 3 + 全站通用 29 + 原语页 62 + index 与规范页 17，全部已实现）。一图流：
 
 ```bash
 node tools/verify.mjs <页> --no-shot   # 结构断言，每次改完跑（改哪页传哪页）
@@ -164,7 +164,7 @@ node tools/probe.mjs <页> <刻度>:"<表达式>"   # 单点几何，写断言�
 
 **字号写在属性上，CSS 只留字体族。** 标题 / 徽章 / 块内字母的 `font-size` 由绘制函数（`parts/cast.js`）按参数写在属性里；CSS 再写一条会盖掉属性，窄屏就会顶着桌面字号。
 
-**CSS 曲线用 JS 复刻。** 落位弹跳是 `cubic-bezier(.2, .9, .3, 1.45)`，`CV.cubicBezier()` 在 JS 里逐点复刻（`prim/motion.js` 的 `POP_EASE`）—— 不给 SVG 元素套 CSS 动画（双层 transform 会让 Chrome 提合成层并丢填充色，渲染成黑块）。
+**CSS 曲线用 JS 复刻。** 落位弹跳是 `cubic-bezier(.2, .9, .3, 1.45)`，`CV.cubicBezier()` 在 JS 里逐点复刻（`parts/beat.js` 的 `CV.POP_CURVE` —— 曲线全站单源，CSS keyframes 由它生成、JS 采样走 `CV.beat.popAt`）—— 不给 SVG 元素套 CSS 动画（双层 transform 会让 Chrome 提合成层并丢填充色，渲染成黑块）。
 
 **首页按屏宽等比放大。** `assets/pages/index.css` 有缩放系数 `--s`（≤1499 为 1，逐档放大），所有尺寸写成 `calc(Npx * var(--s))`；加新尺寸别再写字面 px。
 
