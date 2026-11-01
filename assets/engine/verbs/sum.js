@@ -36,24 +36,28 @@
     var SHRINK = CV.specVal('shrinkDur') || 0.7;
     var HOLD = CV.specVal('holdDur') || 0.95;
 
-    /* 齿轮行：说明/预留/收场独立，折一份的五段三趟共用。
-       飞是编排秒直接填；弹跳/撑开/收回走规范 of 行（k 杆整窗缩放），
-       复合值（折进=max(逐段和, 方框展示)）直接填秒。 */
+    /* 齿轮行：说明/预留/收场独立，折一份的七段三趟共用。
+       飞是编排秒直接填；淡出/弹跳/撑开/收回走规范 of 行（k 杆整窗缩放），
+       落位延迟是全站同默认 0.50（steps 2.6），复合值（折进=max(逐段和, 方框展示)）直接填秒。
+       串行律：抵达 → 淡出完 → 停 0.5 → 才弹（popStart = arrive + fade + delay）。 */
     var rInit = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.6 });
     var rPre  = CV.timeRow(scene.id, { key: 'pre', label: '预留缓冲', sec: RS.open });
     var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '传递', sec: 1.7 });
+    var rFade = CV.timeRow(scene.id, { key: 'fade', label: '送达淡出', of: 'packFade' });
+    var rDly  = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: 0.5 });
     var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳', of: 'popDur' });
     var rGrow = CV.timeRow(scene.id, { key: 'grow', label: '撑开计算层', of: 'growDur' });
     var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '逐段折进', sec: Math.max(SEG + 3 * GAP, HOLD) });
     var rShr  = CV.timeRow(scene.id, { key: 'shrink', label: '收回计算层', of: 'shrinkDur' });
     var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '收场', sec: RS.close + 0.5 });
-    rInit.no = 1; rPre.no = 2; rCol.no = 9;
+    rInit.no = 1; rPre.no = 2; rCol.no = 11;
 
     var TM = {
-      init: rInit.sec, prealloc: rPre.sec, fly: rFly.sec, pop: rPop.sec,
+      init: rInit.sec, prealloc: rPre.sec, fly: rFly.sec,
+      fade: rFade.sec, delay: rDly.sec, pop: rPop.sec,
       grow: rGrow.sec, merge: rMrg.sec, shrink: rShr.sec, collapse: rCol.sec
     };
-    var CYCLE = TM.fly + TM.pop + TM.grow + TM.merge + TM.shrink;
+    var CYCLE = TM.fly + TM.fade + TM.delay + TM.pop + TM.grow + TM.merge + TM.shrink;
     var COLLAPSE_AT = TM.init + TM.prealloc + CYCLE * 3;
     var TOTAL = COLLAPSE_AT + TM.collapse;
 
@@ -62,10 +66,13 @@
       var s = TM.init + TM.prealloc;
       for (var i = 1; i <= 3; i++) {
         var f = {
-          from: i, start: s, arrive: s + TM.fly, popEnd: s + TM.fly + TM.pop,
-          growEnd: s + TM.fly + TM.pop + TM.grow,
-          mergeEnd: s + TM.fly + TM.pop + TM.grow + TM.merge,
-          end: s + TM.fly + TM.pop + TM.grow + TM.merge + TM.shrink
+          from: i, start: s, arrive: s + TM.fly,
+          fadeEnd: s + TM.fly + TM.fade,
+          popStart: s + TM.fly + TM.fade + TM.delay,
+          popEnd: s + TM.fly + TM.fade + TM.delay + TM.pop,
+          growEnd: s + TM.fly + TM.fade + TM.delay + TM.pop + TM.grow,
+          mergeEnd: s + TM.fly + TM.fade + TM.delay + TM.pop + TM.grow + TM.merge,
+          end: s + TM.fly + TM.fade + TM.delay + TM.pop + TM.grow + TM.merge + TM.shrink
         };
         flows.push(f);
         s = f.end;
@@ -91,8 +98,8 @@
 
     return { total: TOTAL, steps: steps, win: win,
              rows: [rInit, rPre,
-               { type: 'group', label: '折一份 ×3', noTxt: '3–8', note: '每趟共用这一组',
-                 rows: [rFly, rPop, rGrow, rMrg, rShr] },
+               { type: 'group', label: '折一份 ×3', noTxt: '3–10', note: '每趟共用这一组',
+                 rows: [rFly, rFade, rDly, rPop, rGrow, rMrg, rShr] },
                rCol],
              flows: flows, TM: TM, COLLAPSE_AT: COLLAPSE_AT,
              at: function (sec) { return TOTAL ? sec / TOTAL : 0; } };
@@ -285,12 +292,13 @@
       });
     });
 
-    /* 下排：刚飞到的整份，弹出 → 逐段上折 → 消失 */
+    /* 下排：刚飞到的整份，弹出 → 逐段上折 → 消失
+       （串行律：抵达→淡出→延迟期间第二排保持接收位，弹从 popStart 起） */
     flows.forEach(function (f) {
       var list = EX.ghost[f.from];
-      var on = sec >= f.arrive && sec < f.mergeEnd;
+      var on = sec >= f.popStart && sec < f.mergeEnd;
       var p = (on && sec >= f.growEnd) ? (sec - f.growEnd) / TM.merge : 0;
-      var pop = CV.beat.popAt(clamp((sec - f.arrive) / TM.pop, 0, 1));
+      var pop = CV.beat.popAt(clamp((sec - f.popStart) / TM.pop, 0, 1));
 
       list.forEach(function (s, i) {
         if (!on) {
@@ -375,13 +383,16 @@
     var SHRINK = CV.specVal('shrinkDur') || 0.7;
     var CALC_FADE = 0.35;
 
-    /* 齿轮行：说明/预留/终点/收场独立，一轮的六段两轮共用（轮间隔也在组里）。
+    /* 齿轮行：说明/预留/终点/收场独立，一轮的八段两轮共用（轮间隔也在组里）。
        弹跳行＝整段窗口的 of 行（单颗 popDur + 3×同批错峰 popStagger，全来自
        规范 08，k 杆整窗缩放，动画逐帧从这行的分量取秒——不是写死字面量）；
+       淡出走规范 packFade、落位延迟全站 0.50（steps 2.6 串行律）；
        撑开/收回走规范倍数，方框浮现的 0.35s 固定衔接不进面板。 */
     var rInit = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.9 });
     var rExp  = CV.timeRow(scene.id, { key: 'expand', label: '预留两排', sec: RS.open + 0.25 });
     var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '飞行', sec: 1.1 });
+    var rFade = CV.timeRow(scene.id, { key: 'fade', label: '送达淡出', of: 'packFade' });
+    var rDly  = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: 0.5 });
     var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳',
       of: ['popDur', 'popStagger', 'popStagger', 'popStagger'], specLabel: '弹跳+错峰' });
     var rGrow = CV.timeRow(scene.id, { key: 'grow', label: '撑开计算层', of: 'growDur' });
@@ -390,10 +401,11 @@
     var rGap  = CV.timeRow(scene.id, { key: 'gap', label: '轮间停顿', sec: 0.55 });
     var rFin  = CV.timeRow(scene.id, { key: 'fin', label: '终点展示', sec: 0.35 });
     var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '收场', sec: RS.close + 0.6 });
-    rInit.no = 1; rExp.no = 2; rFin.no = 10; rCol.no = 11;
+    rInit.no = 1; rExp.no = 2; rFin.no = 12; rCol.no = 13;
 
     var TM = {
-      init: rInit.sec, fly: rFly.sec, land: 0.1,
+      init: rInit.sec, fly: rFly.sec,
+      fade: rFade.sec, delay: rDly.sec,   /* 串行律：抵达→淡出完→停 0.5→才弹（旧 land 0.1 退役） */
       pop: rPop.subs[0].sec,          /* 单颗弹跳 = popDur × k（跟 k 杆与 08 调试台） */
       stag: rPop.subs[1].sec,         /* 同批错峰 = popStagger × k */
       growCalc: rGrow.sec,
@@ -406,7 +418,8 @@
     function mkRound(start) {
       var r = { start: start };
       r.arrive = r.start + TM.fly;
-      r.popStart = r.arrive + TM.land;
+      r.fadeEnd = r.arrive + TM.fade;
+      r.popStart = r.fadeEnd + TM.delay;
       r.popEnd = r.popStart + POP_SPAN;
       r.calcStart = r.popEnd;
       r.calcEnd = r.calcStart + TM.growCalc;
@@ -459,8 +472,8 @@
 
     return { total: TOTAL, steps: steps, win: win,
              rows: [rInit, rExp,
-               { type: 'group', label: '互换一轮 ×2', noTxt: '3–9', note: '两轮共用这一组',
-                 rows: [rFly, rPop, rGrow, rMrg, rDwn, rGap] },
+               { type: 'group', label: '互换一轮 ×2', noTxt: '3–11', note: '两轮共用这一组',
+                 rows: [rFly, rFade, rDly, rPop, rGrow, rMrg, rDwn, rGap] },
                rFin, rCol],
              rounds: ROUNDS, route: route, TM: TM, POP_SPAN: POP_SPAN,
              EXPAND_AT: EXPAND_AT, COLLAPSE_AT: COLLAPSE_AT, CALC_FADE: CALC_FADE,

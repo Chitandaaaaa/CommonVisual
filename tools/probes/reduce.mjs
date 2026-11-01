@@ -8,8 +8,9 @@
    窗口）现算采样点，不再读旧表。
    真值（2026-10-30 旧页 1440×900）：merge1 中点 calc=1、目标卡
    Σᴀ²…；merge1 结束 [ΣA2,ΣB2,ΣC2,ΣD2]、源卡清空；终态 ΣAx4。
-   v2 现值（2026-11-01 弹跳收编包 A 后）：落位行 of popDur=0.55（旧 abs 0.60），
-   每趟 CYC 5.62（旧 5.67）、TOTAL 24.21（旧 24.36）；ghost 弹跳秒=行分量。
+   v2 现值（2026-11-01 收编包 B 串行律后）：抵达→淡出 0.60（packFade）→停 0.50
+   →落位 0.55（popDur，of 行）；每趟 CYC 6.72、TOTAL 27.51（包 A 时 24.21）；
+   ghost 弹跳从 popStart 起，弹跳秒=行分量。
    */
 import { seek, scan, commonChecks, OLD } from './_common.mjs';
 

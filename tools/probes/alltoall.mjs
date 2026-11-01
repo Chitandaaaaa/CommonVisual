@@ -3,7 +3,9 @@
    test-cases.html 3.54–3.60（2026-10-31 拆分重排：旧 3.51 拆为 3.57+3.58，其余顺延）。
    旧页未挂 getCh：自检用 OLD.alltoall 实测刻度
    （TOTAL 14.65s；4 步飞行中点 94/326/558/790；第 0 步收完 270 ——
-   2026-10-30 实测）；v2 挂 getCh 后按字幕锚点（/第 (\d+) 步/）现算。
+   2026-10-30 实测）。v2 飞行中点从 rounds 现算（start+fly/2）——
+   2026-11-01 包 B 串行律（抵达→淡出→延迟→落位）后字幕段中点会漂进
+   延迟相，不能再用；TOTAL 14.70→19.10。
    真值（2026-10-30 旧页 1440×900）：
      scrub 0   : 每卡 8 槽 = 上排 4（本卡字母+片号下标）+ 下排 4 空
      步中点    : 恰 3 个包在飞（发端=其余三卡）；共 12 包
@@ -38,15 +40,17 @@ export async function check(pg) {
   async function stepMids() {
     const s = await scan(pg);
     if (s.ch) {
-      const t = s.ch.t, txt = s.ch.text;
-      const mids = [];
-      for (let k = 0; k < t.length && mids.length < 4; k++) {
-        const m = /第 (\d+) 步/.exec(txt[k]);
-        if (m) {
-          const b = k + 1 < t.length ? t[k + 1] : 1;
-          mids.push({ mid: Math.round((t[k] + (b - t[k]) * 0.35) * 1000), q: +m[1] - 1, after: Math.round((b - 0.02) * 1000) });
-        }
-      }
+      /* 飞行中点从 rounds 现算（start + fly/2）——字幕段中点在串行律
+         （包 B：抵达→淡出→延迟→落位）后会漂进延迟相，包已不可见 */
+      const rd = await pg.evaluate(() => {
+        const c = window.CV.lastMount.getCh();
+        return { rs: c.rounds.map(r => ({ s: r.start, fly: r.arrive - r.start,
+                                          done: r.done })), total: c.total };
+      });
+      const mids = rd.rs.map((r, q) => ({
+        mid: Math.round((r.s + r.fly / 2) / rd.total * 1000),
+        q, after: Math.round((r.done - 0.02) / rd.total * 1000)
+      }));
       if (mids.length === 4) return mids;
     }
     return OLD.alltoall.stepMid.map((x, q) => ({

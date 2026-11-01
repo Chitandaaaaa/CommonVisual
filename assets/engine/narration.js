@@ -202,16 +202,17 @@
     CH.flows.forEach(function (f, k) {
       var src = 'r' + f.from + '/四槽卡', w = '弧线 ' + (k + 1);
       var sup = SUP[k + 2] || '^' + (k + 2);
-      var s = f.start, take = 0.08 * TM.fly, fade = spec('packFade', 0.6);
+      var s = f.start, take = 0.08 * TM.fly;
       var rows = [
         [s, null, src + ' · 交空（4 格）', '空格'],
         [s, s + 0.30, w + ' · 点亮', '数据色'],
         [s, s + take, '整份包 · 起飞', w + ' 起点'],
         [s + take, f.arrive, '整份包 · 飞行', '沿' + w],
         [f.arrive, null, '整份包 · 抵达', '箭头尖'],
-        [f.arrive, f.popEnd, '第二排 · 落位', '4 块同时弹出'],
-        [f.arrive, f.arrive + fade, '整份包 · 淡出', '透明'],
+        [f.arrive, f.fadeEnd, '整份包 · 淡出', '透明'],
         [f.arrive, null, w + ' · 余辉', '45% 数据色'],
+        rest(f.fadeEnd, f.popStart, '第二排保持接收位'),
+        [f.popStart, f.popEnd, '第二排 · 落位', '4 块同时弹出'],
         [f.popEnd, f.growEnd, '双排卡 · 长高', '腾出计算层'],
         /* 方框在长高层内淡入：0.35→0.85 进度（与 sum.overlayReduce 的 chipA 同一口径） */
         [f.popEnd + 0.35 * GROW, f.popEnd + 0.85 * GROW, '计算框 · 浮现', 'sum · avg · max · min'],
@@ -252,15 +253,16 @@
       return rows;
     }
     function roundRows(r, q) {
-      var take = 0.08 * TM.fly, fade = spec('packFade', 0.6);
+      var take = 0.08 * TM.fly;
       var parts = Math.pow(2, q + 1);
       return [
         [r.start, r.start + 0.30, '两条直连 · 点亮（两对同时）', '数据色'],
         [r.start, r.start + take, '整份包 · 起飞（4 个）', '各连线起点'],
         [r.start + take, r.arrive, '整份包 · 飞行', '沿直连'],
         [r.arrive, null, '整份包 · 抵达', '对方卡边缘'],
-        [r.arrive, r.arrive + fade, '整份包 · 淡出', '透明'],
+        [r.arrive, r.fadeEnd, '整份包 · 淡出', '透明'],
         [r.arrive, null, '两条直连 · 余辉', '42% 数据色'],
+        rest(r.fadeEnd, r.popStart, '第二排保持接收位'),
         [r.popStart, r.popEnd, '第二排 · 落位（4 块错峰）', '每卡各收 4 块'],
         [r.calcStart, r.calcEnd, '双排卡 · 长高', '腾出计算层'],
         [r.calcEnd, r.mergeStart, '计算框 · 浮现', 'sum · avg · max · min'],
@@ -319,18 +321,20 @@
     }
     out.push(G('第 2 步 · 预留两排', p, AT.open.e, rows));
 
-    function roundRows(q, fly, seat, calc, merge) {
+    function roundRows(q, fly, seat, calc, merge, dly) {
       var n = CH.RECV[q][0].length;
       var take = 0.08 * (fly.e - fly.s);
+      var fade = spec('packFade', 0.6);
       return [
         [fly.s, null, '四张卡 · 交空（各 ' + CH.EMIT[q][0].length + ' 格）', emitText(q)],
         [fly.s, fly.s + 0.30, '四条直连 · 点亮', '数据色'],
         [fly.s, fly.s + take, '单体包 · 起飞（' + 4 * CH.EMIT[q][0].length + ' 个）', '各直连起点'],
         [fly.s + take, fly.e, '单体包 · 飞行', '沿直连'],
         [fly.e, null, '单体包 · 抵达', '对端卡边缘'],
-        [fly.e, fly.e + spec('packFade', 0.6), '单体包 · 淡出', '透明'],   /* split 读规范 packFade */
+        [fly.e, fly.e + fade, '单体包 · 淡出', '透明'],   /* split 读规范 packFade */
         [fly.e, null, '四条直连 · 余辉', '42% 数据色'],
-        [fly.e, seat.e, '第二排 · 落位（' + n + ' 段' + (n > 1 ? '同时' : '') + '）', '每卡收 ' + n + ' 块'],
+        rest(fly.e + fade, dly.e, '第二排保持接收位'),
+        [dly.e, seat.e, '第二排 · 落位（' + n + ' 段' + (n > 1 ? '同时' : '') + '）', '每卡收 ' + n + ' 块'],
         [calc.s, calc.s + GROW, '双排卡 · 长高', '腾出计算层'],
         [calc.s + GROW, calc.e, '计算框 · 浮现', 'sum · avg · max · min'],
         [merge.s, merge.e, (n > 1 ? n + ' 段 · 折进（错峰）' : '这一段 · 折进'),
@@ -338,14 +342,14 @@
       ];
     }
 
-    var r1 = roundRows(0, AT.r1fly, AT.r1seat, AT.r1calc, AT.r1merge);
+    var r1 = roundRows(0, AT.r1fly, AT.r1seat, AT.r1calc, AT.r1merge, AT.r1dly);
     r1.push([AT.r1down.s, AT.r1down.e, '计算框 · 淡出 → 收层', '退回双排卡（第二排留着）']);
     out.push(G('第 3 步 · 第 1 轮（同列互换）', AT.r1fly.s, AT.r1down.e, r1));
 
     out.push(G('第 4 步 · 收窄', AT.r2open.s, AT.r2open.e,
       [[AT.r2open.s, AT.r2open.e, '第二排 · 收窄', '每卡撤掉这一轮用不上的那格']]));
 
-    var r2 = roundRows(1, AT.r2fly, AT.r2seat, AT.r2calc, AT.r2merge);
+    var r2 = roundRows(1, AT.r2fly, AT.r2seat, AT.r2calc, AT.r2merge, AT.r2dly);
     out.push(G('第 5 步 · 第 2 轮（同行互换）', AT.r2fly.s, AT.r2merge.e, r2));
 
     var w = AT.collapse.s;
@@ -375,11 +379,12 @@
         [r.start, r.start + take, '单体包 · 起飞（3 个）', '各直连起点'],
         [r.start + take, r.arrive, '单体包 · 飞行', '沿直连'],
         [r.arrive, null, '单体包 · 抵达', 'r' + q + ' 卡边缘'],
-        [r.arrive, r.arrive + spec('packFade', 0.6), '单体包 · 淡出', '透明'],
+        [r.arrive, r.fadeEnd, '单体包 · 淡出', '透明'],
         [r.arrive, null, '三条直连 · 余辉', '30% 数据色'],
-        [r.arrive, r.done, '下排 · 落位（4 块错峰）',
+        rest(r.fadeEnd, r.seatBase, '下排保持接收位'),
+        [r.seatBase, r.done, '下排 · 落位（4 块错峰）',
           'A' + q + ' B' + q + ' C' + q + ' D' + q],
-        [r.arrive + (P4 - 1) * SEATG, r.done, '下排-4 · 弹跳', '最后一块落定']
+        [r.seatBase + (P4 - 1) * SEATG, r.done, '下排-4 · 弹跳', '最后一块落定']
       ];
       var end = r.done;
       if (q < P4 - 1) {

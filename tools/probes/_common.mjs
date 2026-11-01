@@ -640,7 +640,9 @@ export async function commonChecks(pg, cfg) {
       });
       return { rows, hasResetAll: !!pop.querySelector('.gear-btn-ghost') };
     });
-    /* 覆盖率：大步组并起来 = 1..段数，transfer 的四个小步并成一组不重复计段 */
+    /* 覆盖率：面板行号并起来须盖住 1..段数（允许更细——2026-11-01 包 B 起
+       家族面板行=相、字幕段=拍，一段可含数相，行号总数可大于段数）；
+       「不重复计段」靠组区间可解析（noTxt 语法合法），组行计满区间 */
     let cover = 0, coverOk = !!panel;
     if (panel && ch) {
       const n = ch.t.length;
@@ -650,7 +652,7 @@ export async function commonChecks(pg, cfg) {
         else if (/^\d+$/.test(r.no)) cover += 1;
         else coverOk = false;
       }
-      coverOk = coverOk && cover === n;
+      coverOk = coverOk && cover >= n;
     }
     /* grp4＝choreo 的四小步组（travel,delay,pop,hold）；分轮组的页
        （reducescatter：第1轮/第2轮各五个相）声明 grp4:false 跳过，
@@ -866,25 +868,37 @@ export async function commonChecks(pg, cfg) {
         }
         return null;
       }
-      /* 动画窗口秒：reduce 走 flows / allreduce 走 rounds.popEnd / alltoall 走
-         rounds.done / choreo 走 transfer 拍的 seatStart / split 走 win.r1seat */
+      /* 动画窗口秒（纯弹跳窗，不含淡出/延迟——2.6 串行后弹跳前有两相）：
+         reduce 走 flows / allreduce 走 rounds.popEnd / alltoall 走 rounds.done−seatBase /
+         choreo 走 transfer 拍的 seatStart / split 走 win.r1seat */
       function popSpan(c) {
         if (c.flows && c.flows[0] && typeof c.flows[0].popEnd === 'number')
-          return c.flows[0].popEnd - c.flows[0].arrive;
+          return c.flows[0].popEnd - c.flows[0].popStart;
         if (c.rounds && c.rounds[0]) {
           const r = c.rounds[0];
           if (typeof r.popEnd === 'number') return r.popEnd - r.popStart;
-          if (typeof r.done === 'number' && typeof r.arrive === 'number')
-            return r.done - r.arrive;
+          if (typeof r.done === 'number' && typeof r.seatBase === 'number')
+            return r.done - r.seatBase;
         }
         if (c.win) {
           for (const k of Object.keys(c.win)) {
             const w = c.win[k];
             if (typeof w.seatStart === 'number') return w.seatEnd - w.seatStart;
           }
+          /* split：r1seat 段 = 淡出+延迟+弹跳（字幕段三相合一），纯弹跳窗要从 dly 末起算 */
+          if (c.win.r1dly && c.win.r1seat) return c.win.r1seat.e - c.win.r1dly.e;
           if (c.win.r1seat) return c.win.r1seat.e - c.win.r1seat.s;
         }
         return null;
+      }
+      /* 串行律（steps 2.6）：弹跳开始不得早于淡出完成（各家族字段名不同，有则验） */
+      function serialOK(c) {
+        const f = (c.flows && c.flows[0]) || (c.rounds && c.rounds[0]) || null;
+        if (f && typeof f.popStart === 'number' && typeof f.fadeEnd === 'number')
+          return f.popStart >= f.fadeEnd - 1e-6;
+        if (c.win && c.win.r1dly && c.win.r1fade)
+          return c.win.r1dly.e >= c.win.r1fade.e - 1e-6;
+        return null;   /* 本页无串行链字段（choreo 的 seatStart 已含延迟） */
       }
       const c0 = M.getCh();
       const row0 = popRow(c0.rows);
@@ -901,9 +915,9 @@ export async function commonChecks(pg, cfg) {
       M.reload();
       const c2 = M.getCh();
       const row2 = popRow(c2.rows);
-      return { k0, k2, back: row2.sec, backTotal: c2.total };
+      return { k0, k2, back: row2.sec, backTotal: c2.total, serial: serialOK(c0) };
     });
-    let kOk = !r29.err && r29.k0.span != null &&
+    let kOk = !r29.err && r29.k0.span != null && r29.serial !== false &&
       near(r29.k2.row, r29.k0.row * 2, 5e-3) &&
       near(r29.k2.span, r29.k0.span * 2, 5e-3) &&
       r29.k2.subs.length === r29.k0.subs.length &&
@@ -937,7 +951,7 @@ export async function commonChecks(pg, cfg) {
     }
     ok('2.29 弹跳行不是假规范行（k 杆与 08 调试台同步变）', !r29.err && kOk && sOk,
       r29.err ? r29.err
-        : `行 ${r29.k0.row.toFixed(2)}→k2 ${r29.k2.row.toFixed(2)} 窗 ${r29.k0.span && r29.k0.span.toFixed(2)}→${r29.k2.span && r29.k2.span.toFixed(2)} 还原 ${r29.back.toFixed(2)}${sD}`);
+        : `行 ${r29.k0.row.toFixed(2)}→k2 ${r29.k2.row.toFixed(2)} 窗 ${r29.k0.span && r29.k0.span.toFixed(2)}→${r29.k2.span && r29.k2.span.toFixed(2)} 还原 ${r29.back.toFixed(2)} 串行=${r29.serial === null ? 'n/a' : r29.serial}${sD}`);
   } else {
     ok('2.29 弹跳行不是假规范行（k 杆与 08 调试台同步变）', true, 'SKIP(本页无 getCh)');
   }

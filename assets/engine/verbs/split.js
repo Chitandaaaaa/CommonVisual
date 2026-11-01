@@ -56,7 +56,9 @@
     var N1 = RECV[0][0].length, N2 = RECV[1][0].length;
     /* 落位窗口 = 单颗弹跳时长：同轮各段同飞同弹（2026-11-01 拍板，规范 08
        双口径），不再按段序错峰——旧窗口 (N−1)×seatGap+pop 随齐弹退役。
-       of 行接 k 杆：窗口秒从行现取，ghost 弹跳与行同一来源（不另写 specVal）。 */
+       of 行接 k 杆：窗口秒从行现取，ghost 弹跳与行同一来源（不另写 specVal）。
+       串行律（steps 2.6）：抵达→淡出→停 0.5→才弹——落位字幕段覆盖
+       淡出+延迟+弹跳三相，各相窗另立 AT 键（见 AT 追加段）。 */
     var rSeat1 = CV.timeRow(scene.id, { key: 'seat1', label: '落位', of: 'popDur' });
     var rSeat2 = CV.timeRow(scene.id, { key: 'seat2', label: '落位', of: 'popDur' });
     var POP = rSeat1.sec;   /* ghost 弹跳秒 = 落位行秒（齐弹：窗口即单颗） */
@@ -64,22 +66,26 @@
     var MRG2 = Math.max((N2 - 1) * MGAP + FUSE, HOLD_D);
 
     /* 齿轮行：落位/撑开/折进/收层是窗口（内部动画仍按规范值走），
-       只有卡片收窄是纯规范值（走倍数）。PLAN 仍按下标读这个平铺数组，
-       分组只发生在返回值 rows 的展示层（见 PANEL_ROWS）。 */
+       淡出走规范 packFade、落位延迟全站 0.50（steps 2.6），
+       只有卡片收窄是纯规范值（走倍数）。分组只发生在返回值 rows 的展示层。 */
     function row(key, label, sec) {
       return CV.timeRow(scene.id, { key: key, label: label, sec: sec });
     }
+    var rFly1  = row('fly1',    '飞行', 1.7);
+    var rFade1 = CV.timeRow(scene.id, { key: 'fade1', label: '送达淡出', of: 'packFade' });
+    var rDly1  = row('delay1',  '落位延迟', 0.5);
+    var rFly2  = row('fly2',    '飞行', 1.7);
+    var rFade2 = CV.timeRow(scene.id, { key: 'fade2', label: '送达淡出', of: 'packFade' });
+    var rDly2  = row('delay2',  '落位延迟', 0.5);
     var ROWS = [
       row('intro',   '说明', 1.1),
       row('reserve', '预留两排', RS.open),
-      row('fly1',    '飞行', 1.7),
-      rSeat1,
+      rFly1, rFade1, rDly1, rSeat1,
       row('calc1',   '撑开', CALC_UP),
       row('merge1',  '折进', MRG1),
       row('down1',   '收层', CALC_DOWN),
       CV.timeRow(scene.id, { key: 'slim', label: '卡片收窄', of: 'blockDur' }),
-      row('fly2',    '飞行', 1.7),
-      rSeat2,
+      rFly2, rFade2, rDly2, rSeat2,
       row('calc2',   '撑开', CALC_UP),
       row('merge2',  '折进', MRG2),
       row('shrink',  '收层收卡', CALC_DOWN + RS.close),
@@ -92,33 +98,34 @@
        「说明 / 预留 / 组 / 收场」骨架对齐。时长键不变，本机调参不失效。 */
     var PANEL_ROWS = [
       ROWS[0], ROWS[1],
-      { type: 'group', label: '第 1 轮 · 同列互换', noTxt: '3–7', note: '这一轮的五个相',
-        rows: ROWS.slice(2, 7) },
-      ROWS[7],
-      { type: 'group', label: '第 2 轮 · 同行互换', noTxt: '9–13', note: '这一轮的五个相',
-        rows: ROWS.slice(8, 13) },
-      ROWS[13]
+      { type: 'group', label: '第 1 轮 · 同列互换', noTxt: '3–9', note: '这一轮的七个相',
+        rows: ROWS.slice(2, 9) },
+      ROWS[9],
+      { type: 'group', label: '第 2 轮 · 同行互换', noTxt: '11–17', note: '这一轮的七个相',
+        rows: ROWS.slice(10, 17) },
+      ROWS[17]
     ];
 
     var c = scene.captions;
     /* 键名按时序标准（assets/rounds.js 头注释）：r<轮号 1 起><相>；
-       整页拍 intro/open/collapse/tail 不带轮号。齿轮行的时长键
-       （row('fly1',…)）是另一套命名空间（localStorage 持久化），不改。 */
+       整页拍 intro/open/collapse/tail 不带轮号。字幕段保持 14 段（剧本
+       captions 不动）：r1fly = 纯飞行，r1seat = 淡出+延迟+弹跳（三相合一）；
+       齿轮行的时长键（row('fly1',…)）是另一套命名空间（localStorage），不改。 */
     var PLAN = [
       { id: 'intro',   sec: ROWS[0].sec,  text: c[0] },
       { id: 'open',    sec: ROWS[1].sec,  text: c[1] },
-      { id: 'r1fly',   sec: ROWS[2].sec,  text: c[2] },
-      { id: 'r1seat',  sec: ROWS[3].sec,  text: c[3] },
-      { id: 'r1calc',  sec: ROWS[4].sec,  text: c[4] },
-      { id: 'r1merge', sec: ROWS[5].sec,  text: c[5] },
-      { id: 'r1down',  sec: ROWS[6].sec,  text: c[6] },
-      { id: 'r2open',  sec: ROWS[7].sec,  text: c[7] },
-      { id: 'r2fly',   sec: ROWS[8].sec,  text: c[8] },
-      { id: 'r2seat',  sec: ROWS[9].sec,  text: c[9] },
-      { id: 'r2calc',  sec: ROWS[10].sec, text: c[10] },
-      { id: 'r2merge', sec: ROWS[11].sec, text: c[11] },
-      { id: 'collapse', sec: ROWS[12].sec, text: c[12] },
-      { id: 'tail',    sec: ROWS[13].sec, text: c[13] }
+      { id: 'r1fly',   sec: rFly1.sec,    text: c[2] },
+      { id: 'r1seat',  sec: rFade1.sec + rDly1.sec + rSeat1.sec, text: c[3] },
+      { id: 'r1calc',  sec: ROWS[6].sec,  text: c[4] },
+      { id: 'r1merge', sec: ROWS[7].sec,  text: c[5] },
+      { id: 'r1down',  sec: ROWS[8].sec,  text: c[6] },
+      { id: 'r2open',  sec: ROWS[9].sec,  text: c[7] },
+      { id: 'r2fly',   sec: rFly2.sec,    text: c[8] },
+      { id: 'r2seat',  sec: rFade2.sec + rDly2.sec + rSeat2.sec, text: c[9] },
+      { id: 'r2calc',  sec: ROWS[14].sec, text: c[10] },
+      { id: 'r2merge', sec: ROWS[15].sec, text: c[11] },
+      { id: 'collapse', sec: ROWS[16].sec, text: c[12] },
+      { id: 'tail',    sec: ROWS[17].sec, text: c[13] }
     ];
 
     var AT = {}, TOTAL = 0, acc = 0;
@@ -128,11 +135,18 @@
     });
     TOTAL = acc;
     /* 收窄的淡出时长跟随 slim 行的窗口（默认＝规范 blockDur） */
-    BLOCKD = ROWS[7].sec;
+    BLOCKD = ROWS[9].sec;
     var steps = [], win = {};
     PLAN.forEach(function (p) {
       steps.push({ t: AT[p.id].s / TOTAL, text: p.text, short: scene.shorts ? scene.shorts[steps.length] : undefined });
       win[p.id] = { s: AT[p.id].s, e: AT[p.id].e };
+    });
+    /* 串行链的相窗（2.6）：落位字幕段三相切开，键同时进 AT（narration 用）
+       与 win（时序标准 r<轮号><相>，探针 / 2.29 从这取） */
+    [['r1', rFade1, rDly1], ['r2', rFade2, rDly2]].forEach(function (p) {
+      var t = AT[p[0] + 'seat'].s;
+      AT[p[0] + 'fade'] = win[p[0] + 'fade'] = { s: t, e: t += p[1].sec };
+      AT[p[0] + 'dly']  = win[p[0] + 'dly']  = { s: t, e: t += p[2].sec };   /* 弹跳起点 = dly.e */
     });
 
     return { total: TOTAL, steps: steps, win: win, rows: PANEL_ROWS,
@@ -373,15 +387,16 @@
       }
     });
 
-    /* 落位的块：同飞同弹 → 逐段上折 → 消失 */
+    /* 落位的块：同飞同弹 → 逐段上折 → 消失
+       （串行律：抵达→淡出→延迟期间第二排保持接收位，弹从 dly.e 起） */
     EX.ghosts.forEach(function (gh) {
-      var fly = AT[gh.q === 0 ? 'r1fly' : 'r2fly'];
-      var landT = fly.e;                 /* 同轮各段同刻落位（2026-11-01 拍板） */
+      var dly = AT[gh.q === 0 ? 'r1dly' : 'r2dly'];
+      var landT = dly.e;                 /* 同轮各段同刻落位（齐弹拍板）＋ 串行律起点 */
       var rowY2 = R[gh.r].y + IN.y2;
 
       moveSlot(gh.slot, rowY2);
 
-      if (sec < fly.e) {
+      if (sec < landT) {
         gh.outer.setAttribute('opacity', '0');
         return;
       }

@@ -8,8 +8,10 @@
    2026-11-01 齐弹拍板：第 1 轮 2 段同刻落位，seat1 窗 1.05→0.55，
    总长 21.15→20.65；3.54 在刷新后干净采样（ghost 透明度跨 seek 不回零）。
    同日弹跳收编包 A：seat1/seat2 改 of popDur 行（k=1 同值 0.55），
-   包淡出从写死 0.55 改读规范 packFade 0.6（narration 淡出行 +0.05，
-   总长不变 20.65）；ghost 弹跳秒=落位行秒。
+   包淡出从写死 0.55 改读规范 packFade 0.6；ghost 弹跳秒=落位行秒。
+   同日包 B 串行律：抵达→淡出 0.60→停 0.50→弹——落位字幕段=三相合一
+   （win 另立 r1fade/r1dly 相键，弹跳起点=dly.e），3.54 采样锚点随迁；
+   每轮 +1.1、TOTAL 20.65→22.85。
    全页断言共用同一次扫描（步 30，60→1000），不再逐条 seek。
    真值（2026-10-30 旧页 1440×900；2026-11-01 齐弹后复核）：
      scrub 0   : 32 个 .slot-tx，card0 顶排 A B C D，calc 全隐
@@ -113,14 +115,14 @@ export async function check(pg) {
   }
 
   /* 3.54 第 1 轮两段同刻齐弹（2026-11-01 拍板：同飞同弹）。
-     ghost 透明度跨 seek 不回零 → 刷新后干净采样：r1fly.e+0.15 处
-     8 个 ghost 全部可见（错峰口径下此刻只有 idx0 的 4 个）。 */
+     ghost 透明度跨 seek 不回零 → 刷新后干净采样：弹跳起点（win.r1dly.e，
+     串行律后=淡出+延迟完）+0.15 处 8 个 ghost 全部可见。 */
   {
     await pg.reload({ waitUntil: 'load' });
     await pg.waitForFunction(() => window.CV && window.CV.lastMount && window.CV.lastMount.controls,
       null, { timeout: 8000 }).catch(() => {});
     const ch = common.ch;
-    const w = ch && ch.win && ch.win.r1fly;
+    const w = ch && ch.win && (ch.win.r1dly || ch.win.r1fly);
     let vis = -1, atS = '';
     if (w) {
       const at = sc(w.e + 0.15, ch.total);
