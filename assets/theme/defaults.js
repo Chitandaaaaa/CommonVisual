@@ -38,6 +38,12 @@ window.CV_PARAM_DEFAULTS = {
     "fuseGloss": 0.9,
     "fuseTrail": 18
   },
+  "orch": {
+    "dimDur": 0.3,
+    "revealDur": 0.32,
+    "takeoffFade": 0.08,
+    "seatDelay": 0.5
+  },
   "global": {
     "pageSpeed": 1
   }

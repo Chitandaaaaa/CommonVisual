@@ -21,9 +21,11 @@
    都拆成小二级标题（.sub-hd + h3）纵向堆叠，右侧子目录自动收录；
    动态 demo 堆叠常播（重画前必停旧 rAF）。
 
-   00 规范总账（2026-11-02 立章）：全页唯一一章「列账不画图」——
-   三类规范（① 调试台参数 ② 编排级定数 ③ 施工约定）各在哪个章节、怎么验收；
-   与 13 章共用同一份数据（SPEC_PARAMS / ORCH_ROWS / RULES），两处渲染防两套口径。
+   00 规范总账（2026-11-02 定稿）：全页唯一一章「列账不画图」——
+   全量可改项总表（动效 39 + 样式 34 = 73 行，LEDGER 单源），点行跳章；
+   原编排级定数清单收编为参数表 orch 组（dimDur / revealDur / takeoffFade / seatDelay），
+   原 12 两套尺寸 / 13 施工约定两章删除 —— 尺寸在各组件章、规矩拆成各章末
+   「想改 → 去哪改」入口行（ENTRY_LINES）。
    ============================================================ */
 (function () {
   'use strict';
@@ -48,88 +50,117 @@
     narrow:  { view: { w: 380,  h: 720 }, card: { w: 146, h: 126 }, slot: { sw: 25, sh: 25, gap: 5  }, hdr: 28, title: 12.5, badge: 8.5 }
   };
 
+
   /* ══════════════════════════════════════════════════════════
-     规范总账数据（00 章与 13 章共用 —— 一份数据、两处渲染，防两套口径）
+     规范总账数据（00 章唯一渲染 · 全量可改项清单，2026-11-02 定稿）
      ------------------------------------------------------------
-     ① SPEC_PARAMS 组件级动效参数：{ sec, key, what, acc }。
-        值不写死：00 章渲染时现读 CV.params（调试台改过就显示改后值，↺ 回基线）；
-        所在章节就是 sec 的前两位（global 归全局）。
-     ② ORCH_ROWS 编排级定数：[条目, 定数, 判定点, 所在章节, 怎么验收]。
-        13 章「编排级定数清单」渲染前 3 列（唯一出处仍是那张清单），00 章渲染全 5 列
-        —— 后两列只是「去哪验、怎么验」，不是第二套数值。
-     ③ RULES 施工约定：{ k 短名, full 全文, acc 验收 }。
-        13 章渲染 full，00 章渲染 k + acc。
+     每组 = { g 组名, rows }；每行 = [类型, 中文名, 英文名·入口, 当前值, 跳章, 跳子节关键词]。
+     类型：'动效'（参数 / 编排节奏）｜'样式'（几何 / 颜色 / 字号 / 曲线）。
+     当前值：['组','键',单位] → 现读 CV.params（调试台改过就跟着变，↺ 回基线）；
+            字符串 → 静态真值（GEO / 绘制函数 / 令牌的定数）。
+     覆盖判据：每个可改的东西必须在本表有一行、入口列填得出 —— 填不出不许入表；
+     入口的「想改 → 去哪改」行拆在各章末（见文件尾 ENTRY_LINES）。
      ══════════════════════════════════════════════════════════ */
-  var SPEC_PARAMS = [
-    { sec: '03-card', key: 'cardDur',    what: '卡片一排 ↔ 两排绕中心上下变宽的耗时', acc: '拖杆 → 03 章动态示例变宽变慢；时序面板「预留两排」行同步' },
-    { sec: '03-card', key: 'blockDur',   what: '第二排单个数据块淡入 / 淡出的耗时', acc: '行秒 = 块数 × 分量（of 杆），改后面板行同步' },
-    { sec: '03-card', key: 'blockGap',   what: '相邻数据块起步的间隔', acc: '块间错峰变化' },
-    { sec: '03-card', key: 'rowLull',    what: '长够 → 第二排开始淡入之间的衔接', acc: '3.61：allreduce 页 +0.2 → RS.open +0.2、总长 +0.2，还原无残差' },
-    { sec: '03-card', key: 'rowPause',   what: '第二排撤完 → 卡片收回之间的衔接', acc: '收侧时序 +Δ，还原无残差' },
-    { sec: '05-packet', key: 'packDur',    what: '单程飞行耗时（easeInOutQuad，按弧长取点）', acc: '拖杆 → 05.4 容器整体重建、飞行变慢（4.11）' },
-    { sec: '05-packet', key: 'packFade',   what: '抵达后原地淡出 = 停留（一轮 = 飞 + 淡，没有额外停留段）', acc: '淡出段拉长，落点仍压箭头尖' },
-    { sec: '05-packet', key: 'packLead',   what: '起步让出（封顶 18 / 路径长；整份包恒 0.015）', acc: '拉大不越封顶' },
-    { sec: '05-packet', key: 'trailDist',  what: '拖尾退后距离', acc: '拖尾拉长' },
-    { sec: '05-packet', key: 'trailScale', what: '拖尾浓度倍数', acc: '拖尾变浓' },
-    { sec: '07-calc', key: 'growDur',    what: '计算层长出耗时', acc: '07 章时间轴重算、按新总长重播' },
-    { sec: '07-calc', key: 'holdDur',    what: '计算层展示耗时', acc: '同上' },
-    { sec: '07-calc', key: 'shrinkDur',  what: '计算层缩回耗时', acc: '同上' },
-    { sec: '07-calc', key: 'calcFade',   what: '方框淡入 / 淡出，与伸缩错开（先长空间再亮框、先灭再收）', acc: '3.61：+0.2 → 每轮 mergeStart / calcDown 各 +0.2、总长 +0.8' },
-    { sec: '08-seat', key: 'popDur',     what: '单块弹跳（0% .35 → 55% 1.16 → 100% 1，缓动 1.45 中途冲头 1.29）', acc: '08 章定格采样值随滑杆重标' },
-    { sec: '08-seat', key: 'seatGap',    what: '顺序到达批错峰（CV.seatAt 算时刻，不是 setTimeout）', acc: '错峰窗口变化且进度条能拖回' },
-    { sec: '08-seat', key: 'popStagger', what: '同批错峰（互换批用；0 = 齐弹；同飞批齐弹不用它）', acc: 'allreduce 同批弹跳拉开 / 收拢' },
-    { sec: '09-merge', key: 'fuseDur',    what: '单次融合全程', acc: '09 章「已融合 n / 4」节奏变化' },
-    { sec: '09-merge', key: 'mergeGap',   what: '多列错峰（与 seatGap 同层级，页面不许另写）', acc: '列间错峰变化' },
-    { sec: '09-merge', key: 'fuseWake',   what: '唤醒段终点（0 – 此值只改颜色描边，块一步不挪）', acc: '09 章说明数字现算更新' },
-    { sec: '09-merge', key: 'fuseRise',   what: '上浮段终点（走 y₀ → y₁ 并缩到 fuseShrink）', acc: '四定格帧重排' },
-    { sec: '09-merge', key: 'fuseFade',   what: '开始淡出的进度点', acc: '四定格帧重排' },
-    { sec: '09-merge', key: 'fuseSwap',   what: '目标换 Σ + 列字母 + 上标的时刻', acc: '换字时刻跟移' },
-    { sec: '09-merge', key: 'fuseShrink', what: '上浮终了缩放', acc: '定格帧缩放标注更新' },
-    { sec: '09-merge', key: 'fuseGloss',  what: '白光扫过峰值', acc: '白光亮度变化' },
-    { sec: '09-merge', key: 'fuseTrail',  what: '融合拖尾退后（两块残影，缩放 .8 / .6）', acc: '残影距离更新' },
-    { sec: 'global', key: 'pageSpeed',   what: '全站页内时长乘数（本页写下的秒数都是 1× 基线）', acc: '调 2× 全站减半；刷新仍生效（2.14）' }
-  ];
-
-  var ORCH_ROWS = [
-    ['变暗 / 复原', '0.30s / 0.30s', '复原从包抵达那一刻开始，不是落位时（beat.dim，透明度 0.6，见 03）',
-      '13 章 · 判定点：各原语页飞行段', 'probe 按锚点采样：飞行中点卡 opacity = .6；复原从包抵达才开始（2.29 串行律）'],
-    ['显形', '0.32s', '第二排空位 / 空槽的淡入；显形的是「位置」不是数据',
-      '13 章 · 判定点：03 章一排两排', '空槽 opacity 0→1 两帧采样 ≈ .32s；数据块不走这条曲线'],
-    ['点亮', '0.30s', '线由灰变数据色、加粗，颜色渐变过去（见 04）',
-      '13 章 · 判定点：04 章线四态', '起飞帧灰线（#c3cadb 虚线 2px），.30s 内变数据色加粗'],
-    ['起飞渐显', '行程前 8%', '包在起点出现并渐显，只占行程前 8%（见 05）',
-      '13 章 · 判定点：05 章数据包', '行程 4% 处包半透明、≥ 8% 后 opacity = 1（与参数 packLead 让出是两回事）'],
-    ['余辉比率', 'choreo 单流 40% · allgather / reduce 45% · allreduce / reduce-scatter 42% · alltoall 30%', '保留数据色，不是变灰；各页文案由 narration 按此表写死',
-      '13 章 · 判定点：各原语页余辉段', 'probe 量各页余辉段 ÷ 飞行段 = 表值；文案断言兜底'],
-    ['落位延迟', '0.50s（全站同默认）', '抵达（含淡出）到起弹之间的呼吸；时序面板有对应行（steps 2.6）',
-      '13 章 · 判定点：steps 2.6 衔接带', 'win 锚点 r<k>fade 完 → r<k>seat 起 = .50；2.29 串行律；steps 手写稿对账（4.15）']
-  ];
-
-  var RULES = [
-    { k: '尺寸只从 GEO 抄',
-      full: '尺寸只从本页 <code>GEO</code> 抄。SVG 等比缩放，<b>viewBox 数字越小 → 整页内容越大</b>，改完用 <code>getBoundingClientRect()</code> 量，别凭数字猜。',
-      acc: '改 GEO 一处 → 桌面 + 窄屏同步变；probe 量 getBoundingClientRect 对真值（写断言先读 paint 初值）' },
-    { k: '组件只走 parts 绘制函数',
-      full: '组件只走 <code>parts/cast.js</code> / <code>payload.js</code> 的绘制函数，不手写 <code>rect</code> / <code>text</code>；要改尺寸改 <code>GEO</code>，不改绘制代码。',
-      acc: 'grep 8 页 scenes 无手写 rect / text（本规范页自身除外）' },
-    { k: '卡内字号写在 SVG 属性上',
-      full: '卡内三处字号（标题 / 徽章 / 块内字母）由绘制函数写在 <code>font-size</code> 属性上，<b>CSS 里别再写</b> —— class 选择器会盖掉属性，窄屏就会顶着桌面字号（曾经 25 的块里塞着 15 的字）。',
-      acc: 'grep theme / pages 的 CSS 无 .dst-badge / .slot-tx 的 font-size' },
-    { k: '断点 860px',
-      full: '断点 860px：<code>&lt; 860</code> 用窄屏一套；切换时重建舞台，再按当前进度重绘。',
-      acc: 'verify 截图组含窄屏 420×820 帧（2.15 / 2.16）' },
-    { k: '下标分工 data-l / data-card',
-      full: '下标分工：数据块挂 <code>data-l</code>（聚焦），卡片挂 <code>data-card</code>（置灰）。整份数据的连线与箭头不带 <code>data-l</code>，但整份包内部的小方块要带。',
-      acc: 'probe 数属性：整份连线不带、包内小块带' },
-    { k: '新增原语四件套',
-      full: '新增原语 = 薄壳 HTML 调 <code>CV.boot(\'&lt;id&gt;\')</code>，剧本写进 <code>scenes/&lt;id&gt;.js</code>，终态登记 <code>registry.js</code>；绘制与时序展开由引擎/动词层接管。',
-      acc: '新页 verify 全绿 + README 页面表 / 目录树同步' },
-    { k: '动效只调函数 · 抄写两边同步',
-      full: '动效只调函数：落位用 <code>CV.spawnPulse</code>，融合用 <code>CV.createMerge</code>，聚焦用 <code>CV.attachFocus</code>。参数写在 <code>theme/stage-page.css</code> 里，本页为了不加载它抄了一份 —— <b>改一边必须改另一边</b>。唯一例外是 <code>reduce</code> 的融合：它的整份包外层已有位移 transform，再叠一层会变黑块，所以用 <code>CV.cubicBezier</code> 逐点复刻同一条曲线（真源在 <code>parts/beat.js</code> 的 <code>CV.POP_CURVE</code>，2026-11-01 起全站单源）。',
-      acc: 'grep stage-page.css 与本页抄写值一致；弹跳曲线只认 CV.POP_CURVE 单源（2.29）' },
-    { k: 'pageSpeed 全局乘数',
-      full: '全局 <code>pageSpeed</code> 是所有页内时长的乘数：调试台调 2×，全站快一倍（「送达淡出」这类秒数都会除以它）。本页写下的数字都是 1× 基线。',
-      acc: '调试台 2× → 全站减半；读文档别拿 2× 环境对数' }
+  var LEDGER = [
+    { g: '01 · 完整数据', rows: [
+      ['样式', '四 rank 色 A–D', 'CV.PALETTE · theme.js', '#7c3aed / #0891b2 / #059669 / #d97706', '01', ''],
+      ['样式', '全站色调令牌 ×6', 'CV.TONE · theme.js', 'deep #4c1d95 · ink #190d33 · wire #c3cadb · wireDim #8b93aa · slotBg #f7f8fc · slotHot #f3eeff', '01', ''],
+      ['样式', '归约色混色公式', 'CV.toneRich · theme.js', '1 份原色 → 每份 +0.19 深 → 4 份 deep', '01', ''],
+      ['样式', '整份虚线框', 'blocks/legend.js', 'rx 14 · 白 72% · 描边 #c1cadf 1.5 · 虚线 4 3 · pad 0.24×块宽', '01', ''],
+      ['样式', '滤镜 flood 色（全站一份）', 'parts/stage.js', '#2a3352（fGlow / fTrail）', '01', '']
+    ] },
+    { g: '02 · 数据块', rows: [
+      ['样式', '块尺寸（桌面 / 窄屏）', 'drawSlot · GEO', '46 / 25', '02', ''],
+      ['样式', '块圆角', 'drawSlot · legend.js', 'rx 8', '02', ''],
+      ['样式', '四态色 own / done / waiting / empty', 'move.js 四态机 · setSlot', 'own=done=数据色 · waiting #f3eeff+「···」 · empty #f7f8fc+虚线', '02', ''],
+      ['样式', '块内字母字号', 'setSlot', '0.33 × 块高（15 / 8）', '02', '']
+    ] },
+    { g: '03 · rank 卡片', rows: [
+      ['动效', '卡片伸缩', 'cardDur', ['03-card', 'cardDur', 's'], '03', '动态'],
+      ['动效', '单块时长', 'blockDur', ['03-card', 'blockDur', 's'], '03', '动态'],
+      ['动效', '块间隔', 'blockGap', ['03-card', 'blockGap', 's'], '03', '动态'],
+      ['动效', '长够→放块', 'rowLull', ['03-card', 'rowLull', 's'], '03', '动态'],
+      ['动效', '撤完→收卡', 'rowPause', ['03-card', 'rowPause', 's'], '03', '动态'],
+      ['样式', '卡片尺寸（桌面 / 窄屏）', 'drawCard · GEO', '300×170 / 146×126', '03', ''],
+      ['样式', '卡头高', 'drawCard', '36 / 28', '03', ''],
+      ['样式', '标题字号', 'drawCard · SVG 属性', '15 / 12.5', '03', ''],
+      ['样式', '徽章尺寸', 'badgeGeo · drawCard', '30×18 / 28×18（有文字 max(30, 字数×字号×.6+18)）', '03', '徽章'],
+      ['样式', '徽章字号', 'drawCard · SVG 属性', '10 / 8.5', '03', '徽章'],
+      ['样式', '徽章右距 · 圆角 · 底色', 'badgeGeo', '右距 14 · 圆角 6 · 底色 26% 白', '03', '徽章'],
+      ['样式', '发送中变暗（透明度）', 'CV.beat.dim', '.6（传播中唯一全卡信号）', '03', ''],
+      ['样式', '目标卡描边', 'drawCard · target', 'dst 加深', '03', '']
+    ] },
+    { g: '04 · 连线与箭头', rows: [
+      ['样式', '闲置线', 'verbs 绘制 · TONE.wire', '#c3cadb · 宽 2 · 虚线 8 7', '04', ''],
+      ['样式', '飞行线', 'verbs 绘制', '数据色 · 加粗', '04', ''],
+      ['样式', '余辉态', 'verbs 绘制', '数据色 .45 淡', '04', ''],
+      ['样式', '箭头 marker', 'payload.marker', '形状 / 尺寸 / 逐帧随色', '04', '']
+    ] },
+    { g: '05 · 数据包', rows: [
+      ['动效', '飞行时长', 'packDur', ['05-packet', 'packDur', 's'], '05', '动态'],
+      ['动效', '送达淡出', 'packFade', ['05-packet', 'packFade', 's'], '05', '动态'],
+      ['动效', '起步让出', 'packLead', ['05-packet', 'packLead', ''], '05', '动态'],
+      ['动效', '拖尾退后', 'trailDist', ['05-packet', 'trailDist', 'px'], '05', '动态'],
+      ['动效', '拖尾浓度', 'trailScale', ['05-packet', 'trailScale', '×'], '05', '动态'],
+      ['样式', '包主体尺寸', 'CV.drawPacket', '24×24', '05', ''],
+      ['样式', '整份包底板', 'CV.drawPacket', '白底收成一份（4 块 = 101 宽）', '05', '']
+    ] },
+    { g: '06 · 控制条', rows: [
+      ['样式', 'scrub 刻度 · 按钮组', 'parts/chrome.js', '0–1000 · 播放 / 上下步 / 循环', '06', '']
+    ] },
+    { g: '07 · 计算方框', rows: [
+      ['动效', '卡片伸长', 'growDur', ['07-calc', 'growDur', 's'], '07', '动态'],
+      ['动效', '方框展示', 'holdDur', ['07-calc', 'holdDur', 's'], '07', '动态'],
+      ['动效', '卡片缩回', 'shrinkDur', ['07-calc', 'shrinkDur', 's'], '07', '动态'],
+      ['动效', '方框过渡', 'calcFade', ['07-calc', 'calcFade', 's'], '07', '动态'],
+      ['动效', '长够→亮框衔接（演示编排）', 'anatomy · 07 章演示', '.25s（未入调试台）', '07', '动态'],
+      ['动效', '灭完→缩回衔接（演示编排）', 'anatomy · 07 章演示', '.2s（未入调试台）', '07', '动态'],
+      ['样式', '方框尺寸 · 字号 · 提示词', 'sum / split 方框段', '56×22 · 11.5 · sum·avg·max·min', '07', '']
+    ] },
+    { g: '08 · 落位弹跳', rows: [
+      ['动效', '弹跳时长', 'popDur', ['08-seat', 'popDur', 's'], '08', ''],
+      ['动效', '多块错峰', 'seatGap', ['08-seat', 'seatGap', 's'], '08', ''],
+      ['动效', '同批错峰', 'popStagger', ['08-seat', 'popStagger', 's'], '08', ''],
+      ['样式', '弹跳曲线（全站单源）', 'CV.POP_CURVE · beat.js', '0% .35 → 55% 1.16 → 100% 1 · 缓动 1.45', '08', ''],
+      ['样式', '涟漪开关', 'CV.SHOW_RING', 'false（定稿不显示）', '08', '']
+    ] },
+    { g: '09 · 融合', rows: [
+      ['动效', '单次融合', 'fuseDur', ['09-merge', 'fuseDur', 's'], '09', ''],
+      ['动效', '多列错峰', 'mergeGap', ['09-merge', 'mergeGap', 's'], '09', ''],
+      ['动效', '唤醒结束', 'fuseWake', ['09-merge', 'fuseWake', ''], '09', ''],
+      ['动效', '上浮结束', 'fuseRise', ['09-merge', 'fuseRise', ''], '09', ''],
+      ['动效', '淡出起点', 'fuseFade', ['09-merge', 'fuseFade', ''], '09', ''],
+      ['动效', '换 Σ 时刻', 'fuseSwap', ['09-merge', 'fuseSwap', ''], '09', ''],
+      ['动效', '终了缩放', 'fuseShrink', ['09-merge', 'fuseShrink', '×'], '09', ''],
+      ['动效', '白光强度', 'fuseGloss', ['09-merge', 'fuseGloss', ''], '09', ''],
+      ['动效', '拖尾退后', 'fuseTrail', ['09-merge', 'fuseTrail', 'px'], '09', ''],
+      ['样式', '结果块写法', 'setSlot / createMerge', '大 Σ + 下标字母 + 上标份数', '09', ''],
+      ['样式', '结果色混色', 'CV.toneRich', '(份数−1)/3 → deep', '09', ''],
+      ['样式', '白光扫过', 'createMerge', '三停渐变（两端透明）· 只动 gradientTransform', '09', ''],
+      ['样式', '拖尾残影缩放', 'createMerge', '.8 / .6', '09', '']
+    ] },
+    { g: '10 · 聚焦', rows: [
+      ['样式', '聚焦高亮 · 置灰', 'CV.attachFocus · data-l / data-card', '数据块挂 data-l · 卡片挂 data-card', '10', '']
+    ] },
+    { g: '11 · 舞台分层', rows: [
+      ['样式', '层叠次序', 'engine/stage', '连线 < 包 < 卡 < 方框 < 聚焦', '11', '']
+    ] },
+    { g: '编排 · 衔接（跨页 · orch 组 2026-11-02 收编）', rows: [
+      ['动效', '变暗 / 复原时长', 'dimDur · orch 组', ['orch', 'dimDur', 's'], '03', ''],
+      ['动效', '显形时长', 'revealDur · orch 组', ['orch', 'revealDur', 's'], '03', ''],
+      ['动效', '点亮时长（解说层）', 'narration.js · css .wire', '0.30s', '04', ''],
+      ['动效', '转接收位（解说层）', 'narration.js', '0.30s', '02', ''],
+      ['动效', '起飞渐显', 'takeoffFade · orch 组', ['orch', 'takeoffFade', ''], '05', '动态'],
+      ['动效', '余辉比率 · 单流', 'narration.js · afterGlow', '40%', '04', ''],
+      ['动效', '余辉比率 · 家族', 'narration.js · afterGlow', '45%', '04', ''],
+      ['动效', '余辉比率 · 归约族', 'narration.js · 着色段', '42%', '04', ''],
+      ['动效', '余辉比率 · 全换', 'narration.js · 着色段', '30%', '04', ''],
+      ['动效', '落位延迟', 'seatDelay · orch 组', ['orch', 'seatDelay', 's'], '08', '']
+    ] },
+    { g: '全局', rows: [
+      ['动效', '播放速度', 'pageSpeed · global', ['global', 'pageSpeed', '×'], '00', ''],
+      ['样式', '断点 · 窄屏重建', '引擎舞台层', '< 860 用窄屏 · 切换重建按当前进度重绘', '03', '']
+    ] }
   ];
 
   /* ══════════════════════════════════════════════════════════
@@ -333,77 +364,81 @@
               (tx - dx * 0.42 + nx) + ' ' + (ty - dy * 0.42 + ny) + ', ' +
               (tx + nx) + ' ' + (ty + ny);
   }
-
   /* ══════════════════════════════════════════════════════════
-     00 规范总账 —— 三类规范各管什么、在哪个章节、怎么验收（2026-11-02 立章）
-     排查从这一章出发：① 拖杆看跟变 + 编号用例自动验；
-     ② probe 按 rounds 锚点量真值，与 13 章清单对账；③ grep / 结构断言。
-     本节列账不画图；数值一律现读、不写死 —— 写死即假文档。
+     00 规范总账 —— 全量可改项总表（2026-11-02 定稿）
+     动效 39 + 样式 34 = 73 行，按章分组排序；点行跳对应章节子节。
+     本节列账不画图；参数值一律现读、不写死 —— 写死即假文档。
      ══════════════════════════════════════════════════════════ */
   (function () {
-    var s = sec('ledger', '00', '规范总账', 'ledger & acceptance');
+    var s = sec('ledger', '00', '规范总账', 'ledger');
+
+    h('p', 'specs', s).innerHTML =
+      '全站「可改的东西」全量清单：<b>动效 39 + 样式 34 = 73 项</b>，按章节分组排序。' +
+      '<b>动效</b>行是参数 —— 调试台（⚙）可调 / 可锁 / 可记录，数值唯一出处 <code>assets/theme/defaults.js</code>，本表「当前值」列现读，改过就跟着变；' +
+      '<b>样式</b>行的入口是绘制函数 / 令牌，改法见各章末「想改 → 去哪改」行。<br>' +
+      '不在此表的三类（各有自己的页与入口）：每页<b>时序</b> = 原语页齿轮面板；<b>文案</b> = steps.html / narration.js 词表；<b>语义</b> = prepost.html / registry.js。<br>' +
+      '新增可改项：先入本表，入口列填不出不许合。';
+
+    h('h3', null, s).textContent = '全量可改项总表';
+
+    var tbl = h('table', 'ledger-tbl', s);
+    var thead = h('thead', null, tbl);
+    var tr0 = h('tr', null, thead);
+    ['类型', '中文名', '英文名 · 入口', '当前值'].forEach(function (x) { h('th', null, tr0).textContent = x; });
+    var tbody = h('tbody', null, tbl);
+    var liveCells = [];
+
+    LEDGER.forEach(function (G) {
+      var gr = h('tr', 'lg-grp', tbody);
+      var gtd = h('td', null, gr);
+      gtd.colSpan = 4;
+      gtd.textContent = G.g;
+      G.rows.forEach(function (r) {
+        var tr = h('tr', 'lg-row', tbody);
+        var tdT = h('td', null, tr);
+        h('span', r[0] === '动效' ? 'lg-t lg-d' : 'lg-t lg-y', tdT).textContent = r[0];
+        h('td', 'lg-name', tr).textContent = r[1];
+        h('td', 'lg-en', tr).textContent = r[2];
+        var tdV = h('td', 'lg-val', tr);
+        if (r[3] instanceof Array) liveCells.push({ td: tdV, p: r[3] });
+        else tdV.textContent = r[3];
+        tr.title = '点击跳到 ' + r[4] + ' 章' + (r[5] ? '「' + r[5] + '」' : '');
+        tr.onclick = function () { jumpTo(r[4], r[5]); };
+      });
+    });
 
     function fmt(v) { return String(Math.round(v * 100) / 100).replace(/^0\./, '.'); }
-    function unit(sec2, key) {
-      var sc = CV.params.schema()[sec2];
-      return (sc && sc.keys[key] && sc.keys[key].unit) || '';
+    function renderVals() {
+      liveCells.forEach(function (x) {
+        var v = CV.params.get(x.p[0], x.p[1]);
+        x.td.textContent = (typeof v === 'number' ? fmt(v) : '—') + x.p[2];
+      });
     }
-    /* 现读当前值：调试台改过就显示改后值，↺ 回基线（所以这列叫「当前值」不叫「默认值」） */
-    function val(sec2, key) {
-      var v = CV.params.get(sec2, key);
-      return typeof v === 'number' ? fmt(v) + unit(sec2, key) : '—';
-    }
-
-    h('p', 'specs', s).innerHTML =
-      '全页规范分三类，性质与验收方式都不同 —— 排查逐条对账，从这一章出发：<br>' +
-      '<b>① 组件级动效参数</b>　进调试台（⚙）可调 / 可锁 / 可记录，数值唯一出处 <code>assets/theme/defaults.js</code>；' +
-      '下面「当前值」列<b>现读参数表</b>，调试台改过就跟着变。<br>' +
-      '<b>② 编排级定数</b>　定死 ≠ 参数化，有意不进调试台；数值唯一出处是 13 章「编排级定数清单」，各页动词抄它。<br>' +
-      '<b>③ 施工约定</b>　验「写法对不对」，不是数；违反即红。';
-
-    /* ── ① 组件级动效参数 ── */
-    h('h3', null, s).textContent = '① 组件级动效参数（26 杆 + 全局乘数 · 调试台 ⚙）';
-    var ul1 = h('ul', 'todo flat', s);
-    var valCells = [];
-    SPEC_PARAMS.forEach(function (p) {
-      var li = h('li', null, ul1);
-      h('b', null, li).textContent = (p.sec === 'global' ? '全局' : p.sec.slice(0, 2)) + ' · ' + p.key;
-      var c = h('code', null, li);
-      valCells.push({ c: c, p: p });
-      h('span', null, li).textContent = p.what + '　→　验收：' + p.acc;
-    });
-    function renderVals() { valCells.forEach(function (x) { x.c.textContent = val(x.p.sec, x.p.key); }); }
     renderVals();
-    CV.params.onChange(function (ch) {
-      if (ch.section === '*' || SPEC_PARAMS.some(function (p) { return p.sec === ch.section; })) renderVals();
-    });
+    CV.params.onChange(function () { renderVals(); });
 
-    /* ── ② 编排级定数 ── */
-    h('h3', null, s).textContent = '② 编排级定数（6 条 · 数值唯一出处 = 13 章清单）';
-    var ul2 = h('ul', 'todo flat', s);
-    ORCH_ROWS.forEach(function (x) {
-      var li = h('li', null, ul2);
-      h('b', null, li).textContent = x[0];
-      h('code', null, li).textContent = x[1];
-      h('span', null, li).textContent = x[3] + '　→　验收：' + x[4];
-    });
-
-    /* ── ③ 施工约定 ── */
-    h('h3', null, s).textContent = '③ 施工约定（8 条 · 全文见 13 章）';
-    var ul3 = h('ul', 'todo flat', s);
-    RULES.forEach(function (r) {
-      var li = h('li', null, ul3);
-      h('b', null, li).textContent = r.k;
-      h('span', null, li).textContent = '　→　验收：' + r.acc;
-    });
-
-    /* ── 排查入口 ── */
-    h('h3', null, s).textContent = '排查入口';
-    h('p', 'specs', s).innerHTML =
-      '<code>node tools/verify.mjs docs/visual.html --no-shot</code> —— 本页结构探针（目录对齐 / 切换 / 动态子块 / 参数重建）+ 页面报错回显；<br>' +
-      '<code>node tools/verify.mjs &lt;8 原语页 + index&gt; --no-shot</code> —— ① 的编号用例（2.14 持久化 / 2.24 基线契约 / 2.25 保存到代码 / 2.29 of 杆 / 3.61 衔接参数）；<br>' +
-      '<code>node tools/probe.mjs &lt;页&gt; &lt;刻度&gt;:"(()=>{ … })()"</code> —— ② 逐条按 rounds 锚点量真值，与 13 章清单对账。<br>' +
-      '量出来对不上：先改各页动词，再回 13 章清单对齐 —— 清单是那组数的唯一出处。';
+    /* 点行 = 切章 + 滚到含关键词的子标题（无关键词 = 章首）。
+       showSection 在下方 toc 段才定义 —— 点击时它早已就位。 */
+    function jumpTo(no, kw) {
+      if (!(window.CV && window.CV.showSection)) return;
+      window.CV.showSection(no);
+      if (!kw) return;
+      var target = null;
+      [].slice.call(document.querySelectorAll('.sec')).some(function (sc) {
+        var n = sc.querySelector('.sec-no');
+        if (n && n.textContent === no) {
+          target = [].slice.call(sc.querySelectorAll('h3')).filter(function (x) {
+            return x.textContent.indexOf(kw) >= 0;
+          })[0] || null;
+          return true;
+        }
+        return false;
+      });
+      if (target) {
+        window.scrollTo(0, target.getBoundingClientRect().top + window.pageYOffset - 12);
+        history.replaceState(null, '', '#' + target.id);
+      }
+    }
   })();
 
   /* ══════════════════════════════════════════════════════════
@@ -2350,118 +2385,31 @@
       '<b>自查方法</b> 在 DevTools 里临时把某一层的 <code>display</code> 关掉，看还有没有东西被别的层挡着。';
   })();
 
-  /* ══════════════════════════════════════════════════════════
-     11 两套尺寸
-     ══════════════════════════════════════════════════════════ */
-  (function () {
-    var s = sec('scale', '12', '两套尺寸', 'GEO');
-    var s1 = demo(s, 700, 268, '桌面与窄屏两套尺寸并排，1:1 真实像素');
-    var D = G.desktop, N = G.narrow;
-
-    capTx(s1, 60, 30, '桌面 · 视口 ≥ 860px');
-    capTx(s1, 470, 30, '窄屏 · 视口 < 860px');
-
-    /* 桌面卡：内容区摆 4 个块，块间距 12 */
-    var dy = 48;
-    CV.drawCard(s1, {
-      key: 0, geo: { x: 60, y: dy, w: D.card.w, h: D.card.h }, color: DATA[0].color,
-      title: 'rank 0', role: 'dst', target: true,
-      hdr: D.hdr, titleSize: D.title, badgeSize: D.badge
-    });
-    var dAreaY = dy + D.hdr;
-    var dAreaH = D.card.h - D.hdr - 16;
-    var dTotalW = 4 * D.slot.sw + 3 * D.slot.gap;
-    var dX = 60 + (D.card.w - dTotalW) / 2;
-    var dY = dAreaY + (dAreaH - D.slot.sh) / 2;
-    DATA.forEach(function (d, i) {
-      CV.setSlot(CV.drawSlot(s1, dX + i * (D.slot.sw + D.slot.gap), dY, D.slot.sw, D.slot.sh), d, {});
-    });
-
-    /* 窄屏卡：只放一个块，展示 25px 的尺寸 */
-    var ny = 48;
-    CV.drawCard(s1, {
-      key: 1, geo: { x: 470, y: ny, w: N.card.w, h: N.card.h }, color: DATA[1].color,
-      title: 'rank 1', role: 'src',
-      hdr: N.hdr, titleSize: N.title, badgeSize: N.badge
-    });
-    var nAreaY = ny + N.hdr;
-    var nAreaH = N.card.h - N.hdr - 16;
-    CV.setSlot(
-      CV.drawSlot(s1, 470 + (N.card.w - N.slot.sw) / 2, nAreaY + (nAreaH - N.slot.sh) / 2, N.slot.sw, N.slot.sh),
-      DATA[1], {}
-    );
-
-    /* 标注：卡 300×170 / 146×126，块 46 / 25，标题条 36 / 28 */
-    dimH(s1, 60, 360, 240, '300');
-    dimV(s1, 372, ny, ny + D.card.h, '170');
-    dimH(s1, 470, 616, 196, '146');
-    dimV(s1, 628, ny, ny + N.card.h, '126');
-    dimH(s1, dX, dX + D.slot.sw, dY + D.slot.sh + 16, '46');
-    dimH(s1, 470 + (N.card.w - N.slot.sw) / 2, 470 + (N.card.w + N.slot.sw) / 2, nAreaY + (nAreaH - N.slot.sh) / 2 + N.slot.sh + 12, '25');
-    dimV(s1, 40, dy, dy + D.hdr, String(D.hdr), true);
-    dimV(s1, 456, ny, ny + N.hdr, String(N.hdr), true);
-  })();
 
   /* ══════════════════════════════════════════════════════════
-     12 施工约定
+     各章末「想改 → 去哪改」入口行
+     （2026-11-02：原 13 章施工约定拆散 —— 规矩贴到它保护的东西旁边。
+       覆盖判据：每个可改的东西，在本章一屏内能找到入口；
+       找不到 = 漏一行，补进 ENTRY_LINES。00 章总表是全量清单。）
      ══════════════════════════════════════════════════════════ */
   (function () {
-    var s = sec('rules', '13', '施工约定', 'rules');
-
-    var ol = h('ol', 'rules', s);
-    RULES.forEach(function (r) {          /* 全文共用自顶部 RULES（00 章渲染短名 + 验收） */
-      h('li', null, ol).innerHTML = r.full;
+    var ENTRY_LINES = {
+      whole: '想改？① 组件只走 <code>parts/cast.js</code> / <code>payload.js</code> 绘制函数，不手写 <code>rect</code> / <code>text</code>；② 四 rank 色 / TONE / 混色只改 <code>theme.js</code>（<code>CV.PALETTE</code> / <code>CV.TONE</code> / <code>CV.toneRich</code>）；③ 滤镜全站一份，色在 <code>parts/stage.js</code>。',
+      slot: '想改？块样式（尺寸 / 圆角 / 四态色 / 字母字号）只改 <code>drawSlot</code> / <code>setSlot</code>（blocks/legend.js）与 <code>move.js</code> 四态机；尺寸源 = GEO。',
+      card: '想改？① 尺寸只从本页 GEO 抄（viewBox 数字越小 → 整页内容越大），断点 860 用窄屏一套、切换重建按当前进度重绘；② 卡内三处字号由绘制函数写在 SVG 属性上，CSS 别再写；③ 徽章几何只改 <code>badgeGeo</code>、发送中变暗只调 <code>CV.beat.dim</code>（透明度 .6）、目标卡描边走 <code>drawCard</code>。',
+      wire: '想改？线四态只改 verbs 绘制（move / sum / split 的着色段）+ <code>CV.TONE.wire</code>；箭头 marker 在 <code>payload.marker</code>。',
+      packet: '想改？数据包只改 <code>CV.drawPacket</code> / <code>CV.payload</code>（place 起飞渐显、fadeOut 送达淡出）。',
+      controls: '想改？控制条只改 <code>parts/chrome.js</code>（scrub 0–1000 刻度）。',
+      calc: '想改？方框绘制只改 sum / split 的方框段；过渡时长走规范 <code>calcFade</code>（调试台 07 组）。GAP1 / GAP2 是本页演示的编排（anatomy.js）。',
+      pop: '想改？落位只调 <code>CV.spawnPulse</code>；曲线只认 <code>CV.POP_CURVE</code> 单源（beat.js）；<code>theme/stage-page.css</code> 与本页抄写两边同步。',
+      fuse: '想改？融合只调 <code>CV.createMerge</code>（beat.js）。',
+      focus: '想改？聚焦只调 <code>CV.attachFocus</code>；下标分工：数据块挂 <code>data-l</code>、卡片挂 <code>data-card</code>。',
+      layers: '想改？层叠次序只改 <code>engine/stage</code> 分层。'
+    };
+    Object.keys(ENTRY_LINES).forEach(function (id) {
+      var sec2 = document.getElementById(id);
+      if (sec2) h('p', 'specs entry-line', sec2).innerHTML = ENTRY_LINES[id];
     });
-
-    h('h3', null, s).textContent = '本轮已按本页对齐（2026-10-27）';
-    var ul2 = h('ul', 'todo flat', s);
-    [
-      ['标题字号', '.gpu-title 写死 18px', '已删 → 走 GEO 的 15 / 12.5'],
-      ['徽章字号', '.dst-badge 写死 10px', '已删 → 走 GEO 的 10 / 8.5'],
-      ['数据块字母', '.slot-tx 钉死 15px', '已改 0.33 × 块高（15 / 8）'],
-      ['All-Reduce 累加器', '52×52 / 30×30', '已改 46 / 25'],
-      ['All-to-All 数据块', '44 · 间距 10 · 行距 8', '已改 46 · 12 · 12'],
-      ['Reduce 计算态回收', '方框边淡出边收窄', '已改「先灭、再收」两步']
-    ].forEach(function (x) {
-      var li = h('li', null, ul2);
-      h('b', null, li).textContent = x[0];
-      var code = h('code', null, li);
-      code.textContent = x[1];
-      h('span', null, li).textContent = x[2];
-    });
-
-    h('h3', null, s).textContent = '本轮已按本页对齐（2026-11-01）';
-    var ul3 = h('ul', 'todo flat', s);
-    [
-      ['数据块状态', '三态（有数据 / 传输中 / 空）', '已改四态 own / done / waiting / empty，逐态标色值'],
-      ['连线状态', '只画静态解剖', '已补 idle / 飞行 / 余晖 / ring 特例四态数值'],
-      ['发送中变暗', 'beat.dim 未成文', '已入 03（.6，传播中唯一全卡信号）'],
-      ['滤镜 flood', 'fGlow / fTrail #1a1f36', '已修齐 #2a3352（与 stage.js 一致）'],
-      ['版式', '桌面/窄屏与动画模式用 tab', '已全拆：小二级标题堆叠，动画常播']
-    ].forEach(function (x) {
-      var li = h('li', null, ul3);
-      h('b', null, li).textContent = x[0];
-      var code = h('code', null, li);
-      code.textContent = x[1];
-      h('span', null, li).textContent = x[2];
-    });
-
-    /* ── 编排级定数清单（2026-11-01 收编包 D 拍板：定死 ≠ 参数化）──
-       这些秒数/比率是页面编排级微过渡：有意不入规范参数（不设全局杆），
-       但必须在唯一事实源定死——各页动词抄这里，改动走各页节奏。 */
-    h('h3', null, s).textContent = '编排级定数清单（定死 ≠ 参数化 · 2026-11-01 拍板）';
-    var ul4 = h('ul', 'todo flat', s);
-    ORCH_ROWS.forEach(function (x) {      /* 前 3 列；全 5 列（所在章节 / 验收）只在 00 章渲染 */
-      var li = h('li', null, ul4);
-      h('b', null, li).textContent = x[0];
-      var code = h('code', null, li);
-      code.textContent = x[1];
-      h('span', null, li).textContent = x[2];
-    });
-    h('p', 'specs', s).innerHTML =
-      '<b>有意不入规范</b> 以上是页面编排级微过渡：不设全局杆、不进调试台，' +
-      '改动走各页动词的节奏（编排值，非组件值）；规范参数只有调试台里那些（03/05/07/08/09 章）。' +
-      '要改这里某个数：先改各页动词，再回本表对齐——本表是这组数的唯一出处。';
   })();
 
   /* ══════════════════════════════════════════════════════════

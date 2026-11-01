@@ -210,13 +210,15 @@ body {
 }
 
 /* ───────────── SVG 内部 ───────────── */
-.gpu-card { transition: opacity .3s ease; }
+/* 变暗/复原、显形的过渡时长 = 规范参数（orch·dimDur / revealDur），
+   theme.js 开机把它们写进 :root 自定义属性，调试台改完即时生效。 */
+.gpu-card { transition: opacity var(--cv-dim, .3s) ease; }
 /* 字号一律由绘制函数按 GEO 写在属性上（标题 15/12.5、徽章 10/8.5、块内字母 .33 × 块高）。
    CSS 只负责字体族与字重 —— 这里再写 font-size 会盖掉属性，窄屏就会顶着桌面的字号。 */
 .gpu-title {
   font-family: var(--sans); font-weight: 700; fill: var(--tx);
 }
-.slot-g { transition: opacity .32s ease; }
+.slot-g { transition: opacity var(--cv-reveal, .32s) ease; }
 .slot-bg { transition: fill .3s ease, stroke .3s ease; }
 
 /* ───────── 悬停聚焦：指向某类数据块时，其余类缓缓褪成灰 ─────────

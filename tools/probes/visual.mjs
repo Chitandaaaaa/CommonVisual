@@ -7,7 +7,7 @@
    4.9 切节按 href 找链接（00 总账占了 toc[0]）；W8 要量 .demo，结束后回 01。
    调试台锚点（theme.js SCHEMA，2026-11-01 拆 tab 后顺延）：
    03-card→sub-03-5 · 05-packet→sub-05-4 · 07-calc→sub-07-3（08 / 09 不变）。
-   W 真值（2026-11-02 立章 00 总账后重测）：.toc 152×391 r12（13 节时 367，+24 = 一条目录行）；.demo 884×230 r14。
+   W 真值（2026-11-02 二改后重测）：.toc 152×342 r12（12 节：立 00 总账、删 12/13 章，实测重测）；.demo 884×230 r14。
    */
 export async function check(pg) {
   const out = [];
@@ -60,8 +60,8 @@ export async function check(pg) {
         demo: demo ? [demo.offsetWidth, demo.offsetHeight, cs(demo)] : null
       };
     });
-    ok('W8 目录 152×391 r12 · 示例盒 884×230 r14',
-      d.toc && d.demo && d.toc[0] === 152 && d.toc[1] === 391 && d.toc[2] === '12px' &&
+    ok('W8 目录 152×342 r12 · 示例盒 884×230 r14',
+      d.toc && d.demo && d.toc[0] === 152 && d.toc[1] === 342 && d.toc[2] === '12px' &&
       d.demo[0] === 884 && d.demo[1] === 230 && d.demo[2] === '14px',
       `toc=${d.toc} demo=${d.demo}`);
   }

@@ -123,6 +123,21 @@
           fuseTrail:  { label: '拖尾退后',   unit: 'px', def: 18,   min: 0,    max: 40,  step: 1 }
         }
       },
+      orch: {
+        label: '编排·衔接',
+        anchor: 'sub-00-1',   /* 00 章总表（2026-11-02 收编：原「编排级定数」纸面清单入册） */
+        groups: [
+          { label: '衔接', keys: ['dimDur', 'revealDur'] },
+          { label: '飞行', keys: ['takeoffFade'] },
+          { label: '时序', keys: ['seatDelay'] }
+        ],
+        keys: {
+          dimDur:      { label: '变暗/复原', unit: 's', def: 0.3,  min: 0.1, max: 1,   step: 0.05 },
+          revealDur:   { label: '显形时长', unit: 's', def: 0.32, min: 0.1, max: 1,   step: 0.02 },
+          takeoffFade: { label: '起飞渐显', unit: '',  def: 0.08, min: 0.02, max: 0.5, step: 0.01 },
+          seatDelay:   { label: '落位延迟', unit: 's', def: 0.5,  min: 0,   max: 1.5, step: 0.05 }
+        }
+      },
       global: {
         label: '全局播放',
         keys: {
@@ -220,6 +235,21 @@
     var v = CV.specVal(key);
     return v > 0 ? v : d;
   };
+
+  /* ---------- orch 组的 CSS 侧落地：过渡时长走自定义属性 ----------
+     stage-page.css 里 .gpu-card / .slot-g 的 transition 读这两个变量；
+     调试台改 dimDur / revealDur 后这里同步重设，不用 reload。 */
+  (function () {
+    function apply() {
+      var s = document.documentElement.style;
+      s.setProperty('--cv-dim', CV.params.get('orch', 'dimDur') + 's');
+      s.setProperty('--cv-reveal', CV.params.get('orch', 'revealDur') + 's');
+    }
+    apply();
+    CV.params.onChange(function (ch) {
+      if (ch.section === 'orch' || ch.section === '*') apply();
+    });
+  })();
   CV.pack = function (k) { return CV.params.get('05-packet', k); };
 
   /* ---------- 保存基线文件：优先直写磁盘（本地服务的 /__cv/save） ---------- */

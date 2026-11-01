@@ -73,10 +73,10 @@
     }
     var rFly1  = row('fly1',    '飞行', 1.7);
     var rFade1 = CV.timeRow(scene.id, { key: 'fade1', label: '送达淡出', of: 'packFade' });
-    var rDly1  = row('delay1',  '落位延迟', 0.5);
+    var rDly1  = row('delay1',  '落位延迟', CV.specVal('seatDelay') || 0.5);
     var rFly2  = row('fly2',    '飞行', 1.7);
     var rFade2 = CV.timeRow(scene.id, { key: 'fade2', label: '送达淡出', of: 'packFade' });
-    var rDly2  = row('delay2',  '落位延迟', 0.5);
+    var rDly2  = row('delay2',  '落位延迟', CV.specVal('seatDelay') || 0.5);
     var ROWS = [
       row('intro',   '说明', 1.1),
       row('reserve', '预留两排', RS.open),

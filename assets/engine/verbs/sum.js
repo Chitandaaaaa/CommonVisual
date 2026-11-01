@@ -48,7 +48,7 @@
     var rPre  = CV.timeRow(scene.id, { key: 'pre', label: '预留缓冲', sec: RS.open });
     var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '传递', sec: 1.7 });
     var rFade = CV.timeRow(scene.id, { key: 'fade', label: '送达淡出', of: 'packFade' });
-    var rDly  = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: 0.5 });
+    var rDly  = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.specVal('seatDelay') || 0.5 });
     var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳', of: 'popDur' });
     var rGrow = CV.timeRow(scene.id, { key: 'grow', label: '撑开计算层', of: 'growDur' });
     var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '逐段折进', sec: Math.max(SEG + 3 * GAP, HOLD) });
@@ -396,7 +396,7 @@
     var rExp  = CV.timeRow(scene.id, { key: 'expand', label: '预留两排', sec: RS.open + 0.25 });
     var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '飞行', sec: 1.1 });
     var rFade = CV.timeRow(scene.id, { key: 'fade', label: '送达淡出', of: 'packFade' });
-    var rDly  = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: 0.5 });
+    var rDly  = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.specVal('seatDelay') || 0.5 });
     var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳',
       of: ['popDur', 'popStagger', 'popStagger', 'popStagger'], specLabel: '弹跳+错峰' });
     var rGrow = CV.timeRow(scene.id, { key: 'grow', label: '撑开计算层', of: 'growDur' });

@@ -121,14 +121,15 @@
   CV.drawPacketBatch = CV.payload.batch;
 
   /* ---------- 把包放到路径 e（0~1）处；rev = 沿路径反向 ----------
-     入场渐显前 8% 行程（写在 JS，不交给 CSS——会跟逐帧淡出抢同一属性）。
+     入场渐显前 8% 行程（规范 orch·takeoffFade；写在 JS，不交给 CSS——会跟逐帧淡出抢同一属性）。
      拖尾永远在「来路」上，退后距离 = 规范 trailDist。 */
   CV.payload.place = function (pkt, wire, e, rev) {
     var Lp = wire.len;
     var pos = rev ? 1 - e : e;
     var at = pos * Lp;
     var pt = wire.path.getPointAtLength(at);
-    pkt.g.setAttribute('opacity', String(e <= 0 ? 0 : Math.min(1, e / 0.08)));
+    var TO = CV.specNum('takeoffFade', 0.08);
+    pkt.g.setAttribute('opacity', String(e <= 0 ? 0 : Math.min(1, e / TO)));
     pkt.head.setAttribute('transform', 'translate(' + pt.x + ' ' + pt.y + ')');
     var step = rev ? 1 : -1;
     var near = (CV.params && CV.params.get('05-packet', 'trailDist')) || 24;

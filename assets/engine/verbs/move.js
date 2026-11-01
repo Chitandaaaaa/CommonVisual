@@ -404,7 +404,7 @@
     var rIntro = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.9 });
     var rFly   = CV.timeRow(scene.id, { key: 'fly', label: '飞行', sec: 0.95 });
     var rFade  = CV.timeRow(scene.id, { key: 'fade', label: '送达淡出', of: 'packFade' });
-    var rDly   = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: 0.5 });
+    var rDly   = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.specVal('seatDelay') || 0.5 });
     var rSeat  = CV.timeRow(scene.id, { key: 'seat', label: '落位窗口',
       of: ['popDur', 'seatGap', 'seatGap', 'seatGap'], specLabel: '弹跳+错峰' });
     var rGap   = CV.timeRow(scene.id, { key: 'gap', label: '步间停顿', sec: 0.4 });

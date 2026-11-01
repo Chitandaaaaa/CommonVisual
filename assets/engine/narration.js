@@ -31,6 +31,11 @@
   var CW = { A: '紫色', B: '青色', C: '绿色', D: '橙色' };
 
   function spec(k, d) { var v = CV.specVal(k); return (typeof v === 'number' && v > 0) ? v : d; }
+  /* orch 组收编（2026-11-02）：显形 / 变暗复原 / 起飞渐显的时长从参数表现读，
+     行的时间点依旧「锚点 + 动作时长」，参数改了重编译即跟变。 */
+  function REVEAL() { return spec('revealDur', 0.32); }
+  function DIM() { return spec('dimDur', 0.3); }
+  function TAKEOFF() { return spec('takeoffFade', 0.08); }
 
   /* ── 校验：词表 + 闭合。出错抛 Error（verify 的 problems 会回显）。 ── */
   function validate(out) {
@@ -105,19 +110,19 @@
              scatter / broadcast 是接收方整张卡的空槽 */
           if (scene.overlay === 'gather') {
             for (var si = 1; si < slotN(scene, scene.target); si++) {
-              rows.push([it.s, it.s + 0.32, slotName(scene, scene.target, si) + ' · 显形', '空格']);
+              rows.push([it.s, it.s + REVEAL(), slotName(scene, scene.target, si) + ' · 显形', '空格']);
             }
           } else {
             Object.keys(scene.rows).forEach(function (rk) {
               var r = Number(rk);
               if (r === scene.target) return;   /* 主角（gather 目的地 / scatter·broadcast 源）不显形 */
               var n = slotN(scene, r);
-              rows.push([it.s, it.s + 0.32,
+              rows.push([it.s, it.s + REVEAL(),
                 cardName(scene, r) + ' · 显形' + (n > 1 ? '（' + n + ' 格）' : ''),
                 n > 1 ? n + ' 个空格' : '空格']);
             });
           }
-          rows.push(rest(it.s + 0.32, it.e, scene.narr.rest[b.id]));
+          rows.push(rest(it.s + REVEAL(), it.e, scene.narr.rest[b.id]));
         } else {
           rows = [rest(it.s, it.e, scene.narr.rest[b.id])];
         }
@@ -127,7 +132,7 @@
 
       /* move / copy */
       var s = it.s, tE = it.travelEnd, fE = it.fadeEnd, sS = it.seatStart, sE = it.seatEnd;
-      var take = 0.08 * (tE - s);            /* 起飞＝行程前 8% */
+      var take = TAKEOFF() * (tE - s);            /* 起飞＝行程前 8% */
       var fade = fE - tE;                    /* 送达淡出 = packFade × 倍数 */
       var rows = [];
 
@@ -160,7 +165,7 @@
           : (scene.overlay === 'gather' ? cardName(scene, f.from[0]) : slotName(scene, f.from[0], f.from[1]));
         var slot = scene.overlay === 'gather' ? slotName(scene, f.to[0], f.to[1]) : cardName(scene, f.to[0]);
 
-        if (scene.overlay === 'gather') rows.push([s, s + 0.30, src + ' · 变暗', '60% 不透明']);
+        if (scene.overlay === 'gather') rows.push([s, s + DIM(), src + ' · 变暗', '60% 不透明']);
         if (scene.overlay === 'scatter') rows.push([s, null, src + ' · 交空', '空格']);
         rows.push([s, s + 0.30, wire + ' · 点亮', cw + '虚线']);
         rows.push([s, s + 0.30, slot + ' · 转接收位' + (isCopy ? '（4 格）' : ''), '紫底 ···']);
@@ -169,7 +174,7 @@
         rows.push([tE, null, pkt + ' · 抵达', '箭头尖']);
         rows.push([tE, tE + fade, pkt + ' · 淡出', '透明']);
         rows.push([tE, null, wire + ' · 余辉', '40% ' + cw]);
-        if (scene.overlay === 'gather') rows.push([tE, tE + 0.30, src + ' · 复原', '100%']);
+        if (scene.overlay === 'gather') rows.push([tE, tE + DIM(), src + ' · 复原', '100%']);
         rows.push(rest(fE, sS, slot + ' 保持接收位'));
         rows.push([sS, null, slot + ' · 落位' + (isCopy ? '（4 格）' : ''),
           isCopy ? '数据块 A B C D' : '数据块 ' + f.letter]);
@@ -202,7 +207,7 @@
     CH.flows.forEach(function (f, k) {
       var src = 'r' + f.from + '/四槽卡', w = '弧线 ' + (k + 1);
       var sup = SUP[k + 2] || '^' + (k + 2);
-      var s = f.start, take = 0.08 * TM.fly;
+      var s = f.start, take = TAKEOFF() * TM.fly;
       var rows = [
         [s, null, src + ' · 交空（4 格）', '空格'],
         [s, s + 0.30, w + ' · 点亮', '数据色'],
@@ -253,7 +258,7 @@
       return rows;
     }
     function roundRows(r, q) {
-      var take = 0.08 * TM.fly;
+      var take = TAKEOFF() * TM.fly;
       var parts = Math.pow(2, q + 1);
       return [
         [r.start, r.start + 0.30, '两条直连 · 点亮（两对同时）', '数据色'],
@@ -323,7 +328,7 @@
 
     function roundRows(q, fly, seat, calc, merge, dly) {
       var n = CH.RECV[q][0].length;
-      var take = 0.08 * (fly.e - fly.s);
+      var take = TAKEOFF() * (fly.e - fly.s);
       var fade = spec('packFade', 0.6);
       return [
         [fly.s, null, '四张卡 · 交空（各 ' + CH.EMIT[q][0].length + ' 格）', emitText(q)],
@@ -371,7 +376,7 @@
     out.push(G('第 1 步 · 说明', 0, R[0].start, [rest(0, R[0].start, scene.narr.rest.intro)]));
 
     R.forEach(function (r, q) {
-      var take = 0.08 * (r.arrive - r.start);
+      var take = TAKEOFF() * (r.arrive - r.start);
       var rows = [
         [r.start, null, '四张卡 · 交空（上排-' + (q + 1) + '）', '空格（4 张同时）'],
         [r.start, null, 'r' + q + ' 下排 · 转接收位', '紫底 ···'],
