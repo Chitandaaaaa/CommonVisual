@@ -2,9 +2,12 @@
    ------------------------------------------------------------
    test-cases.html 4.8–4.13（4.12 / 4.13 于 2026-11-01 随页去 tab 改版改写：
    tab 全拆 → 小二级标题堆叠、动态常播）+ 2.14 的 visual 半截（cv.params.v1 持久化）+ 蓝图 W8。
+   2026-11-02 立章 00 规范总账（列账不画图）：4.8 改计 14 节（00–13）、
+   4.10 切节改按 href 找链接（00 占了 toc[0]）、4.11 给 00 加无画布豁免；
+   后续 W8 / 4.12 需要 01 在场，4.10 结束后回到 01。
    调试台锚点（theme.js SCHEMA，2026-11-01 拆 tab 后顺延）：
    03-card→sub-03-5 · 05-packet→sub-05-4 · 07-calc→sub-07-3（08 / 09 不变）。
-   W 真值（2026-11-01 拆 tab 改版后重测）：.toc 152×367 r12；.demo 884×230 r14。
+   W 真值（2026-11-02 立章 00 总账后重测）：.toc 152×391 r12（13 节时 367，+24 = 一条目录行）；.demo 884×230 r14。
    */
 export async function check(pg) {
   const out = [];
@@ -20,19 +23,20 @@ export async function check(pg) {
       return { secs, toc };
     });
     const noSeq = d.secs.map(s => s.no);
-    const continuous = noSeq.every((n, i) => n === String(i + 1).padStart(2, '0'));
-    ok('4.8 章节数与编号连续', d.secs.length === 13 && continuous,
+    const continuous = noSeq.every((n, i) => n === String(i).padStart(2, '0'));
+    ok('4.8 章节数与编号连续', d.secs.length === 14 && continuous,
       `sec=${d.secs.length} 编号连续=${continuous}`);
     /* 目录锚点是 #sec-NN；本页是单章视图，点击 = 切到第 NN 节（无真实锚元素）*/
     const tocOk = d.toc.length === d.secs.length &&
       d.toc.every((id, i) => id === 'sec-' + d.secs[i].no);
-    ok('4.9 目录对齐', tocOk, `目录=${d.toc.length}/13`);
+    ok('4.9 目录对齐', tocOk, `目录=${d.toc.length}/14`);
     let clickOk = true;
     if (tocOk && d.toc.length > 1) {
-      /* 点第 7 项目：第 7 节显示、其余隐藏、hash 重写 */
-      await pg.evaluate(() => {
-        document.querySelectorAll('.toc a')[6].click();
-      });
+      /* 点第 8 项（07）：第 7 节显示、其余隐藏、hash 重写 —— 按 href 找，不写死下标 */
+      const i07 = d.toc.indexOf('sec-07');
+      await pg.evaluate((i) => {
+        document.querySelectorAll('.toc a')[i].click();
+      }, i07);
       await pg.waitForTimeout(300);
       clickOk = await pg.evaluate(() => {
         const vis = [...document.querySelectorAll('.sec')]
@@ -40,14 +44,15 @@ export async function check(pg) {
         return vis.length === 1 && vis[0].querySelector('.sec-no').textContent === '07' &&
           location.hash === '#sec-07';
       });
-      /* 回到第 1 节，后续断言（4.11 / W8 / 4.12）默认状态不受影响 */
-      await pg.evaluate(() => { document.querySelectorAll('.toc a')[0].click(); });
+      /* 回到 01：后续断言（4.11 / W8 / 4.12）要量 .demo —— 00 总账没有画布 */
+      const i01 = d.toc.indexOf('sec-01');
+      await pg.evaluate((i) => { document.querySelectorAll('.toc a')[i].click(); }, i01);
       await pg.waitForTimeout(300);
     }
     ok('4.10 章节切换交互', clickOk, `切换显示+hash=${clickOk}`);
   }
 
-  /* 4.11 每节示例都能挂载（01–12 节每节有非空画布；13 施工约定无画布豁免）*/
+  /* 4.11 每节示例都能挂载（01–12 节每节有非空画布；13 施工约定、00 规范总账无画布豁免）*/
   {
     const d = await pg.evaluate(() => {
       const q = (s, r) => [...(r || document).querySelectorAll(s)];
@@ -56,7 +61,7 @@ export async function check(pg) {
         svg: q('svg', s).filter(v => v.childNodes.length > 0).length
       }));
     });
-    const bad = d.filter(x => x.id !== 'rules' && x.svg === 0);
+    const bad = d.filter(x => x.id !== 'rules' && x.id !== 'ledger' && x.svg === 0);
     ok('4.11 每节示例都能挂载', bad.length === 0,
       bad.length ? `无画布节=${bad.map(x => x.id).join(',')}` : `01–12 节均有 svg`);
   }
@@ -72,8 +77,8 @@ export async function check(pg) {
         demo: demo ? [demo.offsetWidth, demo.offsetHeight, cs(demo)] : null
       };
     });
-    ok('W8 目录 152×367 r12 · 示例盒 884×230 r14',
-      d.toc && d.demo && d.toc[0] === 152 && d.toc[1] === 367 && d.toc[2] === '12px' &&
+    ok('W8 目录 152×391 r12 · 示例盒 884×230 r14',
+      d.toc && d.demo && d.toc[0] === 152 && d.toc[1] === 391 && d.toc[2] === '12px' &&
       d.demo[0] === 884 && d.demo[1] === 230 && d.demo[2] === '14px',
       `toc=${d.toc} demo=${d.demo}`);
   }
