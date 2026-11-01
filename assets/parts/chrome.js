@@ -315,12 +315,6 @@
 
     var rowsBox, totalEl, savedEl;
 
-    /* ── 逐动作解说页签状态（docs/steps.html §12.2）── */
-    var tab = 'seq';                    /* 'seq' = 时序（默认，探针兼容） | 'narr' */
-    var narrRows = [], narrEls = [], narrOn = [], narrCh = null, narrErr = null;
-    var narrScroll = null, followBtn = null;
-    var follow = true, followTimer = null;
-
     function ovRaw() { return CV.pageOvRaw(page); }
     function ovAll() { return CV.pageOvRead(page); }
 
@@ -487,9 +481,10 @@
         var tr = narrEls[firstOn];
         var cr = narrScroll.getBoundingClientRect();
         var rr = tr.getBoundingClientRect();
-        if (rr.top < cr.top + 4 || rr.bottom > cr.bottom - 4) {
-          tr.scrollIntoView({ block: 'nearest' });
-        }
+        /* 目标行保持在中部附近（±20px 死区防逐帧抖动），不推到容器边缘；
+           instant 滚：高亮换行时挪一行的高度，跟手不闪（docs/steps.html §12.2） */
+        var delta = (rr.top + rr.height / 2) - (cr.top + cr.height / 2);
+        if (delta > 20 || delta < -20) narrScroll.scrollTop += delta;
       }
     }
 

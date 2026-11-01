@@ -130,8 +130,8 @@
 
   <!-- ============================ 01 ============================ -->
   <section id="s1">
-    <div class="sechead"><span class="no">01</span><h2>面板长什么样</h2><span class="meta">右下角齿轮 · 两个标签页</span></div>
-    <p class="role">面板位置不动，宽度从 372px 加到 <b>约 620px</b>（五列排得开）。滚动条只在内层列表，头部与标签条固定。</p>
+    <div class="sechead"><span class="no">01</span><h2>面板长什么样</h2><span class="meta">右上角时序 · 两个标签页</span></div>
+    <p class="role">面板挂在页头右上角，宽度从 372px 加到 <b>约 660px</b>（五列排得开、字号可读）。滚动条只在内层列表，头部与标签条固定。</p>
 
     <figure class="fig">
       <svg viewBox="0 0 900 430" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif">
@@ -469,7 +469,7 @@
         <li>当前时刻落在 <span class="k">[开始, 结束)</span> 内 → 该行高亮；<b>同刻的几行一起亮</b>，正是「同刻」标记的意义。</li>
         <li>结束为空的行（瞬时动作）：从开始时刻起<b>保持高亮 0.15 秒</b>，否则一闪就看不见。</li>
         <li>静止行照常高亮 —— 播到静止段，画面无动作、列表也无动作，自洽。</li>
-        <li>只在「命中行集合」变化时改 class，不逐帧写 DOM；自动滚动仅在目标行不在视口时触发，用户手动滚动后暂停跟随 2 秒。</li>
+        <li>只在「命中行集合」变化时改 class，不逐帧写 DOM；跟随开启时，目标行<b>保持滚动到列表中部附近</b>（±20px 死区内不滚，换行时只挪一行的高度），用户手动滚动后暂停跟随 2 秒。</li>
       </ul>
     </div>
     <div class="card">
@@ -493,7 +493,7 @@
       <li><b>④ all-reduce 第 2 轮起飞前 Σ² 回退普通字母</b>：确认为现行视觉行为，<b>记 docs/bugs.md 待修</b>，解说文案不与之冲突（飞行期间的行不提上排状态）。</li>
       <li><b>⑤ reduce 终态</b>：以「源卡清空（消耗）」为准——动画、探针 3.26/3.29、项目速记三方一致；已改 <span class="k">registry.js</span> 的 reduce post（原「原样变暗」是错的）。</li>
       <li><b>⑥ 收尾「读结果」提示</b>：未做，留拍板（要做得先补 visual.html 组件口径）。</li>
-      <li><b>实现落点</b>：<span class="k">assets/engine/narration.js</span>（词表 CV.NARR_LEX + 五种时间轴的生成器 + 闭合断言，秒数全部从编译产物现取）；齿轮面板第二页签（chrome.js + stage-page.css，宽 620px）；用例 2.22 / 2.23 进 <span class="k">docs/test-cases.html</span>（96 → 98 条）。本轮顺手修掉的数据错：rs 计算框浮现两处时刻（split 是先长够再浮现，串行）、rs 淡出 0.55、allreduce 起飞 0.09、reduce 预留长高主语、allgather 余辉 45%。</li>
+      <li><b>实现落点</b>：<span class="k">assets/engine/narration.js</span>（词表 CV.NARR_LEX + 五种时间轴的生成器 + 闭合断言，秒数全部从编译产物现取）；齿轮面板第二页签（chrome.js + stage-page.css，宽 660px）；用例 2.22 / 2.23 进 <span class="k">docs/test-cases.html</span>（96 → 98 条）。本轮顺手修掉的数据错：rs 计算框浮现两处时刻（split 是先长够再浮现，串行）、rs 淡出 0.55、allreduce 起飞 0.09、reduce 预留长高主语、allgather 余辉 45%。</li>
     </ul>
   </div>
   <p class="role" style="margin-top:14px">本轮只写文档，<b>没有改任何代码</b>。第 04–11 章的表格由文末数据表生成，改一行数据就能改文案。</p>
@@ -667,7 +667,7 @@ function rsSteps() {
     [8.10, 9.05, '两段 · 折进（错峰 0.50）', '这两段各合 2 份 → Σ²'],
     [9.05, 10.10, '计算框 · 淡出 → 收层', '退回双排卡（第二排留着）']
   ]});
-  st.push({ t: '第 4 步 · 撤掉多余空位 · 0.40 秒', span: '10.10 → 10.50', rows: [
+  st.push({ t: '第 4 步 · 收窄 · 0.40 秒', span: '10.10 → 10.50', rows: [
     [10.10, 10.50, '第二排 · 收窄', '每卡撤掉这一轮用不上的那格']
   ]});
   st.push({ t: '第 5 步 · 第 2 轮（同行互换）· 4.30 秒', span: '10.50 → 14.80', rows: [

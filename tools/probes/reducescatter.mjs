@@ -19,7 +19,11 @@ export async function check(pg) {
   const ok = (name, cond, detail) => out.push({ name, pass: !!cond, detail: detail || '' });
 
   const common = await commonChecks(pg, {
-    page: 'reducescatter', v2: false, gear: false, chAvail: false,
+    page: 'reducescatter', v2: false, gear: true, chAvail: true,
+    /* 面板结构：两轮各一组（第1轮 3–7 / 第2轮 9–13），无 choreo 四小步组；
+       2.14 的持久化键用 slim（卡片收窄）——本页唯一走倍数的规范值行，
+       ×2 后总时长变长（其余行都是编排秒，键得带 .sec 后缀） */
+    grp4: false, gearKey: 'slim',
     edges: [{ letter: null }, { letter: null }, { letter: null }, { letter: null },
       { letter: null }, { letter: null }, { letter: null }, { letter: null }],
     uniform: null,

@@ -559,10 +559,14 @@ export async function commonChecks(pg, cfg) {
       }
       coverOk = coverOk && cover === n;
     }
-    const grp4 = panel && panel.rows.some(r => r.g && r.subs.length === 4 &&
-      r.subs.join() === 'travel,delay,pop,hold');
+    /* grp4＝choreo 的四小步组（travel,delay,pop,hold）；分轮组的页
+       （reducescatter：第1轮/第2轮各五个相）声明 grp4:false 跳过，
+       结构由上面的覆盖率检查兜底 */
+    const grp4 = cfg.grp4 === false ||
+      (panel && panel.rows.some(r => r.g && r.subs.length === 4 &&
+        r.subs.join() === 'travel,delay,pop,hold'));
     ok('2.13a 面板大步并成段（不重复计段）', !!panel && coverOk && grp4,
-      panel ? `cover=${cover}/${ch ? ch.t.length : '?'} grp4=${grp4}` : '面板未打开');
+      panel ? `cover=${cover}/${ch ? ch.t.length : '?'} grp4=${cfg.grp4 === false ? 'skip' : grp4}` : '面板未打开');
 
     /* travel 倍数 ×2：总时长变、段数不变、该段变宽、时序仍连续 */
     const before = await scan(pg);
@@ -603,7 +607,9 @@ export async function commonChecks(pg, cfg) {
       await pg.waitForTimeout(200);
       let narrOk = false, narrD = '面板未打开';
       if (ch) {
-        const trKey = Object.keys(ch.win).find(k => ch.winKind[k] === 'transfer');
+        const trKey = Object.keys(ch.win).find(k => ch.winKind[k] === 'transfer') ||
+          /* 家族页 win 无 kind：退而取任一足够长的窗口中点，保证此刻有高亮行 */
+          Object.keys(ch.win).find(k => ch.win[k] && ch.win[k].e - ch.win[k].s > 0.3);
         if (trKey) {
           const w0 = ch.win[trKey];
           const mid = sc((w0.s + (w0.travelEnd != null ? w0.travelEnd : (w0.s + w0.e) / 2)) / 2, ch.total);
@@ -629,9 +635,11 @@ export async function commonChecks(pg, cfg) {
     }
     await pg.keyboard.press('Escape');
 
-    /* 2.14 持久化：LS 有记录 → 刷新仍生效 → 清掉回基线 */
+    /* 2.14 持久化：LS 有记录 → 刷新仍生效 → 清掉回基线
+       （键参数化：cfg.gearKey 给倍数键，默认 choreo 的 travel） */
+    const gKey = cfg.gearKey || 'travel';
     const lsKey = 'cv.page.' + cfg.page + '.v1';
-    await pg.evaluate((k) => localStorage.setItem(k, JSON.stringify({ travel: 2 })), lsKey);
+    await pg.evaluate(([k, g]) => localStorage.setItem(k, JSON.stringify({ [g]: 2 })), [lsKey, gKey]);
     await pg.reload({ waitUntil: 'load' });
     await pg.waitForFunction(() => window.CV && window.CV.lastMount && window.CV.lastMount.controls,
       null, { timeout: 8000 }).catch(() => {});
@@ -646,9 +654,9 @@ export async function commonChecks(pg, cfg) {
       null, { timeout: 8000 }).catch(() => {});
     await pg.waitForTimeout(300);
     const cleared = await pg.evaluate(() => window.CV.lastMount.controls.duration);
-    ok('2.14 参数持久化', persisted.raw && JSON.parse(persisted.raw).travel === 2 &&
+    ok('2.14 参数持久化', persisted.raw && JSON.parse(persisted.raw)[gKey] === 2 &&
       persisted.dur > dur0 && cleared === dur0,
-      `ls=${!!persisted.raw} dur ${dur0}→${persisted.dur}→${cleared}`);
+      `ls=${!!persisted.raw} ${gKey}=2 dur ${dur0}→${persisted.dur}→${cleared}`);
   }
 
   /* ── 2.15 窄屏断点重排（+ 2.5 窄屏短版半截）── */

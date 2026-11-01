@@ -461,7 +461,7 @@ body {
   border: 1px solid transparent; background: none; cursor: pointer;
   padding: 6px 9px 6px 7px; border-radius: 10px;
   color: rgba(22, 27, 46, .46);
-  font-family: var(--sans); font-size: 12.5px; font-weight: 500;
+  font-family: var(--sans); font-size: 13.5px; font-weight: 500;
   transition: color .2s ease, background .2s ease, border-color .2s ease;
 }
 .gear-btn:hover, .gear-btn.on {
@@ -475,13 +475,13 @@ body {
 
 .gear-pop {
   position: fixed; z-index: 40;
-  width: 620px; max-width: calc(100vw - 24px);
-  max-height: min(74vh, 620px);
+  width: 660px; max-width: calc(100vw - 24px);
+  max-height: min(74vh, 660px);
   display: flex; flex-direction: column;
   background: #fff; border: 1px solid var(--line);
   border-radius: 14px;
   box-shadow: 0 18px 44px rgba(22, 27, 46, .16), 0 2px 6px rgba(22, 27, 46, .06);
-  font-family: var(--sans); font-size: 12px; color: var(--tx);
+  font-family: var(--sans); font-size: 13px; color: var(--tx);
   overflow: hidden;
 }
 .gear-pop[hidden] { display: none; }
@@ -494,7 +494,7 @@ body {
 }
 .gear-tab {
   border: 1px solid transparent; border-bottom: none; background: none; cursor: pointer;
-  font-family: var(--sans); font-size: 11.5px; font-weight: 600; color: var(--tx-3);
+  font-family: var(--sans); font-size: 12.5px; font-weight: 600; color: var(--tx-3);
   padding: 5px 11px 6px; border-radius: 8px 8px 0 0;
 }
 .gear-tab:hover { color: var(--tx-2); }
@@ -507,12 +507,12 @@ body {
   padding: 6px 12px; border-bottom: 1px solid #f2f4f9; background: #fafbfe;
 }
 .gear-narr-tip {
-  flex: 1; font-size: 9.5px; color: #b3b9cb; letter-spacing: .01em;
+  flex: 1; font-size: 10.5px; color: #b3b9cb; letter-spacing: .01em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .gear-narr-follow {
   border: 1px solid var(--line); background: #fff; color: var(--tx-3); cursor: pointer;
-  font-family: var(--sans); font-size: 10px; font-weight: 600;
+  font-family: var(--sans); font-size: 11px; font-weight: 600;
   padding: 3px 8px; border-radius: 7px;
 }
 .gear-narr-follow.on { color: #fff; background: var(--accent); border-color: var(--accent); }
@@ -520,38 +520,38 @@ body {
 .gear-narr-err {
   margin: 10px 4px; padding: 10px 12px; border-radius: 10px;
   background: #fef2f2; border: 1px solid #f3d6d6; color: #7c3535;
-  font-size: 11.5px; white-space: pre-wrap;
+  font-size: 12.5px; white-space: pre-wrap;
 }
 
 .na { width: 100%; border-collapse: collapse; }
 .na th, .na td { padding: 4px 6px; text-align: left; vertical-align: top; border-bottom: 1px solid #f0f2f8; }
 .na thead th {
   position: sticky; top: 0; z-index: 1;
-  background: #fafbfe; font-size: 9.5px; font-weight: 600; color: var(--tx-3);
+  background: #fafbfe; font-size: 10.5px; font-weight: 600; color: var(--tx-3);
 }
-.na .na-c1 { width: 40px; }
-.na .na-c2 { width: 52px; }
-.na .na-c3 { width: 46px; }
-.na .na-c5 { width: 190px; }
-.na-no { font-family: var(--mono); font-size: 9.5px; font-weight: 600; color: var(--accent); white-space: nowrap; }
-.na-t { font-family: var(--mono); font-size: 10px; color: var(--tx-2); white-space: nowrap; }
+.na .na-c1 { width: 44px; }
+.na .na-c2 { width: 60px; }
+.na .na-c3 { width: 52px; }
+.na .na-c5 { width: 200px; }
+.na-no { font-family: var(--mono); font-size: 10.5px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+.na-t { font-family: var(--mono); font-size: 11px; color: var(--tx-2); white-space: nowrap; }
 .na-st { font-weight: 600; }
 /* 同刻：连续几行共用一个「开始」格（steps.html §01 图 2） */
 .na-sim { background: #f7f4ff; border-right: 1px solid #e3dbfb; color: #5b3fbe; }
 .na-same {
   display: inline-block; margin-top: 2px; font-style: normal;
-  font-size: 8.5px; line-height: 1.5; color: var(--accent);
+  font-size: 9.5px; line-height: 1.5; color: var(--accent);
   background: #efe8ff; border-radius: 5px; padding: 0 5px;
 }
 .na-what { color: var(--tx); }
-.na-res { color: var(--tx-3); font-size: 10.5px; }
+.na-res { color: var(--tx-3); font-size: 11.5px; }
 .na-rest .na-what { color: var(--tx-3); font-weight: 500; }
 .na-grp td {
   background: #f6f4ff; border-top: 1px solid #e3dbfb; border-bottom: 1px solid #e3dbfb;
   padding: 5px 6px;
 }
-.na-grp b { font-size: 11px; color: #5b3fbe; }
-.na-span { float: right; font-style: normal; font-family: var(--mono); font-size: 9px; color: #7a72a0; }
+.na-grp b { font-size: 12px; color: #5b3fbe; }
+.na-span { float: right; font-style: normal; font-family: var(--mono); font-size: 10px; color: #7a72a0; }
 .na-row.on td { background: #fbf8ff; }
 .na-row.on td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
 .na-row.on .na-what { color: var(--accent); font-weight: 600; }
@@ -562,14 +562,14 @@ body {
   border-bottom: 1px solid var(--line);
   background: linear-gradient(180deg, #fbfaff, #f6f4fe);
 }
-.gear-title { font-size: 13px; font-weight: 650; letter-spacing: -.01em; }
+.gear-title { font-size: 14px; font-weight: 650; letter-spacing: -.01em; }
 .gear-sub {
-  font-family: var(--mono); font-size: 9.5px; color: var(--tx-3);
+  font-family: var(--mono); font-size: 10.5px; color: var(--tx-3);
   letter-spacing: .01em;
 }
 .gear-x {
   margin-left: auto; border: 0; background: none; cursor: pointer;
-  color: var(--tx-3); font-size: 14px; line-height: 1;
+  color: var(--tx-3); font-size: 15px; line-height: 1;
   padding: 0 2px; align-self: center;
 }
 .gear-x:hover { color: var(--tx); }
@@ -579,14 +579,14 @@ body {
 /* 规则只在顶部讲一次：编号对进度条、两种取值方式 */
 .gear-tip {
   padding: 6px 12px 7px;
-  font-size: 9.5px; color: #b3b9cb; letter-spacing: .01em;
+  font-size: 10.5px; color: #b3b9cb; letter-spacing: .01em;
   background: #fafbfe; border-bottom: 1px solid #f2f4f9;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 .gear-row {
   display: grid;
-  grid-template-columns: 30px 64px minmax(0, 1fr) 66px 42px 18px;
+  grid-template-columns: 30px 74px minmax(0, 1fr) 72px 46px 18px;
   align-items: center; gap: 6px;
   padding: 5px 2px;
 }
@@ -604,30 +604,30 @@ body {
 
 /* 步骤号：与进度条第几段严格对应 */
 .gear-no {
-  font-family: var(--mono); font-size: 9.5px; font-weight: 600; line-height: 1;
+  font-family: var(--mono); font-size: 10.5px; font-weight: 600; line-height: 1;
   color: var(--tx-3); text-align: center; letter-spacing: -.02em;
   background: #f1f3f9; border-radius: 5px; padding: 3px 0;
 }
-.gear-no-grp { font-size: 9px; padding: 3px 2px; }
+.gear-no-grp { font-size: 10px; padding: 3px 2px; }
 /* 组内小步不编号（共用组头那一段），只留占位保持列对齐 */
 .gear-no-sub { background: none; padding: 0; }
 
 .gear-lb {
-  font-size: 11.5px; color: var(--tx-2);
+  font-size: 13px; color: var(--tx-2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .gear-spec {
-  font-family: var(--mono); font-size: 9.5px; color: var(--tx-3);
+  font-family: var(--mono); font-size: 10.5px; color: var(--tx-3);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .gear-spec i { font-style: normal; color: #a6adc2; }
 /* 自定义：告诉人「这一步规范里没有」，不是漏了 */
-.gear-row.abs .gear-spec { color: #b3b9cb; font-family: var(--sans); font-size: 10px; }
+.gear-row.abs .gear-spec { color: #b3b9cb; font-family: var(--sans); font-size: 11px; }
 
 .gear-ipt { display: flex; align-items: center; gap: 2px; }
 .gear-k {
-  width: 42px; padding: 3px 4px;
-  font-family: var(--mono); font-size: 11px; text-align: right;
+  width: 46px; padding: 3px 4px;
+  font-family: var(--mono); font-size: 12px; text-align: right;
   color: var(--tx); background: #fff;
   border: 1px solid var(--line-2); border-radius: 7px;
   -moz-appearance: textfield;
@@ -636,16 +636,16 @@ body {
 .gear-k::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .gear-k:focus { outline: none; border-color: var(--accent-2); box-shadow: 0 0 0 3px var(--accent-soft); }
 .gear-unit {
-  font-family: var(--mono); font-size: 9px; color: #b3b9cb; width: 8px;
+  font-family: var(--mono); font-size: 10px; color: #b3b9cb; width: 8px;
 }
 .gear-sec {
-  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
   color: var(--accent); text-align: right;
 }
 .gear-rs {
   border: 0; background: #f2f4f9; color: var(--tx-3); cursor: pointer;
   width: 18px; height: 18px; border-radius: 6px;
-  font-size: 10px; line-height: 1; padding: 0;
+  font-size: 11px; line-height: 1; padding: 0;
 }
 .gear-rs:hover { background: #e7eaf3; color: var(--tx-2); }
 
@@ -655,10 +655,10 @@ body {
   padding: 2px 2px 4px;
 }
 .gear-grp-lb {
-  font-size: 10px; font-weight: 650; letter-spacing: .08em;
+  font-size: 11.5px; font-weight: 650; letter-spacing: .08em;
   color: var(--tx-3);
 }
-.gear-grp-note { margin-left: auto; font-size: 9.5px; color: #b3b9cb; white-space: nowrap; }
+.gear-grp-note { margin-left: auto; font-size: 10.5px; color: #b3b9cb; white-space: nowrap; }
 /* 小步挂在一条竖虚线上，跟上面的大步一眼分开 */
 .gear-grp-body {
   margin-left: 8px; padding-left: 10px;
@@ -670,17 +670,17 @@ body {
   padding: 9px 11px; border-top: 1px solid var(--line);
   background: #fafbfe;
 }
-.gear-total { font-size: 11px; color: var(--tx-3); margin-right: auto; }
-.gear-total b { font-family: var(--mono); font-size: 11.5px; color: var(--tx-2); }
+.gear-total { font-size: 12px; color: var(--tx-3); margin-right: auto; }
+.gear-total b { font-family: var(--mono); font-size: 12.5px; color: var(--tx-2); }
 /* 存下来的回执：改一个数就亮一下，省得「不知道有没有生效」 */
 .gear-saved {
-  margin-left: 7px; font-size: 9.5px; color: #059669;
+  margin-left: 7px; font-size: 10.5px; color: #059669;
   opacity: 0; transition: opacity .18s ease;
 }
 .gear-saved.on { opacity: 1; }
 .gear-btn-sm {
   border: 0; cursor: pointer; font-family: var(--sans);
-  font-size: 11px; font-weight: 600; padding: 6px 9px; border-radius: 8px;
+  font-size: 12px; font-weight: 600; padding: 6px 9px; border-radius: 8px;
   background: var(--accent); color: #fff;
 }
 .gear-btn-sm:hover { filter: brightness(1.06); }
@@ -691,7 +691,7 @@ body {
 @media (max-width: 860px) {
   .hd { padding: 15px 18px; }
   .hd h1 { font-size: 24px; }
-  .gear-btn { font-size: 11.5px; padding: 5px 7px; }
+  .gear-btn { font-size: 12px; padding: 5px 7px; }
   .gear-txt { display: none; }
   .gear-pop { width: 100%; max-width: calc(100vw - 24px); max-height: 68vh; }
   /* 窄屏：关系导航跟着缩一档（h1 24px → chip 17px，同样小三档），

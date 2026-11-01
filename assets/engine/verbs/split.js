@@ -69,29 +69,42 @@
     var MRG1 = Math.max((N1 - 1) * MGAP + FUSE, HOLD_D);
     var MRG2 = Math.max((N2 - 1) * MGAP + FUSE, HOLD_D);
 
-    /* 齿轮行：两轮的段数与秒数都不同（收 2 段 → 收 1 段），平铺不分组，
-       行号＝进度条第几段。落位/撑开/折进/收层是窗口（内部动画仍按规范值走），
-       只有卡片收窄是纯规范值（走倍数）。 */
+    /* 齿轮行：落位/撑开/折进/收层是窗口（内部动画仍按规范值走），
+       只有卡片收窄是纯规范值（走倍数）。PLAN 仍按下标读这个平铺数组，
+       分组只发生在返回值 rows 的展示层（见 PANEL_ROWS）。 */
     function row(key, label, sec) {
       return CV.timeRow(scene.id, { key: key, label: label, sec: sec });
     }
     var ROWS = [
       row('intro',   '说明', 1.1),
       row('reserve', '预留两排', RS.open),
-      row('fly1',    '第1轮飞行', 1.7),
-      row('seat1',   '第1轮落位', SEAT1),
-      row('calc1',   '第1轮撑开', CALC_UP),
-      row('merge1',  '第1轮折进', MRG1),
-      row('down1',   '第1轮收层', CALC_DOWN),
+      row('fly1',    '飞行', 1.7),
+      row('seat1',   '落位', SEAT1),
+      row('calc1',   '撑开', CALC_UP),
+      row('merge1',  '折进', MRG1),
+      row('down1',   '收层', CALC_DOWN),
       CV.timeRow(scene.id, { key: 'slim', label: '卡片收窄', of: 'blockDur' }),
-      row('fly2',    '第2轮飞行', 1.7),
-      row('seat2',   '第2轮落位', SEAT2),
-      row('calc2',   '第2轮撑开', CALC_UP),
-      row('merge2',  '第2轮折进', MRG2),
+      row('fly2',    '飞行', 1.7),
+      row('seat2',   '落位', SEAT2),
+      row('calc2',   '撑开', CALC_UP),
+      row('merge2',  '折进', MRG2),
       row('shrink',  '收层收卡', CALC_DOWN + RS.close),
       row('tail',    '收尾', 2.2)
     ];
     ROWS.forEach(function (r, i) { r.no = i + 1; });
+
+    /* 面板行：两轮各成一组（组名与解说页签的「第 N 轮（同列/同行互换）」同词），
+       行号并起来仍是进度条第几段；轮前缀进组名，行标签与 gather 族的
+       「说明 / 预留 / 组 / 收场」骨架对齐。时长键不变，本机调参不失效。 */
+    var PANEL_ROWS = [
+      ROWS[0], ROWS[1],
+      { type: 'group', label: '第 1 轮 · 同列互换', noTxt: '3–7', note: '这一轮的五个相',
+        rows: ROWS.slice(2, 7) },
+      ROWS[7],
+      { type: 'group', label: '第 2 轮 · 同行互换', noTxt: '9–13', note: '这一轮的五个相',
+        rows: ROWS.slice(8, 13) },
+      ROWS[13]
+    ];
 
     var c = scene.captions;
     /* 键名按时序标准（assets/rounds.js 头注释）：r<轮号 1 起><相>；
@@ -128,7 +141,7 @@
       win[p.id] = { s: AT[p.id].s, e: AT[p.id].e };
     });
 
-    return { total: TOTAL, steps: steps, win: win, rows: ROWS,
+    return { total: TOTAL, steps: steps, win: win, rows: PANEL_ROWS,
              AT: AT, EMIT: EMIT, RECV: RECV, PARTNER: PARTNER,
              POP: POP, SEATG: SEATG, FUSE: FUSE, MGAP: MGAP,
              CALC_FADE: CALC_FADE, CALC_UP: CALC_UP, CALC_DOWN: CALC_DOWN, BLOCKD: BLOCKD,

@@ -120,7 +120,7 @@
         var flySec = (p0.subs && p0.subs.length) ? p0.subs[0].sec : p0.sec;
         items.push({
           id: sg.id, kind: 'transfer', no: no, text: sg.text, short: sg.short,
-          s: total, e: total + run, parts: parts,
+          s: total, e: total + run, parts: parts, note: sg.note,
           travelEnd: p0.s + flySec,
           fadeEnd:   p0.e,
           seatStart: p0.e + parts[1].sec,
@@ -150,7 +150,7 @@
           type: 'group',
           label: '数据传递' + (tNos.length > 1 ? ' ×' + tNos.length : ''),
           noTxt: noText(tNos),
-          note: '每趟共用这一组',
+          note: it.note || '每趟共用这一组',
           rows: it.parts
         });
       } else {
@@ -214,7 +214,7 @@
         return { id: b.id, kind: 'wait', label: b.label || '说明', sec: b.sec, text: b.text, short: b.short };
       }
       return { id: b.id, kind: 'transfer', label: b.label, text: b.text, short: b.short,
-               stagger: b.stagger };
+               stagger: b.stagger, note: b.note };
     });
     var ch = CV.choreo(page, segs);
     ch.beats = scene.beats;
