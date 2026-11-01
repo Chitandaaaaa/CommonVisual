@@ -66,7 +66,7 @@
     { sec: '03-card', key: 'blockGap',   what: '相邻数据块起步的间隔', acc: '块间错峰变化' },
     { sec: '03-card', key: 'rowLull',    what: '长够 → 第二排开始淡入之间的衔接', acc: '3.61：allreduce 页 +0.2 → RS.open +0.2、总长 +0.2，还原无残差' },
     { sec: '03-card', key: 'rowPause',   what: '第二排撤完 → 卡片收回之间的衔接', acc: '收侧时序 +Δ，还原无残差' },
-    { sec: '05-packet', key: 'packDur',    what: '单程飞行耗时（easeInOutQuad，按弧长取点）', acc: '拖杆 → 05.4 容器整体重建、飞行变慢（4.13）' },
+    { sec: '05-packet', key: 'packDur',    what: '单程飞行耗时（easeInOutQuad，按弧长取点）', acc: '拖杆 → 05.4 容器整体重建、飞行变慢（4.11）' },
     { sec: '05-packet', key: 'packFade',   what: '抵达后原地淡出 = 停留（一轮 = 飞 + 淡，没有额外停留段）', acc: '淡出段拉长，落点仍压箭头尖' },
     { sec: '05-packet', key: 'packLead',   what: '起步让出（封顶 18 / 路径长；整份包恒 0.015）', acc: '拉大不越封顶' },
     { sec: '05-packet', key: 'trailDist',  what: '拖尾退后距离', acc: '拖尾拉长' },
@@ -102,7 +102,7 @@
     ['余辉比率', 'choreo 单流 40% · allgather / reduce 45% · allreduce / reduce-scatter 42% · alltoall 30%', '保留数据色，不是变灰；各页文案由 narration 按此表写死',
       '13 章 · 判定点：各原语页余辉段', 'probe 量各页余辉段 ÷ 飞行段 = 表值；文案断言兜底'],
     ['落位延迟', '0.50s（全站同默认）', '抵达（含淡出）到起弹之间的呼吸；时序面板有对应行（steps 2.6）',
-      '13 章 · 判定点：steps 2.6 衔接带', 'win 锚点 r<k>fade 完 → r<k>seat 起 = .50；2.29 串行律；steps 手写稿对账（4.17）']
+      '13 章 · 判定点：steps 2.6 衔接带', 'win 锚点 r<k>fade 完 → r<k>seat 起 = .50；2.29 串行律；steps 手写稿对账（4.15）']
   ];
 
   var RULES = [
@@ -338,7 +338,7 @@
      00 规范总账 —— 三类规范各管什么、在哪个章节、怎么验收（2026-11-02 立章）
      排查从这一章出发：① 拖杆看跟变 + 编号用例自动验；
      ② probe 按 rounds 锚点量真值，与 13 章清单对账；③ grep / 结构断言。
-     本节没有画布（4.11 豁免）；数值一律现读、不写死 —— 写死即假文档。
+     本节列账不画图；数值一律现读、不写死 —— 写死即假文档。
      ══════════════════════════════════════════════════════════ */
   (function () {
     var s = sec('ledger', '00', '规范总账', 'ledger & acceptance');
@@ -400,7 +400,7 @@
     /* ── 排查入口 ── */
     h('h3', null, s).textContent = '排查入口';
     h('p', 'specs', s).innerHTML =
-      '<code>node tools/verify.mjs docs/visual.html --no-shot</code> —— 本页结构（4.8–4.13）+ 页面报错回显；<br>' +
+      '<code>node tools/verify.mjs docs/visual.html --no-shot</code> —— 本页结构探针（目录对齐 / 切换 / 动态子块 / 参数重建）+ 页面报错回显；<br>' +
       '<code>node tools/verify.mjs &lt;8 原语页 + index&gt; --no-shot</code> —— ① 的编号用例（2.14 持久化 / 2.24 基线契约 / 2.25 保存到代码 / 2.29 of 杆 / 3.61 衔接参数）；<br>' +
       '<code>node tools/probe.mjs &lt;页&gt; &lt;刻度&gt;:"(()=>{ … })()"</code> —— ② 逐条按 rounds 锚点量真值，与 13 章清单对账。<br>' +
       '量出来对不上：先改各页动词，再回 13 章清单对齐 —— 清单是那组数的唯一出处。';

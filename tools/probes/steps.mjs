@@ -1,18 +1,18 @@
 /* ============================================================
    CommonVisual · docs/steps.html 探针（2026-11-01 新增）
    ------------------------------------------------------------
-   test-cases.html 4.14–4.17。steps.html 是纯静态规范稿：
+   test-cases.html 4.12–4.15（2026-11-02 顺延重编，原 4.14–4.17）。steps.html 是纯静态规范稿：
    8 个原语小节的解说表由文末 PAGES 手写数据在打开时生成，
    不加载引擎 —— 所以分两层查：
-     · 4.14 / 4.15 / 4.16 只查稿子自身（章节目录、表内时间
+     · 4.12 / 4.13 / 4.14 只查稿子自身（章节目录、表内时间
        自洽、总览与各节一致），不需要任何挂载；
-     · 4.17 是主闸门：开 8 个原语页取 narrate 现值，与稿内
+     · 4.15 是主闸门：开 8 个原语页取 narrate 现值，与稿内
        表 1:1 对步数 / 行数 / 总秒 / 每行起止（±0.005）。文案
        语义不比（引擎为准，稿是转写）。这条抓的就是手写稿
        向编译产物的漂移 —— 首例即 allgather 13.95 → 18.45
        （轮末静止段每轮 +1.5s，稿没跟上，2026-11-01 已同步）。
    本页无 CV.lastMount（dur=null 属静态页预期，勿按 AGENTS #12
-   误判假通过）；4.17 挂 8 个子页，本条约 20 秒。
+   误判假通过）；4.15 挂 8 个子页，本条约 20 秒。
    ============================================================ */
 export async function check(pg) {
   const out = [];
@@ -68,7 +68,7 @@ export async function check(pg) {
     };
   });
 
-  /* ── 4.14 章节与目录对齐 ── */
+  /* ── 4.12 章节与目录对齐 ── */
   {
     const ids = d.secs.map(s => s.id);
     const wantIds = ['gather', 'scatter', 'broadcast', 'allgather',
@@ -76,13 +76,13 @@ export async function check(pg) {
     const anchorsOk = await pg.evaluate(() =>
       [...document.querySelectorAll('#toc a')].every(a =>
         !!document.getElementById(decodeURIComponent((a.getAttribute('href') || '').slice(1)))));
-    ok('4.14 章节与目录对齐',
+    ok('4.12 章节与目录对齐',
       ids.join() === wantIds.join() && d.total === 13 && d.toc.length === 10 &&
       d.secs.every(s => s.meta && s.ph) && anchorsOk,
       `节=${d.secs.length}/13 toc=${d.toc.length}/10 meta缺=${d.secs.filter(s => !s.meta).length} 锚点可达=${anchorsOk}`);
   }
 
-  /* ── 4.15 解说表时间自洽（稿内自查，不需要引擎）── */
+  /* ── 4.13 解说表时间自洽（稿内自查，不需要引擎）── */
   {
     let ok15 = true, d15 = '';
     outer:
@@ -120,10 +120,10 @@ export async function check(pg) {
         }
       }
     }
-    ok('4.15 解说表时间自洽', ok15, d15 || '8 表全部：s≤e · 组首尾相接 · 末组=meta秒 · 同刻rowspan · 编号连续');
+    ok('4.13 解说表时间自洽', ok15, d15 || '8 表全部：s≤e · 组首尾相接 · 末组=meta秒 · 同刻rowspan · 编号连续');
   }
 
-  /* ── 4.16 总览与各节一致 ── */
+  /* ── 4.14 总览与各节一致 ── */
   {
     let ok16 = d.ov.length === 8, d16 = `ov=${d.ov.length}`;
     if (ok16) for (const tr of d.ov) {
@@ -136,10 +136,10 @@ export async function check(pg) {
         ok16 = false; d16 = `「${cn}」总览行与节不一致`; break;
       }
     }
-    ok('4.16 总览与各节一致', ok16, d16);
+    ok('4.14 总览与各节一致', ok16, d16);
   }
 
-  /* ── 4.17 与引擎对账（8 个原语页各挂一次取 narrate 现值）── */
+  /* ── 4.15 与引擎对账（8 个原语页各挂一次取 narrate 现值）── */
   {
     const eng = [];
     for (const sec of d.secs) {
@@ -184,7 +184,7 @@ export async function check(pg) {
       }
       if (bt.length) { ok17 = false; d17 = `${sec.id} ${bt.join(' · ')}`; break; }
     }
-    ok('4.17 与引擎对账（8页 步/节/秒/每行起止）', ok17,
+    ok('4.15 与引擎对账（8页 步/节/秒/每行起止）', ok17,
       d17 || eng.map(e => `${e.id.replace(/^p-/, '')}=${e.v.total}s`).join(' '));
   }
 

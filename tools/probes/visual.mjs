@@ -1,10 +1,10 @@
 /* CommonVisual · visual 页探针（v2 契约版；原 anatomy 页，2026-10-31 移入 docs/）
    ------------------------------------------------------------
-   test-cases.html 4.8–4.13（4.12 / 4.13 于 2026-11-01 随页去 tab 改版改写：
-   tab 全拆 → 小二级标题堆叠、动态常播）+ 2.14 的 visual 半截（cv.params.v1 持久化）+ 蓝图 W8。
-   2026-11-02 立章 00 规范总账（列账不画图）：4.8 改计 14 节（00–13）、
-   4.10 切节改按 href 找链接（00 占了 toc[0]）、4.11 给 00 加无画布豁免；
-   后续 W8 / 4.12 需要 01 在场，4.10 结束后回到 01。
+   test-cases.html 4.8–4.11（2026-11-02 顺延重编）+ 2.14 的 visual 半截（cv.params.v1 持久化）+ 蓝图 W8。
+   2026-11-02 用户拍板：章节快照类断言整体退役——不验节数、不验起始编号、不验画布
+   豁免（旧 4.8「13/14 节 + 从 01 起编」、旧 4.11「每节画布」删除）。结构只留
+   关系断言：目录条数 = 实际节数、锚点一一对应（4.8）+ 切换交互（4.9）。
+   4.9 切节按 href 找链接（00 总账占了 toc[0]）；W8 要量 .demo，结束后回 01。
    调试台锚点（theme.js SCHEMA，2026-11-01 拆 tab 后顺延）：
    03-card→sub-03-5 · 05-packet→sub-05-4 · 07-calc→sub-07-3（08 / 09 不变）。
    W 真值（2026-11-02 立章 00 总账后重测）：.toc 152×391 r12（13 节时 367，+24 = 一条目录行）；.demo 884×230 r14。
@@ -13,8 +13,9 @@ export async function check(pg) {
   const out = [];
   const ok = (name, cond, detail) => out.push({ name, pass: !!cond, detail: detail || '' });
 
-  /* 4.8 / 4.9 / 4.10 章节齐全、目录对齐、切换交互
-     （2026-10-31 拆自旧 4.10：数量与编号 / 目录 / 点击切换各自独立判）*/
+  /* 4.8 / 4.9 目录对齐、切换交互
+     （2026-11-02：节数 / 起始编号 / 画布豁免等快照断言退役，
+       目录对齐是关系断言——目录与实际节一一对应，加章节不需要改这里）*/
   {
     const d = await pg.evaluate(() => {
       const q = (s, r) => [...(r || document).querySelectorAll(s)];
@@ -22,17 +23,13 @@ export async function check(pg) {
       const toc = q('.toc a').map(a => (a.getAttribute('href') || '').slice(1));
       return { secs, toc };
     });
-    const noSeq = d.secs.map(s => s.no);
-    const continuous = noSeq.every((n, i) => n === String(i).padStart(2, '0'));
-    ok('4.8 章节数与编号连续', d.secs.length === 14 && continuous,
-      `sec=${d.secs.length} 编号连续=${continuous}`);
     /* 目录锚点是 #sec-NN；本页是单章视图，点击 = 切到第 NN 节（无真实锚元素）*/
     const tocOk = d.toc.length === d.secs.length &&
       d.toc.every((id, i) => id === 'sec-' + d.secs[i].no);
-    ok('4.9 目录对齐', tocOk, `目录=${d.toc.length}/14`);
+    ok('4.8 目录对齐', tocOk, `目录=${d.toc.length} 节数=${d.secs.length}`);
     let clickOk = true;
     if (tocOk && d.toc.length > 1) {
-      /* 点第 8 项（07）：第 7 节显示、其余隐藏、hash 重写 —— 按 href 找，不写死下标 */
+      /* 点 07：第 7 节显示、其余隐藏、hash 重写 —— 按 href 找，不写死下标 */
       const i07 = d.toc.indexOf('sec-07');
       await pg.evaluate((i) => {
         document.querySelectorAll('.toc a')[i].click();
@@ -44,26 +41,12 @@ export async function check(pg) {
         return vis.length === 1 && vis[0].querySelector('.sec-no').textContent === '07' &&
           location.hash === '#sec-07';
       });
-      /* 回到 01：后续断言（4.11 / W8 / 4.12）要量 .demo —— 00 总账没有画布 */
+      /* 回到 01：W8 要量 .demo —— 00 总账没有画布 */
       const i01 = d.toc.indexOf('sec-01');
       await pg.evaluate((i) => { document.querySelectorAll('.toc a')[i].click(); }, i01);
       await pg.waitForTimeout(300);
     }
-    ok('4.10 章节切换交互', clickOk, `切换显示+hash=${clickOk}`);
-  }
-
-  /* 4.11 每节示例都能挂载（01–12 节每节有非空画布；13 施工约定、00 规范总账无画布豁免）*/
-  {
-    const d = await pg.evaluate(() => {
-      const q = (s, r) => [...(r || document).querySelectorAll(s)];
-      return q('.sec').map(s => ({
-        id: s.id,
-        svg: q('svg', s).filter(v => v.childNodes.length > 0).length
-      }));
-    });
-    const bad = d.filter(x => x.id !== 'rules' && x.id !== 'ledger' && x.svg === 0);
-    ok('4.11 每节示例都能挂载', bad.length === 0,
-      bad.length ? `无画布节=${bad.map(x => x.id).join(',')}` : `01–12 节均有 svg`);
+    ok('4.9 章节切换交互', clickOk, `切换显示+hash=${clickOk}`);
   }
 
   /* W8 目录 / 示例盒尺寸 */
@@ -83,9 +66,9 @@ export async function check(pg) {
       `toc=${d.toc} demo=${d.demo}`);
   }
 
-  /* 4.12 / 4.13（2026-11-01 随页去 tab 改版改写）：
-     4.12 tab 拆净 + 动态子块常驻（03 / 05 的「动态」子块各有非空 svg、rAF 在跑）；
-     4.13 参数变更 → 动态容器整体重建（打标节点脱离文档）、rAF 不增 */
+  /* 4.10 / 4.11（2026-11-01 随页去 tab 改版改写；2026-11-02 顺延重编，原 4.12 / 4.13）：
+     4.10 tab 拆净 + 动态子块常驻（03 / 05 的「动态」子块各有非空 svg、rAF 在跑）；
+     4.11 参数变更 → 动态容器整体重建（打标节点脱离文档）、rAF 不增 */
   {
     await pg.evaluate(() => {
       window.__rafLast = new Map();
@@ -116,11 +99,11 @@ export async function check(pg) {
       return n;
     });
     const n0 = await loops();
-    ok('4.12 tab 拆净、动态子块常驻',
+    ok('4.10 tab 拆净、动态子块常驻',
       tabs === 0 && n03 >= 1 && n05 >= 2 && n0 >= 4,
       `tab=${tabs} 03动态svg=${n03} 05动态svg=${n05} rAF≈${n0}`);
 
-    /* 4.13：给 05-packet 改一键 → 05 动态容器整体重建；重建前后 rAF 不增 */
+    /* 4.11：给 05-packet 改一键 → 05 动态容器整体重建；重建前后 rAF 不增 */
     await pg.evaluate(() => {
       const sec = document.getElementById('packet');
       const h3 = [...sec.querySelectorAll('h3')].find(x => /动态/.test(x.textContent));
@@ -136,7 +119,7 @@ export async function check(pg) {
     const n1 = await loops();
     await pg.evaluate(() => { CV.params.reset(); });
     await pg.waitForTimeout(200);
-    ok('4.13 参数变更 → 动态子块重建', r.rebuilt && n1 <= n0,
+    ok('4.11 参数变更 → 动态子块重建', r.rebuilt && n1 <= n0,
       `重建=${r.rebuilt} rAF ${n0}→${n1}`);
   }
 
