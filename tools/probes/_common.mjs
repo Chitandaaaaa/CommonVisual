@@ -539,23 +539,30 @@ export async function commonChecks(pg, cfg) {
     ok('2.16 时序不重叠无空档', true, 'SKIP(本页无 getCh，v2 复检)');
   }
 
-  /* ── 2.22 逐动作解说生成闭合（docs/steps.html §12.1：
-     词表内动作 + 每步末行=步末 + 末行结束=总时长；生成器自身会先抛错）── */
+  /* ── 2.22 逐动作解说生成闭合（docs/steps.html §12.1 + §12.4：
+     词表内动作 + 每步末行=步末 + 末行结束=总时长 + 解说/结果列禁嵌时间字面量；
+     生成器自身会先抛错）── */
   if (ch) {
     const nv = await pg.evaluate(() => {
       const M = window.CV && window.CV.lastMount;
       if (!M || !M.scene || typeof window.CV.narrate !== 'function') return { err: 'narrate api 缺失' };
       try {
         const d = window.CV.narrate(M.scene, M.getCh());
+        /* §12.4：时间只活在开始/结束列——文本列抓「错峰+数字」「数字+s」字面量 */
+        const bad = d.flat
+          .filter(r => /错峰\s*\d|\d+\.\d+\s*s(?![a-z])/.test(String(r.what) + ' ' + String(r.res || '')))
+          .map(r => r.what);
         return { n: d.flat.length, groups: d.groups.length, total: d.total,
-                 last: d.groups[d.groups.length - 1].e };
+                 last: d.groups[d.groups.length - 1].e, bad };
       } catch (e) { return { err: e.message }; }
     });
-    ok('2.22 解说生成闭合（词表内·末行=总时长）',
-      !nv.err && nv.n > 0 && Math.abs(nv.last - nv.total) < 1e-3,
-      nv.err ? nv.err : `${nv.groups} 步 ${nv.n} 行 total=${(+nv.total).toFixed(2)}`);
+    ok('2.22 解说生成闭合（词表内·末行=总时长·无时间字面量）',
+      !nv.err && nv.n > 0 && Math.abs(nv.last - nv.total) < 1e-3 && nv.bad.length === 0,
+      nv.err ? nv.err
+        : `${nv.groups} 步 ${nv.n} 行 total=${(+nv.total).toFixed(2)}` +
+          (nv.bad.length ? ` 嵌时间=${nv.bad.join(' / ')}` : ''));
   } else {
-    ok('2.22 解说生成闭合（词表内·末行=总时长）', true, 'SKIP(本页无 getCh)');
+    ok('2.22 解说生成闭合（词表内·末行=总时长·无时间字面量）', true, 'SKIP(本页无 getCh)');
   }
 
   /* ── 2.12 聚焦 hover 与钉住 ── */

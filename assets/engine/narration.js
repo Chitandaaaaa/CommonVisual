@@ -186,7 +186,7 @@
   function buildReduce(scene, CH) {
     var out = [], TM = CH.TM;
     var RS = rowSpan4();
-    var GROW = spec('growDur', 0.75), MGAP = spec('mergeGap', 0.5),
+    var GROW = spec('growDur', 0.75),
         SHRINK = spec('shrinkDur', 0.7);
 
     out.push(G('第 1 步 · 说明', 0, TM.init, [rest(0, TM.init, scene.narr.rest.intro)]));
@@ -215,7 +215,7 @@
         [f.popEnd, f.growEnd, '双排卡 · 长高', '腾出计算层'],
         /* 方框在长高层内淡入：0.35→0.85 进度（与 sum.overlayReduce 的 chipA 同一口径） */
         [f.popEnd + 0.35 * GROW, f.popEnd + 0.85 * GROW, '计算框 · 浮现', 'sum · avg · max · min'],
-        [f.growEnd, f.mergeEnd, '四段 · 折进（错峰 ' + MGAP + '）',
+        [f.growEnd, f.mergeEnd, '四段 · 折进（错峰）',
           'ΣA' + sup + ' ΣB' + sup + ' ΣC' + sup + ' ΣD' + sup],
         /* 收回层：前 45% 是方框淡出，之后卡片缩回（与 sum.overlayReduce 的 FADE 同一口径） */
         [f.mergeEnd, f.mergeEnd + 0.45 * SHRINK, '计算框 · 淡出', '透明'],
@@ -238,7 +238,6 @@
   function buildAllreduce(scene, CH) {
     var out = [], TM = CH.TM, R = CH.rounds;
     var RS = rowSpan4();
-    var MGAP = spec('mergeGap', 0.5);
 
     function expandRows(x, end) {
       var rows = [[x, x + RS.cardDur, '四张四槽卡 · 长高（同时）', '一排变两排']];
@@ -262,10 +261,10 @@
         [r.arrive, null, '整份包 · 抵达', '对方卡边缘'],
         [r.arrive, r.arrive + fade, '整份包 · 淡出', '透明'],
         [r.arrive, null, '两条直连 · 余辉', '42% 数据色'],
-        [r.popStart, r.popEnd, '第二排 · 落位（4 块错峰 ' + TM.stag + '）', '每卡各收 4 块'],
+        [r.popStart, r.popEnd, '第二排 · 落位（4 块错峰）', '每卡各收 4 块'],
         [r.calcStart, r.calcEnd, '双排卡 · 长高', '腾出计算层'],
         [r.calcEnd, r.mergeStart, '计算框 · 浮现', 'sum · avg · max · min'],
-        [r.mergeStart, r.mergeEnd, '四段 · 折进（错峰 ' + MGAP + '）',
+        [r.mergeStart, r.mergeEnd, '四段 · 折进（错峰）',
           '四段各 ' + parts + ' 份 → Σ' + (SUP[parts] || parts)],
         [r.mergeEnd, r.end, '计算框 · 淡出 → 收层', '退回双排卡']
       ];
@@ -292,7 +291,7 @@
   /* ══════════ reducescatter（split）══════════ */
   /* CH.AT 各窗口 + EMIT/RECV 路由 */
   function buildRs(scene, CH) {
-    var out = [], AT = CH.AT, MGAP = CH.MGAP;
+    var out = [], AT = CH.AT;
     var RS = rowSpan4();
     var GROW = spec('growDur', 0.75), DATA = CV.PALETTE;
 
@@ -334,7 +333,7 @@
         [fly.e, seat.e, '第二排 · 落位（' + n + ' 段' + (n > 1 ? '同时' : '') + '）', '每卡收 ' + n + ' 块'],
         [calc.s, calc.s + GROW, '双排卡 · 长高', '腾出计算层'],
         [calc.s + GROW, calc.e, '计算框 · 浮现', 'sum · avg · max · min'],
-        [merge.s, merge.e, (n > 1 ? n + ' 段 · 折进（错峰 ' + MGAP + '）' : '这一段 · 折进'),
+        [merge.s, merge.e, (n > 1 ? n + ' 段 · 折进（错峰）' : '这一段 · 折进'),
           n > 1 ? '这两段各合 2 份 → Σ²' : '凑满 4 份 → Σ⁴']
       ];
     }
@@ -378,7 +377,7 @@
         [r.arrive, null, '单体包 · 抵达', 'r' + q + ' 卡边缘'],
         [r.arrive, r.arrive + spec('packFade', 0.6), '单体包 · 淡出', '透明'],
         [r.arrive, null, '三条直连 · 余辉', '30% 数据色'],
-        [r.arrive, r.done, '下排 · 落位（4 块错峰 ' + SEATG + '）',
+        [r.arrive, r.done, '下排 · 落位（4 块错峰）',
           'A' + q + ' B' + q + ' C' + q + ' D' + q],
         [r.arrive + (P4 - 1) * SEATG, r.done, '下排-4 · 弹跳', '最后一块落定']
       ];
