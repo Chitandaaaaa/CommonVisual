@@ -423,9 +423,9 @@
           <tr class="act"><td class="nm">逐块出现</td><td>第二排的接收位从左到右一块块淡入。</td><td>是「位置」逐个出现</td><td class="mono">0.40s/块，隔 0.15</td></tr>
           <tr class="act"><td class="nm">逐块撤</td><td>第二排的接收位从右往左一块块撤掉。</td><td>先撤块，再收卡，不能同时</td><td class="mono">0.40s/块，隔 0.15</td></tr>
           <tr class="act"><td class="nm">计算框·浮现</td><td>卡片中间那层写 <span class="k">sum · avg · max · min</span> 的方框淡入。</td><td>先长空间，后填内容</td><td class="mono">0.40s</td></tr>
-          <tr class="act"><td class="nm">计算框·淡出</td><td>方框淡出，卡片随后缩回。</td><td>方框一定早于卡片退场</td><td class="mono">0.32s</td></tr>
+          <tr class="act"><td class="nm">计算框·淡出</td><td>方框淡出，卡片随后缩回（读规范 07 <span class="k">calcFade</span>）。</td><td>方框一定早于卡片退场</td><td class="mono">0.35s</td></tr>
           <tr class="act"><td class="nm">折进</td><td>下排的块被吸进上排累加器，上排块变 Σ、份数 +1（all-reduce 翻倍）。</td><td>不是复制过去；段与段错峰 0.50</td><td class="mono">0.42s/段</td></tr>
-          <tr class="act"><td class="nm">收层</td><td>计算态卡退回双排卡。shrinkDur 0.70 的<b>后 0.38s</b>——前 0.32s 是「计算框·淡出」，两者共用一个收层窗口。</td><td>只剩卡片在缩，数据钉在原地</td><td class="mono">0.38s</td></tr>
+          <tr class="act"><td class="nm">收层</td><td>计算态卡退回双排卡：方框先灭（calcFade 0.35），卡片再缩回（shrinkDur 0.70），两相串行共 1.05s。</td><td>只剩卡片在缩，数据钉在原地</td><td class="mono">0.70s</td></tr>
           <tr class="act"><td class="nm">收回</td><td>收场时卡片从双排退回单排（rowClose 的收卡段）。</td><td>先逐块撤、再收回，不能同时</td><td class="mono">0.80s</td></tr><tr class="act"><td class="nm">收窄</td><td>reduce-scatter 第二轮前，把这一轮用不上的一格撤掉。</td><td>单独一拍，不跟飞行同时发生</td><td class="mono">0.40s</td></tr>
           <tr class="act"><td class="nm">静止</td><td>整段画面无运动对象。</td><td>单独成一节，也参与高亮</td><td class="mono">按步</td></tr>
         </tbody>
@@ -433,6 +433,7 @@
       <div class="note blue">
         <b>时长都是「当前默认值」。</b>它们来自全局规范（飞行 1.5 / 淡出 0.6 / 弹跳 0.55 / 折进 0.42 / 长高 0.75…），齿轮面板一改就整体变。
         所以真正的数字必须<b>从时间轴实时算</b>，这份文档里的秒数只是当前默认。
+        表中变暗 / 复原 / 显形 / 点亮 / 余辉比率一类<b>编排级微过渡有意不入规范</b>（不设全局杆）——定数清单与出处见 visual 13 章「编排级定数清单」。
       </div>
     </div>
 

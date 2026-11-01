@@ -787,6 +787,9 @@
     /* 发送中变暗：beat.dim（此前只在引擎注释里，未成文） */
     var bDim = subBlock(s, '发送中变暗 · beat.dim');
     drawDim(bDim);
+    h('p', 'specs', bDim).innerHTML =
+      '<b>变暗 / 复原</b> 0.30s / 0.30s——编排级定数（有意不入规范参数），复原从包抵达那一刻开始；' +
+      '全表见 13 章「编排级定数清单」';
 
     /* 动态：两个场景堆叠常播（一排变两排 / 两排变一排，互为倒放） */
     var bDyn = subBlock(s, '动态 · 卡片长高与数据块增减');
@@ -934,6 +937,9 @@
     });
     subTx(C, 30, 220, '飞行中虚线向前流动：dashoffset = −e × 110（速度感）；落到终点定格 −110 不归零，虚线不在包底下回跳', '#939bb2', 9.5, 'start');
     subTx(C, 30, 236, 'marker 随流染色 · 包沿前 8% 行程渐显（见 05）· 余晖是「刚送完」的记忆，ring 特例是「这条边还在被用」的记忆', '#939bb2', 9.5, 'start');
+    h('p', 'specs', bSt).innerHTML =
+      '<b>点亮 / 余辉</b> 点亮 0.30s（颜色渐变过去）；余辉保留数据色、比率各页不同' +
+      '（choreo 单流 40% · allgather/reduce 45% · allreduce/rs 42% · alltoall 30%）——编排级定数，全表见 13 章';
   })();
 
   /* ══════════════════════════════════════════════════════════
@@ -970,7 +976,8 @@
     var sp1 = h('p', 'specs', b1);
     sp1.innerHTML =
       '<b>trailScale</b> 拖尾浓度倍数（规范 05 · 调试台「特效」）：0 = 无拖尾、1 = 基线，两段拖尾透明度同乘<br>' +
-      '<b>入场</b> 起飞后前 8% 行程线性渐显（opacity = e ÷ 0.08），写在 JS 不交 CSS —— 不跟逐帧定位抢同一属性';
+      '<b>入场</b> 起飞后前 8% 行程线性渐显（opacity = e ÷ 0.08），写在 JS 不交 CSS —— 不跟逐帧定位抢同一属性' +
+      '（编排级定数，见 13 章）';
 
     /* ── 整份包：桌面 / 窄屏各一张，纵向堆叠（2026-11-01 拆 tab） ── */
     drawBatch(subBlock(s, '整份包 .pkt.batch · 桌面'), false);
@@ -2249,7 +2256,7 @@
       '断点 860px：<code>&lt; 860</code> 用窄屏一套；切换时重建舞台，再按当前进度重绘。',
       '下标分工：数据块挂 <code>data-l</code>（聚焦），卡片挂 <code>data-card</code>（置灰）。整份数据的连线与箭头不带 <code>data-l</code>，但整份包内部的小方块要带。',
       '新增原语 = 薄壳 HTML 调 <code>CV.boot(\'&lt;id&gt;\')</code>，剧本写进 <code>scenes/&lt;id&gt;.js</code>，终态登记 <code>registry.js</code>；绘制与时序展开由引擎/动词层接管。',
-      '动效只调函数：落位用 <code>CV.spawnPulse</code>，融合用 <code>CV.createMerge</code>，聚焦用 <code>CV.attachFocus</code>。参数写在 <code>theme/stage-page.css</code> 里，本页为了不加载它抄了一份 —— <b>改一边必须改另一边</b>。唯一例外是 <code>reduce</code> 的融合：它的整份包外层已有位移 transform，再叠一层会变黑块，所以用 <code>CV.cubicBezier</code> 逐点复刻同一条曲线（<code>POP_EASE</code>，真源在 <code>prim/motion.js</code>）。',
+      '动效只调函数：落位用 <code>CV.spawnPulse</code>，融合用 <code>CV.createMerge</code>，聚焦用 <code>CV.attachFocus</code>。参数写在 <code>theme/stage-page.css</code> 里，本页为了不加载它抄了一份 —— <b>改一边必须改另一边</b>。唯一例外是 <code>reduce</code> 的融合：它的整份包外层已有位移 transform，再叠一层会变黑块，所以用 <code>CV.cubicBezier</code> 逐点复刻同一条曲线（真源在 <code>parts/beat.js</code> 的 <code>CV.POP_CURVE</code>，2026-11-01 起全站单源）。',
       '全局 <code>pageSpeed</code> 是所有页内时长的乘数：调试台调 2×，全站快一倍（「送达淡出」这类秒数都会除以它）。本页写下的数字都是 1× 基线。'
     ].forEach(function (x) { h('li', null, ol).innerHTML = x; });
 
@@ -2285,6 +2292,30 @@
       code.textContent = x[1];
       h('span', null, li).textContent = x[2];
     });
+
+    /* ── 编排级定数清单（2026-11-01 收编包 D 拍板：定死 ≠ 参数化）──
+       这些秒数/比率是页面编排级微过渡：有意不入规范参数（不设全局杆），
+       但必须在唯一事实源定死——各页动词抄这里，改动走各页节奏。 */
+    h('h3', null, s).textContent = '编排级定数清单（定死 ≠ 参数化 · 2026-11-01 拍板）';
+    var ul4 = h('ul', 'todo flat', s);
+    [
+      ['变暗 / 复原', '0.30s / 0.30s', '复原从包抵达那一刻开始，不是落位时（beat.dim，透明度 0.6，见 03）'],
+      ['显形', '0.32s', '第二排空位 / 空槽的淡入；显形的是「位置」不是数据'],
+      ['点亮', '0.30s', '线由灰变数据色、加粗，颜色渐变过去（见 04）'],
+      ['起飞渐显', '行程前 8%', '包在起点出现并渐显，只占行程前 8%（见 05）'],
+      ['余辉比率', 'choreo 单流 40% · allgather / reduce 45% · allreduce / reduce-scatter 42% · alltoall 30%', '保留数据色，不是变灰；各页文案由 narration 按此表写死'],
+      ['落位延迟', '0.50s（全站同默认）', '抵达（含淡出）到起弹之间的呼吸；时序面板有对应行（steps 2.6）']
+    ].forEach(function (x) {
+      var li = h('li', null, ul4);
+      h('b', null, li).textContent = x[0];
+      var code = h('code', null, li);
+      code.textContent = x[1];
+      h('span', null, li).textContent = x[2];
+    });
+    h('p', 'specs', s).innerHTML =
+      '<b>有意不入规范</b> 以上是页面编排级微过渡：不设全局杆、不进调试台，' +
+      '改动走各页动词的节奏（编排值，非组件值）；规范参数只有调试台里那些（03/05/07/08/09 章）。' +
+      '要改这里某个数：先改各页动词，再回本表对齐——本表是这组数的唯一出处。';
   })();
 
   /* ══════════════════════════════════════════════════════════
