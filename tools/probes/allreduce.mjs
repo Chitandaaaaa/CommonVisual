@@ -147,5 +147,36 @@ export async function check(pg) {
     ok('3.45 终态没有残留原始块', !raw, raw ? '仍有 A/B/C/D 块' : '无 A/B/C/D');
   }
 
+  /* 3.61 衔接参数生效（2026-11-01 收编包 C：calcFade 入 07、rowLull/rowPause 入 03）。
+     07 调试台改 calcFade +0.2：每轮 mergeStart 与 calcDown 各 +0.2、总长 +0.8（两轮）；
+     03 调试台改 rowLull +0.2：预留两排行（RS.open+0.25）+0.2、总长 +0.2；改完还原。 */
+  {
+    const r = await pg.evaluate(() => {
+      const M = window.CV.lastMount;
+      const c0 = M.getCh();
+      const t0 = c0.total, cd0 = c0.TM.calcDown, ex0 = c0.win.open.e - c0.win.open.s;
+      CV.params.set('07-calc', 'calcFade', 0.55);
+      M.reload();
+      const c1 = M.getCh();
+      const t1 = c1.total, cd1 = c1.TM.calcDown;
+      CV.params.set('03-card', 'rowLull', 0.5);
+      M.reload();
+      const c2 = M.getCh();
+      const t2 = c2.total, ex2 = c2.win.open.e - c2.win.open.s;
+      CV.params.set('07-calc', 'calcFade', 0.35);
+      CV.params.set('03-card', 'rowLull', 0.3);
+      M.reload();
+      const c3 = M.getCh();
+      return { t0, cd0, ex0, t1, cd1, t2, ex2, back: c3.total };
+    });
+    const n3 = (x, y) => Math.abs(x - y) <= 5e-3;
+    const ok61 = !!r && n3(r.cd1, r.cd0 + 0.2) && n3(r.t1, r.t0 + 0.8) &&
+      n3(r.ex2, r.ex0 + 0.2) && n3(r.t2, r.t0 + 1.0) && n3(r.back, r.t0);
+    ok('3.61 衔接参数生效（calcFade / rowLull）', ok61,
+      r ? `calcFade+0.2: calcDown ${r.cd0.toFixed(2)}→${r.cd1.toFixed(2)} total ${r.t0.toFixed(2)}→${r.t1.toFixed(2)}；` +
+          `rowLull+0.2: 预留 ${r.ex0.toFixed(2)}→${r.ex2.toFixed(2)} total→${r.t2.toFixed(2)}；还原 ${r.back.toFixed(2)}`
+        : 'eval 失败');
+  }
+
   return out;
 }
