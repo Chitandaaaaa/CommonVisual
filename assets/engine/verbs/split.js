@@ -52,7 +52,6 @@
 
   verbs.split.timeline = function (scene) {
     var POP = CV.dur('pop');
-    var SEATG = CV.dur('seatGap');
     var FUSE = CV.dur('fuse');
     var MGAP = CV.dur('gap');
     var RS = CV.rowSpan(4);
@@ -65,7 +64,9 @@
     var BLOCKD = CV.dur('blockDur');
 
     var N1 = RECV[0][0].length, N2 = RECV[1][0].length;
-    var SEAT1 = (N1 - 1) * SEATG + POP, SEAT2 = (N2 - 1) * SEATG + POP;
+    /* 落位窗口 = 单颗弹跳时长：同轮各段同飞同弹（2026-11-01 拍板，规范 08
+       双口径），不再按段序错峰——旧窗口 (N−1)×seatGap+pop 随齐弹退役 */
+    var SEAT1 = POP, SEAT2 = POP;
     var MRG1 = Math.max((N1 - 1) * MGAP + FUSE, HOLD_D);
     var MRG2 = Math.max((N2 - 1) * MGAP + FUSE, HOLD_D);
 
@@ -143,7 +144,7 @@
 
     return { total: TOTAL, steps: steps, win: win, rows: PANEL_ROWS,
              AT: AT, EMIT: EMIT, RECV: RECV, PARTNER: PARTNER,
-             POP: POP, SEATG: SEATG, FUSE: FUSE, MGAP: MGAP,
+             POP: POP, FUSE: FUSE, MGAP: MGAP,
              CALC_FADE: CALC_FADE, CALC_UP: CALC_UP, CALC_DOWN: CALC_DOWN, BLOCKD: BLOCKD,
              at: function (sec) { return TOTAL ? sec / TOTAL : 0; } };
   };
@@ -241,7 +242,7 @@
   verbs.split.overlay = function (S, scene, CH, sec) {
     var L = S.L, layer = S.layers;
     var EX = S.extra;
-    var AT = CH.AT, FUSE = CH.FUSE, MGAP = CH.MGAP, POP = CH.POP, SEATG = CH.SEATG;
+    var AT = CH.AT, FUSE = CH.FUSE, MGAP = CH.MGAP, POP = CH.POP;
     var c0 = L.slot;
     var DEEP = CV.TONE.deep;
 
@@ -379,10 +380,10 @@
       }
     });
 
-    /* 落位的块：弹出 → 逐段上折 → 消失 */
+    /* 落位的块：同飞同弹 → 逐段上折 → 消失 */
     EX.ghosts.forEach(function (gh) {
       var fly = AT[gh.q === 0 ? 'r1fly' : 'r2fly'];
-      var landT = fly.e + gh.idx * SEATG;
+      var landT = fly.e;                 /* 同轮各段同刻落位（2026-11-01 拍板） */
       var rowY2 = R[gh.r].y + IN.y2;
 
       moveSlot(gh.slot, rowY2);

@@ -85,6 +85,7 @@
         scene: scene,
         name: reg.en + ' 时序',
         getCh: api.getCh,
+        controls: api.controls,
         onChange: function () { api.reload(); }
       });
       if (gearApi && api.controls.onPaint) {

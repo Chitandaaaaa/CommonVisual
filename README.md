@@ -99,7 +99,7 @@ CommonVisual/
 │   ├── algorithms.html     算法口径：每原语五行（通信前/骨架/轮次/终态/锚点；轮次与锚点均已收编）
 │   ├── visual.html         组件与动效规范：1:1 真值 + 参数调试台（原根 anatomy.html）
 │   ├── steps.html          原语动态步骤规范：名词表 + 逐动作解说文案（原 docs/action.html）
-│   ├── test-cases.html     验证用例清单（96 条，含旧编号映射）
+│   ├── test-cases.html     验证用例清单（110 条，含旧编号映射）
 │   └── bugs.md             缺陷台账（回归与人工验证统一追加）
 ├── tools/
 │   ├── serve.mjs           开发服务 + 「保存到代码」写盘端点（POST /__cv/save，白名单两个基线文件）
@@ -130,7 +130,7 @@ CommonVisual/
 
 ## 验证
 
-验证纪律（先 probe 后截图、验收分频、CDP 坑）见 [`AGENTS.md`](AGENTS.md)；用例清单是 [`docs/test-cases.html`](docs/test-cases.html)（96 条：通用 3 + 全站通用 20 + 原语页 60 + index 与规范页 13，全部已实现）。一图流：
+验证纪律（先 probe 后截图、验收分频、CDP 坑）见 [`AGENTS.md`](AGENTS.md)；用例清单是 [`docs/test-cases.html`](docs/test-cases.html)（110 条：通用 3 + 全站通用 28 + 原语页 62 + index 与规范页 17，全部已实现）。一图流：
 
 ```bash
 node tools/verify.mjs <页> --no-shot   # 结构断言，每次改完跑（改哪页传哪页）

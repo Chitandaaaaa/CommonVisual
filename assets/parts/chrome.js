@@ -27,6 +27,11 @@
   var ICON_PLAY  = '<svg viewBox="0 0 24 24" width="25" height="25" fill="currentColor"><path d="M7 4.5v15L20 12z"/></svg>';
   var ICON_PAUSE = '<svg viewBox="0 0 24 24" width="25" height="25" fill="currentColor"><path d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/></svg>';
 
+  /* 运行时倍速档位（齿轮「逐动作解说」页签的放慢/放快）：
+     只乘在播放推进上，不动编译时长，与全局 pageSpeed（时长除数）叠乘；
+     会话内临时态，刷新回 1×。 */
+  var RATE_STEPS = [0.25, 0.5, 1, 2, 4];
+
   /**
    * @param {Array}  o.steps      [{ t: 0~1, text: html, short? }]
    * @param {Number} o.duration   一轮播放时长（ms）
@@ -52,7 +57,7 @@
     var elSegs = q('#segs', '.segs');
     var elCap = q('#capText', '.cap-text');
 
-    var t = 0, playing = false, rafId = null, lastTs = 0;
+    var t = 0, playing = false, rafId = null, lastTs = 0, rate = 1;
     var segFills = [];
     var paintHooks = [];
 
@@ -99,6 +104,21 @@
       for (var hi = 0; hi < paintHooks.length; hi++) paintHooks[hi](v);
     }
 
+    /* 倍速档位步进：dir=+1 放快 / −1 放慢，越界停在端点。
+       只影响播放推进（tick），seek / 步进 / 高亮一律照常。 */
+    function setRate(v) {
+      rate = clamp(v, RATE_STEPS[0], RATE_STEPS[RATE_STEPS.length - 1]);
+      return rate;
+    }
+    function rateStep(dir) {
+      var i = 0, bd = Infinity;
+      for (var k = 0; k < RATE_STEPS.length; k++) {
+        var d = Math.abs(RATE_STEPS[k] - rate);
+        if (d < bd) { bd = d; i = k; }
+      }
+      return setRate(RATE_STEPS[clamp(i + dir, 0, RATE_STEPS.length - 1)]);
+    }
+
     function setPlaying(v) {
       playing = v;
       var btn = elPlay;
@@ -109,13 +129,14 @@
       }
       if (v) { lastTs = performance.now(); rafId = requestAnimationFrame(tick); }
       else if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      paintChrome(t);   /* 暂停态变了要广播给逐帧钩子（齿轮暂停钮同步） */
     }
 
     function tick(ts) {
       if (!playing) return;
       var dt = Math.min(ts - lastTs, 80);
       lastTs = ts;
-      t += dt / duration;
+      t += dt * rate / duration;
       if (t >= 1) t = 0;                 /* 循环播放 */
       onFrame(t);
       paintChrome(t);
@@ -168,6 +189,9 @@
       if (!isPage) return;
       document.addEventListener('keydown', function (e) {
         if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+        /* 焦点在按钮上时空格走原生点击即可，别再叠加全局播放切换（会双触发）；
+           R / 方向键无原生按钮行为，保持全局生效 */
+        if (e.code === 'Space' && e.target.tagName === 'BUTTON') return;
         if (e.code === 'Space') { e.preventDefault(); setPlaying(!playing); }
         if (e.code === 'ArrowRight') { e.preventDefault(); if (next) next.click(); }
         if (e.code === 'ArrowLeft') { e.preventDefault(); if (prev) prev.click(); }
@@ -186,6 +210,9 @@
       setPlaying: setPlaying,
       toggle: function () { setPlaying(!playing); },
       isPlaying: function () { return playing; },
+      setRate: setRate,
+      rateStep: rateStep,
+      getRate: function () { return rate; },
       t: function () { return t; },
       get duration() { return duration; },
       tToV: tToV,
@@ -295,6 +322,7 @@
     var page = o.page;
     var sceneRef = o.scene || null;   /* 解说生成要用剧本；boot 传入，避免 parts 反向依赖装配层 */
     var getCh = o.getCh;
+    var controls = o.controls || null; /* 暂停/倍速钮要走控制条 API；缺省则不渲染这组钮 */
     var onChange = o.onChange || function () {};
     var hd = document.querySelector('.hd');
     if (!page || typeof getCh !== 'function' || !hd) return null;
@@ -432,6 +460,7 @@
     var narrGroups = [];
     var narrScroll = null, followBtn = null;
     var follow = true, followTimer = null;
+    var pauseBtn = null, rateSlowBtn = null, rateFastBtn = null, rateVal = null;
 
     function buildNarrData(ch) {
       narrCh = ch;
@@ -460,9 +489,29 @@
       followTimer = setTimeout(function () { setFollow(true); }, 2000);
     }
 
+    /* 暂停钮文案跟着真实播放态走（底部条 / 空格 / 本钮三个入口都汇到
+       setPlaying → paintChrome → frame，这里只按状态写，不自己记状态） */
+    function syncPlayBtn() {
+      if (!controls || !pauseBtn) return;
+      var on = controls.isPlaying();
+      if (pauseBtn._on === on) return;
+      pauseBtn._on = on;
+      pauseBtn.textContent = on ? '暂停' : '播放';
+      pauseBtn.classList.toggle('on', on);
+    }
+
+    function syncRateUI() {
+      if (!controls || !rateVal) return;
+      var r = controls.getRate();
+      rateVal.textContent = r + '×';
+      if (rateSlowBtn) rateSlowBtn.disabled = r <= RATE_STEPS[0];
+      if (rateFastBtn) rateFastBtn.disabled = r >= RATE_STEPS[RATE_STEPS.length - 1];
+    }
+
     /* 命中 [开始, 结束) 的行亮；瞬时行（结束空）从开始起亮 0.15 秒。
        只在命中集合变化时改 class，不逐帧写 DOM。 */
     function frame(t) {
+      syncPlayBtn();
       if (pop.hidden || tab !== 'narr' || !narrRows.length) return;
       var ch = getCh();
       if (ch !== narrCh) return;        /* 重编译后下一次 render() 会重建 */
@@ -494,11 +543,39 @@
       var box = el('div', 'gear-narr');
       var bar = el('div', 'gear-narr-bar');
       bar.appendChild(el('span', 'gear-narr-tip', '结束留空＝瞬时 · 高亮＝正在播 · 滚动即暂停跟随 2 秒'));
+      if (controls) {
+        pauseBtn = el('button', 'gear-narr-follow');
+        pauseBtn.type = 'button';
+        pauseBtn.addEventListener('click', function () { controls.toggle(); });
+        bar.appendChild(pauseBtn);
+
+        rateSlowBtn = el('button', 'gear-narr-follow');
+        rateSlowBtn.type = 'button';
+        rateSlowBtn.textContent = '− 放慢';
+        rateSlowBtn.title = '放慢一档（0.25 / 0.5 / 1 / 2 / 4）';
+        rateSlowBtn.setAttribute('aria-label', '放慢一档');
+        rateSlowBtn.addEventListener('click', function () { controls.rateStep(-1); syncRateUI(); });
+        bar.appendChild(rateSlowBtn);
+
+        rateVal = el('span', 'gear-rate-val');
+        bar.appendChild(rateVal);
+
+        rateFastBtn = el('button', 'gear-narr-follow');
+        rateFastBtn.type = 'button';
+        rateFastBtn.textContent = '＋ 放快';
+        rateFastBtn.title = '放快一档（0.25 / 0.5 / 1 / 2 / 4）';
+        rateFastBtn.setAttribute('aria-label', '放快一档');
+        rateFastBtn.addEventListener('click', function () { controls.rateStep(1); syncRateUI(); });
+        bar.appendChild(rateFastBtn);
+
+        syncRateUI();
+      }
       followBtn = el('button', 'gear-narr-follow' + (follow ? ' on' : ''));
       followBtn.type = 'button';
       followBtn.textContent = follow ? '跟随播放 · 开' : '跟随播放 · 关';
       followBtn.addEventListener('click', function () { setFollow(!follow); });
       bar.appendChild(followBtn);
+      syncPlayBtn();
       box.appendChild(bar);
 
       var body = el('div', 'gear-narr-body');

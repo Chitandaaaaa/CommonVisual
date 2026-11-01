@@ -97,10 +97,11 @@
       no += 1;
       if (sg.kind === 'transfer') {
         var run = 0;
-        /* 一拍内 n 块错峰落位（beat 声明 stagger: n，如 allgather）：pop 段
-           如实扩成 popDur + (n−1)×seatGap——SEAT_PARTS 隐含「每趟只落一块」，
-           整轮并发的页会把末块弹跳漏出轮界（bugs.md 2026-10-31）。走 of
-           数组：面板仍按规范值显示、仍调同一根倍数杆；不传 stagger 照旧。 */
+        /* 一拍内 n 块错峰落位（beat 声明 stagger: n）：pop 段如实扩成
+           popDur + (n−1)×seatGap——SEAT_PARTS 隐含「每趟只落一块」。
+           走 of 数组：面板仍按规范值显示、仍调同一根倍数杆；不传 stagger
+           照旧。当前无页面声明 stagger（同飞批齐弹，2026-11-01 拍板），
+           机制留给将来顺序到达的拍。 */
         var srcs = SEAT_PARTS;
         if (sg.stagger > 1) {
           var ofL = ['popDur'];

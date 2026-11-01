@@ -146,7 +146,7 @@
         rows.push([tE, tE + fade, '单体包 · 淡出', '透明']);
         rows.push([tE, null, '4 条环边 · 余辉', '45% 数据色']);
         rows.push([sS, null, '四张卡 · 落位', recv]);
-        rows.push([sS, sS + popD, '四张卡 · 弹跳', '4 块错峰 0.50 依次落定']);
+        rows.push([sS, sS + popD, '四张卡 · 弹跳', '4 块同时落定']);
         rows.push(rest(sS + popD, it.e,
           ord + 1 >= scene.parts ? '四张卡都集齐 A B C D' : '四张卡各 ' + (ord + 1) + ' 块'));
       } else {
@@ -292,7 +292,7 @@
   /* ══════════ reducescatter（split）══════════ */
   /* CH.AT 各窗口 + EMIT/RECV 路由 */
   function buildRs(scene, CH) {
-    var out = [], AT = CH.AT, SEATG = CH.SEATG, MGAP = CH.MGAP;
+    var out = [], AT = CH.AT, MGAP = CH.MGAP;
     var RS = rowSpan4();
     var GROW = spec('growDur', 0.75), DATA = CV.PALETTE;
 
@@ -331,7 +331,7 @@
         [fly.e, null, '单体包 · 抵达', '对端卡边缘'],
         [fly.e, fly.e + 0.55, '单体包 · 淡出', '透明'],      /* split 硬编码 0.55 */
         [fly.e, null, '四条直连 · 余辉', '42% 数据色'],
-        [fly.e, seat.e, '第二排 · 落位（' + n + ' 段错峰 ' + SEATG + '）', '每卡收 ' + n + ' 块'],
+        [fly.e, seat.e, '第二排 · 落位（' + n + ' 段' + (n > 1 ? '同时' : '') + '）', '每卡收 ' + n + ' 块'],
         [calc.s, calc.s + GROW, '双排卡 · 长高', '腾出计算层'],
         [calc.s + GROW, calc.e, '计算框 · 浮现', 'sum · avg · max · min'],
         [merge.s, merge.e, (n > 1 ? n + ' 段 · 折进（错峰 ' + MGAP + '）' : '这一段 · 折进'),

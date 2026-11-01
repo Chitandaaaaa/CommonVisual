@@ -1770,10 +1770,10 @@
     function specHTML() {
       return '<b>关键帧</b> <code>0%</code> scale(.35) opacity 0 → <code>55%</code> scale(1.16) opacity 1 → ' +
         '<code>100%</code> scale(1) · 时长 <code>' + nx2(seatDur()) + 's</code> · 每段都吃同一条缓动<br>' +
-      '<b>多块错峰</b> 一批里有多个块时，第 k 个比第 k−1 个晚 <code>' + nx2(seatGap()) + 's</code> 起跳 ' +
-        '（规范 08 · <code>seatGap</code>）—— 齐刷刷一起弹读不出「一个一个落」。' +
-        '页面用 <code>CV.seatAt(i, base)</code> 算每个块的时刻，<b>不是</b> setTimeout：' +
-        '进度条要能来回拖，定时器拖不回来<br>' +
+      '<b>多块落位两口径</b> 顺序到达的批（all-to-all 一步收的块）用错峰弹：第 k 个比第 k−1 个晚 <code>' + nx2(seatGap()) + 's</code> 起跳 ' +
+        '（规范 08 · <code>seatGap</code>），页面用 <code>CV.seatAt(i, base)</code> 算每个块的时刻，<b>不是</b> setTimeout：' +
+        '进度条要能来回拖，定时器拖不回来；' +
+        '同飞的批（all-gather / reduce-scatter，2026-11-01 拍板）则齐弹——同到同弹，弹跳不拉错峰窗口<br>' +
       '<b>不属于规范的间隔</b> 到达终点到开始弹跳之间的「落位延迟」、两趟传递之间停多久，' +
         '都是每页自己排的节奏 —— 在原语页右侧齿轮里直接填秒<br>' +
       '<b>为什么要 1.45</b> 这个缓动的 y 控制点大于 1，中途会冲过头：1.29× 出现在 0.18s，' +
@@ -1791,7 +1791,7 @@
          用 .sub-tx 包裹文字，给二级标题编号（.sub-no）留位置，
          否则 resize 重算时 textContent 会把编号一起清掉。 */
       var sp = liveHd.querySelector('.sub-tx') || h('span', 'sub-tx', liveHd);
-      sp.textContent = '实时 · 三个块依次落位，错峰 ' + seatGap().toFixed(2) + 's，每 2.2s 重播';
+      sp.textContent = '实时 · seatAt 机制演示（错峰弹）：三个块依次落位，错峰 ' + seatGap().toFixed(2) + 's，每 2.2s 重播';
     }
     liveTx();
     var B = demo(s, 460, 120, '三个数据块依次落位弹跳，真实 CSS 动画');

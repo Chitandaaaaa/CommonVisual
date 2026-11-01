@@ -1,18 +1,21 @@
 /* CommonVisual · reducescatter 页探针（v2 契约版；本页旧版探针的移植 + 3.50/3.51/3.53）
    ------------------------------------------------------------
-   test-cases.html 3.46–3.53（2026-10-31 拆分重排：旧 3.45 拆为 3.50 不变式 +
-   3.51 结束帧，其余顺延）。旧页未挂 getCh：终态与扫描与旧版一致；
-   3.51 的「第 1 轮合并结束」刻度用 OLD.reducescatter.afterMerge1=438
-   （TOTAL 21.25s，2026-10-30 实测）；v2 挂 getCh 后用 win.r1merge 现算
-   （紫条续记：−20 提前量待时序标准定稿后去掉）。
+   test-cases.html 3.46–3.54（2026-10-31 拆分重排：旧 3.45 拆为 3.50 不变式 +
+   3.51 结束帧，其余顺延；2026-11-01 补 3.54 第 1 轮齐弹）。旧页未挂 getCh：
+   终态与扫描与旧版一致；3.51 的「第 1 轮合并结束」刻度用
+   OLD.reducescatter.afterMerge1=438（TOTAL 21.25s，2026-10-30 实测）；
+   v2 挂 getCh 后用 win.r1merge 现算（紫条续记：−20 提前量已废）。
+   2026-11-01 齐弹拍板：第 1 轮 2 段同刻落位，seat1 窗 1.05→0.55，
+   总长 21.15→20.65；3.54 在刷新后干净采样（ghost 透明度跨 seek 不回零）。
    全页断言共用同一次扫描（步 30，60→1000），不再逐条 seek。
-   真值（2026-10-30 旧页 1440×900）：
+   真值（2026-10-30 旧页 1440×900；2026-11-01 齐弹后复核）：
      scrub 0   : 32 个 .slot-tx，card0 顶排 A B C D，calc 全隐
      合并段    : calc 会亮（>0.5）；全程任一卡 Σ 块 ≤ 2（无整份 Σ 中间态）
      afterMerge1: card0 被换出的列（2、3）已空，留下列是 Σᴀ²/Σʙ²
+     齐弹帧    : r1fly.e+0.15 处可见 ghost=8（4 卡 × 2 段同刻；错峰口径下只有 4）
      scrub 1000: 4 个 calc 全隐；每卡 1 块 Σᴀ⁴，四个下标 = A B C D
    */
-import { seek, scan, commonChecks, OLD } from './_common.mjs';
+import { seek, scan, commonChecks, sc, OLD } from './_common.mjs';
 
 export async function check(pg) {
   const out = [];
@@ -104,6 +107,27 @@ export async function check(pg) {
       blocks.length === 4 && per.every(l => l.length === 1) &&
       new Set(blocks.map(x => x.t)).size === 4 && distinct,
       `blocks=[${blocks.map(x => x.t)}] subs=${subs.join('')}`);
+  }
+
+  /* 3.54 第 1 轮两段同刻齐弹（2026-11-01 拍板：同飞同弹）。
+     ghost 透明度跨 seek 不回零 → 刷新后干净采样：r1fly.e+0.15 处
+     8 个 ghost 全部可见（错峰口径下此刻只有 idx0 的 4 个）。 */
+  {
+    await pg.reload({ waitUntil: 'load' });
+    await pg.waitForFunction(() => window.CV && window.CV.lastMount && window.CV.lastMount.controls,
+      null, { timeout: 8000 }).catch(() => {});
+    const ch = common.ch;
+    const w = ch && ch.win && ch.win.r1fly;
+    let vis = -1, atS = '';
+    if (w) {
+      const at = sc(w.e + 0.15, ch.total);
+      await seek(pg, at, 300);
+      vis = await pg.evaluate(() =>
+        [...document.querySelectorAll('.ghost-g')]
+          .filter(g => parseFloat(g.getAttribute('opacity') || '0') > 0.05).length);
+      atS = `@${at}`;
+    }
+    ok('3.54 第 1 轮两段同刻齐弹', vis === 8, `${atS}: 可见 ghost=${vis} (want 8)`);
   }
 
   return out;

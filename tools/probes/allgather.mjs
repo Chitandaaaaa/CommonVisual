@@ -1,11 +1,13 @@
 /* CommonVisual · allgather 页探针（v2 契约版，可在旧页自检）
    ------------------------------------------------------------
-   test-cases.html 3.30–3.38（2026-10-31 拆分重排：旧 3.30 补拆清单行 → 3.33+3.34、旧 3.31 拆为 3.35+3.36，后续顺延）。
+   test-cases.html 3.30–3.39（2026-10-31 拆分重排：旧 3.30 补拆清单行 → 3.33+3.34、旧 3.31 拆为 3.35+3.36，后续顺延；
+   2026-11-01 补 3.39 同轮齐弹）。
    窗口由 getCh 现算（win 键按时序标准 r1/r2/r3，见 assets/rounds.js 头注释）。
-   真值（2026-10-30 旧页 1440×900 两次一致；2026-11-01 pop 段计入错峰后
-   轮长 4.15→5.65、总长 13.95→18.45，下列 scrub 落点复核仍等价）：
+   真值（2026-10-30 旧页 1440×900 两次一致；2026-11-01 齐弹拍板后 pop 段
+   缩回单颗，轮长 5.65→4.15、总长 18.45→13.95，下列 scrub 落点复核仍等价）：
      每轮飞行中点：4 条边同时高亮（各带不同字母）、4 个包同飞 ——
      「每轮四条边同时发」是实现的口径，轮与轮严格串行（scrub 140 实测）。
+     落位齐弹：r1 seatStart=3.50，四块同刻起弹（scrub 265 实测 .slot-pop=4）。
      scrub 332: 每卡 2 块、徽章 2/4；632: 3 块 3/4；1000: 16 块 4/4。
    */
 import { seek, scan, commonChecks, sc, PAL } from './_common.mjs';
@@ -119,6 +121,19 @@ export async function check(pg) {
     ok('3.38 终态四卡内容相同',
       all.every(l => l.map(x => x.l).join() === 'A,B,C,D'),
       all.map(l => l.map(x => x.l).join('')).join(' | '));
+  }
+
+  /* 3.39 同轮四块同刻齐弹（2026-11-01 拍板：同飞同弹，弹跳不拉错峰窗口）。
+     slot-pop class 跨 seek 不摘，前面用例已污染 → 刷新后干净采样：
+     r1 seatStart+0.2s 处四块全部带弹跳 class（错峰口径下此刻只有第 1 块）。 */
+  {
+    await pg.reload({ waitUntil: 'load' });
+    await pg.waitForFunction(() => window.CV && window.CV.lastMount && window.CV.lastMount.controls,
+      null, { timeout: 8000 }).catch(() => {});
+    const w = rounds[0];
+    await seek(pg, sc(w.seatStart + 0.2, T), 300);
+    const n = await pg.evaluate(() => document.querySelectorAll('.slot-pop').length);
+    ok('3.39 同轮四块同刻齐弹', n === 4, `弹跳中槽=${n} (want 4)`);
   }
 
   return out;

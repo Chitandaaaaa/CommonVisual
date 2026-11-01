@@ -366,17 +366,18 @@
 
     verbs.move.ringWires(S, scene, CH, sec);
 
-    /* 数据包按流飞行；落位一批四块是同时到的，但要一块一块弹（规范 08 seatGap） */
+    /* 数据包按流飞行；同轮四包同飞同弹（2026-11-01 拍板，规范 08 双口径）：
+       起弹时刻统一 = seatStart，不再按流下标错峰（错峰口径留给顺序到达的页） */
     scene.beats.forEach(function (b) {
       if (b.kind !== 'move') return;
       var w = CH.win[b.id];
       b.flows.forEach(function (f, fi) {
         var key = 'p' + b.id + '_' + fi;
-        var at = CV.seatAt(fi, w.seatStart);
+        var at = w.seatStart;
         if (sec >= at && !seenM[key]) {
           seenM[key] = 1;
-          /* 单颗弹跳时长 = popOne（popDur 分量）；错峰页的 popSec 是整段
-             错峰窗口（首弹起 → 末弹止），拿来当单颗时长会把每颗都拉长 */
+          /* 单颗弹跳时长 = popOne（popDur 分量）；若哪页声明 stagger 使
+             popSec 变成整段窗口，这里仍取单颗分量 */
           CV.beat.seat(S.layers.fx, S.chips[f.to[0]][idxOf(f.letter)], P(f.color).color, w.popOne || w.popSec);
         } else if (sec < at && seenM[key]) {
           delete seenM[key];

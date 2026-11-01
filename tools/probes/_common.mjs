@@ -719,6 +719,79 @@ export async function commonChecks(pg, cfg) {
       }
       ok('2.23 解说页签行表与高亮跟随', narrOk, narrD);
     }
+
+    /* 2.27 解说页签暂停钮：文案跟真实播放态走（本钮 / 底部条两个入口都同步）。
+       差分式断言，不假设初态：点钮翻转 → 底部条翻转 → 还原。 */
+    {
+      const playBtnState = () => pg.evaluate(() => {
+        const c = window.CV.lastMount.controls;
+        const btn = [...document.querySelectorAll('.gear-narr-bar button')]
+          .find(b => b.textContent === '暂停' || b.textContent === '播放');
+        return { playing: c.isPlaying(), txt: btn ? btn.textContent : null };
+      });
+      const clickNarrBtn = txt => pg.evaluate(t => {
+        const b = [...document.querySelectorAll('.gear-narr-bar button')].find(x => x.textContent === t);
+        if (b) b.click();
+      }, txt);
+      const clickBottomPlay = () => pg.evaluate(() => {
+        const el = document.querySelector('#play'); if (el) el.click();
+      });
+
+      const s0 = await playBtnState();
+      await clickNarrBtn(s0.txt);                    // 齿轮钮：翻转播放态
+      await pg.waitForTimeout(120);
+      const s1 = await playBtnState();
+      await clickBottomPlay();                       // 底部条：再翻转（反向同步）
+      await pg.waitForTimeout(120);
+      const s2 = await playBtnState();
+      if (s2.playing !== s0.playing) await clickBottomPlay();   // 还原初态
+
+      const pOk = !!s0.txt && s0.txt === (s0.playing ? '暂停' : '播放') &&
+        s1.playing === !s0.playing && s1.txt === (s1.playing ? '暂停' : '播放') &&
+        s2.playing === s0.playing && s2.txt === s0.txt;
+      ok('2.27 解说页签暂停钮双向同步', pOk,
+        `${s0.txt}→${s1.txt}→${s2.txt} playing=${s0.playing}→${s1.playing}→${s2.playing}`);
+    }
+
+    /* 2.28 解说页签倍速钮：五档步进 / 读数 / 边界禁用；seek 与分段不受倍速影响 */
+    {
+      const rateState = () => pg.evaluate(() => {
+        const c = window.CV.lastMount.controls;
+        const val = document.querySelector('.gear-narr-bar .gear-rate-val');
+        const btns = [...document.querySelectorAll('.gear-narr-bar button')];
+        const slow = btns.find(b => b.textContent === '− 放慢');
+        const fast = btns.find(b => b.textContent === '＋ 放快');
+        return { r: c.getRate(), val: val ? val.textContent : null,
+                 slowD: slow ? slow.disabled : null, fastD: fast ? fast.disabled : null };
+      });
+      const clickRate = txt => pg.evaluate(t => {
+        const b = [...document.querySelectorAll('.gear-narr-bar button')].find(x => x.textContent === t);
+        if (b) b.click();
+      }, txt);
+
+      await pg.evaluate(() => window.CV.lastMount.controls.setRate(1));
+      const r0 = await rateState();                              // 1×，两端都不禁用
+      await clickRate('＋ 放快');
+      const r1 = await rateState();                              // 2×
+      await clickRate('＋ 放快');
+      const r2 = await rateState();                              // 4×，放快禁用
+      await clickRate('− 放慢'); await clickRate('− 放慢');
+      await clickRate('− 放慢'); await clickRate('− 放慢');
+      const r3 = await rateState();                              // 0.25×，放慢禁用
+      const tSeek = await pg.evaluate(() => {
+        const c = window.CV.lastMount.controls;
+        c.seek(0.5); const v = c.t();
+        c.seek(0); c.setRate(1);                                 // 还原
+        return v;
+      });
+      const rOk = r0.r === 1 && r0.val === '1×' && !r0.slowD && !r0.fastD &&
+        r1.r === 2 && r1.val === '2×' &&
+        r2.r === 4 && r2.val === '4×' && r2.fastD === true &&
+        r3.r === 0.25 && r3.val === '0.25×' && r3.slowD === true &&
+        Math.abs(tSeek - 0.5) < 1e-9;
+      ok('2.28 解说页签倍速五档', rOk,
+        `1→${r1.val}→${r2.val}(fastD=${r2.fastD})→${r3.val}(slowD=${r3.slowD}) seek@0.5=${tSeek.toFixed(4)}`);
+    }
     await pg.keyboard.press('Escape');
 
     /* 2.14 持久化：LS 有记录 → 刷新仍生效 → 清掉回基线
