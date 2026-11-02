@@ -83,7 +83,8 @@ engine/verbs/      copy / move / sum / split 四个动词 —— 绘制与逐帧
 - `registry.js` **终态唯一事实** —— 每页的 `pre / post / rel / verbs`，关系导航、对照表、规范页、探针都读它，不解析动画终态
 - `rounds.js` **轮次口径（算法数据层）** —— 每条原语几轮、每轮动哪些边、轮内分几个相、验证采样哪些锚点（win 引用）；逐字转录自动词展开与剧本 beats，`docs/algorithms.html` 现渲染；win 键命名标准在其头注释
 - `theme/spec.js` **参数表单源**（CV.SPEC：10 组 49 键的 label / 范围 / 出厂值 / kind / sink；消费端只经 `CV.spec(键)` 读，表外键抛错、禁 `||` 兜底；方案见 `docs/参数总线方案.md`）
-- `theme/defaults.js` 参数基线（规范页调试台「保存到代码」写入；读取顺序：spec 出厂值 ← 代码基线 ← localStorage 临时改动）
+- `theme/defaults.js` 全站参数基线（规范页调试台「保存到代码」写入；读取顺序：spec 出厂值 ← 代码基线 ← localStorage 临时改动）
+- `scenes/pages-base.js` 页级时序基线（原语页齿轮「保存到代码」写入；覆盖存 localStorage 单一键 `cv.cfg.page.v1`，页名为键；归属由 `tools/arch.mjs` 边界断言守）
 - `nav/` 页角关系导航；`blocks/` 文档页内容块（head / table / toc / legend / anatomy / paramEditor）
 
 ## 目录结构

@@ -809,8 +809,8 @@ export async function commonChecks(pg, cfg) {
     /* 2.14 持久化：LS 有记录 → 刷新仍生效 → 清掉回基线
        （键参数化：cfg.gearKey 给倍数键，默认 choreo 的 travel） */
     const gKey = cfg.gearKey || 'travel';
-    const lsKey = 'cv.page.' + cfg.page + '.v1';
-    await pg.evaluate(([k, g]) => localStorage.setItem(k, JSON.stringify({ [g]: 2 })), [lsKey, gKey]);
+    const lsKey = 'cv.cfg.page.v1';
+    await pg.evaluate(([k, g, pg0]) => localStorage.setItem(k, JSON.stringify({ [pg0]: { [g]: 2 } })), [lsKey, gKey, cfg.page]);
     await pg.reload({ waitUntil: 'load' });
     await pg.waitForFunction(() => window.CV && window.CV.lastMount && window.CV.lastMount.controls,
       null, { timeout: 8000 }).catch(() => {});
@@ -825,7 +825,7 @@ export async function commonChecks(pg, cfg) {
       null, { timeout: 8000 }).catch(() => {});
     await pg.waitForTimeout(300);
     const cleared = await pg.evaluate(() => window.CV.lastMount.controls.duration);
-    ok('2.14 参数持久化', persisted.raw && JSON.parse(persisted.raw)[gKey] === 2 &&
+    ok('2.14 参数持久化', persisted.raw && (JSON.parse(persisted.raw)[cfg.page] || {})[gKey] === 2 &&
       persisted.dur > dur0 && cleared === dur0,
       `ls=${!!persisted.raw} ${gKey}=2 dur ${dur0}→${persisted.dur}→${cleared}`);
   }

@@ -5,13 +5,13 @@
    ① choreo（gather/scatter/broadcast/allgather 用）：
       剧本列节拍（wait / move / copy），move|copy 自动展开成
       传递 → 落位延迟 → 落位弹跳 → 间隔 四段；有规范值的段走
-      规范值 × 页面倍数，倍数可被齿轮改（cv.page.<页>.v1）。
+      规范值 × 页面倍数，倍数可被齿轮改（cv.cfg.page.v1，页名为键）。
    ② family（reduce/allreduce/reducescatter/alltoall 用）：
       各自的动词（sum/split/move）按规范值 + 编排秒算出显式分段表，
       剧本只给每段的文案；rows 由动词自己构造，同样接时序齿轮。
 
    两条路径的齿轮行都出自 CV.timeRow：有规范值的段给倍数输入
-   （规范改了全站跟），没约定的段直接填秒；覆盖存 cv.page.<页>.v1。
+   （规范改了全站跟），没约定的段直接填秒；覆盖存 cv.cfg.page.v1（单一键，页名为键）。
 
    产物：{ total, steps, win, rows, beats, family }
    组件不知道任何原语；这一层只认识节拍与秒。
@@ -19,12 +19,17 @@
 (function (CV) {
   'use strict';
 
-  /* ── 每页时序覆盖：代码基线（CV_PAGE_DEFAULTS）← localStorage 临时改动 ── */
-  var PAGE_LS = 'cv.page.';
-  CV.pageOvRaw = function (page) {
-    try { return JSON.parse(localStorage.getItem(PAGE_LS + page + '.v1')) || {}; }
+  /* ── 每页时序覆盖：pages-base.js 基线 ← localStorage（单一键，全页合一） ──
+     链与全站同构：代码基线文件 ← LS 覆盖；只是 scope 是「页」，键带页名。 */
+  var PAGE_LS = 'cv.cfg.page.v1';
+  function pageOvAll() {
+    try { return JSON.parse(localStorage.getItem(PAGE_LS)) || {}; }
     catch (e) { return {}; }
-  };
+  }
+  function pageOvWrite(all) {
+    try { localStorage.setItem(PAGE_LS, JSON.stringify(all)); } catch (e) {}
+  }
+  CV.pageOvRaw = function (page) { return pageOvAll()[page] || {}; };
   CV.pageOvRead = function (page) {
     var out = {};
     var base = (window.CV_PAGE_DEFAULTS || {})[page];
@@ -34,10 +39,14 @@
     return out;
   };
   CV.pageOvSave = function (page, ov) {
-    try { localStorage.setItem(PAGE_LS + page + '.v1', JSON.stringify(ov)); } catch (e) {}
+    var all = pageOvAll();
+    if (ov && Object.keys(ov).length) all[page] = ov; else delete all[page];
+    pageOvWrite(all);
   };
   CV.pageOvClear = function (page) {
-    try { localStorage.removeItem(PAGE_LS + page + '.v1'); } catch (e) {}
+    var all = pageOvAll();
+    delete all[page];
+    pageOvWrite(all);
   };
 
   /* ── 一行齿轮数据（choreo 与 family 动词共用）──

@@ -985,7 +985,12 @@ td.dim{color:var(--tx2)}
 
 <span class="c">读</span>   CV.spec('popDur')        按键名查、表外键抛错、返回当前值原样 —— 消费端唯一入口
 <span class="c">写</span>   CV.params.set / reset    只有面板与探针调；set 触发 onChange → 页面 reload 重编译
-<span class="c">CSS</span>  --cv-<键>                sink=css/both 的键全部写成 :root 自定义属性，stage-page.css 只读 var()（5.1d 扫裸值）</pre>
+<span class="c">CSS</span>  --cv-<键>                sink=css/both 的键全部写成 :root 自定义属性，stage-page.css 只读 var()（5.1d 扫裸值）
+
+<span class="c">页级链</span>（同一套机制，scope 是「页」）：时序齿轮的倍数 / 编排秒
+     ① 基线  scenes/pages-base.js   CV_PAGE_DEFAULTS[页][键]      机器写：齿轮「保存到代码」
+     ② 覆盖  localStorage            cv.cfg.page.v1                单一键，页名为键；compile.js 的 pageOv* 读写
+     归属由 arch.mjs 边界断言守：全局数据位只许约定文件读写。</pre>
   <div class="note">
     <b>为什么禁止 <code>CV.spec('x') || 0.55</code>：</b>那个 0.55 是默认值的第二份拷贝，表改了它不会跟 —— 2026-11-02 清理前 fuseDur 的兜底写着 0.55、表里是 0.42，靠「表值非零兜底从不触发」才没出事。
     现在表外键直接抛错，默认值只有表能给；探针 5.1c 扫源码守这条。全套设计见 <code>docs/参数总线方案.md</code>。

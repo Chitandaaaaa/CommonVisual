@@ -148,6 +148,20 @@ const out = {
   cssVarShared: Object.fromEntries([...cssVarShared].sort())
 };
 
+/* ── 边界断言：全局数据位只许约定文件读（参数总线的归属，docs/参数总线方案.md §5）── */
+const GLOBAL_OWNERS = {
+  CV_PARAM_DEFAULTS: ['assets/theme/defaults.js', 'assets/theme/theme.js'],   // 定义（机器写）+ 播种读
+  CV_PAGE_DEFAULTS:  ['assets/scenes/pages-base.js', 'assets/engine/compile.js', 'assets/parts/chrome.js'], // 定义 + 读取 + 齿轮「保存到代码」写
+  CV_LEDGER:         ['assets/ledger.js', 'assets/blocks/anatomy.js']          // 定义 + 00 章渲染（探针走 module）
+};
+const boundaryBad = [];
+for (const [f, g] of Object.entries(out.globals)) {
+  for (const name of g) {
+    const owners = GLOBAL_OWNERS[name];
+    if (owners && !owners.includes(f)) boundaryBad.push(f + ' 读 ' + name + '（只许 ' + owners.join(' / ') + '）');
+  }
+}
+
 if (process.argv.includes('--json')) {
   console.log(JSON.stringify(out, null, 2));
 } else {
@@ -165,6 +179,9 @@ if (process.argv.includes('--json')) {
   }
   console.log('\n## 全局数据依赖');
   for (const [f, g] of Object.entries(out.globals)) console.log(`  ${f}: ${g.join(', ')}`);
+  console.log('\n## 边界断言（全局数据位归属）');
+  if (!boundaryBad.length) console.log('  （无越界，参数总线归属成立）');
+  for (const b of boundaryBad) console.log('  ✗ ' + b);
   console.log('\n## CSS → CSS');
   for (const [f, d] of Object.entries(out.cssEdges)) console.log(`  ${f} @import ${d.join(', ')}`);
   console.log('\n## CSS 跨文件变量（本文件未定义、靠别的文件提供）');
