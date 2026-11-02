@@ -5,7 +5,7 @@
 
 ## 一、项目速览
 
-CommonVisual 是零构建的静态可视化站点，用逐步动画讲清 8 种分布式通信原语（gather / scatter / broadcast / reduce / allgather / allreduce / reducescatter / alltoall）。技术栈是纯 HTML + CSS + 原生 JS：全局命名空间 `window.CV` + defer 脚本，不用框架、不用 ESM、不用打包——「双击 html 就能看」是硬需求（file:// 下 ESM 被 CORS 拦）。核心入口是根目录 9 个 HTML（8 原语页 + index），每页是薄壳、只调 `CV.boot('<id>')`，内容全在 `assets/scenes/<id>.js` 纯数据剧本里；**规范页在 `docs/`**（prepost / algorithms / visual / specs / steps / test-cases），经 `../assets/` 引用底层组件——规范与业务代码两条线互不依赖，都只向下用组件。单一事实源是 `assets/registry.js`（每条原语的 pre / post 语义 + algo + rel + verbs），轮次口径在 `assets/rounds.js`（算法数据层，几轮 / 每轮哪些边 / 轮内相），公共层 `assets/engine/`（compile / director / verbs）、`parts/`、`prim/`、`theme/` 被八页共用。唯一 dev 依赖 playwright-core，`tools/` 用无头 Chrome 跑几何断言与截图；仓库没有 build、没有 lint。
+CommonVisual 是零构建的静态可视化站点，用逐步动画讲清 8 种分布式通信原语（gather / scatter / broadcast / reduce / allgather / allreduce / reducescatter / alltoall）。技术栈是纯 HTML + CSS + 原生 JS：全局命名空间 `window.CV` + defer 脚本，不用框架、不用 ESM、不用打包——「双击 html 就能看」是硬需求（file:// 下 ESM 被 CORS 拦）。核心入口是根目录 9 个 HTML（8 原语页 + index），每页是薄壳、只调 `CV.boot('<id>')`，内容全在 `assets/scenes/<id>.js` 纯数据剧本里；**规范页在 `docs/`**（prepost / algorithms / visual / specs / steps / test-cases），经 `../assets/` 引用底层组件——规范与业务代码两条线互不依赖，都只向下用组件。单一事实源是 `assets/registry.js`（每条原语的 pre / post 语义 + algo + rel + verbs），轮次口径在 `assets/rounds.js`（算法数据层，几轮 / 每轮哪些边 / 轮内相），可调参数的单源是 `assets/theme/spec.js`（`CV.SPEC`，读法只有 `CV.spec`），公共层 `assets/engine/`（compile / director / verbs）、`parts/`、`prim/`、`theme/` 被八页共用。唯一 dev 依赖 playwright-core，`tools/` 用无头 Chrome 跑几何断言与截图；仓库没有 build、没有 lint。
 
 ## 二、关键命令
 
@@ -35,8 +35,8 @@ node tools/probe.mjs gather 310:"(()=>{ ... })()"  # 写断言前量真值（十
 - **命名对齐**：页面 id 贯穿全套——`gather.html` ↔ `scenes/gather.js` ↔ `probes/gather.mjs`；docs 规范页按文件名配对探针（prepost.mjs / visual.mjs），boot id 是分发键不随文件名（prepost.html 仍 `CV.boot('layout')`）；全局只经 `window.CV` 与约定数据位（如 `CV_PARAM_DEFAULTS`），不另起全局变量。
 - **跨页零引用**：8 个页面 JS 互不引用，要复用就下沉公共层；公共层改动必须 8 页回归（用 probe，不用全截图）。
 - **只有引擎碰时间**：时间轴编译一次，播放 / seek / 循环只是改 t 的推进方式；组件不自组合。
-- **不硬编码**：尺寸、颜色、耗时走 theme 令牌与 `defaults.js`；scrub 用 0–1000 刻度、`controls.seek()` 用 0–1，换算交给页面 `getCh()`。
-- **口径有出处**：文案与动态步骤看 `docs/steps.html`，组件真值看 `docs/visual.html`，算法口径看 `docs/algorithms.html`，用例清单以 `docs/test-cases.html` 为准（219 条＝通用 3 + 全站 29 + 原语页 63 + index 与规范页 15 + 规范符合性 109，只有能判「过 / 不过」的验证动作才占编号）；规范总账单源在 `assets/ledger.js`（107 项，visual.html 00 章 / 05 组探针同源）；改验证规则先改那一页，再同步本文件。
+- **不硬编码**：可调参数只有一张表 `assets/theme/spec.js`（`CV.SPEC`），消费端只经 `CV.spec('键')` 读（表外键抛错），**禁止 `|| 字面量` 兜底**——默认值只许表给（探针 5.1c 扫源码守这条；方案见 `docs/参数总线方案.md`）；色值令牌在 `theme.js`；scrub 用 0–1000 刻度、`controls.seek()` 用 0–1，换算交给页面 `getCh()`。
+- **口径有出处**：文案与动态步骤看 `docs/steps.html`，组件真值看 `docs/visual.html`，算法口径看 `docs/algorithms.html`，用例清单以 `docs/test-cases.html` 为准（220 条＝通用 3 + 全站 29 + 原语页 63 + index 与规范页 15 + 规范符合性 110，只有能判「过 / 不过」的验证动作才占编号）；规范总账单源在 `assets/ledger.js`（107 项，visual.html 00 章 / 05 组探针同源）；改验证规则先改那一页，再同步本文件。
 - **解说文案改法**：动作词只能出自 `assets/engine/narration.js` 的 `CV.NARR_LEX`（表外动作生成器直接抛错）；静止行的「场上有什么」写在各 scene 的 `narr.rest`；秒数永远从编译产物现取，不许手写；解说/结果列**禁嵌时间值与参数插值**（steps §12.4，节奏用词表达：同时/错峰）——时间只活在开始/结束列。
 - **收尾五件事**：probe 回归 → README 页面表 / 目录树同步 → 新原语补四件套（薄壳 HTML + scenes 剧本 + registry 登记 + probes 断言）→ `.workbuddy/memory/` 当日日志（长期约定进 MEMORY.md）→ commit 正文写清「为什么这么改」。
 
@@ -72,3 +72,4 @@ node tools/probe.mjs gather 310:"(()=>{ ... })()"  # 写断言前量真值（十
 13. 探针固定大步长会漏小窗口阶段（reducescatter 计算框只在合并段亮，step=120 漏拍被误判回归）——细扫或按页面 STEPS 定位阶段中点。
 14. 写断言前先读 paint 里的初值，别从路由和步骤反推（gather `count` 从 1 起跳等 7 处口径修正的教训）。
 15. 时间预算：新原语页 20–25 分钟、公共层改动回归 +10、每次返工 +8——超预算就是在返工，停下来重新想，别接着截图。
+16. 兜底字面量会漂移：`CV.specVal('fuseDur') || 0.55` 与表值 0.42 并存了一阵，靠「表值非零兜底从不触发」才没出事——默认值只许 spec.js 给，消费端禁写 `||`（2026-11-02 清掉 35 处，5.1c 守门）。

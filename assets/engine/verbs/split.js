@@ -47,16 +47,16 @@
     var GROW_D = CV.dur('grow');
     var HOLD_D = CV.dur('hold');
     var SHRINK_D = CV.dur('shrink');
-    var CALC_FADE = CV.specNum('calcFade', 0.35);   /* 方框过渡 = 规范 07 的 calcFade */
+    var CALC_FADE = CV.spec('calcFade');   /* 方框过渡 = 规范 07 的 calcFade */
     var CALC_UP = GROW_D + CALC_FADE;
     var CALC_DOWN = CALC_FADE + SHRINK_D;
     var BLOCKD = CV.dur('blockDur');
-    var PACKFADE = CV.specVal('packFade') || 0.6;   /* 包淡出 = 规范 05 的 packFade */
+    var PACKFADE = CV.spec('packFade');   /* 包淡出 = 规范 05 的 packFade */
 
     var N1 = RECV[0][0].length, N2 = RECV[1][0].length;
     /* 落位窗口 = 单颗弹跳时长：同轮各段同飞同弹（2026-11-01 拍板，规范 08
        双口径），不再按段序错峰——旧窗口 (N−1)×seatGap+pop 随齐弹退役。
-       of 行接 k 杆：窗口秒从行现取，ghost 弹跳与行同一来源（不另写 specVal）。
+       of 行接 k 杆：窗口秒从行现取，ghost 弹跳与行同一来源（不另写 CV.spec）。
        串行律（steps 2.6）：抵达→淡出→停 0.5→才弹——落位字幕段覆盖
        淡出+延迟+弹跳三相，各相窗另立 AT 键（见 AT 追加段）。 */
     var rSeat1 = CV.timeRow(scene.id, { key: 'seat1', label: '落位', of: 'popDur' });
@@ -73,10 +73,10 @@
     }
     var rFly1  = row('fly1',    '飞行', 1.7);
     var rFade1 = CV.timeRow(scene.id, { key: 'fade1', label: '送达淡出', of: 'packFade' });
-    var rDly1  = row('delay1',  '落位延迟', CV.specVal('seatDelay') || 0.5);
+    var rDly1  = row('delay1',  '落位延迟', CV.spec('seatDelay'));
     var rFly2  = row('fly2',    '飞行', 1.7);
     var rFade2 = CV.timeRow(scene.id, { key: 'fade2', label: '送达淡出', of: 'packFade' });
-    var rDly2  = row('delay2',  '落位延迟', CV.specVal('seatDelay') || 0.5);
+    var rDly2  = row('delay2',  '落位延迟', CV.spec('seatDelay'));
     var ROWS = [
       row('intro',   '说明', 1.1),
       row('reserve', '预留两排', RS.open),
@@ -495,7 +495,7 @@
         } else if (sec >= fw.e) {
           var done = sec >= mw.e;
           /* 余辉计时回灰（orch·trailReduce）：抵达后保留数据色 ratio×飞行时长 */
-          var residS = (fw.e - fw.s) * (CV.specVal('trailReduce') || 0.42);
+          var residS = (fw.e - fw.s) * CV.spec('trailReduce');
           var glowingS = sec - fw.e <= residS;
           CV.beat.dim(S.cards[r], false);
           p.g.setAttribute('opacity', '0');

@@ -19,9 +19,7 @@
      k 杆缩放后动画与窗口同源）。用「时刻」比 sec，不用 setTimeout ——
      进度条能来回拖，定时器拖不回来。 */
   CV.seatAt = function (i, base, gap) {
-    var g = (typeof gap === 'number') ? gap
-          : (CV.params ? CV.params.get('08-seat', 'seatGap') : undefined);
-    if (typeof g !== 'number') g = 0.5;
+    var g = (typeof gap === 'number') ? gap : CV.spec('seatGap');
     return base + i * Math.max(0, g);
   };
 
@@ -31,12 +29,8 @@
      「先长够再放块 / 撤完再收卡」两段衔接已入规范 03-calc（2026-11-01 包 C：
      rowLull 0.3 / rowPause 0.25，调试台可调）。 */
   function rowSpec() {
-    function g(k, d) {
-      var v = CV.params.get('03-card', k);
-      return (typeof v === 'number') ? v : d;
-    }
-    return { cardDur: g('cardDur', 0.8), blockDur: g('blockDur', .4), blockGap: g('blockGap', .15),
-             lull: g('rowLull', .3), pause: g('rowPause', .25) };
+    return { cardDur: CV.spec('cardDur'), blockDur: CV.spec('blockDur'), blockGap: CV.spec('blockGap'),
+             lull: CV.spec('rowLull'), pause: CV.spec('rowPause') };
   }
 
   CV.rowSpan = function (n) {
@@ -75,14 +69,14 @@
     opt = opt || {};
     var P = opt.parts || 4;
     switch (key) {
-      case 'grow':    return CV.specVal('growDur')   || 0.75;
-      case 'hold':    return CV.specVal('holdDur')   || 0.95;
-      case 'shrink':  return CV.specVal('shrinkDur') || 0.7;
-      case 'pop':     return CV.specVal('popDur')    || 0.55;
-      case 'seatGap': return CV.specVal('seatGap')   || 0.5;
-      case 'blockDur':return CV.specVal('blockDur')  || 0.4;
-      case 'fuse':    return CV.specVal('fuseDur')   || 0.55;
-      case 'gap':     return CV.specVal('mergeGap')  || 0.5;
+      case 'grow':    return CV.spec('growDur');
+      case 'hold':    return CV.spec('holdDur');
+      case 'shrink':  return CV.spec('shrinkDur');
+      case 'pop':     return CV.spec('popDur');
+      case 'seatGap': return CV.spec('seatGap');
+      case 'blockDur':return CV.spec('blockDur');
+      case 'fuse':    return CV.spec('fuseDur');
+      case 'gap':     return CV.spec('mergeGap');
       /* 归并窗口 = 逐段折进去的整段，同时是「方框亮着」的那段：不低于 holdDur */
       case 'merge':   return Math.max(CV.dur('fuse') + (P - 1) * CV.dur('gap'), CV.dur('hold'));
       case 'prealloc':return CV.rowSpan(P).open;

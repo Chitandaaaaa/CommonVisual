@@ -30,6 +30,7 @@ node tools/verify.mjs index gather scatter broadcast reduce allgather allreduce 
 
 | 2026-11-01 | docs/steps.html | 手写稿时间列与编译产物漂移：allgather 全节 13.95s → 实 18.45s（轮末静止段每轮 +1.5s 落码后稿未跟上）；reduce / allreduce / reducescatter / alltoall 共 12 行「显形」给了 0.4s 窗（引擎记瞬时）；rs 两处「长高 · 浮现」叠行（引擎串行：先长够再浮现）；allreduce 飞行起点 0.14→0.09、alltoall 起飞 0.14→0.08、reduce 淡出 0.32→0.31 | `node tools/verify.mjs docs/steps.html --no-shot`（4.17 引擎对账） | 已修（2026-11-01 稿内时间列全部按 narrate 现值同步、文案未动；4.17 同日落地防再漂） |
 | 2026-11-01 | assets/rounds.js | reduce 条目锚点声明 `tail.e`，但该页编译产物最后一拍是 `collapse`（winKeys 无 tail）——锚点是探针采样标准（3.42 / 3.43 / 3.51 按它采），声明漂在轴外 | `node tools/verify.mjs reduce --no-shot`（2.26 rounds 契约） | 已修（2026-11-01 tail.e → collapse.e；docs/algorithms.html 锚点行随数据源自动更正） |
+| 2026-11-02 | docs/steps.html | 手写稿再次漂移：reduce / allreduce / reducescatter 共 12 行「第二排-k · 显形」结束列空（瞬时），引擎自 11-02「方案 A」起按 blockDur 给 0.4s 窗（narration 三处 `b0 + CV.dur('blockDur')`）——4.15 对账红，HEAD 上即红、与参数总线 B1 无关 | `node tools/verify.mjs docs/steps.html --no-shot`（4.15） | 已修（2026-11-02 稿内 12 行结束列按 narrate 现值补 +0.40；文案未动） |
 
 ## 巡检历史
 

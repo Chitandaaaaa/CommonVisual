@@ -307,7 +307,7 @@
     function fmt(v) { return String(Math.round(v * 100) / 100).replace(/^0\./, '.'); }
     function renderVals() {
       liveCells.forEach(function (x) {
-        var v = CV.params.get(x.p[0], x.p[1]);
+        var v = CV.spec(x.p[1]);
         x.td.textContent = (typeof v === 'number' ? fmt(v) : '—') + x.u;
       });
     }
@@ -552,7 +552,7 @@
      ══════════════════════════════════════════════════════════ */
   (function () {
     var s = sec('card', '03', 'rank 卡片', 'card');
-    var cp = function (k) { return CV.params.get('03-card', k); };   /* 卡片动态参数：卡片伸缩 / 单块时长 / 块间隔 */
+    var cp = CV.spec;   /* 卡片动态参数：卡片伸缩 / 单块时长 / 块间隔 */
 
     /* 徽章几何，与 CV.drawCard 里的 badgeGeo 同一套规则 */
     function badgeW(role, text, size) {
@@ -1259,7 +1259,7 @@
       /* 时间轴与拖尾全部走参数注册表（CV.params），由调试台实时调 / 锁：
          packDur 飞行 / packFade 送达淡出（同时就是「停留」）/ packLead 起步让出。
          一轮 = 飞 + 淡，没有额外的停留段 —— 包淡完，这一趟就结束了，立刻下一轮。 */
-      var P = function (k) { return CV.params.get('05-packet', k); };
+      var P = CV.spec;
       var DUR = P('packDur'), FADE = P('packFade');
       var CYCLE = DUR + FADE;
       /* 起步让出一小段：整份包的左缘本来就贴着线起点，几乎不用让；
@@ -1501,11 +1501,11 @@
 
       /* ── 时间轴：全部由规范值算出来，改参数 = 改总长 ── */
       var DUR = {
-        grow:   CV.params.get('07-calc', 'growDur')   || 0.75,
-        hold:   CV.params.get('07-calc', 'holdDur')   || 0.95,
-        shrink: CV.params.get('07-calc', 'shrinkDur') || 0.7
+        grow:   CV.spec('growDur'),
+        hold:   CV.spec('holdDur'),
+        shrink: CV.spec('shrinkDur')
       };
-      var FADE = CV.params.get('07-calc', 'calcFade') || 0.35;   /* 方框淡入 / 淡出：规范 07 衔接 */
+      var FADE = CV.spec('calcFade');   /* 方框淡入 / 淡出：规范 07 衔接 */
       var GAP1 = 0.25;   /* 长够 → 方框才亮：先长空间、再填内容 */
       var GAP2 = 0.2;    /* 方框灭了 → 卡片才收：先灭、再收 */
       var REST = 0.9;    /* 首尾各驻留一下，读得出「起点是两排」 */
@@ -1857,15 +1857,15 @@
 
     /* 说明里的数字跟着滑杆走：写死「.55s / .17s」，改完参数文档就成了假的 */
     function seatDur() {
-      var v = CV.params.get('08-seat', 'popDur');
+      var v = CV.spec('popDur');
       return typeof v === 'number' ? v : .55;
     }
     function seatGap() {
-      var v = CV.params.get('08-seat', 'seatGap');
+      var v = CV.spec('seatGap');
       return typeof v === 'number' ? v : .5;
     }
     function popStagger() {
-      var v = CV.params.get('08-seat', 'popStagger');
+      var v = CV.spec('popStagger');
       return typeof v === 'number' ? v : .12;
     }
     function nx2(v) { return v.toFixed(2).replace(/^0\./, '.'); }
@@ -2005,11 +2005,11 @@
        这一节只是把规范值拿来示范，不另定一套节奏；reduce 页读的是同一个数。
        HOLD0（开头先亮着不动）才是这一节的编排，不进规范。 */
     function fuseDur() {
-      var v = CV.params.get('09-merge', 'fuseDur');
+      var v = CV.spec('fuseDur');
       return typeof v === 'number' ? v : .42;
     }
     function fuseGap() {
-      var v = CV.params.get('09-merge', 'mergeGap');
+      var v = CV.spec('mergeGap');
       return typeof v === 'number' ? v : .5;
     }
 
@@ -2066,7 +2066,7 @@
     function nx(v) { return String(Math.round(v * 100) / 100).replace(/^0\./, '.'); }
 
     function specHTML() {
-      function v(k) { return CV.params.get('09-merge', k); }
+      var v = CV.spec;
       var wake = v('fuseWake'), rise = v('fuseRise'), fade = v('fuseFade'), swap = v('fuseSwap');
       var shrink = v('fuseShrink'), trail = v('fuseTrail'), gloss = v('fuseGloss');
       var gs = Math.max(fade, swap - .23), ge = Math.min(1, swap + .22);

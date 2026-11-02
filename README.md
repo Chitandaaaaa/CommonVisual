@@ -82,7 +82,8 @@ engine/verbs/      copy / move / sum / split 四个动词 —— 绘制与逐帧
 - `prim/` 基础 —— `dom`（h/el/cubicBezier）、`geom`（几何常量）、`motion`（错峰 seatAt / 一排两排 rowSpan、`specVal`/`dur` 读规范值）
 - `registry.js` **终态唯一事实** —— 每页的 `pre / post / rel / verbs`，关系导航、对照表、规范页、探针都读它，不解析动画终态
 - `rounds.js` **轮次口径（算法数据层）** —— 每条原语几轮、每轮动哪些边、轮内分几个相、验证采样哪些锚点（win 引用）；逐字转录自动词展开与剧本 beats，`docs/algorithms.html` 现渲染；win 键命名标准在其头注释
-- `theme/defaults.js` 参数基线（规范页调试台「保存到代码」写入；读取顺序：代码基线 ← localStorage 临时改动）
+- `theme/spec.js` **参数表单源**（CV.SPEC：7 组 36 键的 label / 范围 / 出厂值；消费端只经 `CV.spec(键)` 读，表外键抛错、禁 `||` 兜底；方案见 `docs/参数总线方案.md`）
+- `theme/defaults.js` 参数基线（规范页调试台「保存到代码」写入；读取顺序：spec 出厂值 ← 代码基线 ← localStorage 临时改动）
 - `nav/` 页角关系导航；`blocks/` 文档页内容块（head / table / toc / legend / anatomy / paramEditor）
 
 ## 目录结构
@@ -123,7 +124,7 @@ CommonVisual/
 │   ├── nav/                edge / node / mini
 │   ├── blocks/             head / table / toc / legend / anatomy / paramEditor
 │   ├── pages/              文档页样式（index / docs / anatomy）
-│   └── theme/              theme.js/css + stage-page.css（舞台样式真源）
+│   └── theme/              spec.js（参数表单源）+ theme.js/css + stage-page.css（舞台样式真源）
 │                           + defaults.js（参数基线）
 └── package.json            仅验证工具需要（playwright-core）
 ```
@@ -140,7 +141,7 @@ node tools/probe.mjs <页> <刻度>:"<表达式>"   # 单点几何，写断言�
 
 ## 设计决策
 
-**规范是唯一来源。** 组件的名字、尺寸、配色、耗时都在 `docs/visual.html` 约定；参数基线写在 `theme/defaults.js`（调试台「保存到代码」直接覆盖）。原语页在**加载时**读规范值算时间轴（`CV.specVal` / `CV.dur`），改规范要刷新页面才生效。
+**规范是唯一来源。** 组件的名字、尺寸、配色、耗时都在 `docs/visual.html` 约定；可调参数的表在 `theme/spec.js`（一张表、读法只有 `CV.spec(键)`、禁兜底），参数基线写在 `theme/defaults.js`（调试台「保存到代码」直接覆盖）。原语页在**加载时**读规范值算时间轴（`CV.specVal` / `CV.dur`），改规范要刷新页面才生效。
 
 **齿轮已接入八页。** 右上角齿轮（`parts/chrome.js`）按页列时序行：有规范值的段调「倍数」（规范一改全站跟），没约定的段直接填秒。改动两级存：localStorage `cv.page.<页>.v1` 立即重排，点「保存到代码」写入基线（`node tools/serve.mjs` 下直写 `assets/scenes/pages-base.js`，静态服务退化为下载）。
 

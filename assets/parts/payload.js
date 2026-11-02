@@ -51,10 +51,7 @@
   CV.drawWire = CV.payload.link;
 
   /* ---------- 拖尾浓度倍数（规范 05 trailScale） ---------- */
-  function trailK() {
-    var s = CV.params && CV.params.get('05-packet', 'trailScale');
-    return (typeof s === 'number') ? s : 1;
-  }
+  function trailK() { return CV.spec('trailScale'); }
 
   /* ---------- P3/P4 飞行数据包：主体 + 两段递减拖尾 ---------- */
   CV.payload.packet = function (parent, o) {
@@ -128,11 +125,11 @@
     var pos = rev ? 1 - e : e;
     var at = pos * Lp;
     var pt = wire.path.getPointAtLength(at);
-    var TO = CV.specNum('takeoffFade', 0.08);
+    var TO = CV.spec('takeoffFade');
     pkt.g.setAttribute('opacity', String(e <= 0 ? 0 : Math.min(1, e / TO)));
     pkt.head.setAttribute('transform', 'translate(' + pt.x + ' ' + pt.y + ')');
     var step = rev ? 1 : -1;
-    var near = (CV.params && CV.params.get('05-packet', 'trailDist')) || 24;
+    var near = CV.spec('trailDist');
     var far = near * (46 / 24);
     var a = wire.path.getPointAtLength(Math.max(0, Math.min(Lp, at + step * near)));
     var b = wire.path.getPointAtLength(Math.max(0, Math.min(Lp, at + step * far)));
@@ -151,8 +148,8 @@
     if (typeof durSec === 'number') {
       d = durSec;
     } else {
-      var sp = (CV.params && CV.params.get('global', 'pageSpeed')) || 1;
-      d = ((CV.params && CV.params.get('05-packet', 'packFade')) || 0) / (sp > 0 ? sp : 1);
+      var sp = CV.spec('pageSpeed');
+      d = CV.spec('packFade') / (sp > 0 ? sp : 1);
     }
     if (!(d > 0)) { pkt.g.setAttribute('opacity', '0'); return; }
     var o = 1 - elapsedSec / d;

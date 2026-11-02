@@ -811,25 +811,25 @@ td.dim{color:var(--tx2)}
 
       <path d="M430 398 L430 416" stroke="#b9c0d4" stroke-width="1.3" fill="none" marker-end="url(#a2)"/>
 
-      <!-- L0 令牌 -->
+      <!-- L0 参数总线 -->
       <g>
         <text x="2" y="434" font-size="11" font-family="ui-monospace,monospace" font-weight="700" fill="#047857">L0</text>
         <rect x="52" y="416" width="756" height="58" rx="9" fill="#f0fdf7" stroke="#a7f3d0"/>
-        <text x="70" y="442" font-size="13.5" font-weight="600" fill="#047857">令牌</text>
-        <text x="140" y="442" font-size="12" font-family="ui-monospace,monospace" fill="#5f6780">theme.css · theme.js · defaults.js</text>
-        <text x="70" y="462" font-size="11.5" fill="#939bb2">色、尺寸、缓动的唯一来源。全站只有这一处 :root</text>
+        <text x="70" y="442" font-size="13.5" font-weight="600" fill="#047857">参数总线</text>
+        <text x="152" y="442" font-size="12" font-family="ui-monospace,monospace" fill="#5f6780">theme.css · spec.js（表） · defaults.js（基线） · theme.js（store）</text>
+        <text x="70" y="462" font-size="11.5" fill="#939bb2">色、尺寸、缓动、可调参数的唯一来源。表只有一张，读法只有 <tspan font-family="ui-monospace,monospace">CV.spec(键)</tspan>，全站只有这一处 :root</text>
         <text x="828" y="442" font-size="11.5" fill="#c27803">串行</text>
         <text x="828" y="461" font-size="11" fill="#939bb2">改一次全站变</text>
       </g>
 
       <text x="2" y="500" font-size="12" fill="#939bb2">箭头只有向下。<tspan font-weight="600" fill="#6d28d9">下层永远不认识上层 —— 所以换页面、换剧本、换组件，都不牵动下面。</tspan></text>
     </svg>
-    <div class="figcap">层级越靠上，可并行的切口越多。<b>真正排队的只有 L0 令牌和引擎主循环</b> —— 层内都按文件切开了。</div>
+    <div class="figcap">层级越靠上，可并行的切口越多。<b>真正排队的只有 L0 参数总线和引擎主循环</b> —— 层内都按文件切开了。</div>
   </div>
 
   <h3 style="font-size:15px;margin:30px 0 12px;font-weight:600">文件落位</h3>
 <pre><span class="c">assets/</span>
-├── <span class="k">theme/</span>     theme.css  theme.js  defaults.js              <span class="c">L0  令牌 · 唯一 :root</span>
+├── <span class="k">theme/</span>     theme.css  spec.js  defaults.js  theme.js    <span class="c">L0  参数总线 · 表 / 基线 / store · 唯一 :root</span>
 ├── <span class="k">prim/</span>      dom.js  geom.js  motion.js                   <span class="c">L1  3 个</span>
 ├── <span class="k">parts/</span>     stage.js  cast.js  payload.js
 │             beat.js  chrome.js                             <span class="c">L2  画过程</span>
@@ -861,9 +861,9 @@ td.dim{color:var(--tx2)}
     <tbody>
       <tr><td><b>8 原语页</b></td><td>theme + prim + parts + nav + blocks/legend + engine 全套 + registry + scenes + boot</td><td><code>CV.boot(id)</code> → scenes 剧本</td><td>按 AGENTS 分频</td></tr>
       <tr><td><b>index</b></td><td>theme + prim + registry + nav + boot + index.css</td><td>boot → nav 渲染</td><td>verify index</td></tr>
-      <tr><td><b>docs/prepost.html</b> 语义</td><td>9 项：theme/docs.css、prim/dom、theme.js、registry、blocks/head·table·toc、boot</td><td><code>boot('layout')</code> → CV.pages → blocks.layoutApp</td><td>改 blocks/table.js 带上它</td></tr>
+      <tr><td><b>docs/prepost.html</b> 语义</td><td>11 项：theme/docs.css、prim/dom、defaults·spec·theme.js、registry、blocks/head·table·toc、boot</td><td><code>boot('layout')</code> → CV.pages → blocks.layoutApp</td><td>改 blocks/table.js 带上它</td></tr>
       <tr><td><b>docs/algorithms.html</b> 算法口径</td><td>4 项：theme/docs.css、registry、rounds（最薄）</td><td>内联脚本直读 registry + rounds，不进装配层</td><td>verify docs/algorithms.html</td></tr>
-      <tr><td><b>docs/visual.html</b> 视觉</td><td>13 项：css×3、prim×2、<b>parts/cast·payload·beat·chrome</b>、blocks/legend·anatomy·paramEditor</td><td>blocks/anatomy.js 自装配（无 boot 调用）</td><td><b>与原语页共用 parts 四件：改这四件 = 8 原语页 + 本页</b></td></tr>
+      <tr><td><b>docs/visual.html</b> 视觉</td><td>16 项：css×3、defaults·spec·ledger·theme.js、prim×2、<b>parts/cast·payload·beat·chrome</b>、blocks/legend·anatomy·paramEditor</td><td>blocks/anatomy.js 自装配（无 boot 调用）</td><td><b>与原语页共用 parts 四件：改这四件 = 8 原语页 + 本页</b></td></tr>
       <tr><td><b>specs / steps / test-cases</b></td><td>0（自包含）</td><td>纯静态</td><td>无</td></tr>
     </tbody>
   </table>
@@ -871,7 +871,7 @@ td.dim{color:var(--tx2)}
     <b>两条线的落点就在这张表里：</b>规范页与业务页互不引用，只向下共用 theme / prim / parts / blocks / registry；反向（assets 引用 docs）必须为零 —— <code>node tools/arch.mjs</code> 每次会扫（含 ../assets 归一、断链、反向依赖三查）。回归命令里 docs 规范页带路径传参：<code>verify docs/visual.html</code>。
   </div>
 
-  <div class="rules r5">
+  <div class="rules">
     <div class="rule">
       <div class="h">① 组件不自组合</div>
       <div class="b"><code>parts/*</code> 之间零引用。谁和谁拼在一起，由引擎决定。这样任何一件都能单独替换、单独测试。</div>
@@ -891,6 +891,10 @@ td.dim{color:var(--tx2)}
     <div class="rule" style="border-left-color:#0891b2">
       <div class="h">⑤ 组件按组切开</div>
       <div class="b"><code>parts/</code> <code>nav/</code> <code>blocks/</code> 三组之间不互相引用，同一组内的文件之间也不引用。三条泳道可以三个人同时改。</div>
+    </div>
+    <div class="rule" style="border-left-color:#047857">
+      <div class="h">⑥ 参数只有一张表</div>
+      <div class="b">可调参数全在 <code>theme/spec.js</code>（CV.SPEC）；消费端只经 <code>CV.spec(键)</code> 读，表外键抛错，<b>不许 <code>|| 字面量</code> 兜底</b>——默认值只有表能给。探针 5.1c 扫源码守这条。</div>
     </div>
   </div>
 
@@ -966,6 +970,25 @@ td.dim{color:var(--tx2)}
       <text x="0" y="262" font-size="12" fill="#939bb2">换一个原语 = 换一份剧本，其余不动；切一次桌面/窄屏 = 换一次 S3 的 preset，重新算坐标。</text>
     </svg>
     <div class="figcap">五件操作背后只有一件事：<b>改变 t 的推进方式</b>。这是「组件无状态」换来的全部好处。</div>
+  </div>
+
+  <h3 style="font-size:15px;margin:28px 0 12px;font-weight:600">一条覆盖链 · 参数从哪来</h3>
+  <p class="sec-sub" style="margin-bottom:12px">
+    时间轴上每一段的秒、每一处特效的比率，都不写在引擎里，而是开机时从<b>参数总线</b>现读。
+    总线只有一条链，三层后者盖前者；页面、引擎、组件、剧本都只读不写，写它的只有调试面板和探针。
+  </p>
+<pre><span class="c">① 出厂值</span>   theme/spec.js        CV.SPEC[组].keys[键].def      人写：label / 范围 / 步进 / 单位
+      ↓ 盖
+<span class="c">② 基线</span>     theme/defaults.js    window.CV_PARAM_DEFAULTS       机器写：调试台「保存到代码」固化，可提交
+      ↓ 盖
+<span class="c">③ 运行时</span>   localStorage         cv.params.v1                    本机临时调试，清缓存即回基线
+
+<span class="c">读</span>   CV.spec('popDur')        按键名查、表外键抛错、返回当前值原样 —— 消费端唯一入口
+<span class="c">写</span>   CV.params.set / reset    只有面板与探针调；set 触发 onChange → 页面 reload 重编译
+<span class="c">CSS</span>  --cv-dim / --cv-reveal   store 把需要走过渡的键同步成自定义属性，stage-page.css 只读 var()</pre>
+  <div class="note">
+    <b>为什么禁止 <code>CV.spec('x') || 0.55</code>：</b>那个 0.55 是默认值的第二份拷贝，表改了它不会跟 —— 2026-11-02 清理前 fuseDur 的兜底写着 0.55、表里是 0.42，靠「表值非零兜底从不触发」才没出事。
+    现在表外键直接抛错，默认值只有表能给；探针 5.1c 扫源码守这条。全套设计见 <code>docs/参数总线方案.md</code>。
   </div>
 
   <h3 style="font-size:15px;margin:28px 0 12px;font-weight:600">剧本长什么样</h3>

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>词表 v4 · 核对（最终形态预览）</title>
+<style>
+  :root{
+    --bg:#f5f6f8;--panel:#fff;--ink:#1c2130;--ink2:#4b5364;--muted:#7a8296;
+    --line:#e4e7ee;--accent:#7c3aed;--ok:#059669;--warn:#d97706;
+    --shadow:0 1px 2px rgba(20,25,40,.06),0 8px 24px rgba(20,25,40,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 24px 80px}
+  h1{font-size:24px;margin:0 0 6px;letter-spacing:-.3px}
+  .sub{color:var(--muted);font-size:12.5px}
+  .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:4px 10px;border-radius:20px;border:1px solid #ddd4fb;background:#f1ecfe;color:var(--accent)}
+  .badge.grey{border-color:var(--line);background:#eef0f5;color:var(--muted)}
+  .badge.warn{border-color:#f0e2c8;background:#fdfaf3;color:var(--warn)}
+  .lead{margin:16px 0 0;color:var(--ink2);font-size:13.2px}
+  .lead b{color:var(--ink)}
+  .progress{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 8px;border-bottom:1px solid var(--line);margin-top:14px;
+    display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--ink2)}
+  .progress b{font-family:ui-monospace,Menlo,monospace;color:var(--accent);font-size:14px}
+  .progress .bar{flex:1;height:6px;border-radius:3px;background:#e6e8f0;overflow:hidden}
+  .progress .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+  .progress button{border:1px solid var(--line);background:#fff;color:var(--muted);font-size:11px;padding:3px 9px;border-radius:7px;cursor:pointer}
+  section{margin:30px 0 0}
+  .sechead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+  .sechead .no{font:600 12px/1 ui-monospace,Menlo,monospace;color:#fff;background:var(--accent);padding:6px 9px;border-radius:7px;letter-spacing:.5px}
+  .sechead h2{font-size:17px;margin:0}
+  .sechead .meta{font-size:11.5px;color:var(--muted)}
+  .role{color:var(--muted);font-size:12.5px;margin:0 0 10px}
+  .role b{color:var(--ink2)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:14px 16px;margin-top:12px}
+  .card h3{font-size:13.5px;margin:0 0 8px}
+
+  table{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);font-size:12.5px}
+  th,td{padding:7px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#fafbfd;color:var(--ink2);font-weight:600;font-size:11.5px;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:#3f4658}
+  .nm{font-weight:600;color:#3b2b7a;white-space:nowrap}
+  .w-no{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:#b9bfcd}
+  td .enum{display:block;margin:1px 0;padding-left:14px;position:relative}
+  td .enum::before{content:"·";position:absolute;left:2px;color:#b9bfcd}
+  td .enum.none::before{content:none}
+  .todo{background:#fdf3e3;color:var(--warn);font-size:10.5px;padding:1px 7px;border-radius:6px;font-weight:600;white-space:nowrap}
+  .cut{background:#fef6f6;color:#dc2626;font-size:10.5px;padding:1px 7px;border-radius:6px;font-weight:600;white-space:nowrap}
+  .note{background:#f4f8ff;border:1px solid #d8e4f7;border-radius:10px;padding:10px 13px;color:#35507a;font-size:12.4px;margin-top:14px}
+  .note b{color:#1f3a63}
+
+  /* 核对交互（review-only：挪入 steps 时整列删除） */
+  .chk-col{width:34px;text-align:center}
+  th.chk-col{color:#b9bfcd}
+  tbody tr[data-w]{cursor:pointer}
+  tbody tr[data-w] .chk-box{display:inline-block;width:15px;height:15px;border:1.5px solid #c4c9d8;border-radius:4px;vertical-align:middle;background:#fff}
+  tbody tr[data-w]:hover td{background:#fbfaff}
+  tbody tr[data-w].ok td{background:#f2fbf7}
+  tbody tr[data-w].ok .chk-box{background:var(--ok);border-color:var(--ok);position:relative}
+  tbody tr[data-w].ok .chk-box::after{content:"✓";position:absolute;inset:0;color:#fff;font-size:11px;line-height:13px;text-align:center}
+  tbody tr[data-w].ok .w-no::after{content:" ✓";color:var(--ok)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>词表 v4 · 核对</h1>
+  <div class="sub">CommonVisual · docs/词表v4-核对.html · 2026-11-02 · 最终形态预览（= 定稿后挪入 steps.html §02 的样子）</div>
+  <div class="badges">
+    <span class="badge">核对稿 · 不是定稿</span>
+    <span class="badge grey">67 条</span>
+    <span class="badge grey">107 行账本 id 全归巢</span>
+    <span class="badge warn">待入账 7 处</span>
+    <span class="badge warn">更名 / 退役 3 处</span>
+  </div>
+  <p class="lead">
+    <b>用法：</b>点行勾选（进度存本机，刷新不丢）。表格本体就是最终形态——确认完成后整节挪进 steps.html §02，
+    届时删掉最左「核对」列，其余原样。<b>定义规则：</b>① 只描述物件自身（页面归属在页面稿）；
+    ② 名称自明者省略描述；③ 一律枚举，状态一态一条不串联。
+  </p>
+  <div class="progress">
+    <span>核对进度</span><b id="cnt">0 / 67</b>
+    <div class="bar"><i id="bar"></i></div>
+    <button id="reset" type="button">重置本机勾选</button>
+  </div>
+
+  <!-- ==================== §2.1 ==================== -->
+  <section id="s21">
+    <div class="sechead"><span class="no">2.1</span><h2>实例名语法规则</h2><span class="meta">1 条</span></div>
+    <p class="role">词条只收<b>类名</b>；实例是语法产物，不占词条。</p>
+    <div class="card">
+      <table>
+        <thead><tr><th class="chk-col">核对</th><th style="width:60px">条目</th><th style="width:90px">名词</th><th>实例枚举</th><th style="width:170px">编号</th><th style="width:170px">备注</th></tr></thead>
+        <tbody>
+          <tr data-w="W-01"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-01</td><td class="nm">实例名</td>
+            <td><span class="enum">卡实例：<code class="mono">四槽卡-2</code>（四槽卡的第 2 格）、<code class="mono">r1/四槽卡-3</code>（多张同形卡时 rank 前缀 + 第 3 格）、<code class="mono">r1/单槽卡</code>（单槽卡 1 槽，不写槽号）</span>
+                <span class="enum">包实例：<code class="mono">单体包 A/B/C/D</code>（4 种字母）</span>
+                <span class="enum">连线实例：<code class="mono">弧线 1/2/3</code>（按趟序号）</span>
+                <span class="enum">排实例：<code class="mono">下排-1～4</code>、<code class="mono">上排-1～4</code></span></td>
+            <td class="mono">—</td><td>拍板①「类名词条 + 编号语法规则」</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== §2.2 ==================== -->
+  <section id="s22">
+    <div class="sechead"><span class="no">2.2</span><h2>物件 · 卡与部件</h2><span class="meta">20 条</span></div>
+    <div class="card">
+      <table>
+        <thead><tr><th class="chk-col">核对</th><th style="width:60px">条目</th><th style="width:100px">名词</th><th>定义要点</th><th style="width:34%">状态枚举</th><th style="width:170px">编号</th><th style="width:150px">备注</th></tr></thead>
+        <tbody>
+          <tr data-w="W-02"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-02</td><td class="nm">单槽卡</td><td></td>
+            <td><span class="enum">空</span><span class="enum">持 A</span><span class="enum">持 B</span><span class="enum">持 C</span><span class="enum">持 D</span></td>
+            <td class="mono">03-size、03-hdr、03-titleFs</td><td></td></tr>
+          <tr data-w="W-03"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-03</td><td class="nm">四槽卡</td><td></td>
+            <td><span class="enum">空 ×4</span><span class="enum">A＋空×3</span><span class="enum">A B＋空×2</span><span class="enum">A B C＋空</span><span class="enum">A B C D（满）</span><span class="enum">A＋空 C D</span><span class="enum">A＋空 空 D</span><span class="enum">ΣA² ΣB² ΣC² ΣD²</span><span class="enum">ΣA³ ΣB³ ΣC³ ΣD³</span><span class="enum">ΣA⁴ ΣB⁴ ΣC⁴ ΣD⁴</span><span class="enum">分片 A0 A1 A2 A3</span><span class="enum">分片 ·A1 A2 A3（第 1 列空）</span><span class="enum">分片 ··A2 A3（前 2 列空）</span><span class="enum">分片 ···A3（前 3 列空）</span><span class="enum">分片全空（= 空×4）</span></td>
+            <td class="mono">03-size、03-hdr、03-titleFs</td><td></td></tr>
+          <tr data-w="W-04"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-04</td><td class="nm">双排卡</td><td></td>
+            <td><span class="enum">上排 数据块 A B C D ＋ 下排 隐藏空格</span><span class="enum">上排 数据块 A B C D ＋ 下排 空格×4（显形后）</span><span class="enum">上排 数据块 A B C D ＋ 下排 接收态槽位×4</span><span class="enum">上排 数据块 A B C D ＋ 下排 弹跳中的块×4</span><span class="enum">上排 Σ 块ᵏ×4 ＋ 下排 折进中的块</span><span class="enum">上排 Σ 块ᵏ×4 ＋ 下排 空格×4</span></td>
+            <td class="mono">03-blockDur、03-blockGap、03-rowLull、03-rowPause</td><td>态 4/5 下排的块是 fx 层 ghost，不是常设槽位数据</td></tr>
+          <tr data-w="W-05"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-05</td><td class="nm">计算态卡</td><td></td>
+            <td><span class="enum">撑开中（长高2 进行，计算框随 0.35→0.85 进度浮现）</span><span class="enum">满（上排 Σ 块ᵏ ＋ 计算框全亮）</span><span class="enum">收回中（计算框先淡出 0.32，卡片后缩 0.38）</span></td>
+            <td class="mono">07-growDur、07-shrinkDur、07-calcFade</td><td></td></tr>
+          <tr data-w="W-06"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-06</td><td class="nm">卡体</td>
+            <td>卡宽恒定；高度三档：单排 h1=170 ／ 双排 h2 ／ 计算态 h3，绕中心上下对称伸缩</td><td></td>
+            <td class="mono">03-cardDur</td><td></td></tr>
+          <tr data-w="W-07"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-07</td><td class="nm">标题条</td>
+            <td>顶部色带；文字 <code class="mono">rank 0</code> ～ <code class="mono">rank 3</code> 共 4 种，色 = 该卡 rank 色</td><td></td>
+            <td class="mono">03-hdr、03-titleFs</td><td>原「标题条 / 角标」拆出</td></tr>
+          <tr data-w="W-08"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-08</td><td class="nm">徽章</td><td></td>
+            <td><span class="enum">角色：dst（宽 30）｜ src（宽 28）</span><span class="enum">进度：0/4 ｜ 1/4 ｜ 2/4 ｜ 3/4 ｜ 4/4 ｜ 4 段</span></td>
+            <td class="mono">03-badgeSize、03-badgeFormula、03-badgeFs、03-badgeRight、03-badgeRx、03-badgeBg、03-badgeText</td><td>原「标题条 / 角标」拆出</td></tr>
+          <tr data-w="W-09"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-09</td><td class="nm">目标卡</td>
+            <td>本原语的收数卡；描边加深以示区分</td><td></td>
+            <td class="mono">03-target</td><td>哪个 rank 是目标卡属页面稿内容，不入词条</td></tr>
+          <tr data-w="W-10"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-10</td><td class="nm">图例</td><td></td><td></td>
+            <td class="mono">01-frameRx、01-frameBg、01-frameStroke、01-frameDash、01-framePad</td><td>整份虚线框：rx14、白底 72%、#c1cadf 描边、虚线 4 3、内边距 0.24×块宽</td></tr>
+          <tr data-w="W-11"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-11</td><td class="nm">滤镜</td><td></td><td></td>
+            <td class="mono">01-flood</td><td>flood 色 #2a3352，全站一份</td></tr>
+          <tr data-w="W-12"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-12</td><td class="nm">背景网格</td><td></td><td></td>
+            <td class="mono">01-toneWireDim</td><td>灰 #8b93aa 档</td></tr>
+          <tr data-w="W-13"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-13</td><td class="nm">弧线连线</td>
+            <td>卡间虚线弧，末端箭头尖</td>
+            <td><span class="enum">闲置——#c3cadb、宽 2、虚线 8 7</span><span class="enum">飞行——流色、宽 2.6、虚线 9 7</span><span class="enum">余辉——流色、宽 1.8、虚线 8 7、opacity 40%，持续 = 比率×飞行时长</span><span class="enum">回灰——同闲置但宽 1.8</span></td>
+            <td class="mono">01-toneWire、04-idleColor、04-idleWidth、04-idleDash、04-flyColor、04-flyWidth、04-flyDash、04-glowColor、04-glowWidth、OR-trailChoreo</td><td>拍板新拆</td></tr>
+          <tr data-w="W-14"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-14</td><td class="nm">直连连线</td>
+            <td>卡间驼峰线（法向偏移避让对向包）</td>
+            <td><span class="enum">同弧线连线四态</span><span class="enum">全完成深紫——#4c1d95、opacity .26</span></td>
+            <td class="mono">01-toneWire、04-idleColor、04-idleWidth、04-idleDash、04-flyColor、04-flyWidth、04-flyDash、04-glowColor、04-glowWidth、OR-trailReduce</td><td>拍板新拆</td></tr>
+          <tr data-w="W-15"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-15</td><td class="nm">环边连线</td>
+            <td>环上固定边，每轮复用同一条线；箭头色逐帧跟该边当前轮次的流色</td>
+            <td><span class="enum">同弧线连线四态</span></td>
+            <td class="mono">01-toneWire、04-idleColor、04-idleWidth、04-idleDash、04-flyColor、04-flyWidth、04-flyDash、04-glowColor、04-glowWidth、OR-trailChoreo</td><td>拍板新拆</td></tr>
+          <tr data-w="W-16"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-16</td><td class="nm">箭头</td><td></td>
+            <td><span class="enum">fill：A 色 ｜ B 色 ｜ C 色 ｜ D 色 ｜ #c3cadb（闲置）｜ 深紫（终态）</span></td>
+            <td class="mono">04-markerShape、04-markerSize、04-markerFollow</td><td>双向直连无箭头（04 章定案豁免）</td></tr>
+          <tr data-w="W-17"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-17</td><td class="nm">数据包</td><td></td>
+            <td><span class="enum">单体包——内装 1 块；字母 4 种：A ｜ B ｜ C ｜ D</span><span class="enum">整份包——内并排 4 块 A B C D，统一源色（不按目标分色）</span></td>
+            <td class="mono">05-packDur、05-packFade、05-packLead、05-body、05-board、05-boardW</td><td>如认为单体包 / 整份包该拆两条，在此注明</td></tr>
+          <tr data-w="W-18"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-18</td><td class="nm">拖尾</td>
+            <td>两层渐缩副本（缩放 .8/.6），越远越淡</td><td></td>
+            <td class="mono">05-trailDist、05-trailScale、09-fuseTrail</td><td>包飞行 / 融合共用装置，一条</td></tr>
+          <tr data-w="W-19"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-19</td><td class="nm">白光</td>
+            <td>融合换 Σ 时扫过目标块的三停渐变（两端透明）</td><td></td>
+            <td class="mono">09-fuseGloss、09-gloss</td><td></td></tr>
+          <tr data-w="W-20"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-20</td><td class="nm">计算框</td>
+            <td>写「计算」的方牌 + 悬停提示气泡</td>
+            <td><span class="enum">提示词：sum · avg · max · min（桌面）｜ sum · avg（窄屏）</span></td>
+            <td class="mono">07-chipSize、07-chipFs、07-chipTip、07-holdDur、07-gap1、07-gap2</td><td>补本体词条（原表只有「计算框·浮现 / 淡出」两个动作）</td></tr>
+          <tr data-w="W-21"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-21</td><td class="nm">控制条</td><td></td><td></td>
+            <td class="mono">06-scrub、06-buttons</td><td>scrub 刻度 0–1000</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== §2.3 ==================== -->
+  <section id="s23">
+    <div class="sechead"><span class="no">2.3</span><h2>槽位与数据</h2><span class="meta">8 条</span></div>
+    <div class="card">
+      <table>
+        <thead><tr><th class="chk-col">核对</th><th style="width:60px">条目</th><th style="width:110px">名词</th><th>定义要点</th><th style="width:34%">状态枚举</th><th style="width:170px">编号</th><th style="width:150px">备注</th></tr></thead>
+        <tbody>
+          <tr data-w="W-22"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-22</td><td class="nm">槽位</td>
+            <td>卡内方形位置；<b>槽是位置，块是数据</b></td>
+            <td><span class="enum">几何：桌面 46×46 rx8、间距 58</span><span class="enum">几何：窄屏 25×25、间距 30</span></td>
+            <td class="mono">02-size、02-rx、02-letterFs</td><td></td></tr>
+          <tr data-w="W-23"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-23</td><td class="nm">空格</td><td></td>
+            <td><span class="enum">可见</span><span class="enum">隐藏（opacity 0，预留前）</span></td>
+            <td class="mono">01-toneSlotBg、02-empty</td><td>#f7f8fc 底 + 4 3 灰虚线框，无字</td></tr>
+          <tr data-w="W-24"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-24</td><td class="nm">接收态槽位</td>
+            <td>接收中的槽位；构词仿「计算态卡」</td>
+            <td><span class="enum">单一视觉态：#f3eeff 浅紫底 + #a78bfa 紫实线框 + 居中 ···</span></td>
+            <td class="mono">01-toneSlotHot、02-waiting <span class="todo">状态机待入账</span></td>
+            <td>拍板③改名（原「接收位」）。点亮/熄灭时机草案：点亮 = 起飞同拍、熄灭 = 落位同拍（拍板⑤）</td></tr>
+          <tr data-w="W-25"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-25</td><td class="nm">数据块</td><td></td>
+            <td><span class="enum">A 紫 #7c3aed</span><span class="enum">B 青 #0891b2</span><span class="enum">C 绿 #059669</span><span class="enum">D 橙 #d97706</span><span class="enum">all-gather 四态另分 own（自己那格）/ done（收到的）——渲染同款</span></td>
+            <td class="mono">01-rankA、01-rankB、01-rankC、01-rankD、02-own、02-done、02-letterFs</td><td>色加深（+0.19/份）属折进过程，见 W-27</td></tr>
+          <tr data-w="W-26"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-26</td><td class="nm">分片块</td>
+            <td>数据块带右下角小下标</td>
+            <td><span class="enum">实例 16 种：A0～A3、B0～B3、C0～C3、D0～D3（字母 × 下标 0–3）</span></td>
+            <td class="mono">— <span class="todo">待入账</span></td><td></td></tr>
+          <tr data-w="W-27"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-27</td><td class="nm">Σ 块</td>
+            <td>Σ + 下标列字母 + 上标份数；份数规则两种：每折 +1 ｜ 翻倍。颜色随份数加深（+0.19/份）</td>
+            <td><span class="enum">2 份：ΣA² ΣB² ΣC² ΣD²</span><span class="enum">3 份：ΣA³ ΣB³ ΣC³ ΣD³</span><span class="enum">4 份：ΣA⁴ ΣB⁴ ΣC⁴ ΣD⁴</span></td>
+            <td class="mono">01-toneDeep、01-toneInk、01-mixRich、09-sigma、09-sigmaSub、09-sigmaSup、09-sigmaColor</td><td></td></tr>
+          <tr data-w="W-28"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-28</td><td class="nm">计算层</td>
+            <td>计算态卡腾出的中间层空间（长高2 撑开、收窄1 收起）</td><td></td>
+            <td class="mono">07-growDur、07-shrinkDur</td><td>补缺失</td></tr>
+          <tr data-w="W-29"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-29</td><td class="nm">累加器</td>
+            <td>上排承担折进的槽位组；来一份折一份 ｜ 每轮折一次</td><td></td>
+            <td class="mono">01-mixRich、02-own</td><td>补缺失，与「上排」定义互相引用</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== §2.4 ==================== -->
+  <section id="s24">
+    <div class="sechead"><span class="no">2.4</span><h2>卡内区域与计数词</h2><span class="meta">8 条</span></div>
+    <div class="card">
+      <table>
+        <thead><tr><th class="chk-col">核对</th><th style="width:60px">条目</th><th style="width:110px">名词</th><th>定义要点</th><th style="width:34%">状态枚举</th><th style="width:170px">编号</th><th style="width:150px">备注</th></tr></thead>
+        <tbody>
+          <tr data-w="W-30"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-30</td><td class="nm">上排</td><td></td>
+            <td><span class="enum">数据块 A B C D</span><span class="enum">Σ 块ᵏ×4</span><span class="enum">分片块</span><span class="enum">空格</span></td>
+            <td class="mono">—（几何随双排卡，visual 03 章图）</td><td>补缺失</td></tr>
+          <tr data-w="W-31"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-31</td><td class="nm">下排</td><td></td>
+            <td><span class="enum">隐藏空格</span><span class="enum">空格</span><span class="enum">接收态槽位</span><span class="enum">弹出的块（折进中的 ghost）</span><span class="enum">数据块（可带下标）</span></td>
+            <td class="mono">—（同上）</td><td><span class="cut">更名建议</span>「第二排」退役并入此词——解说文案要不要跟着改，待确认</td></tr>
+          <tr data-w="W-32"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-32</td><td class="nm">待收槽</td><td></td><td></td>
+            <td class="mono">—</td><td><span class="cut">建议退役</span>即 W-24 接收态槽位，口语别名。勾「核对」= 同意退役</td></tr>
+          <tr data-w="W-33"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-33</td><td class="nm">轮</td>
+            <td>一轮 = 一批同构互换</td><td></td>
+            <td class="mono">— <span class="todo">待入账</span></td><td>只定用法，无独立动效</td></tr>
+          <tr data-w="W-34"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-34</td><td class="nm">步</td>
+            <td>进度条的第几段；面板行号 = 段号</td><td></td>
+            <td class="mono">— <span class="todo">待入账</span></td><td></td></tr>
+          <tr data-w="W-35"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-35</td><td class="nm">趟</td>
+            <td>一次单边传递</td><td></td>
+            <td class="mono">— <span class="todo">待入账</span></td><td></td></tr>
+          <tr data-w="W-36"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-36</td><td class="nm">拍</td>
+            <td>一段窗口内的子相（淡出相 / 延迟相等，win 相键 <code class="mono">r&lt;k&gt;&lt;相&gt;</code>）</td><td></td>
+            <td class="mono">— <span class="todo">待入账</span></td><td></td></tr>
+          <tr data-w="W-37"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-37</td><td class="nm">回合</td><td></td><td></td>
+            <td class="mono">—</td><td><span class="cut">建议删除</span>与「轮」重复。勾「核对」= 同意删除</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== §2.5 ==================== -->
+  <section id="s25">
+    <div class="sechead"><span class="no">2.5</span><h2>动作</h2><span class="meta">26 条</span></div>
+    <div class="card">
+      <table>
+        <thead><tr><th class="chk-col">核对</th><th style="width:60px">条目</th><th style="width:110px">名词</th><th>定义要点</th><th style="width:34%">状态枚举 / 取值</th><th style="width:170px">编号</th><th style="width:150px">备注</th></tr></thead>
+        <tbody>
+          <tr data-w="W-38"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-38</td><td class="nm">变暗</td><td></td>
+            <td><span class="enum">透明度 1 → 0.6（发送中），复原回 1（≠ 置灰 W-61）</span></td>
+            <td class="mono">03-dimOp、OR-dimDur</td><td></td></tr>
+          <tr data-w="W-39"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-39</td><td class="nm">复原</td>
+            <td>变暗回 100%；在包抵达那一刻开始，不是落位时</td><td></td>
+            <td class="mono">OR-dimDur</td><td></td></tr>
+          <tr data-w="W-40"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-40</td><td class="nm">交空</td>
+            <td>送出方该格立刻变空；是消耗，不是搬走后又长回来</td>
+            <td><span class="enum">粒度：1 格 ｜ 2 格 ｜ 4 格同时</span></td>
+            <td class="mono">— <span class="todo">待入账</span></td><td></td></tr>
+          <tr data-w="W-41"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-41</td><td class="nm">显形</td>
+            <td>从不可见（opacity 0）淡入为<b>空格</b>（删「空格或接收位」两可——拍板⑤）</td>
+            <td><span class="enum">时长 = revealDur 0.32</span></td>
+            <td class="mono">OR-revealDur、01-toneSlotBg</td><td>批量形式 = 逐块出现（W-51）</td></tr>
+          <tr data-w="W-42"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-42</td><td class="nm">转接收态</td>
+            <td>空格 → 接收态槽位（W-24）；从起飞那一刻开始。原「转接收位」随名词③改名</td>
+            <td><span class="enum">粒度：1 格 ｜ 2 格 ｜ 4 格同时</span></td>
+            <td class="mono">02-waiting、01-toneSlotHot、OR-recv</td><td></td></tr>
+          <tr data-w="W-43"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-43</td><td class="nm">点亮</td>
+            <td>线由灰变数据色、加粗（2→2.6）、虚线换节距（8 7 → 9 7）；颜色渐变过去</td><td></td>
+            <td class="mono">OR-wireLit、04-flyColor、04-flyWidth、04-flyDash</td><td></td></tr>
+          <tr data-w="W-44"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-44</td><td class="nm">起飞</td>
+            <td>包出现并渐显；让出段占行程前 8%</td><td></td>
+            <td class="mono">OR-takeoff、05-packLead</td><td></td></tr>
+          <tr data-w="W-45"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-45</td><td class="nm">飞行</td>
+            <td>包沿路径前进，缓入缓出，拖尾跟随；不是匀速</td><td></td>
+            <td class="mono">05-packDur</td><td></td></tr>
+          <tr data-w="W-46"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-46</td><td class="nm">抵达</td>
+            <td>包停在箭头尖，位置不再变化；瞬时</td><td></td>
+            <td class="mono">— <span class="todo">待入账</span></td><td></td></tr>
+          <tr data-w="W-47"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-47</td><td class="nm">淡出</td>
+            <td>包原地线性 opacity 1 → 0；包是被目标「吃进去」，淡的过程即停留</td><td></td>
+            <td class="mono">05-packFade</td><td></td></tr>
+          <tr data-w="W-48"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-48</td><td class="nm">余辉</td>
+            <td>线降比率保留数据色，持续 = 比率×飞行时长后回灰；不是变灰</td>
+            <td><span class="enum">比率：40% ｜ 45% ｜ 42% ｜ 30%</span></td>
+            <td class="mono">OR-trailChoreo、OR-trailFam、OR-trailReduce、OR-trailATA、04-glowColor、04-glowWidth</td><td></td></tr>
+          <tr data-w="W-49"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-49</td><td class="nm">落位</td>
+            <td>接收态槽位当场变数据块，瞬时</td>
+            <td><span class="enum">粒度：1 格 ｜ 4 格同时</span></td>
+            <td class="mono">08-seatGap</td><td></td></tr>
+          <tr data-w="W-50"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-50</td><td class="nm">弹跳</td>
+            <td>35% → 116% → 100% 过冲，单颗 0.55</td>
+            <td><span class="enum">节奏：单块错峰（seatGap 0.50 依次）｜ 同飞批齐弹（同时落定）</span></td>
+            <td class="mono">08-popDur、08-popStagger、08-curve、08-ring（涟漪常关）</td><td></td></tr>
+          <tr data-w="W-51"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-51</td><td class="nm">逐块出现</td>
+            <td>下排空格从左到右逐个淡入（显形 W-41 的批量形式）：0.40/块、隔 0.15，共 4 块</td><td></td>
+            <td class="mono">03-blockDur、03-blockGap</td><td></td></tr>
+          <tr data-w="W-52"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-52</td><td class="nm">逐块撤</td>
+            <td>下排从右往左逐个撤（逐块出现的逆）；先撤块再收卡，不能同时</td><td></td>
+            <td class="mono">03-blockDur</td><td></td></tr>
+          <tr data-w="W-53"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-53</td><td class="nm">长高1</td>
+            <td>一排变两排，腾出下排；卡高 h1→h2，绕中心扩（0.80），衔接 0.30 后逐块出现</td><td></td>
+            <td class="mono">03-cardDur、03-rowLull</td><td>拍板②</td></tr>
+          <tr data-w="W-54"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-54</td><td class="nm">长高2</td>
+            <td>双排再长一层，腾出计算层；h2→h3（0.75）</td><td></td>
+            <td class="mono">07-growDur</td><td>拍板②</td></tr>
+          <tr data-w="W-55"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-55</td><td class="nm">浮现</td>
+            <td>主体 = 计算框（W-20）；先长够空间再浮出（撑开进度 0.35→0.85），0.32–0.38。原「计算框·浮现」降级为普通动词</td><td></td>
+            <td class="mono">07-calcFade</td><td></td></tr>
+          <tr data-w="W-56"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-56</td><td class="nm">折进</td>
+            <td>下排块被吸进累加器：唤醒 → 上浮 → 白光 → 换 Σ；位移↑缩放↓透明度↓全单调</td>
+            <td><span class="enum">份数规则：每折 +1 ｜ 翻倍。错峰 mergeGap 0.50/段</span></td>
+            <td class="mono">09-fuseDur、09-mergeGap、09-fuseWake、09-fuseRise、09-fuseFade、09-fuseSwap、09-fuseShrink、09-ghost</td><td></td></tr>
+          <tr data-w="W-57"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-57</td><td class="nm">收窄1</td>
+            <td>计算框淡出（0.32）、计算层收起退回双排（0.38）；数据钉在原地。原「收层」</td><td></td>
+            <td class="mono">07-shrinkDur、07-calcFade</td><td>拍板④；按作用范围从大到小编号</td></tr>
+          <tr data-w="W-58"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-58</td><td class="nm">收窄2</td>
+            <td>下排逐块撤后卡退回单排（h2→h1）；衔接 rowPause 0.25。原「收回」</td><td></td>
+            <td class="mono">03-blockDur、03-rowPause</td><td>拍板④</td></tr>
+          <tr data-w="W-59"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-59</td><td class="nm">收窄3</td>
+            <td>撤掉用不上的一格（0.40）。原「收窄」</td><td></td>
+            <td class="mono">03-blockDur</td><td>拍板④</td></tr>
+          <tr data-w="W-60"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-60</td><td class="nm">落位延迟</td>
+            <td>抵达 → 弹跳之间的呼吸窗（0.50）</td><td></td>
+            <td class="mono">OR-seatDelay</td><td></td></tr>
+          <tr data-w="W-61"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-61</td><td class="nm">置灰</td>
+            <td>聚焦（hover / 钉住）时无关卡灰化（data-dim），≠ 变暗 W-38（发送中 0.6 透明度）</td><td></td>
+            <td class="mono">10-dataL、10-dataCard</td><td>补缺失</td></tr>
+          <tr data-w="W-62"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-62</td><td class="nm">静止</td>
+            <td>整段无运动对象；单独成节，也参与高亮</td><td></td>
+            <td class="mono">— <span class="todo">待入账</span></td><td></td></tr>
+          <tr data-w="W-63"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-63</td><td class="nm">停驻</td>
+            <td>校验规则（非页面动效）：复合写法（如「淡出 → 收层」）退役，一律拆成两个动作行（同拍并行各写各行）</td><td></td>
+            <td class="mono">— <span class="todo">待入账</span></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== §2.6 ==================== -->
+  <section id="s26">
+    <div class="sechead"><span class="no">2.6</span><h2>全局</h2><span class="meta">4 条</span></div>
+    <div class="card">
+      <table>
+        <thead><tr><th class="chk-col">核对</th><th style="width:60px">条目</th><th style="width:110px">名词</th><th>定义要点</th><th style="width:34%">状态枚举</th><th style="width:170px">编号</th><th style="width:150px">备注</th></tr></thead>
+        <tbody>
+          <tr data-w="W-64"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-64</td><td class="nm">播放速度</td>
+            <td>整页时长缩放（pageSpeed）</td><td></td>
+            <td class="mono">GL-speed</td><td></td></tr>
+          <tr data-w="W-65"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-65</td><td class="nm">断点</td>
+            <td>桌面 / 窄屏两套几何（860px 分界；桌面 300×170 卡、窄屏 146×126）</td><td></td>
+            <td class="mono">GL-bp、GL-narrow</td><td></td></tr>
+          <tr data-w="W-66"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-66</td><td class="nm">分层</td>
+            <td>六固定图层顺序：卡 &lt; 块 &lt; 连线 &lt; 包 &lt; 标签</td><td></td>
+            <td class="mono">11-layers</td><td></td></tr>
+          <tr data-w="W-67"><td class="chk-col"><span class="chk-box"></span></td><td class="w-no">W-67</td><td class="nm">逐动作解说</td>
+            <td>齿轮面板第二页签；本词表及编号列即其数据源</td><td></td>
+            <td class="mono">OR-wireLit、OR-recv</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="note">
+    <b>附 A · 待入账 7 处</b>（有词无行，落地时补进 assets/ledger.js——拍板⑤先立规范行、最后改业务代码）：
+    接收态槽位状态机（W-24）· 分片块下标（W-26）· 交空（W-40）· 抵达（W-46）· 静止（W-62）· 计数词轮/步/趟/拍（W-33～36）· 停驻校验规则（W-63）。
+    <br><b>附 B · 更名 / 退役 3 处</b>：「第二排」退役并入「下排」（W-31）· 「待收槽」退役 = W-24（W-32）· 「回合」删除（W-37）。
+    <br><b>附 C · 覆盖核算：</b>107 行 ledger id 全部归巢（01×17、02×7、03×17、04×11、05×8、06×2、07×9、08×5、09×15、10×2、11×1、OR×10、GL×3）。
+  </div>
+
+</div>
+
+<script>
+/* 核对交互（review-only，挪入 steps.html 时整段删除） */
+(function () {
+  var KEY = 'cv.lexv4-check';
+  var rows = [].slice.call(document.querySelectorAll('tbody tr[data-w]'));
+  var cnt = document.getElementById('cnt');
+  var bar = document.getElementById('bar');
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { saved = {}; }
+
+  function paint() {
+    var n = 0;
+    rows.forEach(function (tr) {
+      var on = !!saved[tr.getAttribute('data-w')];
+      tr.classList.toggle('ok', on);
+      if (on) n++;
+    });
+    cnt.textContent = n + ' / ' + rows.length;
+    bar.style.width = (rows.length ? (n / rows.length * 100) : 0).toFixed(1) + '%';
+  }
+  rows.forEach(function (tr) {
+    tr.addEventListener('click', function () {
+      var k = tr.getAttribute('data-w');
+      saved[k] = !saved[k];
+      if (!saved[k]) delete saved[k];
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      paint();
+    });
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    saved = {};
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    paint();
+  });
+  paint();
+})();
+</script>
+</body>
+</html>

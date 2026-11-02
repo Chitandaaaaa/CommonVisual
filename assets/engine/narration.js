@@ -35,12 +35,12 @@
   var SUP = { 2: '²', 3: '³', 4: '⁴' };
   var CW = { A: '紫色', B: '青色', C: '绿色', D: '橙色' };
 
-  function spec(k, d) { var v = CV.specVal(k); var n = (typeof v === 'number' && v > 0) ? v : d; return n / SPD; }
+  function spec(k) { return CV.spec(k) / SPD; }
   /* orch 组收编（2026-11-02）：显形 / 变暗复原 / 起飞渐显的时长从参数表现读，
      行的时间点依旧「锚点 + 动作时长」，参数改了重编译即跟变。 */
-  function REVEAL() { return spec('revealDur', 0.32); }
-  function DIM() { return spec('dimDur', 0.3); }
-  function TAKEOFF() { var v = CV.specVal('takeoffFade'); return (typeof v === 'number' && v > 0) ? v : 0.08; }   /* 比例：分母已是缩放后的行程，不经 SPD（比值无纲） */
+  function REVEAL() { return spec('revealDur'); }
+  function DIM() { return spec('dimDur'); }
+  function TAKEOFF() { return CV.spec('takeoffFade'); }   /* 比例：分母已是缩放后的行程，不经 SPD（比值无纲） */
 
   /* ── 校验：词表 + 闭合。出错抛 Error（verify 的 problems 会回显）。 ── */
   function validate(out) {
@@ -153,7 +153,7 @@
         var recv = b.flows.map(function (f) {
           return 'r' + f.to[0] + ' 收 ' + f.letter;
         }).join('、');
-        var popD = spec('popDur', 0.55);
+        var popD = spec('popDur');
         rows.push([s, null, '待收槽 · 转接收位', '紫底 ···（每卡 1 格）']);
         rows.push([s, s + 0.30 / SPD, '4 条环边 · 点亮', '各自的数据色']);
         rows.push([s, s + take, '单体包 · 起飞（4 个）', '各自环边起点']);
@@ -202,8 +202,8 @@
   function buildReduce(scene, CH) {
     var out = [], TM = CH.TM;
     var RS = rowSpan4();
-    var GROW = spec('growDur', 0.75),
-        SHRINK = spec('shrinkDur', 0.7);
+    var GROW = spec('growDur'),
+        SHRINK = spec('shrinkDur');
 
     out.push(G('第 1 步 · 说明', 0, TM.init, [rest(0, TM.init, scene.narr.rest.intro)]));
 
@@ -311,7 +311,7 @@
   function buildRs(scene, CH) {
     var out = [], AT = CH.AT;
     var RS = rowSpan4();
-    var GROW = spec('growDur', 0.75), DATA = CV.PALETTE;
+    var GROW = spec('growDur'), DATA = CV.PALETTE;
 
     function emitText(q) {
       /* 按发送集合把四张卡归组：r0/r1 交 C D，r2/r3 交 A B */
@@ -340,7 +340,7 @@
     function roundRows(q, fly, seat, calc, merge, dly) {
       var n = CH.RECV[q][0].length;
       var take = TAKEOFF() * (fly.e - fly.s);
-      var fade = spec('packFade', 0.6);
+      var fade = spec('packFade');
       return [
         [fly.s, null, '四张卡 · 交空（各 ' + CH.EMIT[q][0].length + ' 格）', emitText(q)],
         [fly.s, fly.s + 0.30 / SPD, '四条直连 · 点亮', '数据色'],

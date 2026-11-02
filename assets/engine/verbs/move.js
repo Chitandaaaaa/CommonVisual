@@ -116,7 +116,7 @@
 
       /* 余辉计时回灰（orch·trailChoreo / trailATA）：抵达后保留数据色
          ratio×飞行时长，然后回灰（idleWire）—— 比率不再是无上限的常亮 */
-      var glowWin = (w.travelEnd - w.s) * (CV.specVal(S.trailKey) || 0.4);
+      var glowWin = (w.travelEnd - w.s) * (CV.spec(S.trailKey));
       var glowing = sec - w.travelEnd <= glowWin;
       if (flying) {
         var e = CV.easeInOutQuad((sec - w.s) / (w.travelEnd - w.s));
@@ -126,7 +126,7 @@
         if (p.half && wire.len > 0) {
           lead = Math.min(0.32, p.half / wire.len);
         } else {
-          lead = Math.min(18 / (wire.len || 1), CV.specVal('packLead') || 0.16);
+          lead = Math.min(18 / (wire.len || 1), CV.spec('packLead'));
         }
         if (lead > 0) {
           e = lead + e * (1 - lead);
@@ -188,7 +188,7 @@
       var flying = sec < cur.w.travelEnd;
       /* 余辉计时回灰（orch·trailChoreo）：与 move.render 同一套——抵达后保留
          数据色 ratio×飞行时长，然后回灰；此前 ring 是常亮到下一轮（漏接） */
-      var glowWinR = (cur.w.travelEnd - cur.w.s) * (CV.specVal(S.trailKey) || 0.4);
+      var glowWinR = (cur.w.travelEnd - cur.w.s) * (CV.spec(S.trailKey));
       if (flying) {
         wire.path.setAttribute('stroke', color);
         wire.path.setAttribute('stroke-width', '2.6');
@@ -448,7 +448,7 @@
     var rIntro = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.9 });
     var rFly   = CV.timeRow(scene.id, { key: 'fly', label: '飞行', sec: 0.95 });
     var rFade  = CV.timeRow(scene.id, { key: 'fade', label: '送达淡出', of: 'packFade' });
-    var rDly   = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.specVal('seatDelay') || 0.5 });
+    var rDly   = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.spec('seatDelay') });
     var rSeat  = CV.timeRow(scene.id, { key: 'seat', label: '落位窗口',
       of: ['popDur', 'seatGap', 'seatGap', 'seatGap'], specLabel: '弹跳+错峰' });
     var rGap   = CV.timeRow(scene.id, { key: 'gap', label: '步间停顿', sec: 0.4 });
@@ -643,7 +643,7 @@
              余辉计时回灰（orch·trailATA）：抵达后保留数据色 ratio×飞行时长 */
           CV.payload.place(p, wire, 1, rev);
           CV.payload.fadeOut(p, sec - rd.arrive);
-          var glowWinA = (rd.arrive - rd.start) * (CV.specVal('trailATA') || 0.3);
+          var glowWinA = (rd.arrive - rd.start) * CV.spec('trailATA');
           var glowingA = sec - rd.arrive <= glowWinA;
           wire.path.setAttribute('stroke', glowingA ? col : '#c3cadb');
           wire.path.setAttribute('stroke-width', glowingA ? '1.6' : '1.4');

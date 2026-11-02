@@ -256,7 +256,7 @@ export async function commonChecks(pg, cfg) {
   }
 
   /* ── 2.24 参数基线契约（assets/theme/defaults.js，规范 #8 落地 2026-11-01）
-     defaults 的组/键必须全部被 theme.js 的 SCHEMA 认识、值必须是有限数字。
+     defaults 的组/键必须全部被 spec.js 的 SCHEMA（CV.SPEC）认识、值必须是有限数字。
      组/键对不上 = 「保存到代码」写了旧键，或 SCHEMA 改名没同步 defaults。
      只比形状不比值 —— localStorage 本机改动合法地盖在基线上，比值会误红。── */
   const dfl = await pg.evaluate(() => {

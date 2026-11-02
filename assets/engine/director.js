@@ -96,7 +96,7 @@
     S.CH = CH;
 
     /* 全局播放速度：choreo 页作用于时长；家族页不乘（与现页面一致） */
-    var speed = (CV.params && CV.params.get('global', 'pageSpeed')) || 1;
+    var speed = CV.spec('pageSpeed');
     if (!(speed > 0)) speed = 1;
     var duration = CH.raw ? Math.round(CH.total * 1000)
                           : Math.round(CH.total * 1000 / speed);

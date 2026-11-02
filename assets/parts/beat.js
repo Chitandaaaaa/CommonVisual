@@ -60,8 +60,7 @@
 
   CV.beat.seat = function (popLayer, slot, color, durSec) {
     /* 弹跳时长取规范 08 的 popDur；页面按自己倍数算好秒就传进来 */
-    var d = (typeof durSec === 'number' && durSec >= 0) ? durSec
-                                                        : ((CV.params && CV.params.get('08-seat', 'popDur')) || 0.55);
+    var d = (typeof durSec === 'number' && durSec >= 0) ? durSec : CV.spec('popDur');
     slot.g.style.animationDuration = d + 's';
     slot.g.classList.remove('slot-pop');
     /* SVG 无 offsetWidth，用 getBoundingClientRect 强制回流，否则删-加 class 被合并不重播 */
@@ -195,19 +194,16 @@
 
     /* 规范值每帧现取（规范页拖滑杆立刻变形）；参数有先后关系，先夹一次 */
     function knobs() {
-      function g(k, d) {
-        var v = CV.params ? CV.params.get('09-merge', k) : undefined;
-        return typeof v === 'number' ? v : d;
-      }
-      var wake = Math.max(.02, g('fuseWake', .16));
-      var rise = Math.min(.98, Math.max(wake + .04, g('fuseRise', .72)));
-      var swap = Math.min(1, Math.max(wake + .08, g('fuseSwap', .78)));
-      var fade = Math.min(swap - .03, Math.max(0, g('fuseFade', .45)));
+      var g = CV.spec;
+      var wake = Math.max(.02, g('fuseWake'));
+      var rise = Math.min(.98, Math.max(wake + .04, g('fuseRise')));
+      var swap = Math.min(1, Math.max(wake + .08, g('fuseSwap')));
+      var fade = Math.min(swap - .03, Math.max(0, g('fuseFade')));
       return {
         wake: wake, rise: rise, swap: swap, fade: fade,
-        shrink: Math.min(1, Math.max(0, g('fuseShrink', .36))),
-        gloss:  Math.max(0, g('fuseGloss', .9)),
-        trail:  Math.max(0, g('fuseTrail', 18))
+        shrink: Math.min(1, Math.max(0, g('fuseShrink'))),
+        gloss:  Math.max(0, g('fuseGloss')),
+        trail:  Math.max(0, g('fuseTrail'))
       };
     }
 

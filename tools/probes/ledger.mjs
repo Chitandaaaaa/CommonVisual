@@ -36,20 +36,43 @@ function srcFiles() {
   walk(path.join(ROOT, 'assets', 'parts'), 'assets/parts');
   walk(path.join(ROOT, 'assets', 'prim'), 'assets/prim');
   walk(path.join(ROOT, 'assets', 'blocks'), 'assets/blocks');
+  walk(path.join(ROOT, 'assets', 'scenes'), 'assets/scenes');
   return out;
 }
 let SRC = null;
 function sources() { if (!SRC) SRC = srcFiles(); return SRC; }
 
+/* 规范表的键：读 spec.js 的 CV.SPEC（表单源；defaults.js 只是基线快照，
+   新键入表而未「保存到代码」时 defaults 里还没有，不能拿它当键清单） */
 function schemaKeys() {
-  const src = fs.readFileSync(path.join(ROOT, 'assets', 'theme', 'defaults.js'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'assets', 'theme', 'spec.js'), 'utf8');
   const win = {};
   new Function('window', src)(win);
   const out = [];
-  Object.keys(win.CV_PARAM_DEFAULTS).forEach(function (g) {
-    Object.keys(win.CV_PARAM_DEFAULTS[g]).forEach(function (k) { out.push(g + ' · ' + k); });
+  Object.keys(win.CV.SPEC).forEach(function (g) {
+    Object.keys(win.CV.SPEC[g].keys).forEach(function (k) { out.push(g + ' · ' + k); });
   });
   return out;
+}
+
+/* 5.1c：消费端禁兜底（docs/参数总线方案.md §4.1）——
+   store 本体 theme.js 与按 schema 遍历出控件的 paramEditor.js 之外，
+   不许 params.get / specVal / specNum 直读，CV.spec(...) 之后不许 || 字面量。
+   注释里提到的不算（先剥块注释再扫）。 */
+function check5_1c() {
+  const bad = [];
+  const re = [
+    [/CV\.params\.get\(/, 'params.get 直读（应 CV.spec）'],
+    [/\bspecVal\(|\bspecNum\(/, 'specVal/specNum 残留'],
+    [/CV\.spec\([^)]*\)\s*\|\|\s*[0-9.]/, 'CV.spec 后 || 字面量兜底'],
+    [/\bspec\('[A-Za-z]+',\s*[0-9.]+\)/, 'spec(键, 默认值) 兜底']
+  ];
+  sources().forEach(function (f) {
+    if (/blocks\/paramEditor\.js$/.test(f.rel)) return;
+    const text = f.text.replace(/\/\*[\s\S]*?\*\//g, '');
+    re.forEach(function (p) { if (p[0].test(text)) bad.push(f.rel + '：' + p[1]); });
+  });
+  return bad;
 }
 
 /* 5.1：特效函数被调用 + 参数键被消费（Node 侧，零浏览器耗时） */
@@ -892,6 +915,10 @@ export async function check(pg) {
       res.deadFns.length === 0 && res.deadKeys.length === 0,
       (res.deadFns.length ? '死函数：' + res.deadFns.join('、') + ' ' : '') +
       (res.deadKeys.length ? '死参数：' + res.deadKeys.join('、') : '全部特效函数有调用点 · 全部参数键有消费'));
+    const bad = check5_1c();
+    ok('5.1c 消费端只经 CV.spec 读表 · 无兜底字面量（源码层）',
+      bad.length === 0,
+      bad.length ? bad.join('；') : '无 params.get / specVal / specNum 直读，无 || 兜底');
   }
 
   const rows = LGR.forPage(pageId);

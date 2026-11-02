@@ -53,7 +53,7 @@
       if (k == null) k = (p.k == null ? 1 : p.k);
       var subs = [], spec = 0, sec = 0;
       keys.forEach(function (kk) {
-        var v = CV.specVal(kk);
+        var v = CV.spec(kk);
         subs.push({ key: kk, spec: v, sec: v * k });
         spec += v; sec += v * k;
       });
@@ -74,7 +74,7 @@
     /* 「传递」= 数据包组件自己的整段：飞行（packDur）+ 送达淡出（packFade） */
     { key: 'travel', label: '传递',     of: ['packDur', 'packFade'], specLabel: '数据包' },
     /* 包停在箭头尖 → 弹跳开始之间的呼吸（页面自定） */
-    { key: 'delay',  label: '落位延迟', sec: CV.specVal('seatDelay') || 0.5 },
+    { key: 'delay',  label: '落位延迟', sec: CV.spec('seatDelay') },
     { key: 'pop',    label: '落位弹跳', of: 'popDur' },
     /* 这一趟结束后到下一趟之间停多久（页面编排） */
     { key: 'hold',   label: '间隔',     sec: 1 }
@@ -82,7 +82,7 @@
 
   /* ══════════ choreo：节拍表 → 时间轴（与旧引擎同一套数） ══════════ */
   CV.choreo = function (page, segs) {
-    var speed = (CV.params && CV.params.get('global', 'pageSpeed')) || 1;
+    var speed = CV.spec('pageSpeed');
     if (!(speed > 0)) speed = 1;
 
     function part(p) { return CV.timeRow(page, p); }
@@ -211,7 +211,7 @@
       /* family 页也吃 pageSpeed（2026-11-02，用户拍板「所有特效都按规范来」）：
          编译末对整棵时间轴做时间变换（行秒 / 锚点 / 画面窗口同除 speed），
          与 choreo 页（choreo() 内同款变换）同一口径。speed=1 时零操作。 */
-      var speed = (CV.params && CV.params.get('global', 'pageSpeed')) || 1;
+      var speed = CV.spec('pageSpeed');
       if (speed > 0 && speed !== 1) {
         /* 锚点（COLLAPSE_AT / EXPAND_AT）与窗口时长键同除 —— 漏一个就会出现
            「窗口在缩放系、锚点在原系」的混系错位（narrate 闭合断言当场抓过） */

@@ -38,12 +38,12 @@
   /* ════════════════════ accumulate · reduce ════════════════════ */
 
   verbs.sum.timelineReduce = function (scene) {
-    var SEG = CV.specVal('fuseDur') || 0.55;
-    var GAP = CV.specVal('mergeGap') || 0.5;
+    var SEG = CV.spec('fuseDur');
+    var GAP = CV.spec('mergeGap');
     var RS = CV.rowSpan(4);
-    var GROW = CV.specVal('growDur') || 0.75;
-    var SHRINK = CV.specVal('shrinkDur') || 0.7;
-    var HOLD = CV.specVal('holdDur') || 0.95;
+    var GROW = CV.spec('growDur');
+    var SHRINK = CV.spec('shrinkDur');
+    var HOLD = CV.spec('holdDur');
 
     /* 齿轮行：说明/预留/收场独立，折一份的七段三趟共用。
        飞是编排秒直接填；淡出/弹跳/撑开/收回走规范 of 行（k 杆整窗缩放），
@@ -57,7 +57,7 @@
     var rPre  = CV.timeRow(scene.id, { key: 'pre', label: '预留缓冲', sec: RS.open });
     var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '传递', sec: 1.7 });
     var rFade = CV.timeRow(scene.id, { key: 'fade', label: '送达淡出', of: 'packFade' });
-    var rDly  = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.specVal('seatDelay') || 0.5 });
+    var rDly  = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.spec('seatDelay') });
     var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳', of: 'popDur' });
     var rGrow = CV.timeRow(scene.id, { key: 'grow', label: '撑开计算层', of: 'growDur' });
     var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '逐段折进', sec: Math.max(SEG + 3 * GAP, HOLD) });
@@ -213,7 +213,7 @@
       if (p >= 1 - 1e-9) return 1;
    /* 窗口走完（p≥1）强制收敛到 1：(fuse+3·gap−3·gap)/fuse 的浮点尾差会让
       末列 e 永远差一丝 <1，被「0<e<1 交给 fuse」分支永久跳过（3.44 抓过） */
-      return clamp((p * TM.merge - i * CV.dur('gap')) / (CV.specVal('fuseDur') || 0.55), 0, 1);
+      return clamp((p * TM.merge - i * CV.dur('gap')) / CV.spec('fuseDur'), 0, 1);
     }
     function doneParts(sec) {
       var n = 1;
@@ -395,7 +395,7 @@
         CV.payload.place(p, w, 1);
         CV.payload.fadeOut(p, sec - f.arrive);
         /* 余辉计时回灰（orch·trailFam）：抵达后保留数据色 ratio×飞行时长 */
-        var residF = (f.arrive - f.start) * (CV.specVal('trailFam') || 0.45);
+        var residF = (f.arrive - f.start) * CV.spec('trailFam');
         var glowingF = sec - f.arrive <= residF;
         w.path.setAttribute('stroke', glowingF ? color : '#c3cadb');
         w.path.setAttribute('stroke-width', glowingF ? '1.8' : '2');
@@ -425,13 +425,13 @@
   /* ════════════════════ exchange · allreduce ════════════════════ */
 
   verbs.sum.timelineAllreduce = function (scene) {
-    var SEG = CV.specVal('fuseDur') || 0.55;
-    var MGAP = CV.specVal('mergeGap') || 0.5;
+    var SEG = CV.spec('fuseDur');
+    var MGAP = CV.spec('mergeGap');
     var RS = CV.rowSpan(4);
-    var GROW = CV.specVal('growDur') || 0.75;
-    var HOLD = CV.specVal('holdDur') || 0.95;
-    var SHRINK = CV.specVal('shrinkDur') || 0.7;
-    var CALC_FADE = CV.specNum('calcFade', 0.35);   /* 方框过渡 = 规范 07 的 calcFade */
+    var GROW = CV.spec('growDur');
+    var HOLD = CV.spec('holdDur');
+    var SHRINK = CV.spec('shrinkDur');
+    var CALC_FADE = CV.spec('calcFade');   /* 方框过渡 = 规范 07 的 calcFade */
 
     /* 齿轮行：说明/预留/终点/收场独立，一轮的八段两轮共用（轮间隔也在组里）。
        弹跳行＝整段窗口的 of 行（单颗 popDur + 3×同批错峰 popStagger，全来自
@@ -442,7 +442,7 @@
     var rExp  = CV.timeRow(scene.id, { key: 'expand', label: '预留两排', sec: RS.open + 0.25 });
     var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '飞行', sec: 1.1 });
     var rFade = CV.timeRow(scene.id, { key: 'fade', label: '送达淡出', of: 'packFade' });
-    var rDly  = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.specVal('seatDelay') || 0.5 });
+    var rDly  = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.spec('seatDelay') });
     var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳',
       of: ['popDur', 'popStagger', 'popStagger', 'popStagger'], specLabel: '弹跳+错峰' });
     var rGrow = CV.timeRow(scene.id, { key: 'grow', label: '撑开计算层', of: 'growDur' });
@@ -657,7 +657,7 @@
 
     function mergeE(p, i) {
       if (p >= 1 - 1e-9) return 1;   /* 同 overlayReduce：窗口走完强制收敛，浮点尾差不进 (0,1) 分支 */
-      return clamp((p * TM.merge - i * CV.dur('gap')) / (CV.specVal('fuseDur') || 0.55), 0, 1);
+      return clamp((p * TM.merge - i * CV.dur('gap')) / CV.spec('fuseDur'), 0, 1);
     }
 
     var lvl0 = q >= 0 ? Math.pow(2, q) : 1;
@@ -812,7 +812,7 @@
         } else if (sec >= R.arrive) {
           var allDone = sec >= ROUNDS[1].end;
           /* 余辉计时回灰（orch·trailReduce）：抵达后保留数据色 ratio×飞行时长 */
-          var residAR = (R.arrive - R.start) * (CV.specVal('trailReduce') || 0.42);
+          var residAR = (R.arrive - R.start) * CV.spec('trailReduce');
           var glowingAR = sec - R.arrive <= residAR;
           var roundDone = sec >= R.end;
           var strokeCol = allDone ? DEEP : (glowingAR && !roundDone ? color : '#c3cadb');
