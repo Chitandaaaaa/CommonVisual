@@ -90,7 +90,7 @@
 <div class="wrap">
 
   <h1>CommonVisual · 验证用例清单</h1>
-  <div class="sub">225 条：通用 3 ＋ 全站通用 29 ＋ 原语页 63 ＋ index 与规范页 15 ＋ 规范符合性 115。已实现 225 条，待补 0 条（第 2/3/4 组在 <code>tools/probes/</code>，随 verify.mjs 跑）。<b>结构断言每次改完都跑；截图与人工观感留到提交前和每日定时。</b></div>
+  <div class="sub">233 条：通用 3 ＋ 全站通用 29 ＋ 原语页 63 ＋ index 与规范页 15 ＋ 规范符合性 115 ＋ 参数面板 8。已实现 233 条，待补 0 条（第 2/3/4 组在 <code>tools/probes/</code>，随 verify.mjs 跑）。<b>结构断言每次改完都跑；截图与人工观感留到提交前和每日定时。</b></div>
   <div class="rule-top">以本页为准 · 改本页需同步 AGENTS.md 一 与 MEMORY.md</div>
   <div class="lead">本页只列<b>用例</b>——能判「过或不过」的验证动作，每条写明<b>作用在哪个页面</b>与<b>通过标准</b>；拆分、入册等条数沿革见页尾变更日志。<b>左侧红条</b>＝口径已按实现对齐的条目，补断言以红条文案为准；<b>橙条</b>＝2026-10-31 拆分新增的行；<b>紫条</b>＝待处理条目（当前 0 条，已了结的登记见页尾日志）。</div>
     <div class="boundary warn"><b>待处理（审计登记、未排期——只记录，不改代码）：</b>历史登记的紫条均已了结，当前门禁 0 紫；下列为现行已知的弱断言缺口。<br>
@@ -425,6 +425,26 @@
         <tr><td class="c-no"><span class="n">5.106</span></td><td class="c-p">7 原语页（alltoall 豁免）</td><td><span class="t">GL-speed 播放速度</span></td><td class="c-v" data-l="断言">link（改参数→Δ 可量→还原无残差）：参数 global · pageSpeed（×）（§00）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">ledger.mjs</span></td></tr>
         <tr><td class="c-no"><span class="n">5.107</span></td><td class="c-p">7 原语页（alltoall 豁免）</td><td><span class="t">GL-bp 断点 860</span></td><td class="c-v" data-l="断言">truth（页面 DOM / 常量真值对照）：&lt; 860 用窄屏（§03）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">ledger.mjs</span></td></tr>
         <tr><td class="c-no"><span class="n">5.108</span></td><td class="c-p">7 原语页（alltoall 豁免）</td><td><span class="t">GL-narrow 窄屏重建（按当前进度重绘）</span></td><td class="c-v" data-l="断言">truth（页面 DOM / 常量真值对照）：切换重建 · 进度保持（§03）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">ledger.mjs</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+
+  <!-- ===================== 06 ===================== -->
+  <section id="sec-06">
+    <div class="sechead"><span class="no">06</span><h2>参数面板 · 一个核两把壳</h2><span class="meta">8 条 · 每次改完跑（随 05 组同源执行） · 已实现 8</span></div>
+    <div class="role">渲染核 = <code>assets/blocks/paramCore.js</code>（96 行：数值 / 颜色 / 锁条，样式自注入）。两把壳：原语页齿轮「外观」页签 + 规范页抽屉（blocks/paramEditor.js）。锁默认只读、不持久化、只门禁 UI 不回滚数据——探针走 <code>CV.params.set</code>，不经 UI。</div>
+    <table style="margin-top:12px">
+      <thead><tr><th class="c-no">序号</th><th class="c-p" style="width:150px">页面</th><th>检查项</th><th class="c-v">检查型 · 当前值 · 章节</th><th>状态 / 探针</th></tr></thead>
+      <tbody>
+        <tr class="new"><td class="c-no"><span class="n">6.1</span></td><td class="c-p">8 原语页</td><td><span class="t">齿轮「外观」页签在场</span></td><td class="c-v" data-l="断言">点开齿轮 → 外观页签 → 渲染核 96 行全渲染（数值 + 颜色 + 跨章组）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/ledger.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">6.2</span></td><td class="c-p">8 原语页</td><td><span class="t">默认锁定 · 解锁全放开</span></td><td class="c-v" data-l="断言">面板打开即 96 行全部只读（disabled 态，防误触）；勾「解锁编辑」后余锁 0。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/ledger.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">6.3</span></td><td class="c-p">8 原语页</td><td><span class="t">解锁改 rankA → fill 即时跟变</span></td><td class="c-v" data-l="断言">改 hex 提交 → 页面 SVG 槽 fill 变 → <code>CV.params.reset()</code> 回基线色。「就着动态过程调」的最短闭环。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/ledger.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">6.4</span></td><td class="c-p">8 原语页</td><td><span class="t">「保存到代码」出口在场</span></td><td class="c-v" data-l="断言">外观页签底部有保存钮，文本与规范页抽屉同源（<code>paramCore.siteFileText</code>）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/ledger.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">6.5</span></td><td class="c-p">8 原语页</td><td><span class="t">锁不持久化</span></td><td class="c-v" data-l="断言">关面板重开（核重建）回到锁定——「默认不可调」按会话生效，不记 localStorage。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/ledger.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">6.6</span></td><td class="c-p">docs/visual.html</td><td><span class="t">抽屉与齿轮同核 · 默认锁定</span></td><td class="c-v" data-l="断言">⚙ 打开抽屉，96 行渲染、默认锁；章节联动只显当前节的组。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/ledger.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">6.7</span></td><td class="c-p">docs/visual.html</td><td><span class="t">抽屉章节联动</span></td><td class="c-v" data-l="断言">当前节无参时给空态跳转入口；跨章组（舞台几何 / 全局播放）只在「全部章节」可见。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/ledger.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">6.8</span></td><td class="c-p">8 原语页</td><td><span class="t">外观改值触发重建（几何 / 色板）</span></td><td class="c-v" data-l="断言">boot 挂 <code>params.onChange → api.reload()</code>：改几何 / 色板后重编译重建，时长 / 坐标 / 填色同步（6.3 的 fill 断言即此链的产物）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/ledger.mjs</span></td></tr>
       </tbody>
     </table>
   </section>

@@ -555,78 +555,15 @@
   }
 }
 
-/* 手风琴分组：每章一组，滚到哪节哪节自动展开 */
-.pp-group { margin-bottom: 8px; }
-.pp-group-head {
-  display: flex; align-items: center; gap: 8px; width: 100%;
-  padding: 9px 10px; background: #f7f8fc;
-  border: 1px solid var(--line); border-radius: 10px;
-  cursor: pointer; text-align: left;
-  font-family: var(--sans); color: var(--tx);
-}
-.pp-group.open .pp-group-head { border-radius: 10px 10px 0 0; }
-.pp-group-title { font-size: 12.5px; font-weight: 600; color: var(--tx); }
+/* 参数调试台抽屉 × 渲染核（blocks/paramCore.js，pc-* 样式由核注入）
+   这里只留壳的两处适配：定位链接、抽屉内布局微调。 */
 .pp-locate {
   font-size: 11px; color: var(--accent); margin-left: auto;
   cursor: pointer; white-space: nowrap;
 }
 .pp-locate:hover { text-decoration: underline; }
-.pp-tag {
-  font-size: 9.5px; letter-spacing: .06em; color: var(--tx-3);
-  margin-left: auto; padding: 1px 6px; border-radius: 999px;
-  background: #eef0f6; border: 1px solid var(--line);
-}
-.pp-chev { font-size: 11px; color: var(--tx-3); width: 12px; text-align: center; }
-.pp-group-body {
-  display: none; padding: 6px 10px 8px;
-  border: 1px solid var(--line); border-top: none;
-  border-radius: 0 0 10px 10px;
-}
-.pp-group.open .pp-group-body { display: block; }
-
-/* 组内子分组：同一个组件规范按「耗时 / 特效」分开看，一眼知道哪些改时长、哪些只改观感 */
-.pp-sub + .pp-sub { margin-top: 8px; padding-top: 7px; border-top: 1px dashed var(--line); }
-.pp-sub-hd {
-  font-size: 10px; letter-spacing: .08em; color: var(--tx-3);
-  margin-bottom: 2px;
-}
-
-.pp-row {
-  display: grid;
-  grid-template-columns: 1fr 96px 46px 16px 22px;
-  align-items: center; gap: 6px;
-  padding: 4px 0;
-}
-.pp-label {
-  font-size: 11.5px; color: var(--tx-2);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.pp-range { width: 96px; }
-.pp-num {
-  width: 46px; padding: 2px 4px; font-family: var(--mono); font-size: 11px;
-  border: 1px solid var(--line); border-radius: 6px; color: var(--tx);
-  text-align: right; background: #fff;
-}
-/* 去掉数字输入框的上下箭头：它占掉宽度，把「0.16」这种四位数的最后一位挤掉 */
-.pp-num::-webkit-inner-spin-button,
-.pp-num::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-.pp-num { appearance: textfield; -moz-appearance: textfield; }
-/* 颜色行：取色器占滑杆位、十六进制占数字位，列网格与数值行对齐 */
-.pp-row-color { grid-template-columns: 1fr 96px 62px 0 22px; }
-.pp-color {
-  width: 96px; height: 22px; padding: 0; border: 1px solid var(--line); border-radius: 6px;
-  background: #fff; cursor: pointer;
-}
-.pp-hex {
-  width: 62px; padding: 2px 4px; font-family: var(--mono); font-size: 11px;
-  border: 1px solid var(--line); border-radius: 6px; color: var(--tx); background: #fff;
-}
-.pp-unit { font-family: var(--mono); font-size: 9.5px; color: var(--tx-3); text-align: center; }
-.pp-reset {
-  border: 0; background: #f1f3f9; color: var(--tx-3); cursor: pointer;
-  border-radius: 6px; font-size: 12px; line-height: 1; padding: 4px 0;
-}
-.pp-reset:hover { background: #e7eaf3; color: var(--tx-2); }
+.param-dock .pc-chev { margin-left: 0; }
+.param-dock .pc-panel { padding: 2px 2px 6px; }
 
 /* ── 00 章全量可改项总表（2026-11-02）── */
 .ledger-tbl { width: 100%; border-collapse: collapse; margin: 6px 0 4px; }

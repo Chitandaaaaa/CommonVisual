@@ -105,10 +105,10 @@ td.dim{color:var(--tx2)}
   <h1>组件库与代码架构</h1>
   <p class="lead">
     本页是 CommonVisual 组件库与代码架构的标准。只回答一个问题：<b>要讲清 8 种原语，需要哪些零件？</b><br>
-    从这个问题出发，得到 <b>32 件组件</b>、<b>6 层架构</b>，以及 <b>5 个写明形状的扩展点</b>。
+    从这个问题出发，得到 <b>33 件组件</b>、<b>6 层架构</b>，以及 <b>5 个写明形状的扩展点</b>。
   </p>
   <div class="chips">
-    <span class="chip"><b>32</b>组件</span>
+    <span class="chip"><b>33</b>组件</span>
     <span class="chip"><b>4</b>动作原语</span>
     <span class="chip"><b>8</b>份剧本</span>
     <span class="chip"><b>6</b>层依赖</span>
@@ -324,7 +324,7 @@ td.dim{color:var(--tx2)}
 
 <!-- ============ 02 ============ -->
 <section id="parts">
-  <div class="sec-h"><span class="sec-n">02</span><h2>组件库 · 32 件</h2></div>
+  <div class="sec-h"><span class="sec-n">02</span><h2>组件库 · 33 件</h2></div>
   <p class="sec-sub">
     每件只做一件事，只认自己的输入，<b>不知道「原语」这个词存在</b>。
     舞台不知道谁是 gather，演员不知道数据要去哪 —— 只有编排层知道。
@@ -790,8 +790,8 @@ td.dim{color:var(--tx2)}
         <text x="2" y="274" font-size="11" font-family="ui-monospace,monospace" font-weight="700" fill="#2563eb">L2</text>
         <rect x="52" y="256" width="756" height="58" rx="9" fill="#f5f8ff" stroke="#bfdbfe"/>
         <text x="70" y="282" font-size="13.5" font-weight="600" fill="#2563eb">组件</text>
-        <text x="108" y="282" font-size="12" font-family="ui-monospace,monospace" fill="#5f6780">parts/ ×5　nav/ ×3　blocks/ ×6</text>
-        <text x="70" y="302" font-size="11.5" fill="#939bb2">32 件，三组各管一类问题：画过程 / 画关系 / 搭页面。组内互不引用</text>
+        <text x="108" y="282" font-size="12" font-family="ui-monospace,monospace" fill="#5f6780">parts/ ×5　nav/ ×3　blocks/ ×7</text>
+        <text x="70" y="302" font-size="11.5" fill="#939bb2">33 件，三组各管一类问题：画过程 / 画关系 / 搭页面。组内互不引用</text>
         <text x="828" y="282" font-size="11.5" fill="#c27803">按组串行</text>
         <text x="828" y="301" font-size="11" fill="#939bb2">三组可并行</text>
       </g>
@@ -835,7 +835,7 @@ td.dim{color:var(--tx2)}
 │             beat.js  chrome.js                             <span class="c">L2  画过程</span>
 ├── <span class="k">nav/</span>       node.js  mini.js  edge.js                     <span class="c">L2  画关系（dir·dotrow 在 node.js 内）</span>
 ├── <span class="k">blocks/</span>    head.js  legend.js  toc.js  table.js
-│             anatomy.js  paramEditor.js                     <span class="c">L2  搭页面（后两件仅 docs/visual.html 加载）</span>
+│             anatomy.js  paramCore.js  paramEditor.js        <span class="c">L2  搭页面（核两壳共用；paramEditor 仅规范页）</span>
 ├── <span class="k">engine/</span>    compile.js  director.js
 │             <span class="k">verbs/</span>   move.js  copy.js  split.js  sum.js    <span class="c">L3  2 + 4 个</span>
 ├── <span class="k">pages/</span>     index.css  docs.css  anatomy.css            <span class="c">页面样式</span>

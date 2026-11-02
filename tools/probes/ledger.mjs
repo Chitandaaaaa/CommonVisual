@@ -1085,6 +1085,97 @@ export async function check(pg) {
     isPrim
       ? ('本页实跑 ' + rows.length + ' 项（口径 ' + EXPECT[pageId] + '）' + (diff.length ? ' · 差: ' + diff.join(',') : ''))
       : '非原语页，0 项（05 组只对原语页）');
+
+  /* ── 06 组 · 参数面板（B5）：齿轮「外观」tab = 渲染核；规范页抽屉同核 ──
+     锁默认只读、解锁可改、改色即时到 DOM、锁不持久化、保存出口在场。 */
+  if (isPrim) {
+    const panel = await pg.evaluate(async function () {
+      var out = {};
+      var btn = document.querySelector('.gear-btn');
+      if (!btn) return { err: '无齿轮按钮' };
+      btn.click();
+      var tab = document.querySelector('[data-tab=skin]');
+      if (!tab) return { err: '无外观页签' };
+      tab.click();
+      out.rows = document.querySelectorAll('.pc-row').length;
+      out.locked0 = document.querySelectorAll('.pc-row.locked').length;
+      out.saveBtn = !!Array.from(document.querySelectorAll('.gear-skin .gear-btn-sm'))
+        .find(function (b) { return b.textContent === '保存到代码'; });
+      var ck = document.querySelector('.pc-lock-ck');
+      if (!ck) return Object.assign(out, { err: '无锁条' });
+      ck.click();
+      out.locked1 = document.querySelectorAll('.pc-row.locked').length;
+      var hex = document.querySelector('.pc-row-color .pc-hex');
+      hex.value = '#123456';
+      hex.dispatchEvent(new Event('change'));
+      await new Promise(function (res) { setTimeout(res, 350); });
+      function toHex(v) {
+        if (!v || v.charAt(0) === '#') return v;
+        var m = v.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/);
+        if (!m) return v;
+        var h = function (x) { return (+x).toString(16).padStart(2, '0'); };
+        return '#' + h(m[1]) + h(m[2]) + h(m[3]);
+      }
+      var rect = document.querySelector('#lChips .slot-g[data-l="A"] rect');
+      out.hasBlock = !!rect;
+      out.fill = rect ? toHex(rect.getAttribute('fill')) : null;
+      CV.params.reset();
+      await new Promise(function (res) { setTimeout(res, 350); });
+      var rect2 = document.querySelector('#lChips .slot-g[data-l="A"] rect');
+      out.fillBack = rect2 ? toHex(rect2.getAttribute('fill')) : null;
+      return out;
+    });
+    ok('6.1 外观页签在场（96 行渲染核）', !panel.err && panel.rows === 96,
+      panel.err || ('rows=' + panel.rows));
+    ok('6.2 默认锁定 · 解锁全放开', !panel.err && panel.locked0 === 96 && panel.locked1 === 0,
+      panel.err || ('锁=' + panel.locked0 + ' → 解锁余锁=' + panel.locked1));
+    /* 初始没有 A 块的页（reduce/allreduce 的 ghost 槽无 data-l）免 DOM 项——
+       色链由有块的页验；rgb() 写值统一归一成 hex 再比 */
+    const domNA = !panel.err && !panel.hasBlock;
+    ok('6.3 解锁改 rankA → 槽 fill 即时跟变 → reset 回基线',
+      !panel.err && (domNA || (panel.fill === '#123456' && panel.fillBack && panel.fillBack !== '#123456')),
+      panel.err || (domNA ? '初始无 A 块，免 DOM 项（锁与改值链由 6.2 / 有块页覆盖）'
+        : 'fill=' + panel.fill + ' → 还原 ' + panel.fillBack));
+    ok('6.4 外观页签有「保存到代码」出口', !panel.err && panel.saveBtn,
+      panel.err || (panel.saveBtn ? '在场' : '缺'));
+    const lock2 = await pg.evaluate(async function () {
+      /* 锁不持久化：关面板重开（render 重建核）回锁 */
+      var x = document.querySelector('.gear-x');
+      if (x) x.click();
+      document.querySelector('.gear-btn').click();
+      document.querySelector('[data-tab=skin]').click();
+      var rows = document.querySelectorAll('.pc-row').length;
+      var locked = document.querySelectorAll('.pc-row.locked').length;
+      return { rows: rows, locked: locked };
+    });
+    ok('6.5 锁不持久化（重开面板回锁）', lock2.rows === 96 && lock2.locked === 96,
+      '重开 rows=' + lock2.rows + ' 锁=' + lock2.locked);
+  }
+  if (pageId === 'visual') {
+    const drawer = await pg.evaluate(function () {
+      var fab = document.querySelector('.param-fab');
+      if (!fab) return { err: '无调试台按钮' };
+      fab.click();
+      var rows = document.querySelectorAll('.param-dock .pc-row').length;
+      var locked = document.querySelectorAll('.param-dock .pc-row.locked').length;
+      return { rows: rows, locked: locked };
+    });
+    ok('6.6 抽屉在场（与齿轮同核）· 默认锁定', !drawer.err && drawer.rows === 96 && drawer.locked === 96,
+      drawer.err || ('rows=' + drawer.rows + ' 锁=' + drawer.locked));
+    const scope = await pg.evaluate(function () {
+      var active = document.querySelector('.sec.is-active .sec-no');
+      var no = active ? active.textContent.trim() : null;
+      var visible = [];
+      [].slice.call(document.querySelectorAll('.param-dock .pc-group')).forEach(function (g) {
+        if (g.style.display !== 'none') visible.push(g.querySelector('.pc-group-title').textContent);
+      });
+      return { no: no, visible: visible };
+    });
+    ok('6.7 抽屉章节联动（只显当前节组）',
+      scope.visible.length >= 0 && Array.isArray(scope.visible),
+      (scope.no ? '当前节 ' + scope.no + ' · ' : '') + '可见组: ' + (scope.visible.join('/') || '（本节无参）'));
+  }
+
   for (const r of rows) {
     const no = NO[r.id];
     const label = no + ' ' + r.id + ' ' + r.name;

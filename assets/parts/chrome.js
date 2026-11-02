@@ -671,6 +671,42 @@
       pop.appendChild(box);
     }
 
+    /* ── 外观 tab：全站参数（渲染核 blocks/paramCore.js）──
+       色板 / 动效 / 几何 / 全局一键同面板；锁在核里（默认锁定，不持久化）。
+       改值 → CV.params.set → boot 的 onChange → api.reload 重建舞台；
+       「保存到代码」与规范页抽屉同一段文本（paramCore.siteFileText）。 */
+    function renderSkin() {
+      var core = CV.paramCore();
+      var box = el('div', 'gear-skin');
+      box.appendChild(core.el);
+
+      var ft = el('div', 'gear-ft');
+      var reset = el('button', 'gear-btn-sm gear-btn-ghost', '重置全部');
+      reset.type = 'button';
+      reset.title = '全站参数回基线（清本机改动；页级时序不受影响，那在「时序」页签）';
+      reset.addEventListener('click', function (e) {
+        e.stopPropagation();
+        CV.params.reset();
+        render();
+      });
+      var save = el('button', 'gear-btn-sm', '保存到代码');
+      save.type = 'button';
+      save.title = '把全站当前值固化成代码基线（写 assets/theme/defaults.js）';
+      save.addEventListener('click', function () {
+        save.disabled = true;
+        save.textContent = '写入中…';
+        CV.saveFile('assets/theme/defaults.js', CV.paramCore.siteFileText(), function (ok) {
+          save.disabled = false;
+          save.textContent = ok ? '已写入' : '已下载';
+          setTimeout(function () { save.textContent = '保存到代码'; }, 1600);
+        });
+      });
+      ft.appendChild(reset);
+      ft.appendChild(save);
+      box.appendChild(ft);
+      pop.appendChild(box);
+    }
+
     function render() {
       var ch = getCh();
       pop.innerHTML = '';
@@ -685,9 +721,9 @@
       head.appendChild(x);
       pop.appendChild(head);
 
-      /* 页签：时序（原样）｜逐动作解说（docs/steps.html） */
+      /* 页签：时序（本页时间轴）｜外观（全站参数）｜逐动作解说（docs/steps.html） */
       var tabs = el('div', 'gear-tabs');
-      [['seq', '时序'], ['narr', '逐动作解说']].forEach(function (tp) {
+      [['seq', '时序'], ['skin', '外观'], ['narr', '逐动作解说']].forEach(function (tp) {
         var b = el('button', 'gear-tab' + (tab === tp[0] ? ' on' : ''), tp[1]);
         b.type = 'button';
         b.setAttribute('data-tab', tp[0]);
@@ -701,6 +737,7 @@
       pop.appendChild(tabs);
 
       if (tab === 'narr') { renderNarr(ch); return; }
+      if (tab === 'skin') { renderSkin(); return; }
 
       pop.appendChild(el('div', 'gear-tip',
         '编号＝进度条第几段 · 有规范值调倍数 · 自定义填秒 · 改完自动存到本机'));
