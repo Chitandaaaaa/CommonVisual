@@ -24,12 +24,12 @@ ALL.forEach(function (r, i) { NO[r.id] = i + 2; });   /* 5.1 = 使用检查，�
 /* ── 源码扫描（Node 侧）── */
 function srcFiles() {
   const out = [];
-  const walk = (dir, rel) => {
+  const walk = (dir, rel, skip) => {
     for (const f of fs.readdirSync(dir)) {
       const full = path.join(dir, f);
       const r = rel ? rel + '/' + f : f;
-      if (fs.statSync(full).isDirectory()) walk(full, r);
-      else if (f.endsWith('.js')) out.push({ rel: r, text: fs.readFileSync(full, 'utf8') });
+      if (fs.statSync(full).isDirectory()) walk(full, r, skip);
+      else if (f.endsWith('.js') && !(skip || []).some(s => r.indexOf(s) >= 0)) out.push({ rel: r, text: fs.readFileSync(full, 'utf8') });
     }
   };
   walk(path.join(ROOT, 'assets', 'engine'), 'assets/engine');
@@ -37,6 +37,9 @@ function srcFiles() {
   walk(path.join(ROOT, 'assets', 'prim'), 'assets/prim');
   walk(path.join(ROOT, 'assets', 'blocks'), 'assets/blocks');
   walk(path.join(ROOT, 'assets', 'scenes'), 'assets/scenes');
+  /* theme/ 只进 store 本体（spec.js / defaults.js 是表与基线，键名在文件里天然出现） */
+  walk(path.join(ROOT, 'assets', 'theme'), 'assets/theme',
+       ['theme/spec.js', 'theme/defaults.js', 'stage-page.css']);
   return out;
 }
 let SRC = null;
@@ -45,12 +48,9 @@ function sources() { if (!SRC) SRC = srcFiles(); return SRC; }
 /* 规范表的键：读 spec.js 的 CV.SPEC（表单源；defaults.js 只是基线快照，
    新键入表而未「保存到代码」时 defaults 里还没有，不能拿它当键清单） */
 function schemaKeys() {
-  const src = fs.readFileSync(path.join(ROOT, 'assets', 'theme', 'spec.js'), 'utf8');
-  const win = {};
-  new Function('window', src)(win);
   const out = [];
-  Object.keys(win.CV.SPEC).forEach(function (g) {
-    Object.keys(win.CV.SPEC[g].keys).forEach(function (k) { out.push(g + ' · ' + k); });
+  Object.keys(win_SPEC()).forEach(function (g) {
+    Object.keys(win_SPEC()[g].keys).forEach(function (k) { out.push(g + ' · ' + k); });
   });
   return out;
 }
@@ -69,8 +69,93 @@ function check5_1c() {
   ];
   sources().forEach(function (f) {
     if (/blocks\/paramEditor\.js$/.test(f.rel)) return;
+    if (/theme\/theme\.js$/.test(f.rel)) return;   /* store 自己按组+键读写，是参数总线的实现 */
     const text = f.text.replace(/\/\*[\s\S]*?\*\//g, '');
     re.forEach(function (p) { if (p[0].test(text)) bad.push(f.rel + '：' + p[1]); });
+  });
+  return bad;
+}
+
+/* 5.1d：CSS 侧只读 var(--cv-<键>)（方案 §4.1）——
+   a) 舞台过程选择器（.cap-text 色块 / .gpu-card / .slot-* / .wire / .slot-pop / .ring）
+      的规则体里不许有裸色值（#fff 白字豁免）与裸秒，过渡时长必须 var(--cv-*)；
+      悬停聚焦 / hover 反馈是交互不是过程，不在名单内，保留字面量。
+   b) 任何 assets CSS 里的 var(--cv-X) 必须是 spec.js 里 sink='css'|'both' 的键——
+      抓变量名拼错、表里删了键 CSS 还在读。 */
+function check5_1d() {
+  const cssPath = path.join(ROOT, 'assets', 'theme', 'stage-page.css');
+  const css = fs.readFileSync(cssPath, 'utf8');
+  const bad = [];
+  const STAGE = ['cap-text', 'gpu-card', 'slot-g', 'slot-bg', 'slot-tx', 'wire', 'slot-pop', 'ring'];
+  const rules = css.match(/[^{}]+\{[^{}]*\}/g) || [];
+  rules.forEach(function (r) {
+    const sel = r.slice(0, r.indexOf('{'));
+    const body = r.slice(r.indexOf('{') + 1);
+    if (!STAGE.some(s => sel.indexOf(s) >= 0)) return;
+    /* 悬停聚焦 / 变灰是交互态不是过程（chrome.focus）：data-dim / data-focus /
+       :not(...) 复合选择器全是交互规则，豁免 */
+    if (/\[data-(dim|focus)/.test(sel) || /:not\(/.test(sel)) return;
+    const hexes = (body.match(/#[0-9a-fA-F]{3,6}\b/g) || []).filter(h => h.toLowerCase() !== '#fff');
+    if (hexes.length) bad.push('裸色值 ' + hexes.join(',') + ' @ ' + sel.trim().slice(0, 50));
+    const secs = body.match(/[0-9]*\.?[0-9]+s\b/g) || [];
+    if (secs.length) bad.push('裸时长 ' + secs.join(',') + ' @ ' + sel.trim().slice(0, 50));
+  });
+  const cssDir = path.join(ROOT, 'assets');
+  const cssFiles = [];
+  (function walkc(d) {
+    fs.readdirSync(d).forEach(function (f) {
+      const full = path.join(d, f);
+      if (fs.statSync(full).isDirectory()) walkc(full);
+      else if (f.endsWith('.css')) cssFiles.push(full);
+    });
+  })(cssDir);
+  const specKeys = {};
+  Object.keys(win_SPEC()).forEach(function (g) {
+    Object.keys(win_SPEC()[g].keys).forEach(function (k) {
+      const d = win_SPEC()[g].keys[k];
+      if (d.sink === 'css' || d.sink === 'both') specKeys[k] = true;
+    });
+  });
+  cssFiles.forEach(function (f) {
+    const t = fs.readFileSync(f, 'utf8');
+    (t.match(/var\(--cv-([A-Za-z0-9]+)/g) || []).forEach(function (m) {
+      const k = m.slice(9);
+      if (!specKeys[k]) bad.push('var(--cv-' + k + ') 不在规范表或非 css sink @ ' + path.relative(ROOT, f));
+    });
+  });
+  return bad;
+}
+
+/* spec.js 以表的形式在 Node 里求值一次（5.1a / 5.1d 共用） */
+let SPEC_CACHE = null;
+function win_SPEC() {
+  if (SPEC_CACHE) return SPEC_CACHE;
+  const win = {};
+  new Function('window', fs.readFileSync(path.join(ROOT, 'assets', 'theme', 'spec.js'), 'utf8'))(win);
+  SPEC_CACHE = win.CV.SPEC;
+  return SPEC_CACHE;
+}
+
+/* 5.1e：JS 侧不许有色板字面量副本（方案 §4.1）——
+   spec.js 色键的 def 值不得出现在 engine / parts / prim / scenes / boot /
+   theme.js / blocks（anatomy.js 除外：规范页演示的文案里写着色值，B3 随
+   00 章生成一并收编）。字幕色块 / 表块 / 演示绘制一律读 CV.PALETTE / CV.TONE。 */
+function check5_1e() {
+  const spec = win_SPEC();
+  const hexes = [];
+  Object.keys(spec).forEach(function (g) {
+    Object.keys(spec[g].keys).forEach(function (k) {
+      const d = spec[g].keys[k];
+      if (d.kind === 'color') hexes.push({ k: g + '.' + k, v: d.def.toLowerCase() });
+    });
+  });
+  const bad = [];
+  sources().forEach(function (f) {
+    if (/blocks\/anatomy\.js$/.test(f.rel)) return;
+    const text = f.text.replace(/\/\*[\s\S]*?\*\//g, '').toLowerCase();
+    hexes.forEach(function (h) {
+      if (text.indexOf(h.v) >= 0) bad.push(f.rel + ' 含 ' + h.v + '（' + h.k + ' 的副本）');
+    });
   });
   return bad;
 }
@@ -89,8 +174,22 @@ function check5_1() {
     ['payload.place（数据包位放）', /CV\.payload\.place\b/, /parts\/payload\.js$/]
   ];
   const deadFns = fns.filter(function (f) { return !callOutside(f[1], f[2]); }).map(function (f) { return f[0]; });
+  /* 消费语料 = JS 源码 + assets 全部 CSS（sink='css' 的键只出现在 var(--cv-键) 里，
+     CSS 引用也算消费——slotCross / wireFade / ringDur / rankA 这类就在这一侧） */
   const engineSrc = files.map(function (f) { return f.text; }).join('\n');
-  const deadKeys = schemaKeys().filter(function (k) { return engineSrc.indexOf(k.split(' · ')[1]) < 0; });
+  const cssText = (function () {
+    const t = [];
+    (function walkc(d) {
+      fs.readdirSync(d).forEach(function (f) {
+        const full = path.join(d, f);
+        if (fs.statSync(full).isDirectory()) walkc(full);
+        else if (f.endsWith('.css')) t.push(fs.readFileSync(full, 'utf8'));
+      });
+    })(path.join(ROOT, 'assets'));
+    return t.join('\n');
+  })();
+  const consumed = engineSrc + '\n' + cssText;
+  const deadKeys = schemaKeys().filter(function (k) { return consumed.indexOf(k.split(' · ')[1]) < 0; });
   return { deadFns: deadFns, deadKeys: deadKeys };
 }
 
@@ -919,6 +1018,14 @@ export async function check(pg) {
     ok('5.1c 消费端只经 CV.spec 读表 · 无兜底字面量（源码层）',
       bad.length === 0,
       bad.length ? bad.join('；') : '无 params.get / specVal / specNum 直读，无 || 兜底');
+    const badD = check5_1d();
+    ok('5.1d CSS 侧只读 var(--cv-键) · 舞台过程规则无裸色值 / 裸秒（源码层）',
+      badD.length === 0,
+      badD.length ? badD.join('；') : '舞台过程选择器全部走 --cv-*，且 CSS 引用的键都在规范表');
+    const badE = check5_1e();
+    ok('5.1e JS 侧无色板字面量副本（源码层）',
+      badE.length === 0,
+      badE.length ? badE.join('；') : '色值只在 spec.js 的表里，JS 一律读 CV.PALETTE / CV.TONE');
   }
 
   const rows = LGR.forPage(pageId);

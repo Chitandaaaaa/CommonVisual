@@ -75,17 +75,17 @@ body {
   color: #fff; vertical-align: 1.3px;
   margin: 0 1px;
 }
-.cap-text .cA { background: #7c3aed; }
-.cap-text .cB { background: #0891b2; }
-.cap-text .cC { background: #059669; }
-.cap-text .cD { background: #d97706; }
+.cap-text .cA { background: var(--cv-rankA); }
+.cap-text .cB { background: var(--cv-rankB); }
+.cap-text .cC { background: var(--cv-rankC); }
+.cap-text .cD { background: var(--cv-rankD); }
 /* 归约结果 Σ：和画面里「合了 4 份」那块同一个深紫 */
-.cap-text .sig { background: #4c1d95; }
+.cap-text .sig { background: var(--cv-toneDeep); }
 /* rank 编号与它持有的那段数据同色，一眼对上 */
-.cap-text .r0 { background: #7c3aed; }
-.cap-text .r1 { background: #0891b2; }
-.cap-text .r2 { background: #059669; }
-.cap-text .r3 { background: #d97706; }
+.cap-text .r0 { background: var(--cv-rankA); }
+.cap-text .r1 { background: var(--cv-rankB); }
+.cap-text .r2 { background: var(--cv-rankC); }
+.cap-text .r3 { background: var(--cv-rankD); }
 /* 整个 "rankN" 做成一个胶囊，宽度随内容 */
 .cap-text em.rk {
   width: auto; min-width: 17px;
@@ -210,16 +210,17 @@ body {
 }
 
 /* ───────────── SVG 内部 ───────────── */
-/* 变暗/复原、显形的过渡时长 = 规范参数（orch·dimDur / revealDur），
-   theme.js 开机把它们写进 :root 自定义属性，调试台改完即时生效。 */
-.gpu-card { transition: opacity var(--cv-dim, .3s) ease; }
+/* 过程过渡的时长与字幕数据色一律走 --cv-<键>：spec.js 里 sink='css'|'both' 的键
+   由 theme.js 开机写进 :root，调试台改完即时生效。这里不写裸秒 / 裸色值（5.1d 扫）。
+   悬停聚焦 / hover 反馈是交互不是过程，保留字面量，不入表。 */
+.gpu-card { transition: opacity var(--cv-dimDur) ease; }
 /* 字号一律由绘制函数按 GEO 写在属性上（标题 15/12.5、徽章 10/8.5、块内字母 .33 × 块高）。
    CSS 只负责字体族与字重 —— 这里再写 font-size 会盖掉属性，窄屏就会顶着桌面的字号。 */
 .gpu-title {
   font-family: var(--sans); font-weight: 700; fill: var(--tx);
 }
-.slot-g { transition: opacity var(--cv-reveal, .32s) ease; }
-.slot-bg { transition: fill .3s ease, stroke .3s ease; }
+.slot-g { transition: opacity var(--cv-revealDur) ease; }
+.slot-bg { transition: fill var(--cv-slotCross) ease, stroke var(--cv-slotCross) ease; }
 
 /* ───────── 悬停聚焦：指向某类数据块时，其余类缓缓褪成灰 ─────────
    SVG 元素上 CSS filter 兼容性不稳（实测 grayscale 未生效），
@@ -287,7 +288,7 @@ body {
 
 .slot-tx {
   font-family: var(--mono); font-weight: 700;
-  transition: fill .3s ease;
+  transition: fill var(--cv-slotCross) ease;
 }
 .dst-badge {
   font-family: var(--mono); font-weight: 700; letter-spacing: .06em;
@@ -295,7 +296,7 @@ body {
 .ann {
   font-family: var(--sans); font-size: 12.5px; font-weight: 600;
 }
-.wire { transition: stroke .3s ease, opacity .3s ease; }
+.wire { transition: stroke var(--cv-wireFade) ease, opacity var(--cv-wireFade) ease; }
 /* 数据包的 opacity 完全由 JS 逐帧写（出现 0→1、到达后 1→0 都是算出来的秒数）。
    这里绝不能加 transition：每帧一次写入都会把过渡重新计时，目标值永远追不上当前值，
    表现就是「飞到箭头尖停住 → 一直满不透明 → 淡出段结束时才突然消失」。
@@ -347,12 +348,12 @@ body {
    只是兜底缺省——beat.seat 每次落位都会现写 animationDuration，
    帧内缓动以注入的 keyframes 为准。 */
 .slot-g { transform-box: fill-box; transform-origin: center; }
-.slot-pop { animation: slotPop .55s cubic-bezier(.2, .9, .3, 1.45); }
+.slot-pop { animation: slotPop var(--cv-popDur) cubic-bezier(.2, .9, .3, 1.45); }
 /* 涟漪用 scale 展开而不是改 r，这样与数据块尺寸无关，宽窄屏比例一致 */
 .ring {
   fill: none;                     /* 必须显式设 none，否则 SVG 默认用黑色填充成实心圆 */
   transform-box: fill-box; transform-origin: center;
-  animation: ringOut 1.05s ease-out forwards;
+  animation: ringOut var(--cv-ringDur) ease-out forwards;
 }
 @keyframes ringOut {
   0%   { transform: scale(.32); opacity: .85; stroke-width: 4; }

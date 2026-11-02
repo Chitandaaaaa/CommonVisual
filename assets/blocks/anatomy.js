@@ -37,12 +37,12 @@
 
   /* 一份完整数据 = 4 段，rank 与它持有的那段同色 */
   var DATA = [
-    { letter: 'A', color: '#7c3aed', rank: 0 },
-    { letter: 'B', color: '#0891b2', rank: 1 },
-    { letter: 'C', color: '#059669', rank: 2 },
-    { letter: 'D', color: '#d97706', rank: 3 }
+    { letter: 'A', color: CV.PALETTE[0].color, rank: 0 },
+    { letter: 'B', color: CV.PALETTE[1].color, rank: 1 },
+    { letter: 'C', color: CV.PALETTE[2].color, rank: 2 },
+    { letter: 'D', color: CV.PALETTE[3].color, rank: 3 }
   ];
-  var SIGMA = '#4c1d95';          /* 归约结果：深紫 */
+  var SIGMA = CV.TONE.deep;          /* 归约结果：深紫 */
 
   /* 宽窄两套几何，一个数字都不允许页面级自定义 */
   var G = {
@@ -90,11 +90,11 @@
     fs.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
     var d = el('defs', {}, fs);
     var f = el('filter', { id: 'fCard', x: '-40%', y: '-40%', width: '180%', height: '190%' }, d);
-    el('feDropShadow', { dx: 0, dy: 6, stdDeviation: 12, 'flood-color': '#2a3352', 'flood-opacity': '.1' }, f);
+    el('feDropShadow', { dx: 0, dy: 6, stdDeviation: 12, 'flood-color': CV.TONE.flood, 'flood-opacity': '.1' }, f);
     var fg = el('filter', { id: 'fGlow', x: '-90%', y: '-90%', width: '280%', height: '280%' }, d);
-    el('feDropShadow', { dx: 0, dy: 0, stdDeviation: 8, 'flood-color': '#2a3352', 'flood-opacity': '.22' }, fg);
+    el('feDropShadow', { dx: 0, dy: 0, stdDeviation: 8, 'flood-color': CV.TONE.flood, 'flood-opacity': '.22' }, fg);
     var ft = el('filter', { id: 'fTrail', x: '-90%', y: '-90%', width: '280%', height: '280%' }, d);
-    el('feDropShadow', { dx: 0, dy: 0, stdDeviation: 5, 'flood-color': '#2a3352', 'flood-opacity': '.14' }, ft);
+    el('feDropShadow', { dx: 0, dy: 0, stdDeviation: 5, 'flood-color': CV.TONE.flood, 'flood-opacity': '.14' }, ft);
     document.body.appendChild(fs);
   })();
 
@@ -951,7 +951,7 @@
     var PX = [10, 208, 406, 604];
     var CAP = [['S 形', '左右错位'], ['直线', '正对的边'], ['双向成对', '各偏 22'], ['双向直连', '不加箭头']];
 
-    function dot(x, y) { el('circle', { cx: x, cy: y, r: 3.5, fill: '#c3cadb' }, B); }
+    function dot(x, y) { el('circle', { cx: x, cy: y, r: 3.5, fill: CV.TONE.wire }, B); }
 
     /* ① S 形 */
     var x = PX[0];
@@ -1005,8 +1005,8 @@
       var mid = 'st' + i;
       CV.drawMarker(C.querySelector('defs'), mid);
       var wire = CV.drawWire(C, { d: wireS(sx, sy, tx, ty), markerId: mid });
-      el('circle', { cx: sx, cy: sy, r: 3.5, fill: '#c3cadb' }, C);
-      el('circle', { cx: tx, cy: ty, r: 3.5, fill: '#c3cadb' }, C);
+      el('circle', { cx: sx, cy: sy, r: 3.5, fill: CV.TONE.wire }, C);
+      el('circle', { cx: tx, cy: ty, r: 3.5, fill: CV.TONE.wire }, C);
       var col = DATA[0].color;
       function paint(c, w2, dash, op) {
         wire.path.setAttribute('stroke', c);
@@ -1016,7 +1016,7 @@
         var mk = C.querySelector('#' + mid + ' path');
         if (mk) mk.setAttribute('fill', c);
       }
-      if (i === 0) paint('#c3cadb', '2', '8 7', '1');
+      if (i === 0) paint(CV.TONE.wire, '2', '8 7', '1');
       else if (i === 1) {
         paint(col, '2.6', '9 7', '1');
         var pkt = CV.drawPacket(C, { letter: 'A', color: col });
@@ -1247,12 +1247,12 @@
           c.setAttribute('opacity', '.45');
           marker.setAttribute('fill', WIRE_C);
         } else {
-          c.setAttribute('stroke', '#c3cadb');
+          c.setAttribute('stroke', CV.TONE.wire);
           c.setAttribute('stroke-width', '2');
           c.setAttribute('stroke-dasharray', '8 7');
           c.setAttribute('stroke-dashoffset', '0');
           c.setAttribute('opacity', '1');
-          marker.setAttribute('fill', '#c3cadb');
+          marker.setAttribute('fill', CV.TONE.wire);
         }
       }
 
@@ -1829,7 +1829,7 @@
       t = DUR * i / 150;
       d += (i ? ' L ' : 'M ') + xt(t).toFixed(2) + ' ' + yv(at(t).s).toFixed(2);
     }
-    el('path', { d: d, fill: 'none', stroke: '#7c3aed', 'stroke-width': 2, 'stroke-linejoin': 'round' }, A);
+    el('path', { d: d, fill: 'none', stroke: CV.PALETTE[0].color, 'stroke-width': 2, 'stroke-linejoin': 'round' }, A);
 
     /* 横轴刻度：只标三个关键点，免得挤 */
     [[0, '0'], [K1, '0.30s · 55%'], [DUR, '0.55s']].forEach(function (k) {
@@ -1838,8 +1838,8 @@
     });
 
     /* 峰值 */
-    el('circle', { cx: xt(.177), cy: yv(1.29), r: 3.4, fill: '#fff', stroke: '#7c3aed', 'stroke-width': 2 }, A);
-    subTx(A, xt(.177) + 10, yv(1.29) - 8, '峰值 1.29× · 0.18s', '#7c3aed', 10, 'start');
+    el('circle', { cx: xt(.177), cy: yv(1.29), r: 3.4, fill: '#fff', stroke: CV.PALETTE[0].color, 'stroke-width': 2 }, A);
+    subTx(A, xt(.177) + 10, yv(1.29) - 8, '峰值 1.29× · 0.18s', CV.PALETTE[0].color, 10, 'start');
     el('circle', { cx: xt(.447), cy: yv(.974), r: 2.6, fill: '#a78bfa' }, A);
     subTx(A, xt(.447) + 8, yv(.974) + 22, '回落到 0.97×', '#a78bfa', 10, 'start');
 
@@ -2148,10 +2148,10 @@
     subTx(B, 186, 22, '聚焦后', '#939bb2', 10);
 
     [
-      ['数据块底',   '#7c3aed', '#e4e8f0'],
+      ['数据块底',   CV.PALETTE[0].color, '#e4e8f0'],
       ['块内字母',   '#ffffff', '#b7becc'],
-      ['连线',       '#c3cadb', '#ccd2e0'],
-      ['卡片标题条', '#7c3aed', '#e8ecf4'],
+      ['连线',       CV.TONE.wire, '#ccd2e0'],
+      ['卡片标题条', CV.PALETTE[0].color, '#e8ecf4'],
       ['卡片标题',   '#ffffff', '#aeb6c7'],
       ['卡片边框',   '#e2e6f0', '#eef1f8']
     ].forEach(function (r, k) {
@@ -2161,7 +2161,7 @@
         x: 120, y: y, width: 34, height: 14, rx: 4,
         fill: r[1], stroke: '#d3d8e6', 'stroke-width': 1
       }, B);
-      el('path', { d: 'M 162 ' + (y + 7) + ' L 174 ' + (y + 7) + ' M 171 ' + (y + 4) + ' L 174 ' + (y + 7) + ' L 171 ' + (y + 10), fill: 'none', stroke: '#c3cadb', 'stroke-width': 1.2 }, B);
+      el('path', { d: 'M 162 ' + (y + 7) + ' L 174 ' + (y + 7) + ' M 171 ' + (y + 4) + ' L 174 ' + (y + 7) + ' L 171 ' + (y + 10), fill: 'none', stroke: CV.TONE.wire, 'stroke-width': 1.2 }, B);
       el('rect', {
         x: 186, y: y, width: 34, height: 14, rx: 4,
         fill: r[2], stroke: '#e2e6f0', 'stroke-width': 1
@@ -2201,7 +2201,7 @@
       var top = i === 0;
       el('rect', {
         x: 116, y: y, width: 150, height: 32, rx: 8,
-        fill: top ? '#f3eeff' : '#fff',
+        fill: top ? CV.TONE.slotHot : '#fff',
         stroke: top ? '#d7c9fb' : '#e2e6f0', 'stroke-width': 1.2
       }, A);
       subTx(A, 128, y + 20, row[0], top ? '#6d28d9' : '#5f6780', 10, 'start');
@@ -2211,7 +2211,7 @@
     /* 左侧那条箭头：往上 = 越后写 */
     el('path', {
       d: 'M 78 258 L 78 46 M 74 54 L 78 44 L 82 54',
-      fill: 'none', stroke: '#c3cadb', 'stroke-width': 1.2, 'stroke-linecap': 'round'
+      fill: 'none', stroke: CV.TONE.wire, 'stroke-width': 1.2, 'stroke-linecap': 'round'
     }, A);
     subTx(A, 78, 276, '先写', '#b3bacb', 10);
     subTx(A, 78, 32, '后写', '#939bb2', 10);
@@ -2233,8 +2233,8 @@
     var A2 = demo(bDefs, 580, 200, '背景网格 40×40 与三个滤镜的参数：全站唯一一份，stage.js 建场时写入');
     var gx = 40, gy = 36;
     for (var gi = 0; gi <= 3; gi++) {
-      el('line', { x1: gx + gi * 40, y1: gy, x2: gx + gi * 40, y2: gy + 120, stroke: '#8b93aa', 'stroke-opacity': '.1', 'stroke-width': 1 }, A2);
-      el('line', { x1: gx, y1: gy + gi * 40, x2: gx + 120, y2: gy + gi * 40, stroke: '#8b93aa', 'stroke-opacity': '.1', 'stroke-width': 1 }, A2);
+      el('line', { x1: gx + gi * 40, y1: gy, x2: gx + gi * 40, y2: gy + 120, stroke: CV.TONE.wireDim, 'stroke-opacity': '.1', 'stroke-width': 1 }, A2);
+      el('line', { x1: gx, y1: gy + gi * 40, x2: gx + 120, y2: gy + gi * 40, stroke: CV.TONE.wireDim, 'stroke-opacity': '.1', 'stroke-width': 1 }, A2);
     }
     dimH(A2, gx, gx + 40, gy + 136, '40');
     capTx(A2, 220, 52, '网格 gGrid · lBg 最底层');

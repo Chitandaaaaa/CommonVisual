@@ -116,7 +116,7 @@
     var g = el('g', { class: 'slot-g' }, parent);
     var rect = el('rect', {
       class: 'slot-bg', x: x, y: y, width: w, height: h, rx: 8,
-      fill: '#f7f8fc', stroke: '#d5dae8', 'stroke-width': 1.3, 'stroke-dasharray': '4 3'
+      fill: CV.TONE.slotBg, stroke: '#d5dae8', 'stroke-width': 1.3, 'stroke-dasharray': '4 3'
     }, g);
     var text = el('text', {
       class: 'slot-tx', x: x + w / 2, y: y + h / 2, 'text-anchor': 'middle',
@@ -153,14 +153,14 @@
       }
       if (s.g.getAttribute('data-l') !== data.letter) s.g.setAttribute('data-l', data.letter);
     } else if (opt.active) {
-      s.rect.setAttribute('fill', '#f3eeff');
+      s.rect.setAttribute('fill', CV.TONE.slotHot);
       s.rect.setAttribute('stroke', '#a78bfa');
       s.rect.setAttribute('stroke-dasharray', 'none');
       s.text.setAttribute('fill', '#a78bfa');
       s.text.textContent = '···';
       if (s.g.hasAttribute('data-l')) s.g.removeAttribute('data-l');
     } else {
-      s.rect.setAttribute('fill', '#f7f8fc');
+      s.rect.setAttribute('fill', CV.TONE.slotBg);
       s.rect.setAttribute('stroke', '#d5dae8');
       s.rect.setAttribute('stroke-dasharray', '4 3');
       s.text.setAttribute('fill', '#b9c0d2');

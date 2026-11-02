@@ -77,6 +77,11 @@
     /* 导演挂载 */
     var api = CV.director.mount(scene);
 
+    /* 全站参数（spec.js 的表）改了就重编译重建：色板原地刷新后 SVG 的 fill 是建场时写的，
+       要重建才换色；时长类重编译即跟。theme.js 自己的监听（色板 / CSS 变量）先于这里注册，
+       reload 时拿到的已是新值。 */
+    CV.params.onChange(function () { api.reload(); });
+
     /* 时序齿轮：八页原语都接（scene.gear 声明；family 页的行由各自动词给出）。
        「逐动作解说」页签的高亮走控制条的逐帧钩子（全局只有一个 rAF）。 */
     if (scene.gear && CV.chrome.gear) {

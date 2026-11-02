@@ -134,14 +134,14 @@
   color: #fff; vertical-align: 1.3px;
   margin: 0 1px;
 }
-.ctl-demo .cA { background: #7c3aed; }
-.ctl-demo .cB { background: #0891b2; }
-.ctl-demo .cC { background: #059669; }
-.ctl-demo .cD { background: #d97706; }
-.ctl-demo .r0 { background: #7c3aed; }
-.ctl-demo .r1 { background: #0891b2; }
-.ctl-demo .r2 { background: #059669; }
-.ctl-demo .r3 { background: #d97706; }
+.ctl-demo .cA { background: var(--cv-rankA); }
+.ctl-demo .cB { background: var(--cv-rankB); }
+.ctl-demo .cC { background: var(--cv-rankC); }
+.ctl-demo .cD { background: var(--cv-rankD); }
+.ctl-demo .r0 { background: var(--cv-rankA); }
+.ctl-demo .r1 { background: var(--cv-rankB); }
+.ctl-demo .r2 { background: var(--cv-rankC); }
+.ctl-demo .r3 { background: var(--cv-rankD); }
 .ctl-demo .cap-text em.rk {
   width: auto; min-width: 17px;
   padding: 0 5px; border-radius: 4px;
@@ -611,6 +611,16 @@
 .pp-num::-webkit-inner-spin-button,
 .pp-num::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .pp-num { appearance: textfield; -moz-appearance: textfield; }
+/* 颜色行：取色器占滑杆位、十六进制占数字位，列网格与数值行对齐 */
+.pp-row-color { grid-template-columns: 1fr 96px 62px 0 22px; }
+.pp-color {
+  width: 96px; height: 22px; padding: 0; border: 1px solid var(--line); border-radius: 6px;
+  background: #fff; cursor: pointer;
+}
+.pp-hex {
+  width: 62px; padding: 2px 4px; font-family: var(--mono); font-size: 11px;
+  border: 1px solid var(--line); border-radius: 6px; color: var(--tx); background: #fff;
+}
 .pp-unit { font-family: var(--mono); font-size: 9.5px; color: var(--tx-3); text-align: center; }
 .pp-reset {
   border: 0; background: #f1f3f9; color: var(--tx-3); cursor: pointer;

@@ -256,7 +256,7 @@ export async function commonChecks(pg, cfg) {
   }
 
   /* ── 2.24 参数基线契约（assets/theme/defaults.js，规范 #8 落地 2026-11-01）
-     defaults 的组/键必须全部被 spec.js 的 SCHEMA（CV.SPEC）认识、值必须是有限数字。
+     defaults 的组/键必须全部被 spec.js 的 SCHEMA（CV.SPEC）认识、值必须是有限数字（kind:color 的键则是 #rrggbb）。
      组/键对不上 = 「保存到代码」写了旧键，或 SCHEMA 改名没同步 defaults。
      只比形状不比值 —— localStorage 本机改动合法地盖在基线上，比值会误红。── */
   const dfl = await pg.evaluate(() => {
@@ -269,7 +269,10 @@ export async function commonChecks(pg, cfg) {
       if (!sc[g]) { bad = `组「${g}」不在 schema`; break; }
       for (const k of Object.keys(t[g])) {
         if (!sc[g].keys || !(k in sc[g].keys)) { bad = `${g}.${k} 不在 schema`; break outer; }
-        if (typeof t[g][k] !== 'number' || !isFinite(t[g][k])) { bad = `${g}.${k}=${t[g][k]}`; break outer; }
+        const isColor = sc[g].keys[k].kind === 'color';
+        const v = t[g][k];
+        const okV = isColor ? (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v)) : (typeof v === 'number' && isFinite(v));
+        if (!okV) { bad = `${g}.${k}=${v}`; break outer; }
         n++;
       }
     }

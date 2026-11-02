@@ -13,11 +13,11 @@
   CV.blocks = CV.blocks || {};
 
   var CELL = {
-    A: { t: 'A', c: '#7c3aed' },
-    B: { t: 'B', c: '#0891b2' },
-    C: { t: 'C', c: '#059669' },
-    D: { t: 'D', c: '#d97706' },
-    S: { t: 'Σ', c: '#4c1d95' }
+    A: { t: 'A', c: CV.PALETTE[0].color },
+    B: { t: 'B', c: CV.PALETTE[1].color },
+    C: { t: 'C', c: CV.PALETTE[2].color },
+    D: { t: 'D', c: CV.PALETTE[3].color },
+    S: { t: 'Σ', c: CV.TONE.deep }
   };
   var RANKS = ['rank 0', 'rank 1', 'rank 2', 'rank 3'];
 

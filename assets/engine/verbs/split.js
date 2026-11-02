@@ -499,19 +499,19 @@
           var glowingS = sec - fw.e <= residS;
           CV.beat.dim(S.cards[r], false);
           p.g.setAttribute('opacity', '0');
-          w.path.setAttribute('stroke', done ? DEEP : (glowingS ? col : '#c3cadb'));
+          w.path.setAttribute('stroke', done ? DEEP : (glowingS ? col : CV.TONE.wire));
           w.path.setAttribute('stroke-width', '1.8');
           w.path.setAttribute('stroke-dasharray', '8 7');
           w.path.setAttribute('opacity', done ? '.26' : (glowingS ? '.42' : '1'));
-          w.marker.setAttribute('fill', done ? DEEP : (glowingS ? col : '#c3cadb'));
+          w.marker.setAttribute('fill', done ? DEEP : (glowingS ? col : CV.TONE.wire));
         } else {
           CV.beat.dim(S.cards[r], false);
           p.g.setAttribute('opacity', '0');
-          w.path.setAttribute('stroke', '#c3cadb');
+          w.path.setAttribute('stroke', CV.TONE.wire);
           w.path.setAttribute('stroke-width', '2');
           w.path.setAttribute('stroke-dasharray', '8 7');
           w.path.setAttribute('opacity', '1');
-          w.marker.setAttribute('fill', '#c3cadb');
+          w.marker.setAttribute('fill', CV.TONE.wire);
         }
       }
     }

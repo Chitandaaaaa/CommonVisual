@@ -24,12 +24,12 @@
     var defs = el('defs', {}, svg);
     /* 背景网格 pattern：gGrid 这个 id 被每页引用，重建时绝不能清 defs.innerHTML */
     var pat = el('pattern', { id: 'gGrid', width: 40, height: 40, patternUnits: 'userSpaceOnUse' }, defs);
-    el('path', { d: 'M40 0H0v40', fill: 'none', stroke: '#8b93aa', 'stroke-opacity': '.1', 'stroke-width': 1 }, pat);
+    el('path', { d: 'M40 0H0v40', fill: 'none', stroke: CV.TONE.wireDim, 'stroke-opacity': '.1', 'stroke-width': 1 }, pat);
     /* 滤镜三件：卡片投影 / 包体发光 / 拖尾 */
     function filter(id, dx, dy, std, op) {
       var f = el('filter', { id: id, x: '-40%', y: '-40%', width: '180%', height: '190%' }, defs);
       if (dx === 0 && dy === 0) f.setAttribute('x', '-90%'), f.setAttribute('width', '280%'), f.setAttribute('height', '280%');
-      el('feDropShadow', { dx: dx, dy: dy, stdDeviation: std, 'flood-color': '#2a3352', 'flood-opacity': op }, f);
+      el('feDropShadow', { dx: dx, dy: dy, stdDeviation: std, 'flood-color': CV.TONE.flood, 'flood-opacity': op }, f);
     }
     filter('fCard', 0, 6, 12, .1);
     filter('fGlow', 0, 0, 8, .22);

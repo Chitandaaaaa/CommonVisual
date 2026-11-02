@@ -27,7 +27,7 @@
       id: id, viewBox: '0 0 8 8', refX: 8, refY: 4,
       markerWidth: 5.5, markerHeight: 5.5, orient: 'auto'
     }, defs);
-    var attrs = { class: 'arw', d: 'M0,0 L8,3.27 L8,4.73 L0,8 Z', fill: '#c3cadb' };
+    var attrs = { class: 'arw', d: 'M0,0 L8,3.27 L8,4.73 L0,8 Z', fill: CV.TONE.wire };
     if (letter) attrs['data-l'] = letter;
     var p = el('path', attrs, mk);
     return { marker: mk, path: p };
@@ -40,7 +40,7 @@
   CV.payload.link = function (parent, o) {
     var attrs = {
       class: 'wire', d: o.d, fill: 'none',
-      stroke: '#c3cadb', 'stroke-width': 2,
+      stroke: CV.TONE.wire, 'stroke-width': 2,
       'stroke-linecap': 'round', 'stroke-dasharray': '8 7'
     };
     if (o.markerId) attrs['marker-end'] = 'url(#' + o.markerId + ')';

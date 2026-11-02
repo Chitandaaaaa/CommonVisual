@@ -397,20 +397,20 @@
         /* 余辉计时回灰（orch·trailFam）：抵达后保留数据色 ratio×飞行时长 */
         var residF = (f.arrive - f.start) * CV.spec('trailFam');
         var glowingF = sec - f.arrive <= residF;
-        w.path.setAttribute('stroke', glowingF ? color : '#c3cadb');
+        w.path.setAttribute('stroke', glowingF ? color : CV.TONE.wire);
         w.path.setAttribute('stroke-width', glowingF ? '1.8' : '2');
         w.path.setAttribute('stroke-dasharray', '8 7');
         w.path.setAttribute('stroke-dashoffset', '0');
         w.path.setAttribute('opacity', glowingF ? '.45' : '1');
-        w.marker.setAttribute('fill', glowingF ? color : '#c3cadb');
+        w.marker.setAttribute('fill', glowingF ? color : CV.TONE.wire);
       } else {
         p.g.setAttribute('opacity', '0');
-        w.path.setAttribute('stroke', '#c3cadb');
+        w.path.setAttribute('stroke', CV.TONE.wire);
         w.path.setAttribute('stroke-width', '2');
         w.path.setAttribute('stroke-dasharray', '8 7');
         w.path.setAttribute('stroke-dashoffset', '0');
         w.path.setAttribute('opacity', '1');
-        w.marker.setAttribute('fill', '#c3cadb');
+        w.marker.setAttribute('fill', CV.TONE.wire);
       }
     });
 
@@ -815,7 +815,7 @@
           var residAR = (R.arrive - R.start) * CV.spec('trailReduce');
           var glowingAR = sec - R.arrive <= residAR;
           var roundDone = sec >= R.end;
-          var strokeCol = allDone ? DEEP : (glowingAR && !roundDone ? color : '#c3cadb');
+          var strokeCol = allDone ? DEEP : (glowingAR && !roundDone ? color : CV.TONE.wire);
           var op2 = allDone ? '.26' : (glowingAR && !roundDone ? '.42' : '.75');
           CV.beat.dim(S.cards[f.from], false);
           CV.payload.place(p, W, 1);
@@ -828,11 +828,11 @@
         } else {
           CV.beat.dim(S.cards[f.from], false);
           p.g.setAttribute('opacity', '0');
-          W.path.setAttribute('stroke', '#c3cadb');
+          W.path.setAttribute('stroke', CV.TONE.wire);
           W.path.setAttribute('stroke-width', '2');
           W.path.setAttribute('stroke-dasharray', '8 7');
           W.path.setAttribute('opacity', '1');
-          W.marker.setAttribute('fill', '#c3cadb');
+          W.marker.setAttribute('fill', CV.TONE.wire);
         }
       });
     });

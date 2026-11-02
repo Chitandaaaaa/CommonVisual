@@ -12,11 +12,44 @@
 
    入表门槛（缺一不许入表；字段随批次补齐，见方案 §2.1）：
      label / def / min / max / step / unit 现有；
-     kind scope pages sink chk read 属 B2–B4 增量。
+     kind：'num'（默认）| 'color'（面板出取色器，值是 #rrggbb 字符串）；
+     sink：'js'（默认，只有 JS 读）| 'css'（store 写成 :root 的 --cv-<键>，CSS 只读 var()）
+           | 'both'；
+     scope pages chk read 属 B3–B4 增量。
+   收录边界：只收舞台可见物与动态过程；悬停聚焦 / hover 高亮这类交互反馈
+   不是「过程」，不入表（stage-page.css 里保留字面量，5.1d 只扫过程选择器）。
    ============================================================ */
 (function (CV) {
   'use strict';
   CV.SPEC = {
+    '01-color': {
+      label: '数据色板',
+      anchor: 'sub-01-1',
+      groups: [
+        { label: 'rank 四色', keys: ['rankA', 'rankB', 'rankC', 'rankD'] },
+        { label: '语义色', keys: ['toneDeep', 'toneInk', 'toneWire', 'toneWireDim', 'toneSlotBg', 'toneSlotHot', 'flood'] }
+      ],
+      keys: {
+        rankA:       { label: 'rank A · 紫',    kind: 'color', sink: 'both', def: '#7c3aed' },
+        rankB:       { label: 'rank B · 青',    kind: 'color', sink: 'both', def: '#0891b2' },
+        rankC:       { label: 'rank C · 绿',    kind: 'color', sink: 'both', def: '#059669' },
+        rankD:       { label: 'rank D · 橙',    kind: 'color', sink: 'both', def: '#d97706' },
+        toneDeep:    { label: 'Σ 合满终点色',   kind: 'color', sink: 'both', def: '#4c1d95' },
+        toneInk:     { label: '越加越浓终点',   kind: 'color', def: '#190d33' },
+        toneWire:    { label: '连线闲置',       kind: 'color', def: '#c3cadb' },
+        toneWireDim: { label: '网格 / 描边灰',  kind: 'color', def: '#8b93aa' },
+        toneSlotBg:  { label: '空槽底',         kind: 'color', def: '#f7f8fc' },
+        toneSlotHot: { label: '接收中占位底',   kind: 'color', def: '#f3eeff' },
+        flood:       { label: '滤镜投影色',     kind: 'color', def: '#2a3352' }
+      }
+    },
+    '02-slot': {
+      label: '数据块·过渡',
+      anchor: 'sub-02-1',
+      keys: {
+        slotCross: { label: '变色过渡', unit: 's', def: 0.3, min: 0, max: 1.5, step: 0.05, sink: 'css' }
+      }
+    },
     '03-card': {
       label: '卡片动态',
       anchor: 'sub-03-5',   /* 03 的第 5 个 h3 =「动态 · 卡片长高与数据块增减」（2026-11-01 拆 tab 后顺延） */
@@ -47,6 +80,13 @@
         trailScale: { label: '拖尾浓度', unit: '×',  def: 1,   min: 0,   max: 2,   step: 0.05 }
       }
     },
+    '04-wire': {
+      label: '连线·过渡',
+      anchor: 'sub-04-1',
+      keys: {
+        wireFade: { label: '点亮 / 回灰', unit: 's', def: 0.3, min: 0, max: 1.5, step: 0.05, sink: 'css' }
+      }
+    },
     '07-calc': {
       label: '方框动态',
       anchor: 'sub-07-3',   /* 07 的第 3 个 h3 =「动态 · 方框长出与收回」（2026-11-01 拆 tab 后顺延） */
@@ -65,11 +105,12 @@
       label: '落位弹跳',
       anchor: 'sub-08-1',
       groups: [
-        { label: '耗时', keys: ['popDur'] },
+        { label: '耗时', keys: ['popDur', 'ringDur'] },
         { label: '节奏', keys: ['seatGap', 'popStagger'] }
       ],
       keys: {
-        popDur:     { label: '弹跳时长', unit: 's', def: 0.55, min: 0.1, max: 1.5, step: 0.05 },
+        popDur:     { label: '弹跳时长', unit: 's', def: 0.55, min: 0.1, max: 1.5, step: 0.05, sink: 'both' },
+        ringDur:    { label: '涟漪时长', unit: 's', def: 1.05, min: 0.2, max: 3,   step: 0.05, sink: 'css' },
         seatGap:    { label: '多块错峰', unit: 's', def: 0.5,  min: 0,    max: 0.8, step: 0.01 },
         popStagger: { label: '同批错峰', unit: 's', def: 0.12, min: 0,    max: 0.4, step: 0.01 }
       }
@@ -105,8 +146,8 @@
         { label: '时序', keys: ['seatDelay'] }
       ],
       keys: {
-        dimDur:      { label: '变暗/复原', unit: 's', def: 0.3,  min: 0.1, max: 1,   step: 0.05 },
-        revealDur:   { label: '显形时长', unit: 's', def: 0.32, min: 0.1, max: 1,   step: 0.02 },
+        dimDur:      { label: '变暗/复原', unit: 's', def: 0.3,  min: 0.1, max: 1,   step: 0.05, sink: 'css' },
+        revealDur:   { label: '显形时长', unit: 's', def: 0.32, min: 0.1, max: 1,   step: 0.02, sink: 'css' },
         takeoffFade: { label: '起飞渐显', unit: '',  def: 0.08, min: 0.02, max: 0.5, step: 0.01 },
         trailChoreo: { label: '余辉·单流', unit: '', def: 0.4,  min: 0,   max: 1,   step: 0.01 },
         trailFam:    { label: '余辉·家族', unit: '', def: 0.45, min: 0,   max: 1,   step: 0.01 },

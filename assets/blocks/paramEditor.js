@@ -98,6 +98,7 @@
 
   /* ── 构建每一行 ── */
   function buildRow(sec, key, spec) {
+    if (spec.kind === 'color') return buildColorRow(sec, key, spec);
     var row = document.createElement('div');
     row.className = 'pp-row';
     var val = P.get(sec, key);
@@ -137,6 +138,45 @@
 
     rows.push({ sec: sec, key: key, range: range, num: num, sync: function () {
       var v = P.get(sec, key); range.value = v; num.value = v; last = v;
+    } });
+    return row;
+  }
+
+  /* ── 颜色行（kind:'color'）：取色器 + 十六进制文本，两者互为镜像 ── */
+  function buildColorRow(sec, key, spec) {
+    var row = document.createElement('div');
+    row.className = 'pp-row pp-row-color';
+    var val = P.get(sec, key);
+    row.innerHTML =
+      '<label class="pp-label">' + spec.label + '</label>' +
+      '<input class="pp-color" type="color" value="' + val + '">' +
+      '<input class="pp-hex" type="text" maxlength="7" spellcheck="false" value="' + val + '">' +
+      '<span class="pp-unit"></span>' +
+      '<button class="pp-reset" title="重置此项">↺</button>';
+    var pick = row.querySelector('.pp-color');
+    var hex = row.querySelector('.pp-hex');
+    var last = val;
+
+    function apply(v, commit) {
+      v = String(v || '').trim().toLowerCase();
+      if (!/^#[0-9a-f]{6}$/.test(v)) return;
+      pick.value = v; hex.value = v;
+      P.set(sec, key, v);
+      if (commit) { log.push({ t: Date.now(), section: sec, key: key, from: last, to: v }); last = v; bumpLog(); }
+    }
+    pick.addEventListener('input',  function () { apply(pick.value, false); });
+    pick.addEventListener('change', function () { apply(pick.value, true); });
+    hex.addEventListener('change',  function () { apply(hex.value, true); });
+    row.querySelector('.pp-reset').addEventListener('click', function () {
+      var before = P.get(sec, key);
+      P.reset(sec, key);
+      var after = P.get(sec, key);
+      pick.value = after; hex.value = after; last = after;
+      log.push({ t: Date.now(), section: sec, key: key, from: before, to: after }); bumpLog();
+    });
+
+    rows.push({ sec: sec, key: key, sync: function () {
+      var v = P.get(sec, key); pick.value = v; hex.value = v; last = v;
     } });
     return row;
   }

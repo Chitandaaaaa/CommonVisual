@@ -163,12 +163,12 @@
     if (wire.marker) wire.marker.setAttribute('fill', color);
   }
   function idleWire(wire) {
-    wire.path.setAttribute('stroke', '#c3cadb');
+    wire.path.setAttribute('stroke', CV.TONE.wire);
     wire.path.setAttribute('stroke-width', '2');
     wire.path.setAttribute('stroke-dasharray', '8 7');
     wire.path.setAttribute('stroke-dashoffset', '0');
     wire.path.setAttribute('opacity', '1');
-    if (wire.marker) wire.marker.setAttribute('fill', '#c3cadb');
+    if (wire.marker) wire.marker.setAttribute('fill', CV.TONE.wire);
   }
 
   /* allgather 的边：一条边一条线，颜色跟着「这条边现在跑到第几轮」
@@ -614,7 +614,7 @@
     /* 先统一退灰（必须在流之前，否则后一步会把前一步刚点亮的线抹掉） */
     (scene.wires || []).forEach(function (wd) {
       var w = S.wires[wd.a + '_' + wd.b];
-      w.path.setAttribute('stroke', '#c3cadb');
+      w.path.setAttribute('stroke', CV.TONE.wire);
       w.path.setAttribute('stroke-width', '1.4');
       w.path.setAttribute('stroke-dasharray', '6 6');
       w.path.setAttribute('opacity', '.9');
@@ -645,7 +645,7 @@
           CV.payload.fadeOut(p, sec - rd.arrive);
           var glowWinA = (rd.arrive - rd.start) * CV.spec('trailATA');
           var glowingA = sec - rd.arrive <= glowWinA;
-          wire.path.setAttribute('stroke', glowingA ? col : '#c3cadb');
+          wire.path.setAttribute('stroke', glowingA ? col : CV.TONE.wire);
           wire.path.setAttribute('stroke-width', glowingA ? '1.6' : '1.4');
           wire.path.setAttribute('stroke-dasharray', '6 6');
           wire.path.setAttribute('opacity', glowingA ? '.3' : '.9');
