@@ -106,6 +106,16 @@ async function verifyOne(pageFile) {
     probeResults = await runProbeModule(pg, mod);
     if (probeResults) for (const r of probeResults) console.log(`  probe ${r.pass ? 'PASS' : 'FAIL'}  ${r.name}  ${r.detail || ''}`);
   }
+  // 规范符合性探针（05 组：ledger 单源，全部页面都跑；2026-11-02）
+  const ledgerPath = path.join(PROBE_DIR, 'ledger.mjs');
+  if (fs.existsSync(ledgerPath)) {
+    const lmod = await import(pathToFileURL(ledgerPath).href);
+    const lres = await runProbeModule(pg, lmod);
+    if (lres) {
+      for (const r of lres) console.log(`  probe ${r.pass ? 'PASS' : 'FAIL'}  ${r.name}  ${r.detail || ''}`);
+      probeResults = (probeResults || []).concat(lres);
+    }
+  }
 
   // 最小截图集
   const shots = [];

@@ -14,6 +14,7 @@
      包由 move.build 按 kind:'copy' 建成批包 —— copy 只补槽位与弹跳的覆盖层。 */
 
   verbs.copy.overlay = function (S, scene, CH, sec) {
+    verbs.move.dimCards(S, scene, CH, sec);   /* 方案 A：发送中变暗全站生效 */
     var seenM = verbs.move.seenMap();
     var readyAt = scene.preAt ? CH.win[scene.preAt].s : 0;
     var source = scene.target;

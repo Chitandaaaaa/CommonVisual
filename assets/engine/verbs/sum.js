@@ -13,6 +13,15 @@
   var clamp = CV.clamp;
   verbs.sum = verbs.sum || {};
 
+  /* 折进目标（累加器）在份数 n 时的形态 —— fuse 的复位态/终态都从这里出
+     （reduce / allreduce / rs 三页共用；份数翻倍页传 lvl 即可；≥2 份才切 Σ） */
+  function chipState(i, n) {
+    var p = CV.PALETTE[i];
+    return n < 2
+      ? { letter: p.letter, color: p.color }
+      : { letter: 'Σ', sub: p.letter, count: n, color: CV.toneRich(p.color, n) };
+  }
+
   var DATA = null;
   function P(i) { return DATA[i]; }
 
@@ -128,6 +137,7 @@
     S.extra.emptyRow = [];
     S.extra.ghost = {};
     S.extra.seen = {};
+    S.extra.fuseCol = {};   /* 方案 A：折进块飞行的 beat.fuse 实例（key = 流_列） */
 
     var geo = scene.geo.desktop.target;
     S.extra.targetTop0 = geo.cy != null ? geo.cy - L.card.h / 2 : L.target.y;
@@ -264,12 +274,13 @@
 
     var n = doneParts(sec);
 
-    /* 累加器（上排）：越加越浓，折进过半切 Σ + 下标列字母 + 上标份数 */
+    /* 累加器（上排）：折进中（0<e<1）该列交给 beat.fuse 接管（唤醒/上浮/
+       白光/换 Σ 都在它那里），本循环只画静止态与折完后的终态 */
     S.chips[0].forEach(function (s, i) {
       var base = DATA[i].color;
-      var c = CV.toneRich(base, n);
       var eMerge = cur ? mergeE(mergeP, i) : 0;
-      if (cur) c = CV.mix(c, CV.toneRich(base, n + 1), eMerge);
+      if (eMerge > 0 && eMerge < 1) return;
+      var c = CV.toneRich(base, n);
       var k = n + (eMerge >= 0.5 ? 1 : 0);
       CV.cast.set(s, k >= 2
         ? { letter: 'Σ', sub: DATA[i].letter, count: k, color: c }
@@ -287,10 +298,11 @@
       }
     });
 
-    /* 源卡：交出去就不再留着（消耗语义） */
+    /* 源卡：交出去就不再留着（消耗语义）；发送中变暗（方案 A 全站生效） */
     [1, 2, 3].forEach(function (r) {
       var f = flows[r - 1];
       var off = sec >= f.start;   /* 交出 = 消耗：包一离开这一格就空（不是等到达） */
+      CV.beat.dim(S.cards[r], sec >= f.start && sec < f.arrive);
       S.chips[r].forEach(function (s, i) {
         CV.cast.set(s, off ? null : DATA[i], {});
       });
@@ -305,12 +317,38 @@
       var pop = CV.beat.popAt(clamp((sec - f.popStart) / TM.pop, 0, 1));
 
       list.forEach(function (s, i) {
+        var fk = 'r' + f.from + '_' + i;
         if (!on) {
+          if (EX.fuseCol[fk]) { EX.fuseCol[fk].g.remove(); delete EX.fuseCol[fk]; }
           s.outer.setAttribute('opacity', '0');
           s.outer.removeAttribute('transform');
           return;
         }
         var e = mergeE(p, i);
+        /* 方案 A（2026-11-02）：折进的块飞行交给规范函数 beat.fuse ——
+           唤醒/上浮/白光/拖尾按 09 章参数逐帧驱动，fuseSwap 处目标换 Σ。 */
+        if (e > 0 && e < 1) {
+          if (!EX.fuseCol[fk]) {
+            var ch = S.chips[0][i];
+            EX.fuseCol[fk] = CV.beat.fuse(layer.fx, {
+              x: ch.cx, y0: s.cy, y1: ch.cy, size: c0.sh,
+              data: DATA[i], resetTo: chipState(i, f.from),
+              to: chipState(i, f.from + 1), target: ch
+            });
+          }
+          if (e >= 0.92 && !EX.seen['m' + f.from + i]) {
+            EX.seen['m' + f.from + i] = 1;
+            CV.beat.seat(layer.fx, S.chips[0][i]);
+          }
+          EX.fuseCol[fk].apply(e);
+          s.outer.setAttribute('opacity', '0');
+          s.outer.removeAttribute('transform');
+          return;
+        }
+        if (EX.fuseCol[fk] && (e === 0 || e >= 1)) {
+          EX.fuseCol[fk].g.remove();
+          delete EX.fuseCol[fk];
+        }
         var k = pop.k * (1 - 0.30 * e);
         s.outer.setAttribute('opacity', String(pop.o * (1 - e)));
         s.outer.setAttribute('transform',
@@ -351,12 +389,15 @@
       } else if (sec >= f.arrive) {
         CV.payload.place(p, w, 1);
         CV.payload.fadeOut(p, sec - f.arrive);
-        w.path.setAttribute('stroke', color);
-        w.path.setAttribute('stroke-width', '1.8');
+        /* 余辉计时回灰（orch·trailFam）：抵达后保留数据色 ratio×飞行时长 */
+        var residF = (f.arrive - f.start) * (CV.specVal('trailFam') || 0.45);
+        var glowingF = sec - f.arrive <= residF;
+        w.path.setAttribute('stroke', glowingF ? color : '#c3cadb');
+        w.path.setAttribute('stroke-width', glowingF ? '1.8' : '2');
         w.path.setAttribute('stroke-dasharray', '8 7');
         w.path.setAttribute('stroke-dashoffset', '0');
-        w.path.setAttribute('opacity', '.45');
-        w.marker.setAttribute('fill', color);
+        w.path.setAttribute('opacity', glowingF ? '.45' : '1');
+        w.marker.setAttribute('fill', glowingF ? color : '#c3cadb');
       } else {
         p.g.setAttribute('opacity', '0');
         w.path.setAttribute('stroke', '#c3cadb');
@@ -495,7 +536,7 @@
     var pOne = (L.card.h - L.hdr - 16 - c0.sh) / 2;
     var EX = S.extra;
     EX.HOME = {}; EX.X0 = {}; EX.empties = {}; EX.ghosts = [{}, {}]; EX.calcs = {};
-    EX.paintKey = {}; EX.pulseSeen = {};
+    EX.paintKey = {}; EX.pulseSeen = {}; EX.fuseCol = {};   /* 方案 A：折进飞行实例（key = 轮_卡_列） */
 
     Object.keys(S.cards).forEach(function (rk) {
       var r = Number(rk);
@@ -653,6 +694,8 @@
          本轮折进过半（e≥0.5）升份数 lvl0→lvl1。 */
       S.chips[r].forEach(function (s, i) {
         var e = st.merge > 0 ? mergeE(st.merge, i) : 0;
+        /* 方案 A：折进中（0<e<1）该列交给 beat.fuse 接管（换 Σ/白光都在它那里） */
+        if (e > 0 && e < 1) return;
         var col = e > 0 ? CV.mix(CV.toneFor(i, lvl0), CV.toneFor(i, lvl1), e) : CV.toneFor(i, lvl0);
         var sig = lvl0 >= 2 || e >= 0.5;
         var count = e >= 0.5 ? lvl1 : lvl0;
@@ -696,15 +739,41 @@
         var set = EX.ghosts[qq][r];
         var on = (qq === q) && sec >= R.popStart && sec < R.end;
         set.forEach(function (s, i) {
+          var fk = 'ar' + qq + '_' + r + '_' + i;
           if (!on) {
+            if (EX.fuseCol[fk]) { EX.fuseCol[fk].g.remove(); delete EX.fuseCol[fk]; }
             s.outer.setAttribute('opacity', '0');
             return;
           }
+          moveSlot(s, botY);
           var popP = clamp((sec - R.popStart - i * TM.stag) / TM.pop, 0, 1);
           var pop = CV.beat.popAt(popP);
           var e = st.merge > 0 ? mergeE(st.merge, i) : 0;
+          /* 方案 A（2026-11-02）：折进的块飞行交给规范函数 beat.fuse ——
+             份数翻倍页 resetTo=Σ^(2^q)、to=Σ^(2^(q+1))，换 Σ 在 fuseSwap。 */
+          if (e > 0 && e < 1) {
+            if (!EX.fuseCol[fk]) {
+              var chp = S.chips[r][i];
+              moveSlot(chp, topY);
+              var lvl0 = Math.pow(2, qq), lvl1 = Math.pow(2, qq + 1);
+              EX.fuseCol[fk] = CV.beat.fuse(layer.fx, {
+                x: chp.cx, y0: s.cy, y1: chp.cy, size: c0.sh,
+                data: { letter: DATA[i].letter, color: CV.toneFor(i, lvl0) },
+                resetTo: chipState(i, lvl0), to: chipState(i, lvl1), target: chp
+              });
+            }
+            var pk = 'p' + r + i + '_' + q;
+            if (e >= 0.92 && !EX.pulseSeen[pk]) { EX.pulseSeen[pk] = 1; CV.beat.seat(layer.fx, S.chips[r][i]); }
+            else if (e < 0.92 && EX.pulseSeen[pk]) { delete EX.pulseSeen[pk]; }
+            EX.fuseCol[fk].apply(e);
+            s.outer.setAttribute('opacity', '0');
+            return;
+          }
+          if (EX.fuseCol[fk] && (e === 0 || e >= 1)) {
+            EX.fuseCol[fk].g.remove();
+            delete EX.fuseCol[fk];
+          }
           var k = pop.k * (1 - 0.30 * e);
-          moveSlot(s, botY);
           s.outer.setAttribute('opacity', String(pop.o * (1 - e)));
           s.outer.setAttribute('transform',
             'translate(' + (s.cx * (1 - k)).toFixed(2) + ' ' +
@@ -733,11 +802,16 @@
           W.path.setAttribute('stroke-dasharray', '9 7');
           W.path.setAttribute('opacity', '1');
           W.marker.setAttribute('fill', color);
+          CV.beat.dim(S.cards[f.from], true);   /* 方案 A：发送中变暗全站生效 */
         } else if (sec >= R.arrive) {
           var allDone = sec >= ROUNDS[1].end;
+          /* 余辉计时回灰（orch·trailReduce）：抵达后保留数据色 ratio×飞行时长 */
+          var residAR = (R.arrive - R.start) * (CV.specVal('trailReduce') || 0.42);
+          var glowingAR = sec - R.arrive <= residAR;
           var roundDone = sec >= R.end;
-          var strokeCol = allDone ? DEEP : (roundDone ? '#c3cadb' : color);
-          var op2 = allDone ? '.26' : (roundDone ? '.75' : '.42');
+          var strokeCol = allDone ? DEEP : (glowingAR && !roundDone ? color : '#c3cadb');
+          var op2 = allDone ? '.26' : (glowingAR && !roundDone ? '.42' : '.75');
+          CV.beat.dim(S.cards[f.from], false);
           CV.payload.place(p, W, 1);
           CV.payload.fadeOut(p, sec - R.arrive);
           W.path.setAttribute('stroke', strokeCol);
@@ -746,6 +820,7 @@
           W.path.setAttribute('opacity', op2);
           W.marker.setAttribute('fill', strokeCol);
         } else {
+          CV.beat.dim(S.cards[f.from], false);
           p.g.setAttribute('opacity', '0');
           W.path.setAttribute('stroke', '#c3cadb');
           W.path.setAttribute('stroke-width', '2');

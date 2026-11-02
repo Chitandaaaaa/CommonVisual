@@ -252,7 +252,9 @@
 
     function reset() {
       merged = false;
-      CV.cast.set(tg, o.data, {});
+      /* resetTo：目标块折进前不是空块的场景（累加器已持有 Σⁿ）。
+         不传 = o.data（块从无到有的标准语义，规范页演示用这个）。 */
+      CV.cast.set(tg, o.resetTo || o.data, {});
       apply(0);
     }
 

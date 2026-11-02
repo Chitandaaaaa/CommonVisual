@@ -24,6 +24,7 @@
      line     alltoall 的直线中心交叉（家族 build 自己画） */
   verbs.move.build = function (S, scene) {
     DATA = S.data;
+    S.trailKey = scene.family === 'alltoall' ? 'trailATA' : 'trailChoreo';   /* 余辉比率按族 */
     var style = scene.wireStyle;
     if (!style || style === 'line') return;      /* line 由家族 build 负责 */
 
@@ -113,11 +114,21 @@
       var fading = sec >= w.travelEnd && sec < w.fadeEnd;
       var parked = sec >= w.fadeEnd && sec < w.seatStart;
 
+      /* 余辉计时回灰（orch·trailChoreo / trailATA）：抵达后保留数据色
+         ratio×飞行时长，然后回灰（idleWire）—— 比率不再是无上限的常亮 */
+      var glowWin = (w.travelEnd - w.s) * (CV.specVal(S.trailKey) || 0.4);
+      var glowing = sec - w.travelEnd <= glowWin;
       if (flying) {
         var e = CV.easeInOutQuad((sec - w.s) / (w.travelEnd - w.s));
-        /* 整份包很宽，起步先让出一小段，避免左半压住源卡数据块 */
+        /* 起步让出：整份包按半宽几何让出（封顶 0.32）；单色/曲线包按规范
+           packLead（封顶 18/路径长）—— 2026-11-02 前引擎未消费该参数，此接。 */
+        var lead = 0;
         if (p.half && wire.len > 0) {
-          var lead = Math.min(0.32, p.half / wire.len);
+          lead = Math.min(0.32, p.half / wire.len);
+        } else {
+          lead = Math.min(18 / (wire.len || 1), CV.specVal('packLead') || 0.16);
+        }
+        if (lead > 0) {
           e = lead + e * (1 - lead);
         }
         CV.payload.place(p, wire, e, rev);
@@ -132,10 +143,10 @@
         /* 已到箭头尖：不动了，原地把自己淡掉（这一段同时就是「停留」） */
         CV.payload.place(p, wire, 1, rev);
         CV.payload.fadeOut(p, sec - w.travelEnd, w.fadeSec);
-        if (styleWires) afterGlow(wire, color, '.4');
+        if (styleWires) glowing ? afterGlow(wire, color, '.4') : idleWire(wire);
       } else if (parked || sec >= w.seatStart) {
         p.g.setAttribute('opacity', '0');
-        if (styleWires) afterGlow(wire, color, '.4');
+        if (styleWires) glowing ? afterGlow(wire, color, '.4') : idleWire(wire);
       } else {
         p.g.setAttribute('opacity', '0');
         if (styleWires) idleWire(wire);
@@ -195,6 +206,30 @@
   };
 
   /* —— gather：目标卡 4 格，count 从 1 起跳（A 一开始就在）；在飞的那格显示占位 —— */
+  /* 发送中变暗（方案 A 全站生效）：本卡作为发出方、其包尚在飞行 → 暗，否则复原。
+     choreo 页看 scene.beats 的 move/copy 窗口；alltoall 看 CH.flows 分步。 */
+  verbs.move.dimCards = function (S, scene, CH, sec) {
+    Object.keys(S.cards).forEach(function (rk) {
+      var r = Number(rk);
+      var sending = false;
+      (scene.beats || []).forEach(function (b) {
+        if (b.kind !== 'move' && b.kind !== 'copy') return;
+        var w = CH.win[b.id];
+        if (!w) return;
+        b.flows.forEach(function (f) {
+          if (Number(String(f.from)[0]) === r && sec >= w.s && sec < w.travelEnd) sending = true;
+        });
+      });
+      (CH.flows || []).forEach(function (list, q2) {
+        var rd2 = (CH.rounds || [])[q2];
+        if (!rd2) return;
+        if (sec >= rd2.start && sec < rd2.arrive &&
+            list.some(function (fl) { return fl.from === r; })) sending = true;
+      });
+      CV.beat.dim(S.cards[r], sending);
+    });
+  };
+
   verbs.move.overlayGather = function (S, scene, CH, sec) {
     var seenM = verbs.move.seenMap();
     var preAt = scene.preAt ? CH.win[scene.preAt].s : 0;
@@ -226,17 +261,9 @@
     });
 
     /* 卡片透明度：发送中 .6，其余每帧写回 1（与旧页同一条写入路径） */
+    verbs.move.dimCards(S, scene, CH, sec);   /* 方案 A：发送中变暗全站生效 */
     Object.keys(S.cards).forEach(function (rk) {
       var r = Number(rk);
-      var sending = false;
-      scene.beats.forEach(function (b) {
-        if (b.kind !== 'move') return;
-        var w = CH.win[b.id];
-        b.flows.forEach(function (f) {
-          if (f.from[0] === r && sec >= w.s && sec < w.travelEnd) sending = true;
-        });
-      });
-      S.cards[r].g.setAttribute('opacity', sending ? '.6' : '1');
     });
 
     /* 落位弹跳（时刻比较，能跟进度条回拖） */
@@ -258,6 +285,7 @@
 
   /* —— scatter：源卡逐段腾空；目标卡就绪前隐藏 → 在飞占位 → 落位 —— */
   verbs.move.overlayScatter = function (S, scene, CH, sec) {
+    verbs.move.dimCards(S, scene, CH, sec);   /* 方案 A：发送中变暗全站生效 */
     var seenM = verbs.move.seenMap();
     var readyAt = scene.preAt ? CH.win[scene.preAt].s : 0;
     var source = scene.target;   /* scatter 的 target 字段存的是「源」rank */
@@ -308,6 +336,7 @@
 
   /* —— allgather：own / done / waiting / empty 四态；徽章 n/4；一批四块逐个弹 —— */
   verbs.move.overlayRing = function (S, scene, CH, sec) {
+    verbs.move.dimCards(S, scene, CH, sec);   /* 方案 A：发送中变暗全站生效 */
     var seenM = verbs.move.seenMap();
     var ROUNDS = scene.rounds || 3;
 
@@ -462,6 +491,7 @@
   };
 
   verbs.move.buildAlltoall = function (S, scene) {
+    S.trailKey = 'trailATA';
     DATA = S.data;
     var L = S.L, defs = S.defs;
     var P4 = scene.parts || 4;
@@ -522,6 +552,7 @@
     var areaY = L.hdr, areaH = L.card.h - L.hdr - 16;
     var padTop = (areaH - blockH) / 2;
 
+    verbs.move.dimCards(S, scene, CH, sec);   /* 方案 A：发送中变暗全站生效 */
     Object.keys(S.cards).forEach(function (rk) {
       var r = Number(rk);
       /* 徽章看下排（结果排）：轮到自己当接收方才 0/4 → 4/4 */
@@ -593,13 +624,16 @@
           wire.path.setAttribute('stroke-dasharray', '9 7');
           wire.path.setAttribute('opacity', '1');
         } else if (arrived) {
-          /* 先摆到终点再淡出：拖进度条直接跳到「已到达」时，包不能停在原点 */
+          /* 先摆到终点再淡出：拖进度条直接跳到「已到达」时，包不能停在原点。
+             余辉计时回灰（orch·trailATA）：抵达后保留数据色 ratio×飞行时长 */
           CV.payload.place(p, wire, 1, rev);
           CV.payload.fadeOut(p, sec - rd.arrive);
-          wire.path.setAttribute('stroke', col);
-          wire.path.setAttribute('stroke-width', '1.6');
+          var glowWinA = (rd.arrive - rd.start) * (CV.specVal('trailATA') || 0.3);
+          var glowingA = sec - rd.arrive <= glowWinA;
+          wire.path.setAttribute('stroke', glowingA ? col : '#c3cadb');
+          wire.path.setAttribute('stroke-width', glowingA ? '1.6' : '1.4');
           wire.path.setAttribute('stroke-dasharray', '6 6');
-          wire.path.setAttribute('opacity', '.3');
+          wire.path.setAttribute('opacity', glowingA ? '.3' : '.9');
         } else {
           p.g.setAttribute('opacity', '0');
         }

@@ -129,12 +129,17 @@
         groups: [
           { label: '衔接', keys: ['dimDur', 'revealDur'] },
           { label: '飞行', keys: ['takeoffFade'] },
+          { label: '余辉', keys: ['trailChoreo', 'trailFam', 'trailReduce', 'trailATA'] },
           { label: '时序', keys: ['seatDelay'] }
         ],
         keys: {
           dimDur:      { label: '变暗/复原', unit: 's', def: 0.3,  min: 0.1, max: 1,   step: 0.05 },
           revealDur:   { label: '显形时长', unit: 's', def: 0.32, min: 0.1, max: 1,   step: 0.02 },
           takeoffFade: { label: '起飞渐显', unit: '',  def: 0.08, min: 0.02, max: 0.5, step: 0.01 },
+          trailChoreo: { label: '余辉·单流', unit: '', def: 0.4,  min: 0,   max: 1,   step: 0.01 },
+          trailFam:    { label: '余辉·家族', unit: '', def: 0.45, min: 0,   max: 1,   step: 0.01 },
+          trailReduce: { label: '余辉·归约族', unit: '', def: 0.42, min: 0,  max: 1,   step: 0.01 },
+          trailATA:    { label: '余辉·全换', unit: '', def: 0.3,  min: 0,   max: 1,   step: 0.01 },
           seatDelay:   { label: '落位延迟', unit: 's', def: 0.5,  min: 0,   max: 1.5, step: 0.05 }
         }
       },

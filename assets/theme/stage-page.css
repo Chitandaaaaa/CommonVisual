@@ -258,8 +258,9 @@ body {
   fill: #b7becc !important;
 }
 
-/* 链路与箭头同属某类数据，一并随聚焦褪色（只改颜色，不碰 dash/opacity） */
-#stage path.wire { transition: stroke .45s cubic-bezier(.45, .05, .55, .95); }
+/* 链路与箭头同属某类数据，一并随聚焦褪色（只改颜色，不碰 dash/opacity）。
+   过渡时长统一走下方 .wire 的 0.3s（规范 04/编排·点亮）——
+   原这里单独写的 .45s 会以 ID 特异度整条盖掉 .wire，点亮时长失真，2026-11-02 删。 */
 #stage[data-focus="A"] path.wire[data-l]:not([data-l="A"]),
 #stage[data-focus="B"] path.wire[data-l]:not([data-l="B"]),
 #stage[data-focus="C"] path.wire[data-l]:not([data-l="C"]),

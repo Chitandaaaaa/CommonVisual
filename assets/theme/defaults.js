@@ -42,6 +42,10 @@ window.CV_PARAM_DEFAULTS = {
     "dimDur": 0.3,
     "revealDur": 0.32,
     "takeoffFade": 0.08,
+    "trailChoreo": 0.4,
+    "trailFam": 0.45,
+    "trailReduce": 0.42,
+    "trailATA": 0.3,
     "seatDelay": 0.5
   },
   "global": {

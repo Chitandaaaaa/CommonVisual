@@ -52,120 +52,10 @@
 
 
   /* ══════════════════════════════════════════════════════════
-     规范总账数据（00 章唯一渲染 · 全量可改项清单，2026-11-02 定稿）
-     ------------------------------------------------------------
-     每组 = { g 组名, rows }；每行 = [类型, 中文名, 英文名·入口, 当前值, 跳章, 跳子节关键词]。
-     类型：'动效'（参数 / 编排节奏）｜'样式'（几何 / 颜色 / 字号 / 曲线）。
-     当前值：['组','键',单位] → 现读 CV.params（调试台改过就跟着变，↺ 回基线）；
-            字符串 → 静态真值（GEO / 绘制函数 / 令牌的定数）。
-     覆盖判据：每个可改的东西必须在本表有一行、入口列填得出 —— 填不出不许入表；
-     入口的「想改 → 去哪改」行拆在各章末（见文件尾 ENTRY_LINES）。
+     规范总账数据 —— 单源在 assets/ledger.js（107 行，2026-11-02 原子化），
+     本页与探针 ledger.mjs 同源：清单加一行 = 00 章多一行 + 探针多一条 case。
      ══════════════════════════════════════════════════════════ */
-  var LEDGER = [
-    { g: '01 · 完整数据', rows: [
-      ['样式', '四 rank 色 A–D', 'CV.PALETTE · theme.js', '#7c3aed / #0891b2 / #059669 / #d97706', '01', ''],
-      ['样式', '全站色调令牌 ×6', 'CV.TONE · theme.js', 'deep #4c1d95 · ink #190d33 · wire #c3cadb · wireDim #8b93aa · slotBg #f7f8fc · slotHot #f3eeff', '01', ''],
-      ['样式', '归约色混色公式', 'CV.toneRich · theme.js', '1 份原色 → 每份 +0.19 深 → 4 份 deep', '01', ''],
-      ['样式', '整份虚线框', 'blocks/legend.js', 'rx 14 · 白 72% · 描边 #c1cadf 1.5 · 虚线 4 3 · pad 0.24×块宽', '01', ''],
-      ['样式', '滤镜 flood 色（全站一份）', 'parts/stage.js', '#2a3352（fGlow / fTrail）', '01', '']
-    ] },
-    { g: '02 · 数据块', rows: [
-      ['样式', '块尺寸（桌面 / 窄屏）', 'drawSlot · GEO', '46 / 25', '02', ''],
-      ['样式', '块圆角', 'drawSlot · legend.js', 'rx 8', '02', ''],
-      ['样式', '四态色 own / done / waiting / empty', 'move.js 四态机 · setSlot', 'own=done=数据色 · waiting #f3eeff+「···」 · empty #f7f8fc+虚线', '02', ''],
-      ['样式', '块内字母字号', 'setSlot', '0.33 × 块高（15 / 8）', '02', '']
-    ] },
-    { g: '03 · rank 卡片', rows: [
-      ['动效', '卡片伸缩', 'cardDur', ['03-card', 'cardDur', 's'], '03', '动态'],
-      ['动效', '单块时长', 'blockDur', ['03-card', 'blockDur', 's'], '03', '动态'],
-      ['动效', '块间隔', 'blockGap', ['03-card', 'blockGap', 's'], '03', '动态'],
-      ['动效', '长够→放块', 'rowLull', ['03-card', 'rowLull', 's'], '03', '动态'],
-      ['动效', '撤完→收卡', 'rowPause', ['03-card', 'rowPause', 's'], '03', '动态'],
-      ['样式', '卡片尺寸（桌面 / 窄屏）', 'drawCard · GEO', '300×170 / 146×126', '03', ''],
-      ['样式', '卡头高', 'drawCard', '36 / 28', '03', ''],
-      ['样式', '标题字号', 'drawCard · SVG 属性', '15 / 12.5', '03', ''],
-      ['样式', '徽章尺寸', 'badgeGeo · drawCard', '30×18 / 28×18（有文字 max(30, 字数×字号×.6+18)）', '03', '徽章'],
-      ['样式', '徽章字号', 'drawCard · SVG 属性', '10 / 8.5', '03', '徽章'],
-      ['样式', '徽章右距 · 圆角 · 底色', 'badgeGeo', '右距 14 · 圆角 6 · 底色 26% 白', '03', '徽章'],
-      ['样式', '发送中变暗（透明度）', 'CV.beat.dim', '.6（传播中唯一全卡信号）', '03', ''],
-      ['样式', '目标卡描边', 'drawCard · target', 'dst 加深', '03', '']
-    ] },
-    { g: '04 · 连线与箭头', rows: [
-      ['样式', '闲置线', 'verbs 绘制 · TONE.wire', '#c3cadb · 宽 2 · 虚线 8 7', '04', ''],
-      ['样式', '飞行线', 'verbs 绘制', '数据色 · 加粗', '04', ''],
-      ['样式', '余辉态', 'verbs 绘制', '数据色 .45 淡', '04', ''],
-      ['样式', '箭头 marker', 'payload.marker', '形状 / 尺寸 / 逐帧随色', '04', '']
-    ] },
-    { g: '05 · 数据包', rows: [
-      ['动效', '飞行时长', 'packDur', ['05-packet', 'packDur', 's'], '05', '动态'],
-      ['动效', '送达淡出', 'packFade', ['05-packet', 'packFade', 's'], '05', '动态'],
-      ['动效', '起步让出', 'packLead', ['05-packet', 'packLead', ''], '05', '动态'],
-      ['动效', '拖尾退后', 'trailDist', ['05-packet', 'trailDist', 'px'], '05', '动态'],
-      ['动效', '拖尾浓度', 'trailScale', ['05-packet', 'trailScale', '×'], '05', '动态'],
-      ['样式', '包主体尺寸', 'CV.drawPacket', '24×24', '05', ''],
-      ['样式', '整份包底板', 'CV.drawPacket', '白底收成一份（4 块 = 101 宽）', '05', '']
-    ] },
-    { g: '06 · 控制条', rows: [
-      ['样式', 'scrub 刻度 · 按钮组', 'parts/chrome.js', '0–1000 · 播放 / 上下步 / 循环', '06', '']
-    ] },
-    { g: '07 · 计算方框', rows: [
-      ['动效', '卡片伸长', 'growDur', ['07-calc', 'growDur', 's'], '07', '动态'],
-      ['动效', '方框展示', 'holdDur', ['07-calc', 'holdDur', 's'], '07', '动态'],
-      ['动效', '卡片缩回', 'shrinkDur', ['07-calc', 'shrinkDur', 's'], '07', '动态'],
-      ['动效', '方框过渡', 'calcFade', ['07-calc', 'calcFade', 's'], '07', '动态'],
-      ['动效', '长够→亮框衔接（演示编排）', 'anatomy · 07 章演示', '.25s（未入调试台）', '07', '动态'],
-      ['动效', '灭完→缩回衔接（演示编排）', 'anatomy · 07 章演示', '.2s（未入调试台）', '07', '动态'],
-      ['样式', '方框尺寸 · 字号 · 提示词', 'sum / split 方框段', '56×22 · 11.5 · sum·avg·max·min', '07', '']
-    ] },
-    { g: '08 · 落位弹跳', rows: [
-      ['动效', '弹跳时长', 'popDur', ['08-seat', 'popDur', 's'], '08', ''],
-      ['动效', '多块错峰', 'seatGap', ['08-seat', 'seatGap', 's'], '08', ''],
-      ['动效', '同批错峰', 'popStagger', ['08-seat', 'popStagger', 's'], '08', ''],
-      ['样式', '弹跳曲线（全站单源）', 'CV.POP_CURVE · beat.js', '0% .35 → 55% 1.16 → 100% 1 · 缓动 1.45', '08', ''],
-      ['样式', '涟漪开关', 'CV.SHOW_RING', 'false（定稿不显示）', '08', '']
-    ] },
-    { g: '09 · 融合', rows: [
-      ['动效', '单次融合', 'fuseDur', ['09-merge', 'fuseDur', 's'], '09', ''],
-      ['动效', '多列错峰', 'mergeGap', ['09-merge', 'mergeGap', 's'], '09', ''],
-      ['动效', '唤醒结束', 'fuseWake', ['09-merge', 'fuseWake', ''], '09', ''],
-      ['动效', '上浮结束', 'fuseRise', ['09-merge', 'fuseRise', ''], '09', ''],
-      ['动效', '淡出起点', 'fuseFade', ['09-merge', 'fuseFade', ''], '09', ''],
-      ['动效', '换 Σ 时刻', 'fuseSwap', ['09-merge', 'fuseSwap', ''], '09', ''],
-      ['动效', '终了缩放', 'fuseShrink', ['09-merge', 'fuseShrink', '×'], '09', ''],
-      ['动效', '白光强度', 'fuseGloss', ['09-merge', 'fuseGloss', ''], '09', ''],
-      ['动效', '拖尾退后', 'fuseTrail', ['09-merge', 'fuseTrail', 'px'], '09', ''],
-      ['样式', '结果块写法', 'setSlot / createMerge', '大 Σ + 下标字母 + 上标份数', '09', ''],
-      ['样式', '结果色混色', 'CV.toneRich', '(份数−1)/3 → deep', '09', ''],
-      ['样式', '白光扫过', 'createMerge', '三停渐变（两端透明）· 只动 gradientTransform', '09', ''],
-      ['样式', '拖尾残影缩放', 'createMerge', '.8 / .6', '09', '']
-    ] },
-    { g: '10 · 聚焦', rows: [
-      ['样式', '聚焦高亮 · 置灰', 'CV.attachFocus · data-l / data-card', '数据块挂 data-l · 卡片挂 data-card', '10', '']
-    ] },
-    { g: '11 · 舞台分层', rows: [
-      ['样式', '层叠次序', 'engine/stage', '连线 < 包 < 卡 < 方框 < 聚焦', '11', '']
-    ] },
-    { g: '编排 · 衔接（跨页 · orch 组 2026-11-02 收编）', rows: [
-      ['动效', '变暗 / 复原时长', 'dimDur · orch 组', ['orch', 'dimDur', 's'], '03', ''],
-      ['动效', '显形时长', 'revealDur · orch 组', ['orch', 'revealDur', 's'], '03', ''],
-      ['动效', '点亮时长（解说层）', 'narration.js · css .wire', '0.30s', '04', ''],
-      ['动效', '转接收位（解说层）', 'narration.js', '0.30s', '02', ''],
-      ['动效', '起飞渐显', 'takeoffFade · orch 组', ['orch', 'takeoffFade', ''], '05', '动态'],
-      ['动效', '余辉比率 · 单流', 'narration.js · afterGlow', '40%', '04', ''],
-      ['动效', '余辉比率 · 家族', 'narration.js · afterGlow', '45%', '04', ''],
-      ['动效', '余辉比率 · 归约族', 'narration.js · 着色段', '42%', '04', ''],
-      ['动效', '余辉比率 · 全换', 'narration.js · 着色段', '30%', '04', ''],
-      ['动效', '落位延迟', 'seatDelay · orch 组', ['orch', 'seatDelay', 's'], '08', '']
-    ] },
-    { g: '全局', rows: [
-      ['动效', '播放速度', 'pageSpeed · global', ['global', 'pageSpeed', '×'], '00', ''],
-      ['样式', '断点 · 窄屏重建', '引擎舞台层', '< 860 用窄屏 · 切换重建按当前进度重绘', '03', '']
-    ] }
-  ];
-
-  /* ══════════════════════════════════════════════════════════
-     小工具
-     ══════════════════════════════════════════════════════════ */
+  var LEDGER = (window.CV_LEDGER && window.CV_LEDGER.groups) || [];
 
   var app = $('#app');
 
@@ -373,37 +263,44 @@
     var s = sec('ledger', '00', '规范总账', 'ledger');
 
     h('p', 'specs', s).innerHTML =
-      '全站「可改的东西」全量清单：<b>动效 39 + 样式 34 = 73 项</b>，按章节分组排序。' +
+      '全站「可改的东西」全量清单：<b>动效 39 + 样式 68 = 107 项</b>（assets/ledger.js 单源），按章节分组排序。' +
       '<b>动效</b>行是参数 —— 调试台（⚙）可调 / 可锁 / 可记录，数值唯一出处 <code>assets/theme/defaults.js</code>，本表「当前值」列现读，改过就跟着变；' +
       '<b>样式</b>行的入口是绘制函数 / 令牌，改法见各章末「想改 → 去哪改」行。<br>' +
+      '「页面」列 = 哪些原语页用到它（探针按此逐页出 case，与总账 1:1 对账）；' +
       '不在此表的三类（各有自己的页与入口）：每页<b>时序</b> = 原语页齿轮面板；<b>文案</b> = steps.html / narration.js 词表；<b>语义</b> = prepost.html / registry.js。<br>' +
-      '新增可改项：先入本表，入口列填不出不许合。';
+      '新增可改项：先入 ledger.js、入口列填不出不许合。';
 
     h('h3', null, s).textContent = '全量可改项总表';
 
     var tbl = h('table', 'ledger-tbl', s);
     var thead = h('thead', null, tbl);
     var tr0 = h('tr', null, thead);
-    ['类型', '中文名', '英文名 · 入口', '当前值'].forEach(function (x) { h('th', null, tr0).textContent = x; });
+    ['类型', '中文名', '英文名 · 入口', '当前值', '页面'].forEach(function (x) { h('th', null, tr0).textContent = x; });
     var tbody = h('tbody', null, tbl);
     var liveCells = [];
 
+    function pagesText(p) {
+      if (p === 'demo') return '演示';
+      if (p.length === 8) return '8 页';
+      return p.length + ' 页';
+    }
     LEDGER.forEach(function (G) {
       var gr = h('tr', 'lg-grp', tbody);
       var gtd = h('td', null, gr);
-      gtd.colSpan = 4;
+      gtd.colSpan = 5;
       gtd.textContent = G.g;
       G.rows.forEach(function (r) {
         var tr = h('tr', 'lg-row', tbody);
         var tdT = h('td', null, tr);
-        h('span', r[0] === '动效' ? 'lg-t lg-d' : 'lg-t lg-y', tdT).textContent = r[0];
-        h('td', 'lg-name', tr).textContent = r[1];
-        h('td', 'lg-en', tr).textContent = r[2];
+        h('span', r.t === 'D' ? 'lg-t lg-d' : 'lg-t lg-y', tdT).textContent = r.t === 'D' ? '动效' : '样式';
+        h('td', 'lg-name', tr).textContent = r.name;
+        h('td', 'lg-en', tr).textContent = r.en;
         var tdV = h('td', 'lg-val', tr);
-        if (r[3] instanceof Array) liveCells.push({ td: tdV, p: r[3] });
-        else tdV.textContent = r[3];
-        tr.title = '点击跳到 ' + r[4] + ' 章' + (r[5] ? '「' + r[5] + '」' : '');
-        tr.onclick = function () { jumpTo(r[4], r[5]); };
+        if (r.val && r.val.p) liveCells.push({ td: tdV, p: r.val.p, u: r.val.u || '' });
+        else tdV.textContent = r.val;
+        h('td', 'lg-pages', tr).textContent = pagesText(r.pages);
+        tr.title = '点击跳到 ' + r.sec + ' 章' + (r.kw ? '「' + r.kw + '」' : '') + ' · 适用 ' + pagesText(r.pages);
+        tr.onclick = function () { jumpTo(r.sec, r.kw); };
       });
     });
 
@@ -411,7 +308,7 @@
     function renderVals() {
       liveCells.forEach(function (x) {
         var v = CV.params.get(x.p[0], x.p[1]);
-        x.td.textContent = (typeof v === 'number' ? fmt(v) : '—') + x.p[2];
+        x.td.textContent = (typeof v === 'number' ? fmt(v) : '—') + x.u;
       });
     }
     renderVals();
