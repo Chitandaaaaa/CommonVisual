@@ -246,15 +246,17 @@
       }
     });
 
-    /* 卡片几何：中心固定，上下对称扩 */
+    /* 卡片几何：**顶边钉死，只往下长**（全站统一，2026-11-03）
+       预留第二排、长出计算层，都是往卡片下方加东西；中心对齐会让标题条往上跑，
+       看着像整张卡在「长大」而不是「底下多了一层」。 */
     var h = CHh.h1 + (CHh.h2 - CHh.h1) * growPre + (CHh.h3 - CHh.h2) * growCal;
     var cyc = L.target.cy;
-    var cardTop = cyc - h / 2 + (CHh.h3 - CHh.h2) * growCal / 2;
+    var cardTop = cyc - CHh.h1 / 2;          /* h1 时的顶边，之后不动 */
     CV.cast.resize(S.cards[0], { x: L.target.x, y: cardTop, w: L.card.w, h: h });
     var tGeo = S.cards[0].geo;
 
     /* 两排数据的位置（长计算层时数据钉在原地，只有卡边在扩） */
-    var topNow = growCal > 0 ? (cyc - CHh.h2 / 2) : cardTop;
+    var topNow = cardTop;
     var padTop = EX.padTop();
     var padTop2 = (CHh.h2 - L.hdr - 2 * c0.sh - L.rowGap) / 2;
     var pT = padTop + (padTop2 - padTop) * growPre;
@@ -265,12 +267,14 @@
 
     CV.cast.moveRow(S.chips[0], rowY);
 
-    /* 下排接收位 */
-    var lastMergeEnd = flows[flows.length - 1].mergeEnd;
-    var waiting = sec < lastMergeEnd;
+    /* 下排接收位：只在「有整份在飞」的窗口亮紫底 ···，其余时间是**空块**。
+       2026-11-03 之前这里是 `sec < lastMergeEnd`，等于从预留那一刻就常亮到最后一轮
+       合并收尾 —— 用户看到的是「一上来就全是等待数据的块」，与「新增都是空块」的通则冲突。 */
+    var inFlight = false;
+    flows.forEach(function (f) { if (sec >= f.start && sec < f.popStart) inFlight = true; });
     EX.emptyRow.forEach(function (s, k) {
       moveSlot(s, rowY2);
-      CV.cast.set(s, null, { active: waiting });
+      CV.cast.set(s, null, { active: inFlight });
       s.g.style.opacity = (op.v[k] * cl.v[k]).toFixed(3);
     });
     flows.forEach(function (f) {
@@ -314,12 +318,14 @@
     });
 
     /* 下排：刚飞到的整份，弹出 → 逐段上折 → 消失
-       （串行律：抵达→淡出→延迟期间第二排保持接收位，弹从 popStart 起） */
+       （串行律：抵达→淡出→延迟期间第二排保持接收位，弹从 popStart 起）
+       四段逐块落位：同批错峰 popStagger（08-seat），不是一个 pop 全落
+       —— 2026-11-03 统一「多块传递必须一块一块落」 */
+    var STG = CV.spec('popStagger');
     flows.forEach(function (f) {
       var list = EX.ghost[f.from];
       var on = sec >= f.popStart && sec < f.mergeEnd;
       var p = (on && sec >= f.growEnd) ? (sec - f.growEnd) / TM.merge : 0;
-      var pop = CV.beat.popAt(clamp((sec - f.popStart) / TM.pop, 0, 1));
 
       list.forEach(function (s, i) {
         var fk = 'r' + f.from + '_' + i;
@@ -330,6 +336,9 @@
           return;
         }
         var e = mergeE(p, i);
+        /* 逐块落位：第 i 块比第 i−1 块晚 popStagger 起跳（q<0 时 popAt 给 o=0，
+           所以还没轮到的块是「隐形等着」，不是提前冒头） */
+        var pop = CV.beat.popAt(clamp((sec - f.popStart - i * STG) / TM.pop, 0, 1));
         /* 方案 A（2026-11-02）：折进的块飞行交给规范函数 beat.fuse ——
            唤醒/上浮/白光/拖尾按 09 章参数逐帧驱动，fuseSwap 处目标换 Σ。 */
         if (e > 0 && e < 1) {
@@ -362,16 +371,14 @@
       });
     });
 
-    /* 连线落点：三条线沿目标卡右缘、标题条以下按 25/50/75% 分布 */
+    /* 连线落点：三条线沿目标卡右缘、标题条以下按 25/50/75% 分布。
+       曲率走全站唯一的 CV.arcPath（以前这里手抄了一份 0.42 的贝塞尔，
+       与 geom.js 各改各的，2026-11-03 合并）。 */
     var areaTop = cardTop + L.hdr, areaH = h - L.hdr;
     flows.forEach(function (f) {
       var w = S.wires[f.from];
       var ty = areaTop + areaH * (0.25 + 0.25 * w.k);
-      var span = w.sx - w.tx;
-      var d = 'M ' + w.sx + ' ' + w.sy +
-              ' C ' + (w.sx - span * 0.42) + ' ' + w.sy + ', ' + (w.tx + span * 0.42) + ' ' + ty +
-              ', ' + w.tx + ' ' + ty;
-      w.path.setAttribute('d', d);
+      w.path.setAttribute('d', CV.arcPath(w.sx, w.sy, w.tx, ty));
       w.len = w.path.getTotalLength();
     });
 
@@ -386,31 +393,21 @@
         var e2 = CV.easeInOutQuad((sec - f.start) / (f.arrive - f.start));
         e2 = lead + e2 * (1 - lead);
         CV.payload.place(p, w, e2);
-        w.path.setAttribute('stroke', color);
-        w.path.setAttribute('stroke-width', '2.6');
-        w.path.setAttribute('stroke-dasharray', '9 7');
-        w.path.setAttribute('opacity', '1');
-        w.marker.setAttribute('fill', color);
+        CV.wire.paint(w.path, 'lit', color);
+        CV.wire.arrow(w.marker, color);
       } else if (sec >= f.arrive) {
         CV.payload.place(p, w, 1);
         CV.payload.fadeOut(p, sec - f.arrive);
-        /* 余辉计时回灰（orch·trailFam）：抵达后保留数据色 ratio×飞行时长 */
-        var residF = (f.arrive - f.start) * CV.spec('trailFam');
+        /* 余辉计时回灰（orch·trailRatio）：抵达后保留数据色 ratio×飞行时长 */
+        var residF = (f.arrive - f.start) * CV.spec('trailRatio');
         var glowingF = sec - f.arrive <= residF;
-        w.path.setAttribute('stroke', glowingF ? color : CV.TONE.wire);
-        w.path.setAttribute('stroke-width', glowingF ? '1.8' : '2');
-        w.path.setAttribute('stroke-dasharray', '8 7');
-        w.path.setAttribute('stroke-dashoffset', '0');
-        w.path.setAttribute('opacity', glowingF ? '.45' : '1');
-        w.marker.setAttribute('fill', glowingF ? color : CV.TONE.wire);
+        glowingF ? CV.wire.paint(w.path, 'glow', color)
+                 : CV.wire.paint(w.path, 'idle');
+        CV.wire.arrow(w.marker, glowingF ? color : null);
       } else {
         p.g.setAttribute('opacity', '0');
-        w.path.setAttribute('stroke', CV.TONE.wire);
-        w.path.setAttribute('stroke-width', '2');
-        w.path.setAttribute('stroke-dasharray', '8 7');
-        w.path.setAttribute('stroke-dashoffset', '0');
-        w.path.setAttribute('opacity', '1');
-        w.marker.setAttribute('fill', CV.TONE.wire);
+        CV.wire.paint(w.path, 'idle');
+        CV.wire.arrow(w.marker, null);
       }
     });
 
@@ -546,7 +543,7 @@
     Object.keys(S.cards).forEach(function (rk) {
       var r = Number(rk);
       var geo = CV.gridCard(L, r);
-      EX.HOME[r] = { x: geo.x, cy: geo.y + L.card.h / 2 };
+      EX.HOME[r] = { x: geo.x, top: geo.y, cy: geo.y + L.card.h / 2 };
 
       var x0 = geo.x + (geo.w - totalW) / 2;
       EX.X0[r] = x0;
@@ -663,10 +660,12 @@
     var lvl0 = q >= 0 ? Math.pow(2, q) : 1;
     var lvl1 = q >= 0 ? lvl0 * 2 : 1;
 
-    /* ① 卡片：中心固定，四张同步长高/收回 */
+    /* ① 卡片：**顶边钉死，只往下长**（四张同步）
+       计算层在卡片下方，上面没有任何东西要腾位置；中心对齐会让标题条往上跑，
+       看着像整张卡在「长大」，2026-11-03 统一为只向下长。 */
     var h = h1 + (h2 - h1) * lift + (h3 - h2) * st.calc;
     [0, 1, 2, 3].forEach(function (r) {
-      var y = EX.HOME[r].cy - h / 2;
+      var y = EX.HOME[r].top;
       if (S.cards[r].geo.h !== h || S.cards[r].geo.y !== y) {
         CV.cast.resize(S.cards[r], { x: EX.HOME[r].x, y: y, w: L.card.w, h: h });
       }
@@ -803,36 +802,30 @@
           var lead = Math.min(0.32, p.half / W.len);
           e = lead + e * (1 - lead);
           CV.payload.place(p, W, e);
-          W.path.setAttribute('stroke', color);
-          W.path.setAttribute('stroke-width', '2.6');
-          W.path.setAttribute('stroke-dasharray', '9 7');
-          W.path.setAttribute('opacity', '1');
-          W.marker.setAttribute('fill', color);
+          CV.wire.paint(W.path, 'lit', color);
+          CV.wire.arrow(W.marker, color);
           CV.beat.dim(S.cards[f.from], true);   /* 方案 A：发送中变暗全站生效 */
         } else if (sec >= R.arrive) {
           var allDone = sec >= ROUNDS[1].end;
-          /* 余辉计时回灰（orch·trailReduce）：抵达后保留数据色 ratio×飞行时长 */
-          var residAR = (R.arrive - R.start) * CV.spec('trailReduce');
+          /* 余辉计时回灰（orch·trailRatio）：抵达后保留数据色 ratio×飞行时长 */
+          var residAR = (R.arrive - R.start) * CV.spec('trailRatio');
           var glowingAR = sec - R.arrive <= residAR;
           var roundDone = sec >= R.end;
-          var strokeCol = allDone ? DEEP : (glowingAR && !roundDone ? color : CV.TONE.wire);
-          var op2 = allDone ? '.26' : (glowingAR && !roundDone ? '.42' : '.75');
           CV.beat.dim(S.cards[f.from], false);
           CV.payload.place(p, W, 1);
           CV.payload.fadeOut(p, sec - R.arrive);
-          W.path.setAttribute('stroke', strokeCol);
-          W.path.setAttribute('stroke-width', '1.8');
-          W.path.setAttribute('stroke-dasharray', '8 7');
-          W.path.setAttribute('opacity', op2);
-          W.marker.setAttribute('fill', strokeCol);
+          if (allDone) {
+            CV.wire.paint(W.path, 'done', DEEP); CV.wire.arrow(W.marker, DEEP);
+          } else if (glowingAR && !roundDone) {
+            CV.wire.paint(W.path, 'glow', color); CV.wire.arrow(W.marker, color);
+          } else {
+            CV.wire.paint(W.path, 'rest'); CV.wire.arrow(W.marker, null);
+          }
         } else {
           CV.beat.dim(S.cards[f.from], false);
           p.g.setAttribute('opacity', '0');
-          W.path.setAttribute('stroke', CV.TONE.wire);
-          W.path.setAttribute('stroke-width', '2');
-          W.path.setAttribute('stroke-dasharray', '8 7');
-          W.path.setAttribute('opacity', '1');
-          W.marker.setAttribute('fill', CV.TONE.wire);
+          CV.wire.paint(W.path, 'idle');
+          CV.wire.arrow(W.marker, null);
         }
       });
     });

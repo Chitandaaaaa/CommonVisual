@@ -24,7 +24,6 @@
      line     alltoall 的直线中心交叉（家族 build 自己画） */
   verbs.move.build = function (S, scene) {
     DATA = S.data;
-    S.trailKey = scene.family === 'alltoall' ? 'trailATA' : 'trailChoreo';   /* 余辉比率按族 */
     var style = scene.wireStyle;
     if (!style || style === 'line') return;      /* line 由家族 build 负责 */
 
@@ -114,9 +113,9 @@
       var fading = sec >= w.travelEnd && sec < w.fadeEnd;
       var parked = sec >= w.fadeEnd && sec < w.seatStart;
 
-      /* 余辉计时回灰（orch·trailChoreo / trailATA）：抵达后保留数据色
+      /* 余辉计时回灰（orch·trailRatio）：抵达后保留数据色
          ratio×飞行时长，然后回灰（idleWire）—— 比率不再是无上限的常亮 */
-      var glowWin = (w.travelEnd - w.s) * (CV.spec(S.trailKey));
+      var glowWin = (w.travelEnd - w.s) * (CV.spec('trailRatio'));
       var glowing = sec - w.travelEnd <= glowWin;
       if (flying) {
         var e = CV.easeInOutQuad((sec - w.s) / (w.travelEnd - w.s));
@@ -132,21 +131,15 @@
           e = lead + e * (1 - lead);
         }
         CV.payload.place(p, wire, e, rev);
-        if (styleWires) {
-          wire.path.setAttribute('stroke', color);
-          wire.path.setAttribute('stroke-width', '2.6');
-          wire.path.setAttribute('stroke-dasharray', '9 7');
-          wire.path.setAttribute('opacity', '1');
-          if (wire.marker) wire.marker.setAttribute('fill', color);
-        }
+        if (styleWires) { CV.wire.paint(wire.path, 'lit', color); CV.wire.arrow(wire.marker, color); }
       } else if (fading) {
         /* 已到箭头尖：不动了，原地把自己淡掉（这一段同时就是「停留」） */
         CV.payload.place(p, wire, 1, rev);
         CV.payload.fadeOut(p, sec - w.travelEnd, w.fadeSec);
-        if (styleWires) glowing ? afterGlow(wire, color, '.4') : idleWire(wire);
+        if (styleWires) glowing ? afterGlow(wire, color) : idleWire(wire);
       } else if (parked || sec >= w.seatStart) {
         p.g.setAttribute('opacity', '0');
-        if (styleWires) glowing ? afterGlow(wire, color, '.4') : idleWire(wire);
+        if (styleWires) glowing ? afterGlow(wire, color) : idleWire(wire);
       } else {
         p.g.setAttribute('opacity', '0');
         if (styleWires) idleWire(wire);
@@ -154,21 +147,15 @@
     });
   };
 
-  function afterGlow(wire, color, op) {
-    wire.path.setAttribute('stroke', color);
-    wire.path.setAttribute('stroke-width', '1.8');
-    wire.path.setAttribute('stroke-dasharray', '8 7');
-    wire.path.setAttribute('stroke-dashoffset', '0');
-    wire.path.setAttribute('opacity', op);
-    if (wire.marker) wire.marker.setAttribute('fill', color);
+  /* 余辉 / 闲置：亮度也进规范表（04-wire · 余辉 / 闲置），
+     此前调用处各传 .4 / .45 两个值，同一个状态两个亮度。 */
+  function afterGlow(wire, color) {
+    CV.wire.paint(wire.path, 'glow', color);
+    CV.wire.arrow(wire.marker, color);
   }
   function idleWire(wire) {
-    wire.path.setAttribute('stroke', CV.TONE.wire);
-    wire.path.setAttribute('stroke-width', '2');
-    wire.path.setAttribute('stroke-dasharray', '8 7');
-    wire.path.setAttribute('stroke-dashoffset', '0');
-    wire.path.setAttribute('opacity', '1');
-    if (wire.marker) wire.marker.setAttribute('fill', CV.TONE.wire);
+    CV.wire.paint(wire.path, 'idle');
+    CV.wire.arrow(wire.marker, null);
   }
 
   /* allgather 的边：一条边一条线，颜色跟着「这条边现在跑到第几轮」
@@ -186,23 +173,17 @@
       if (!cur) { idleWire(wire); return; }
       var color = P(cur.f.color).color;
       var flying = sec < cur.w.travelEnd;
-      /* 余辉计时回灰（orch·trailChoreo）：与 move.render 同一套——抵达后保留
+      /* 余辉计时回灰（orch·trailRatio）：与 move.render 同一套——抵达后保留
          数据色 ratio×飞行时长，然后回灰；此前 ring 是常亮到下一轮（漏接） */
-      var glowWinR = (cur.w.travelEnd - cur.w.s) * (CV.spec(S.trailKey));
+      var glowWinR = (cur.w.travelEnd - cur.w.s) * (CV.spec('trailRatio'));
       if (flying) {
-        wire.path.setAttribute('stroke', color);
-        wire.path.setAttribute('stroke-width', '2.6');
-        wire.path.setAttribute('stroke-dasharray', '9 7');
+        CV.wire.paint(wire.path, 'lit', color);
         wire.path.setAttribute('stroke-opacity', '1');
-        wire.path.setAttribute('opacity', '1');
-        wire.marker.setAttribute('fill', color);
+        CV.wire.arrow(wire.marker, color);
       } else if (sec < cur.w.travelEnd + glowWinR) {
-        wire.path.setAttribute('stroke', color);
-        wire.path.setAttribute('stroke-width', '1.8');
-        wire.path.setAttribute('stroke-dasharray', '8 7');
+        CV.wire.paint(wire.path, 'glow', color);
         wire.path.setAttribute('stroke-opacity', '1');
-        wire.path.setAttribute('opacity', '.45');
-        wire.marker.setAttribute('fill', color);
+        CV.wire.arrow(wire.marker, color);
       } else {
         idleWire(wire);
         wire.path.setAttribute('stroke-opacity', '1');
@@ -506,7 +487,6 @@
   };
 
   verbs.move.buildAlltoall = function (S, scene) {
-    S.trailKey = 'trailATA';
     DATA = S.data;
     var L = S.L, defs = S.defs;
     var P4 = scene.parts || 4;
@@ -574,9 +554,14 @@
       var bt = (sec >= R[r].arrive ? P4 : 0) + '/' + P4;
       if (S.cards[r].badgeTx.textContent !== bt) S.cards[r].badgeTx.textContent = bt;
 
-      /* 上排：第 j 步开始那一刻发出第 j 片 */
+      /* 上排：第 j 片在「第 j 步开始」那一刻交出去（消耗）。
+         自己那一片（j === r）例外：它不飞走，是从第一排**挪到第二排**，
+         所以第一排要留到第二排落位那一刻才撤（2026-11-03 修：
+         以前一进第 r 步就清空，第一排空了半拍第二排才落，看着像丢了）。 */
+      var selfLand = CV.seatAt(r, R[r].seatBase, SEATK);
       S.extra.upRow[r].forEach(function (s, j) {
-        if (sec >= R[j].start) CV.cast.set(s, null, {});
+        var offAt = (j === r) ? selfLand : R[j].start;
+        if (sec >= offAt) CV.cast.set(s, null, {});
         else CV.cast.set(s, { letter: DATA[r].letter, color: DATA[r].color, sub: j }, {});
       });
 
@@ -614,10 +599,7 @@
     /* 先统一退灰（必须在流之前，否则后一步会把前一步刚点亮的线抹掉） */
     (scene.wires || []).forEach(function (wd) {
       var w = S.wires[wd.a + '_' + wd.b];
-      w.path.setAttribute('stroke', CV.TONE.wire);
-      w.path.setAttribute('stroke-width', '1.4');
-      w.path.setAttribute('stroke-dasharray', '6 6');
-      w.path.setAttribute('opacity', '.9');
+      CV.wire.paint(w.path, 'idle', null, true);   /* muted：全换的交叉线密，闲置细一档 */
     });
 
     CH.flows.forEach(function (list, q) {
@@ -634,21 +616,16 @@
         if (active) {
           var e = CV.easeInOutQuad((sec - rd.start) / (rd.arrive - rd.start));
           CV.payload.place(p, wire, e, rev);
-          wire.path.setAttribute('stroke', col);
-          wire.path.setAttribute('stroke-width', '2.6');
-          wire.path.setAttribute('stroke-dasharray', '9 7');
-          wire.path.setAttribute('opacity', '1');
+          CV.wire.paint(wire.path, 'lit', col);
         } else if (arrived) {
           /* 先摆到终点再淡出：拖进度条直接跳到「已到达」时，包不能停在原点。
-             余辉计时回灰（orch·trailATA）：抵达后保留数据色 ratio×飞行时长 */
+             余辉计时回灰（orch·trailRatio）：抵达后保留数据色 ratio×飞行时长 */
           CV.payload.place(p, wire, 1, rev);
           CV.payload.fadeOut(p, sec - rd.arrive);
-          var glowWinA = (rd.arrive - rd.start) * CV.spec('trailATA');
+          var glowWinA = (rd.arrive - rd.start) * CV.spec('trailRatio');
           var glowingA = sec - rd.arrive <= glowWinA;
-          wire.path.setAttribute('stroke', glowingA ? col : CV.TONE.wire);
-          wire.path.setAttribute('stroke-width', glowingA ? '1.6' : '1.4');
-          wire.path.setAttribute('stroke-dasharray', '6 6');
-          wire.path.setAttribute('opacity', glowingA ? '.3' : '.9');
+          glowingA ? CV.wire.paint(wire.path, 'glow', col)
+                   : CV.wire.paint(wire.path, 'idle', null, true);
         } else {
           p.g.setAttribute('opacity', '0');
         }

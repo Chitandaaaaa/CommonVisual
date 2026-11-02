@@ -34,6 +34,44 @@
   };
   CV.drawMarker = CV.payload.marker;
 
+  /* ══════════ 连线画笔：四态唯一出口（规范 04-wire） ══════════
+     一条线只有四种状态，此前每页各写一套 setAttribute —— 同一组
+     「宽 2.6 + 虚线 9 7」在 move / sum / split 里抄了三份，余辉透明度
+     又有 .4 / .45 / .42 / .3 四个值，全换还另写 1.4 + 6 6。规范表里
+     一个键都没有，齿轮面板调不到，改一处漏两处（2026-11-03 收编）。
+
+       idle  闲置（灰）        lit   点亮（数据色，飞行中）
+       glow  余辉（数据色，弱） rest  收轮（灰，本届已传完）
+       done  收尾（色由调用方给，通常深灰）
+     muted=true 时闲置态取细一档（全换的交叉线密，需要让位）。 */
+  CV.wire = {
+    paint: function (path, state, color, muted) {
+      var w = CV.spec('wireW'), on = CV.spec('wireDashOn'),
+          off = CV.spec('wireDashOff'), op = CV.spec('wireOpIdle');
+      if (state === 'lit') {
+        w = CV.spec('wireWLit'); on = CV.spec('wireDashLitOn'); op = 1;
+      } else if (state === 'glow') {
+        w = CV.spec('wireWGlow'); op = CV.spec('wireGlowOp');
+      } else if (state === 'rest') {
+        w = CV.spec('wireWGlow'); op = CV.spec('wireRestOp');
+      } else if (state === 'done') {
+        w = CV.spec('wireWGlow'); op = CV.spec('wireDoneOp');
+      } else if (muted) {
+        w = CV.spec('wireWMuted');
+      }
+      path.setAttribute('stroke', color || CV.TONE.wire);
+      path.setAttribute('stroke-width', String(w));
+      path.setAttribute('stroke-dasharray', on + ' ' + off);
+      path.setAttribute('stroke-dashoffset', '0');
+      path.setAttribute('opacity', String(op));
+      return path;
+    },
+    /* 箭头随线色（marker 的 fill 与 stroke 同源，别处各写一遍容易漏） */
+    arrow: function (markerEl, color) {
+      if (markerEl) markerEl.setAttribute('fill', color || CV.TONE.wire);
+    }
+  };
+
   /* ---------- P1 连线 ----------
      letter 可省略：整份数据的流不对应单一字母，不参与聚焦灰化；
      markerId 可省略：双向直连的边画箭头反而指错方向。 */
@@ -46,6 +84,7 @@
     if (o.markerId) attrs['marker-end'] = 'url(#' + o.markerId + ')';
     if (o.letter) attrs['data-l'] = o.letter;
     var p = el('path', attrs, parent);
+    CV.wire.paint(p, 'idle');          /* 出生即闲置态，值从规范表出 */
     return { path: p, len: p.getTotalLength() };
   };
   CV.drawWire = CV.payload.link;

@@ -500,7 +500,8 @@ async function wireAttrs(pg, atSec) {
 }
 C['04-idleColor'] = C['04-idleWidth'] = C['04-idleDash'] = async function (pg, r, ok) {
   const pageId = await pg.evaluate(function () { return location.pathname.split('/').pop().replace('.html', ''); });
-  const want = pageId === 'alltoall' ? { w: '1.4', d: '6 6' } : { w: '2', d: '8 7' };
+  /* 2026-11-03 统一：虚线全站 8 7，只有全换的闲置宽走 wireWMuted 1.4 */
+  const want = { w: pageId === 'alltoall' ? '1.4' : '2', d: '8 7' };
   const wire = await specOf(pg, 'toneWire');
   const fw = await firstFly(pg);
   const ws = await wireAttrs(pg, Math.max(0, (fw ? fw.s : 0) - 0.15));
@@ -909,17 +910,10 @@ C['OR-wireLit'] = C['OR-recv'] = function (pg, r, ok) {
   const lit = r.id === 'OR-wireLit' ? "'点亮': '0.30s'" : "'转接收位': '0.30s'";
   ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, t.indexOf(lit) >= 0, 'narration.js 词表含 ' + lit);
 };
-function trailKeyFor(pageId) {
-  /* 以实现消费点为准（2026-11-02 对账）：allgather 是 choreo 线（trailChoreo），
-     trailFam 只有 reduce（sum accumulate）消费 */
-  if (pageId === 'alltoall') return 'trailATA';
-  if (pageId === 'reduce') return 'trailFam';
-  if (pageId === 'allreduce' || pageId === 'reducescatter') return 'trailReduce';
-  return 'trailChoreo';
-}
-C['OR-trailChoreo'] = C['OR-trailFam'] = C['OR-trailReduce'] = C['OR-trailATA'] = async function (pg, r, ok) {
-  const pageId = await pg.evaluate(function () { return location.pathname.split('/').pop().replace('.html', ''); });
-  const key = trailKeyFor(pageId);
+/* 余辉比率 2026-11-03 统一成一条（原来按族拆四条：trailChoreo / trailFam /
+   trailReduce / trailATA）。八页同一个键、同一个默认值。 */
+C['OR-trailRatio'] = async function (pg, r, ok) {
+  const key = 'trailRatio';
   /* 找本页第一段飞行窗口：choreo 看 win 的 transfer 拍，family 看 r1fly */
   const win = await firstFly(pg);
   if (!win) { ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, false, '本页无飞行窗口可采样'); return; }
@@ -1125,9 +1119,9 @@ export async function check(pg) {
       out.fillBack = rect2 ? toHex(rect2.getAttribute('fill')) : null;
       return out;
     });
-    ok('6.1 外观页签在场（96 行渲染核）', !panel.err && panel.rows === 96,
+    ok('6.1 外观页签在场（104 行渲染核）', !panel.err && panel.rows === 104,
       panel.err || ('rows=' + panel.rows));
-    ok('6.2 默认锁定 · 解锁全放开', !panel.err && panel.locked0 === 96 && panel.locked1 === 0,
+    ok('6.2 默认锁定 · 解锁全放开', !panel.err && panel.locked0 === 104 && panel.locked1 === 0,
       panel.err || ('锁=' + panel.locked0 + ' → 解锁余锁=' + panel.locked1));
     /* 初始没有 A 块的页（reduce/allreduce 的 ghost 槽无 data-l）免 DOM 项——
        色链由有块的页验；rgb() 写值统一归一成 hex 再比 */
@@ -1148,7 +1142,7 @@ export async function check(pg) {
       var locked = document.querySelectorAll('.pc-row.locked').length;
       return { rows: rows, locked: locked };
     });
-    ok('6.5 锁不持久化（重开面板回锁）', lock2.rows === 96 && lock2.locked === 96,
+    ok('6.5 锁不持久化（重开面板回锁）', lock2.rows === 104 && lock2.locked === 104,
       '重开 rows=' + lock2.rows + ' 锁=' + lock2.locked);
   }
   if (pageId === 'visual') {
@@ -1160,7 +1154,7 @@ export async function check(pg) {
       var locked = document.querySelectorAll('.param-dock .pc-row.locked').length;
       return { rows: rows, locked: locked };
     });
-    ok('6.6 抽屉在场（与齿轮同核）· 默认锁定', !drawer.err && drawer.rows === 96 && drawer.locked === 96,
+    ok('6.6 抽屉在场（与齿轮同核）· 默认锁定', !drawer.err && drawer.rows === 104 && drawer.locked === 104,
       drawer.err || ('rows=' + drawer.rows + ' 锁=' + drawer.locked));
     const scope = await pg.evaluate(function () {
       var active = document.querySelector('.sec.is-active .sec-no');

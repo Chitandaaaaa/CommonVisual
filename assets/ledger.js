@@ -73,14 +73,14 @@
     ] },
     { g: '04 · 连线与箭头', rows: [
       { id: '04-idleColor', t: 'Y', name: '闲置线颜色',   en: 'spec:toneWire（verbs 绘制）', val: LIVE('01-color', 'toneWire'), sec: '04', kw: '', pages: P8, chk: 'truth' },
-      { id: '04-idleWidth', t: 'Y', name: '闲置线宽度',   en: 'verbs 绘制', val: '2（alltoall 直线 1.4）', sec: '04', kw: '', pages: P8, chk: 'truth' },
-      { id: '04-idleDash',  t: 'Y', name: '闲置线虚线',   en: 'verbs 绘制', val: '8 7（alltoall 直线 6 6）', sec: '04', kw: '', pages: P8, chk: 'truth' },
+      { id: '04-idleWidth', t: 'Y', name: '闲置线宽度',   en: 'spec:wireW（CV.wire.paint）· 全换 wireWMuted', val: '2（全站统一）', sec: '04', kw: '', pages: P8, chk: 'truth' },
+      { id: '04-idleDash',  t: 'Y', name: '闲置线虚线',   en: 'spec:wireDashOn/Off（CV.wire.paint）', val: '8 7（全站统一）', sec: '04', kw: '', pages: P8, chk: 'truth' },
       { id: '04-wireFade',  t: 'D', name: '点亮 / 回灰过渡', en: 'wireFade · 04-wire 组', val: LIVE('04-wire', 'wireFade', 's'), sec: '04', kw: '动态', pages: P8, chk: 'css' },
       { id: '04-flyColor',  t: 'Y', name: '飞行线颜色',   en: 'verbs 绘制', val: '数据色', sec: '04', kw: '', pages: P8, chk: 'truth' },
-      { id: '04-flyWidth',  t: 'Y', name: '飞行线宽度',   en: 'verbs 绘制', val: '2.6', sec: '04', kw: '', pages: P8, chk: 'truth' },
-      { id: '04-flyDash',   t: 'Y', name: '飞行线虚线',   en: 'verbs 绘制', val: '9 7', sec: '04', kw: '', pages: P8, chk: 'truth' },
+      { id: '04-flyWidth',  t: 'Y', name: '飞行线宽度',   en: 'spec:wireWLit（CV.wire.paint）', val: '2.6', sec: '04', kw: '', pages: P8, chk: 'truth' },
+      { id: '04-flyDash',   t: 'Y', name: '飞行线虚线',   en: 'spec:wireDashLitOn / wireDashOff', val: '9 7', sec: '04', kw: '', pages: P8, chk: 'truth' },
       { id: '04-glowColor', t: 'Y', name: '余辉线颜色',   en: 'verbs 绘制', val: '数据色 · 淡', sec: '04', kw: '', pages: P8, chk: 'truth' },
-      { id: '04-glowWidth', t: 'Y', name: '余辉线宽度',   en: 'verbs 绘制', val: '1.6 / 1.8', sec: '04', kw: '', pages: P8, chk: 'truth' },
+      { id: '04-glowWidth', t: 'Y', name: '余辉线宽度 / 亮度', en: 'spec:wireWGlow / wireGlowOp / wireRestOp / wireDoneOp', val: '1.8 · 0.42 / 0.75 / 0.26', sec: '04', kw: '', pages: P8, chk: 'truth' },
       { id: '04-markerShape', t: 'Y', name: '箭头形状',   en: 'payload.marker', val: '三停箭头（defs 一份）', sec: '04', kw: '', pages: P7M, chk: 'truth' },
       { id: '04-markerSize',  t: 'Y', name: '箭头尺寸',   en: 'payload.marker', val: 'markerWidth × refX 现值', sec: '04', kw: '', pages: P7M, chk: 'truth' },
       { id: '04-markerFollow',t: 'Y', name: '箭头逐帧随色', en: 'payload.marker · fill', val: '随飞行数据色', sec: '04', kw: '', pages: P7M, chk: 'truth' }
@@ -147,10 +147,9 @@
       { id: 'OR-wireLit',   t: 'D', name: '点亮时长（解说层）', en: 'narration.js · css .wire', val: '0.30s', sec: '04', kw: '', pages: P8, chk: 'src' },
       { id: 'OR-recv',      t: 'D', name: '转接收位（解说层）', en: 'narration.js', val: '0.30s', sec: '02', kw: '', pages: P8, chk: 'src' },
       { id: 'OR-takeoff',   t: 'D', name: '起飞渐显', en: 'takeoffFade · orch 组', val: LIVE('orch', 'takeoffFade', ''), sec: '05', kw: '动态', pages: P8, chk: 'link' },
-      { id: 'OR-trailChoreo', t: 'D', name: '余辉比率 · 单流（40%）', en: 'trailChoreo · orch 组', val: LIVE('orch', 'trailChoreo', ''), sec: '04', kw: '', pages: ['gather', 'scatter', 'broadcast', 'allgather'], chk: 'link' },
-      { id: 'OR-trailFam',    t: 'D', name: '余辉比率 · 家族（45%）', en: 'trailFam · orch 组', val: LIVE('orch', 'trailFam', ''), sec: '04', kw: '', pages: ['reduce'], chk: 'link' },
-      { id: 'OR-trailReduce', t: 'D', name: '余辉比率 · 归约族（42%）', en: 'trailReduce · orch 组', val: LIVE('orch', 'trailReduce', ''), sec: '04', kw: '', pages: ['allreduce', 'reducescatter'], chk: 'link' },
-      { id: 'OR-trailATA',    t: 'D', name: '余辉比率 · 全换（30%）', en: 'trailATA · orch 组', val: LIVE('orch', 'trailATA', ''), sec: '04', kw: '', pages: ['alltoall'], chk: 'link' },
+      /* 余辉比率：2026-11-03 前按族拆四条（单流 40 / 家族 45 / 归约族 42 / 全换 30），
+         四个名字都叫「余辉」却各调各的，统一成一条。 */
+      { id: 'OR-trailRatio', t: 'D', name: '余辉比率', en: 'trailRatio · orch 组', val: LIVE('orch', 'trailRatio', ''), sec: '04', kw: '', pages: P8, chk: 'link' },
       { id: 'OR-seatDelay', t: 'D', name: '落位延迟', en: 'seatDelay · orch 组', val: LIVE('orch', 'seatDelay', 's'), sec: '08', kw: '', pages: P8, chk: 'link' }
     ] },
     { g: '全局', rows: [

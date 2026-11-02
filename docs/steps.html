@@ -418,7 +418,7 @@
           <tr class="act"><td class="nm">淡出</td><td>包不透明度线性 → 0。</td><td>包是被目标「吃进去」；完成后才轮到落位（2.6）</td><td class="mono">0.60s</td></tr>
           <tr class="act"><td class="nm">余辉</td><td>线降到 40%（家族页 45%）保留数据色。</td><td><b>不是变灰</b>；比率各页不同：choreo 40% / reduce 45% / allreduce·rs 42% / alltoall 30%</td><td class="mono">瞬时</td></tr>
           <tr class="act"><td class="nm">落位</td><td>接收位消失，该槽当场变成数据块。</td><td><b>不是渐变换色</b></td><td class="mono">瞬时</td></tr>
-          <tr class="act"><td class="nm">弹跳</td><td>该槽从 35% 放大到 116% 再落回 100%。</td><td>多块节奏两口径（visual 08）：同飞批<b>齐弹</b> · 顺序到达<b>错峰 0.50</b>（all-to-all）</td><td class="mono">0.55s</td></tr>
+          <tr class="act"><td class="nm">弹跳</td><td>该槽从 35% 放大到 116% 再落回 100%。</td><td>多块一律<b>逐块落位</b>（2026-11-03 统一，原来的「同飞批齐弹」退役）：同批一次飞来的多块错峰 <span class="k">popStagger</span>，顺序到达的错峰 <span class="k">seatGap</span>；落位窗口仍是单颗秒，错峰让后一块压到下一拍</td><td class="mono">0.55s</td></tr>
           <tr class="act"><td class="nm">长高</td><td>卡高增加一层。腾出<b>第二排</b>时 0.80s（cardDur），腾出<b>计算层</b>时 0.75s（growDur）。</td><td>开场只做一次，收场才收回</td><td class="mono">0.80 / 0.75s</td></tr>
           <tr class="act"><td class="nm">逐块出现</td><td>第二排的接收位从左到右一块块淡入。</td><td>是「位置」逐个出现</td><td class="mono">0.40s/块，隔 0.15</td></tr>
           <tr class="act"><td class="nm">逐块撤</td><td>第二排的接收位从右往左一块块撤掉。</td><td>先撤块，再收卡，不能同时</td><td class="mono">0.40s/块，隔 0.15</td></tr>
@@ -447,7 +447,7 @@
           <tr><td class="nm">串行律</td><td>淡出未完成，不得落位；家族页弹跳未完成不得折进（中间隔着撑开）。并行是分叉，不是风格。</td><td>与「先逐块撤再收回」「方框早于卡片退场」同一族</td></tr>
           <tr><td class="nm">落位延迟</td><td>抵达（含淡出）到起弹之间停 <span class="k">0.50s</span>，全站同默认；时序面板有对应行（choreo 页行名即「落位延迟」）。</td><td>页面不许把这一拍写死进动词</td></tr>
           <tr><td class="nm">组件口径</td><td>弹跳的时长与多块节奏读 <b>visual 08</b>（<span class="k">popDur</span> / <span class="k">seatGap</span> / <span class="k">popStagger</span>），不许在页面复制第二份曲线或秒数。</td><td>08 管组件长什么样，本条管它何时上场</td></tr>
-          <tr><td class="nm">面板行语义</td><td>「落位弹跳」行＝<b>完整弹跳窗口</b>：分量（单颗 <span class="k">popDur</span>，错峰 <span class="k">popStagger</span> / <span class="k">seatGap</span>）全来自 visual 08，时序面板一根 k 杆整窗缩放，动画逐帧从行分量取秒；落位延迟不折进该行。</td><td>齐弹页窗口即单颗；防假规范行回归＝2.29</td></tr>
+          <tr><td class="nm">面板行语义</td><td>「落位弹跳」行＝<b>完整弹跳窗口</b>：分量（单颗 <span class="k">popDur</span>，错峰 <span class="k">popStagger</span> / <span class="k">seatGap</span>）全来自 visual 08，时序面板一根 k 杆整窗缩放，动画逐帧从行分量取秒；落位延迟不折进该行。</td><td>窗口＝单颗，多块靠错峰依次起跳；防假规范行回归＝2.29</td></tr>
         </tbody>
       </table>
     </div>
@@ -522,6 +522,15 @@
       <li><b>2026-11-01 · 拍板（解说列禁嵌时间）</b>：新增 12.4——时间值只活在开始/结束列，解说/结果列不嵌时间值、不做参数插值（「错峰 0.50」在参数改动后即成假话）；节奏用词表达（同时/错峰）。引擎 5 处插值与手写稿 5 处字面量同日清零，断言并入 2.22。</li>
       <li><b>2026-11-01 · 拍板（弹跳收编包 A）</b>：弹跳曲线全站单源——visual 08 的 <code>CV.POP_CURVE</code> 一份，CSS keyframes 开机由它生成、JS 采样走 <code>CV.beat.popAt</code>，三处副本（stage-page.css 静态帧 / sum.js / split.js / motion.js）全部退役；08 新增 <span class="k">popStagger</span>（同批错峰，0＝齐弹）。reduce / allreduce / alltoall / reduce-scatter 的弹跳行改 of 行：窗口=分量之和、k 杆整窗缩放、动画逐帧从行分量取秒（2.6 面板行语义随之改写，0.91 写死字面量的假规范行就此消灭）；reduce 单颗 0.60→0.55（总长 24.36→24.21），split 淡出从写死 0.55 改读规范 packFade。防假规范行回归＝2.29（110→111）。串行对齐（淡出→延迟→落位）仍属待对齐项，实现随行（包 B）。</li>
       <li><b>2026-11-01 · 拍板（串行律落地·包 B）</b>：§13 衔接顺序律的「待对齐项」销账——四页家族（reduce / allreduce / reduce-scatter / all-to-all）全部改为 抵达→淡出（packFade）→落位延迟（0.50，全站同默认）→落位弹跳，不再「抵达即弹、与淡出并行」；allreduce 旧 land 0.1 由延迟 0.50 顶替，all-to-all 采纳决策点同步加淡出+延迟（全站一致）。齿轮面板家族弹跳组拆出「送达淡出 / 落位延迟」行；解说表延迟相写「画面 · 静止 · 保持接收位」（与 choreo 页同词）。总长 reduce 24.21→27.51、allreduce 21.26→23.26、reduce-scatter 20.65→22.85、all-to-all 14.70→19.10，手写稿与探针锚点同日翻新；2.29 扩串行断言（落位 ≥ 淡出完）。</li>
+      <li><b>2026-11-03 · 全站统一（弧型 / 长高方向 / 落位节奏 / 空槽态）</b>：
+① 连线弧型修好——<code>CV.arcPath</code> 的控制点原本沿**弦**摆（起点 + 弦×k、终点 − 弦×k），四点共线，贝塞尔退化成直线，全站连线从画下那天起就是直的；改成沿**主轴**进出的 S 形（横长的水平进出、纵长的垂直进出），<code>CV.humpPath</code> 同源改；reduce 手抄的第二份贝塞尔并入 <code>CV.arcPath</code>。
+② 卡片长高一律<b>顶边钉死、只往下长</b>——原来 reduce / allreduce / reduce-scatter 都是中心对齐（上下对称），标题条跟着往上跑。
+③ 多块落位一律<b>逐块</b>——「同飞批齐弹」退役，改按 <span class="k">popStagger</span> 依次起跳（all-to-all 本就走 <span class="k">seatGap</span> 错峰）；落位窗口仍是单颗秒。
+④ 新增的第二排空位一律是<b>空块</b>（灰底虚线），只有包在飞的那段才转接收位（紫底 ···）；reduce 原来从预留那一刻就常亮到末轮合并收尾。
+⑤ reduce-scatter 的空位显形 / 撤块改按<b>本卡第几个有效格</b>排序——原来按全局列号索引，而各卡有效列不同（r0/r1 收 0,1；r2/r3 收 2,3），于是 r0/r1 先冒头、r2/r3 后冒头；收场另用 <code>orderLast</code>（最后一轮那一格的序号），四张卡才是同时消失。
+⑥ all-to-all 自己那一片：第一排留到第二排落位那一刻才撤（原来一进第 r 步就清空，第一排空半拍、第二排才落）。
+⑦ 余辉四个键合并成一个 <span class="k">trailRatio</span>（原 trailChoreo .40 / trailFam .45 / trailReduce .42 / trailATA .30，四个名字都叫「余辉」却各调各的）；账本 107 → 104 项，用例 233 → 230 条。
+⑧ <b>连线笔画收编</b>——线宽 / 虚线 / 余辉亮度原先散在 move · sum · split 三个 verb 里各写一遍字符串（同一组「2.6 + <code>9 7</code>」抄了三份，余辉亮度又有 .4 / .45 / .42 三个值，all-to-all 另写 1.4 + <code>6 6</code> + .9），规范表 04 章一个键都没有，齿轮面板调不到、改一处漏两处。现 04-wire 组扩成三组 11 键（线宽 <span class="k">wireW / wireWLit / wireWGlow / wireWMuted</span>、虚线 <span class="k">wireDashOn / wireDashOff / wireDashLitOn</span>、透明度 <span class="k">wireOpIdle / wireGlowOp / wireRestOp / wireDoneOp</span>），唯一画笔 <code>CV.wire.paint(path, 'idle'|'lit'|'glow'|'rest'|'done', color, muted)</code> 接管全部 14 处 setAttribute，箭头随色并成 <code>CV.wire.arrow</code>（原来每处各写一次 <code>marker.setAttribute('fill')</code>）。all-to-all 的闲置细一档改由 <span class="k">wireWMuted</span>（1.4）表达，虚线回全站 <code>8 7</code>，不再有按页分叉的例外；外观页签 93 → 104 行。</li>
     </ul>
   </div>
   </section>

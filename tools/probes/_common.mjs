@@ -28,7 +28,7 @@
      #7c3aed #0891b2 #059669 #d97706；V4 空槽 #f7f8fc（接收中
      #f3eeff）；V5 头 36、角标高 18（角色徽章宽 dst30/src28，
      文字徽章 36 —— 蓝图写的「36×18」只对文字徽章成立，已勘误）；
-     V6 空闲线 #c3cadb + dash 8 7（alltoall 例外 6 6）；V7 字号
+     V6 空闲线 #c3cadb + dash 8 7（宽：alltoall 走 muted 1.4）；V7 字号
      槽15/标题15/角标10；V8 字幕 rank chip 实色底白字。
    ============================================================ */
 
@@ -196,8 +196,8 @@ function near(a, b, eps) { return Math.abs(a - b) <= (eps == null ? 1e-4 : eps);
      edges     2.11：与 #lWires .wire DOM 序一致的流列表；letter=null 表示整份流
      noMarkers 双向直连边无箭头（alltoall）：要求 marker 数为 0
      uniform   整份流的统一源色（broadcast/reduce/allreduce/reducescatter）
-     idleDash  V6 空闲线 dash（默认 '8 7'；alltoall '6 6'）
-     idleSw    V6 空闲线宽（默认 '2'；alltoall '1.4'）
+     idleDash  V6 空闲线 dash（默认 '8 7'，全站统一）
+     idleSw    V6 空闲线宽（默认 '2'；alltoall 走 wireWMuted '1.4'）
      keep      2.12：keep(letter) → 保留的卡号数组（聚焦不灰化的卡）
      oldFlight 旧页无 getCh 时 2.11 的飞行中点刻度（v2 走 getCh 现算）
    }

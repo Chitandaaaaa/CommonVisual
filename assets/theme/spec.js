@@ -81,10 +81,32 @@
       }
     },
     '04-wire': {
-      label: '连线·过渡',
+      label: '连线·笔画',
       anchor: 'sub-04-1',
+      /* 2026-11-03 入册：线宽 / 虚线 / 余辉透明度此前散在 move·sum·split 三处
+         各写一遍字符串（同一组 2.6+'9 7' 抄了三份），规范表一个键都没有，
+         齿轮面板调不到，改一处漏两处。现全部收进本组，唯一画笔 CV.wire.paint()。 */
+      groups: [
+        { label: '过渡', keys: ['wireFade'] },
+        { label: '线宽', keys: ['wireW', 'wireWLit', 'wireWGlow', 'wireWMuted'] },
+        { label: '虚线', keys: ['wireDashOn', 'wireDashOff', 'wireDashLitOn'] },
+        { label: '透明度', keys: ['wireOpIdle', 'wireGlowOp', 'wireRestOp', 'wireDoneOp'] }
+      ],
       keys: {
-        wireFade: { label: '点亮 / 回灰', unit: 's', def: 0.3, min: 0, max: 1.5, step: 0.05, sink: 'css', chk: 'css', read: '.wire@transition-duration' }
+        wireFade:   { label: '点亮 / 回灰', unit: 's', def: 0.3, min: 0, max: 1.5, step: 0.05, sink: 'css', chk: 'css', read: '.wire@transition-duration' },
+        wireW:      { label: '闲置',        unit: 'px', def: 2,   min: 0.5, max: 6, step: 0.1, chk: 'unit' },
+        wireWLit:   { label: '点亮',        unit: 'px', def: 2.6, min: 0.5, max: 6, step: 0.1, chk: 'unit' },
+        wireWGlow:  { label: '余辉 / 收尾', unit: 'px', def: 1.8, min: 0.5, max: 6, step: 0.1, chk: 'unit' },
+        /* 全换的交叉线密，闲置态单独细一档（原 all-to-all 写死 1.4） */
+        wireWMuted: { label: '全换·闲置',   unit: 'px', def: 1.4, min: 0.5, max: 6, step: 0.1, chk: 'unit' },
+        wireDashOn:    { label: '实线段',   unit: 'px', def: 8, min: 2, max: 24, step: 0.5, chk: 'unit' },
+        wireDashOff:   { label: '间隔',     unit: 'px', def: 7, min: 2, max: 24, step: 0.5, chk: 'unit' },
+        wireDashLitOn: { label: '点亮实线段', unit: 'px', def: 9, min: 2, max: 24, step: 0.5, chk: 'unit' },
+        wireOpIdle: { label: '闲置',        unit: '',  def: 1,    min: 0, max: 1, step: 0.02, chk: 'unit' },
+        wireGlowOp: { label: '余辉',        unit: '',  def: 0.42, min: 0, max: 1, step: 0.02, chk: 'unit' },
+        /* 本轮传完、整轮未完：线已退灰但比闲置弱一点，提示「这条用过一次」 */
+        wireRestOp: { label: '收轮（退灰）', unit: '',  def: 0.75, min: 0, max: 1, step: 0.02, chk: 'unit' },
+        wireDoneOp: { label: '收尾（全灰）', unit: '', def: 0.26, min: 0, max: 1, step: 0.02, chk: 'unit' }
       }
     },
     '07-calc': {
@@ -141,18 +163,17 @@
       anchor: 'sub-00-1',   /* 00 章总表（2026-11-02 收编：原「编排级定数」纸面清单入册） */
       groups: [
         { label: '衔接', keys: ['dimDur', 'revealDur'] },
-        { label: '飞行', keys: ['takeoffFade'] },
-        { label: '余辉', keys: ['trailChoreo', 'trailFam', 'trailReduce', 'trailATA'] },
+        { label: '飞行', keys: ['takeoffFade', 'trailRatio'] },
         { label: '时序', keys: ['seatDelay'] }
       ],
       keys: {
         dimDur:      { label: '变暗/复原', unit: 's', def: 0.3,  min: 0.1, max: 1,   step: 0.05, sink: 'css', chk: 'link' },
         revealDur:   { label: '显形时长', unit: 's', def: 0.32, min: 0.1, max: 1,   step: 0.02, sink: 'css', chk: 'link' },
         takeoffFade: { label: '起飞渐显', unit: '',  def: 0.08, min: 0.02, max: 0.5, step: 0.01, chk: 'link' },
-        trailChoreo: { label: '余辉·单流', unit: '', def: 0.4,  min: 0,   max: 1,   step: 0.01, chk: 'link' },
-        trailFam:    { label: '余辉·家族', unit: '', def: 0.45, min: 0,   max: 1,   step: 0.01, chk: 'link' },
-        trailReduce: { label: '余辉·归约族', unit: '', def: 0.42, min: 0,  max: 1,   step: 0.01, chk: 'link' },
-        trailATA:    { label: '余辉·全换', unit: '', def: 0.3,  min: 0,   max: 1,   step: 0.01, chk: 'link' },
+        /* 余辉比率：抵达后线保留数据色的时长 = 飞行时长 × 此值，随后回灰。
+           2026-11-03 之前按族拆成四个键（单流 0.40 / 家族 0.45 / 归约族 0.42 /
+           全换 0.30），四个名字都叫「余辉」却各调各的——统一成一个。 */
+        trailRatio:  { label: '余辉比率', unit: '',  def: 0.4,  min: 0,   max: 1,   step: 0.01, chk: 'link' },
         seatDelay:   { label: '落位延迟', unit: 's', def: 0.5,  min: 0,    max: 1.5, step: 0.05, chk: 'link' }
       }
     },

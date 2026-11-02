@@ -95,26 +95,45 @@
     return { sx: ac.x, sy: ac.y + t * a.h / 2, tx: bc.x, ty: bc.y - t * b.h / 2, horiz: false };
   };
 
-  /* 弧线：控制点在两端 arcK 处（全站同一条曲率，spec geo.arcK） */
+  /* 弧线 · S 形（全站唯一曲率，spec geo.arcK）
+     ------------------------------------------------------------
+     控制点沿**主轴**摆，不沿弦摆：横长的线水平进 / 水平出，纵长的线
+     垂直进 / 垂直出。这样线从卡片边缘是「平着拉出去」的，中途再弯；
+     若把控制点放在弦上（起点 + 弦×k），四个点共线，贝塞尔退化成直线
+     —— 2026-11-03 之前那版就是这么写的，全站连线一直是直的。 */
   CV.arcPath = function (sx, sy, tx, ty) {
     var k = CV.spec('arcK');
     var dx = tx - sx, dy = ty - sy;
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      return 'M ' + sx + ' ' + sy +
+             ' C ' + (sx + dx * k) + ' ' + sy + ', ' +
+                   (tx - dx * k) + ' ' + ty + ', ' +
+                   tx + ' ' + ty;
+    }
     return 'M ' + sx + ' ' + sy +
-           ' C ' + (sx + dx * k) + ' ' + (sy + dy * k) + ', ' +
-                 (tx - dx * k) + ' ' + (ty - dy * k) + ', ' +
+           ' C ' + sx + ' ' + (sy + dy * k) + ', ' +
+                 tx + ' ' + (ty - dy * k) + ', ' +
                  tx + ' ' + ty;
   };
 
-  /* 法向偏移后的弧线：双向交换的两条车道各偏 +off（方向本身已相反，不再补符号） */
+  /* 法向偏移后的弧线：双向交换的两条车道各偏 +off（方向本身已相反，不再补符号）。
+     弧型与 arcPath 同源（S 形），只是整条线沿法向平移 off。 */
   CV.humpPath = function (e, off) {
     var k = CV.spec('arcK');
     var dx = e.tx - e.sx, dy = e.ty - e.sy;
     var len = Math.sqrt(dx * dx + dy * dy) || 1;
     var nx = -dy / len * (off || 0), ny = dx / len * (off || 0);
-    return 'M ' + (e.sx + nx) + ' ' + (e.sy + ny) +
-           ' C ' + (e.sx + dx * k + nx) + ' ' + (e.sy + dy * k + ny) + ', ' +
-                 (e.tx - dx * k + nx) + ' ' + (e.ty - dy * k + ny) + ', ' +
-                 (e.tx + nx) + ' ' + (e.ty + ny);
+    var ax = e.sx + nx, ay = e.sy + ny, bx = e.tx + nx, by = e.ty + ny;
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      return 'M ' + ax + ' ' + ay +
+             ' C ' + (ax + dx * k) + ' ' + ay + ', ' +
+                   (bx - dx * k) + ' ' + by + ', ' +
+                   bx + ' ' + by;
+    }
+    return 'M ' + ax + ' ' + ay +
+           ' C ' + ax + ' ' + (ay + dy * k) + ', ' +
+                 bx + ' ' + (by - dy * k) + ', ' +
+                 bx + ' ' + by;
   };
 
   /* 端点随法向平移（包的起终点要跟着车道走） */

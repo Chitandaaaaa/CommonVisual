@@ -25,7 +25,7 @@ export async function check(pg) {
       { letter: null }, { letter: null }, { letter: null }],
     noMarkers: true,                                  /* 双向直连边不画箭头 */
     uniform: null,
-    idleDash: '6 6', idleSw: '1.4',                   /* alltoall 空闲线是更细的 6 6 */
+    idleDash: '8 7', idleSw: '1.4',                   /* 2026-11-03 统一：虚线回规范 8 7，宽度仍走 wireWMuted 1.4 */
     keep: () => [0, 1, 2, 3],
     oldFlight: OLD.alltoall.stepMid[0]
   });

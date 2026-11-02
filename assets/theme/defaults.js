@@ -9,6 +9,19 @@ window.CV_PARAM_DEFAULTS = {
     "rowLull": 0.3,
     "rowPause": 0.25
   },
+  "04-wire": {
+    "wireW": 2,
+    "wireWLit": 2.6,
+    "wireWGlow": 1.8,
+    "wireWMuted": 1.4,
+    "wireDashOn": 8,
+    "wireDashOff": 7,
+    "wireDashLitOn": 9,
+    "wireOpIdle": 1,
+    "wireGlowOp": 0.42,
+    "wireRestOp": 0.75,
+    "wireDoneOp": 0.26
+  },
   "05-packet": {
     "packDur": 1.5,
     "packFade": 0.6,
@@ -42,10 +55,7 @@ window.CV_PARAM_DEFAULTS = {
     "dimDur": 0.3,
     "revealDur": 0.32,
     "takeoffFade": 0.08,
-    "trailChoreo": 0.4,
-    "trailFam": 0.45,
-    "trailReduce": 0.42,
-    "trailATA": 0.3,
+    "trailRatio": 0.4,
     "seatDelay": 0.5
   },
   "global": {

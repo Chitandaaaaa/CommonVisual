@@ -186,6 +186,32 @@
     S.extra.calcs = {};
     S.extra.seen = {};
     S.extra.fuseCol = {};   /* 方案 A：折进飞行实例（key = 轮_卡_列） */
+    /* 每张卡「第几个有效接收格」→ 全局列号的反查表。
+       各卡收到的列不一样（第 1 轮 r0/r1 收 0,1、r2/r3 收 2,3），
+       显形/撤块要按本卡序号同步，不能按列号，否则左右两组错拍。 */
+    S.extra.order = {};
+    var RECV = S.CH.RECV;
+    /* 两套序号：
+       order     —— 全历史有效格（第一轮 ∪ 第二轮），管「显形」（op）
+       orderLast —— 只剩最后一轮那一格的序号，管「收场撤块」（cl）
+       收场时每张卡只留自己那一格，若仍按全历史序号，r0 是 0、r3 是 3，
+       四张卡就会一格一格依次消失；按 orderLast 全是 0，才同时消失。 */
+    S.extra.orderLast = {};
+    Object.keys(S.cards).forEach(function (rk) {
+      var r = Number(rk), seenCol = {}, cols = [];
+      RECV[0][r].concat(RECV[1][r]).forEach(function (i) {
+        if (!seenCol[i]) { seenCol[i] = 1; cols.push(i); }
+      });
+      cols.sort(function (a, b) { return a - b; });
+      var m = {};
+      cols.forEach(function (c, i) { m[c] = i; });
+      S.extra.order[r] = m;
+
+      var lastCols = RECV[1][r].slice().sort(function (a, b) { return a - b; });
+      var m2 = {};
+      lastCols.forEach(function (c, i) { m2[c] = i; });
+      S.extra.orderLast[r] = m2;
+    });
 
     Object.keys(S.cards).forEach(function (rk) {
       var r = Number(rk);
@@ -330,12 +356,12 @@
     var IN = verbs.split.inner(L, h);
     var rowStep = c0.sh + L.rowGap;
 
-    /* 卡片几何：中心不动，上下同时长 */
+    /* 卡片几何：**顶边钉死，只往下长**（全站统一，2026-11-03）
+       预留第二排和计算层都加在卡片下方，上面不留空。 */
     var R = {};
     [0, 1, 2, 3].forEach(function (r) {
       var b = CV.gridCard(L, r);
-      var cyc = b.y + L.card.h / 2;
-      R[r] = { x: b.x, y: cyc - h / 2, w: b.w, h: h };
+      R[r] = { x: b.x, y: b.y, w: b.w, h: h };
       CV.cast.resize(S.cards[r], R[r]);
     });
 
@@ -389,9 +415,24 @@
         moveSlot(rs, y2);
         var qc = sec >= AT.r2fly.s ? 1 : 0;
         var fw = AT[qc === 0 ? 'r1fly' : 'r2fly'];
-        var inFlight = sec >= fw.s && sec < fw.e && CH.RECV[qc][r].indexOf(j) >= 0;
+        var dlyT = AT[qc === 0 ? 'r1dly' : 'r2dly'].e;   /* 落位时刻才交棒给 ghost */
+        /* 接收位保持到**落位**，不是到「飞行结束」——中途变回空块会看成
+           「这块没人要了」（2026-11-03 修）。 */
+        var inFlight = sec >= fw.s && sec < dlyT && CH.RECV[qc][r].indexOf(j) >= 0;
         CV.cast.set(rs, null, { active: inFlight });
-        rs.g.style.opacity = (recvAlpha(r, j, sec) * op.v[j] * cl.v[j]).toFixed(3);
+        /* 显形 / 撤块都按「本卡第几个有效格」走，不按全局列号：
+           各卡有效列不同（r0 拿 0,1；r2 拿 2,3），按列号索引会让
+           左边两张先冒头、右边两张后冒头，看起来像不同步。
+           不归本卡的列（order 里没有）直接隐藏——否则 op.v[undefined] 是
+           NaN，写进 style.opacity 会被浏览器丢掉，格子反而全程可见。 */
+        var ord = EX.order[r][j];
+        var alpha = 0;
+        if (ord != null) {
+          var ordL = EX.orderLast[r][j];
+          var clv = ordL == null ? cl.v[ord] : cl.v[ordL];
+          alpha = recvAlpha(r, j, sec) * op.v[ord] * clv;
+        }
+        rs.g.style.opacity = alpha.toFixed(3);
       }
 
       var bt = left + ' 段';
@@ -423,7 +464,9 @@
         return;
       }
       var e = mergeE(gh.q, gh.idx, sec);
-      var pop = CV.beat.popAt(clamp((sec - landT) / POP, 0, 1));
+      /* 逐块落位：第 idx 段比前一段晚 popStagger 起跳（全站统一「多块不齐弹」，
+         2026-11-03）；窗口本身仍是单颗弹跳秒，错峰让最后一块略压到下一拍，肉眼无碍。 */
+      var pop = CV.beat.popAt(clamp((sec - landT - gh.idx * CV.spec('popStagger')) / POP, 0, 1));
       /* 方案 A（2026-11-02）：折进的块飞行交给规范函数 beat.fuse ——
          rs 每列份数翻倍：resetTo=Σ^(已持有)、to=Σ^(×2)，换 Σ 在 fuseSwap。 */
       if (e > 0 && e < 1) {
@@ -477,41 +520,34 @@
           var lead = Math.min(0.32, (p.half || 0) / (w.len || 1));
           var ep = CV.easeInOutQuad((sec - fw.s) / (fw.e - fw.s));
           CV.payload.place(p, w, lead + ep * (1 - lead));
-          w.path.setAttribute('stroke', col);
-          w.path.setAttribute('stroke-width', '2.6');
-          w.path.setAttribute('stroke-dasharray', '9 7');
-          w.path.setAttribute('opacity', '1');
-          w.marker.setAttribute('fill', col);
+          CV.wire.paint(w.path, 'lit', col);
+          CV.wire.arrow(w.marker, col);
           CV.beat.dim(S.cards[r], true);   /* 方案 A：发送中变暗全站生效 */
         } else if (fading) {
           CV.beat.dim(S.cards[r], false);
           CV.payload.place(p, w, 1);
           CV.payload.fadeOut(p, sec - fw.e, PACKFADE);
-          w.path.setAttribute('stroke', col);
-          w.path.setAttribute('stroke-width', '1.8');
-          w.path.setAttribute('stroke-dasharray', '8 7');
-          w.path.setAttribute('opacity', '.42');
-          w.marker.setAttribute('fill', col);
+          CV.wire.paint(w.path, 'glow', col);
+          CV.wire.arrow(w.marker, col);
         } else if (sec >= fw.e) {
           var done = sec >= mw.e;
-          /* 余辉计时回灰（orch·trailReduce）：抵达后保留数据色 ratio×飞行时长 */
-          var residS = (fw.e - fw.s) * CV.spec('trailReduce');
+          /* 余辉计时回灰（orch·trailRatio）：抵达后保留数据色 ratio×飞行时长 */
+          var residS = (fw.e - fw.s) * CV.spec('trailRatio');
           var glowingS = sec - fw.e <= residS;
           CV.beat.dim(S.cards[r], false);
           p.g.setAttribute('opacity', '0');
-          w.path.setAttribute('stroke', done ? DEEP : (glowingS ? col : CV.TONE.wire));
-          w.path.setAttribute('stroke-width', '1.8');
-          w.path.setAttribute('stroke-dasharray', '8 7');
-          w.path.setAttribute('opacity', done ? '.26' : (glowingS ? '.42' : '1'));
-          w.marker.setAttribute('fill', done ? DEEP : (glowingS ? col : CV.TONE.wire));
+          if (done) {
+            CV.wire.paint(w.path, 'done', DEEP); CV.wire.arrow(w.marker, DEEP);
+          } else if (glowingS) {
+            CV.wire.paint(w.path, 'glow', col); CV.wire.arrow(w.marker, col);
+          } else {
+            CV.wire.paint(w.path, 'idle'); CV.wire.arrow(w.marker, null);
+          }
         } else {
           CV.beat.dim(S.cards[r], false);
           p.g.setAttribute('opacity', '0');
-          w.path.setAttribute('stroke', CV.TONE.wire);
-          w.path.setAttribute('stroke-width', '2');
-          w.path.setAttribute('stroke-dasharray', '8 7');
-          w.path.setAttribute('opacity', '1');
-          w.marker.setAttribute('fill', CV.TONE.wire);
+          CV.wire.paint(w.path, 'idle');
+          CV.wire.arrow(w.marker, null);
         }
       }
     }
