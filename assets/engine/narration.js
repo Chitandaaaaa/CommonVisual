@@ -29,15 +29,18 @@
   };
 
   var EPS = 1e-4;
+  /* pageSpeed 缩放：CH 上的窗口已被 compile 同除，本文件自算的跨度也必须同除（÷ speed），
+     否则「锚点在缩放系、动作时长在 1× 系」混系错位（闭合断言当场抓过） */
+  var SPD = 1;
   var SUP = { 2: '²', 3: '³', 4: '⁴' };
   var CW = { A: '紫色', B: '青色', C: '绿色', D: '橙色' };
 
-  function spec(k, d) { var v = CV.specVal(k); return (typeof v === 'number' && v > 0) ? v : d; }
+  function spec(k, d) { var v = CV.specVal(k); var n = (typeof v === 'number' && v > 0) ? v : d; return n / SPD; }
   /* orch 组收编（2026-11-02）：显形 / 变暗复原 / 起飞渐显的时长从参数表现读，
      行的时间点依旧「锚点 + 动作时长」，参数改了重编译即跟变。 */
   function REVEAL() { return spec('revealDur', 0.32); }
   function DIM() { return spec('dimDur', 0.3); }
-  function TAKEOFF() { return spec('takeoffFade', 0.08); }
+  function TAKEOFF() { var v = CV.specVal('takeoffFade'); return (typeof v === 'number' && v > 0) ? v : 0.08; }   /* 比例：分母已是缩放后的行程，不经 SPD（比值无纲） */
 
   /* ── 校验：词表 + 闭合。出错抛 Error（verify 的 problems 会回显）。 ── */
   function validate(out) {
@@ -46,8 +49,8 @@
       if (!rows.length) throw new Error('narration: 「' + g.label + '」没有行');
       for (var i = 0; i < rows.length; i++) {
         var r = rows[i];
-        if (r[1] !== null && r[1] < r[0] - EPS) {
-          throw new Error('narration: ' + g.label + ' 行「' + r[2] + '」结束 ' + r[1] + ' < 开始 ' + r[0]);
+        if (r[1] !== null && !(r[1] >= r[0] - EPS)) {   /* NaN 也掉进来：NaN < x 恒 false，必须用逆否判断 */
+          throw new Error('narration: ' + g.label + ' 行「' + r[2] + '」结束非法（' + r[1] + '），开始 ' + r[0]);
         }
         var stem = String(r[2]).split(' · ')[1] || '';
         var paren = stem.indexOf('（');
@@ -91,7 +94,13 @@
       ? 'r' + r + '/四槽卡-' + (i + 1) : '四槽卡-' + (i + 1);
   }
   /* 一排↔两排的规范秒（预留 / 收场共用） */
-  function rowSpan4() { return CV.rowSpan(4); }
+  function rowSpan4() {
+    var r = CV.rowSpan(4);
+    ['open', 'close', 'blocks', 'cardDur', 'step'].forEach(function (k) {
+      if (typeof r[k] === 'number') r[k] /= SPD;
+    });
+    return r;
+  }
 
   /* 一组 = { label, s, e, rows: [[s, e|null, what, res], …] } */
   function G(label, s, e, rows) { return { label: label, s: s, e: e, rows: rows }; }
@@ -146,7 +155,7 @@
         }).join('、');
         var popD = spec('popDur', 0.55);
         rows.push([s, null, '待收槽 · 转接收位', '紫底 ···（每卡 1 格）']);
-        rows.push([s, s + 0.30, '4 条环边 · 点亮', '各自的数据色']);
+        rows.push([s, s + 0.30 / SPD, '4 条环边 · 点亮', '各自的数据色']);
         rows.push([s, s + take, '单体包 · 起飞（4 个）', '各自环边起点']);
         rows.push([s + take, tE, '单体包 · 飞行', '沿环边']);
         rows.push([tE, null, '单体包 · 抵达', '箭头尖']);
@@ -169,8 +178,8 @@
 
         if (scene.overlay === 'gather') rows.push([s, s + DIM(), src + ' · 变暗', '60% 不透明']);
         if (scene.overlay === 'scatter') rows.push([s, null, src + ' · 交空', '空格']);
-        rows.push([s, s + 0.30, wire + ' · 点亮', cw + '虚线']);
-        rows.push([s, s + 0.30, slot + ' · 转接收位' + (isCopy ? '（4 格）' : ''), '紫底 ···']);
+        rows.push([s, s + 0.30 / SPD, wire + ' · 点亮', cw + '虚线']);
+        rows.push([s, s + 0.30 / SPD, slot + ' · 转接收位' + (isCopy ? '（4 格）' : ''), '紫底 ···']);
         rows.push([s, s + take, pkt + ' · 起飞', wire + ' 起点']);
         rows.push([s + take, tE, pkt + ' · 飞行', '沿' + wire]);
         rows.push([tE, null, pkt + ' · 抵达', '箭头尖']);
@@ -200,8 +209,8 @@
 
     var p = TM.init, rows = [[p, p + RS.cardDur, '四槽卡 · 长高', '一排变两排（卡高多一层）']];
     for (var k = 0; k < 4; k++) {
-      var b0 = p + RS.cardDur + 0.3 + k * RS.step;
-      rows.push([b0, b0 + RS.blockDur, '第二排-' + (k + 1) + ' · 显形',
+      var b0 = p + RS.cardDur + 0.3 / SPD + k * RS.step;
+      rows.push([b0, b0 + CV.dur('blockDur') / SPD, '第二排-' + (k + 1) + ' · 显形',
         k === 0 ? '接收位（紫底 ···）' : '接收位']);
     }
     out.push(G('第 2 步 · 预留缓冲', p, p + TM.prealloc, rows));
@@ -212,7 +221,7 @@
       var s = f.start, take = TAKEOFF() * TM.fly;
       var rows = [
         [s, null, src + ' · 交空（4 格）', '空格'],
-        [s, s + 0.30, w + ' · 点亮', '数据色'],
+        [s, s + 0.30 / SPD, w + ' · 点亮', '数据色'],
         [s, s + take, '整份包 · 起飞', w + ' 起点'],
         [s + take, f.arrive, '整份包 · 飞行', '沿' + w],
         [f.arrive, null, '整份包 · 抵达', '箭头尖'],
@@ -222,12 +231,12 @@
         [f.popStart, f.popEnd, '第二排 · 落位', '4 块同时弹出'],
         [f.popEnd, f.growEnd, '双排卡 · 长高', '腾出计算层'],
         /* 方框在长高层内淡入：0.35→0.85 进度（与 sum.overlayReduce 的 chipA 同一口径） */
-        [f.popEnd + 0.35 * GROW, f.popEnd + 0.85 * GROW, '计算框 · 浮现', 'sum · avg · max · min'],
+        [f.popEnd + 0.35 / SPD * GROW, f.popEnd + 0.85 / SPD * GROW, '计算框 · 浮现', 'sum · avg · max · min'],
         [f.growEnd, f.mergeEnd, '四段 · 折进（错峰）',
           'ΣA' + sup + ' ΣB' + sup + ' ΣC' + sup + ' ΣD' + sup],
         /* 收回层：前 45% 是方框淡出，之后卡片缩回（与 sum.overlayReduce 的 FADE 同一口径） */
-        [f.mergeEnd, f.mergeEnd + 0.45 * SHRINK, '计算框 · 淡出', '透明'],
-        [f.mergeEnd + 0.45 * SHRINK, f.end, '计算态卡 · 收层', '退回双排卡']
+        [f.mergeEnd, f.mergeEnd + 0.45 / SPD * SHRINK, '计算框 · 淡出', '透明'],
+        [f.mergeEnd + 0.45 / SPD * SHRINK, f.end, '计算态卡 · 收层', '退回双排卡']
       ];
       out.push(G('第 ' + (k + 3) + ' 步 · r' + f.from + ' 的整份', s, f.end, rows));
     });
@@ -235,7 +244,7 @@
     var c = CH.COLLAPSE_AT;
     out.push(G('第 6 步 · 收场', c, CH.total, [
       [c, c + RS.blocks, '第二排 · 逐块撤（从右往左）', '4 个接收位撤掉'],
-      [c + RS.blocks + 0.25, c + RS.close, '四槽卡 · 收回', '单排卡'],
+      [c + RS.blocks + 0.25 / SPD, c + RS.close, '四槽卡 · 收回', '单排卡'],
       rest(c + RS.close, CH.total, scene.narr.rest.collapse)
     ]));
     return out;
@@ -250,8 +259,8 @@
     function expandRows(x, end) {
       var rows = [[x, x + RS.cardDur, '四张四槽卡 · 长高（同时）', '一排变两排']];
       for (var k = 0; k < 4; k++) {
-        var b0 = x + RS.cardDur + 0.3 + k * RS.step;
-        rows.push([b0, b0 + RS.blockDur, '第二排-' + (k + 1) + ' · 显形',
+        var b0 = x + RS.cardDur + 0.3 / SPD + k * RS.step;
+        rows.push([b0, b0 + CV.dur('blockDur') / SPD, '第二排-' + (k + 1) + ' · 显形',
           k === 0 ? '接收位（紫底 ···）' : '接收位']);
       }
       if (scene.narr.rest.open) {
@@ -263,7 +272,7 @@
       var take = TAKEOFF() * TM.fly;
       var parts = Math.pow(2, q + 1);
       return [
-        [r.start, r.start + 0.30, '两条直连 · 点亮（两对同时）', '数据色'],
+        [r.start, r.start + 0.30 / SPD, '两条直连 · 点亮（两对同时）', '数据色'],
         [r.start, r.start + take, '整份包 · 起飞（4 个）', '各连线起点'],
         [r.start + take, r.arrive, '整份包 · 飞行', '沿直连'],
         [r.arrive, null, '整份包 · 抵达', '对方卡边缘'],
@@ -291,7 +300,7 @@
     var c = CH.COLLAPSE_AT;
     out.push(G('第 7 步 · 收场', c, CH.total, [
       [c, c + RS.blocks, '第二排 · 逐块撤（从右往左）', '4 个接收位撤掉'],
-      [c + RS.blocks + 0.25, c + RS.close, '四张卡 · 收回', '单排卡'],
+      [c + RS.blocks + 0.25 / SPD, c + RS.close, '四张卡 · 收回', '单排卡'],
       rest(c + RS.close, CH.total, scene.narr.rest.collapse)
     ]));
     return out;
@@ -322,8 +331,8 @@
 
     var p = AT.open.s, rows = [[p, p + RS.cardDur, '四张四槽卡 · 长高（同时）', '一排变两排']];
     for (var k = 0; k < 4; k++) {
-      var b0 = p + RS.cardDur + 0.3 + k * RS.step;
-      rows.push([b0, b0 + RS.blockDur, '第二排-' + (k + 1) + ' · 显形',
+      var b0 = p + RS.cardDur + 0.3 / SPD + k * RS.step;
+      rows.push([b0, b0 + CV.dur('blockDur') / SPD, '第二排-' + (k + 1) + ' · 显形',
         k === 0 ? '接收位（紫底 ···）' : '接收位']);
     }
     out.push(G('第 2 步 · 预留两排', p, AT.open.e, rows));
@@ -334,7 +343,7 @@
       var fade = spec('packFade', 0.6);
       return [
         [fly.s, null, '四张卡 · 交空（各 ' + CH.EMIT[q][0].length + ' 格）', emitText(q)],
-        [fly.s, fly.s + 0.30, '四条直连 · 点亮', '数据色'],
+        [fly.s, fly.s + 0.30 / SPD, '四条直连 · 点亮', '数据色'],
         [fly.s, fly.s + take, '单体包 · 起飞（' + 4 * CH.EMIT[q][0].length + ' 个）', '各直连起点'],
         [fly.s + take, fly.e, '单体包 · 飞行', '沿直连'],
         [fly.e, null, '单体包 · 抵达', '对端卡边缘'],
@@ -363,7 +372,7 @@
     out.push(G('第 6 步 · 收场', w, CH.total, [
       [w, w + CH.CALC_DOWN, '计算框 · 淡出 → 收层', '退回双排卡'],
       [w + CH.CALC_DOWN, w + CH.CALC_DOWN + RS.blocks, '第二排 · 逐块撤（从右往左）', '接收位撤光'],
-      [w + CH.CALC_DOWN + RS.blocks + 0.25, w + CH.CALC_DOWN + RS.close, '四张卡 · 收回', '单排卡'],
+      [w + CH.CALC_DOWN + RS.blocks + 0.25 / SPD, w + CH.CALC_DOWN + RS.close, '四张卡 · 收回', '单排卡'],
       rest(AT.tail.s, CH.total, scene.narr.rest.tail)
     ]));
     return out;
@@ -382,7 +391,7 @@
       var rows = [
         [r.start, null, '四张卡 · 交空（上排-' + (q + 1) + '）', '空格（4 张同时）'],
         [r.start, null, 'r' + q + ' 下排 · 转接收位', '紫底 ···'],
-        [r.start, r.start + 0.30, '三条直连 · 点亮', '数据色'],
+        [r.start, r.start + 0.30 / SPD, '三条直连 · 点亮', '数据色'],
         [r.start, r.start + take, '单体包 · 起飞（3 个）', '各直连起点'],
         [r.start + take, r.arrive, '单体包 · 飞行', '沿直连'],
         [r.arrive, null, '单体包 · 抵达', 'r' + q + ' 卡边缘'],
@@ -412,6 +421,7 @@
   CV.narrate = function (scene, CH) {
     if (!scene || !CH) throw new Error('narrate: 需要 scene 与编译产物 CH');
     if (!scene.narr) throw new Error('narrate: scene.' + scene.id + ' 缺 narr（静止行文案）');
+    SPD = (CH.speed > 0 && CH.speed !== 1) ? CH.speed : 1;   /* choreo/family 编译产物都带 speed */
     var groups;
     if (!scene.family) groups = buildChoreo(scene, CH);
     else if (scene.family === 'sum') groups = scene.sumType === 'exchange'

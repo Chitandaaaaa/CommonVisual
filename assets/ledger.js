@@ -17,6 +17,7 @@
   var P8 = ['gather', 'scatter', 'broadcast', 'allgather', 'reduce', 'allreduce', 'reducescatter', 'alltoall'];
   var P3 = ['reduce', 'allreduce', 'reducescatter'];           /* 融合 / Σ 族 */
   var CHOREO = ['gather', 'scatter', 'broadcast'];
+  var P7M = ['gather', 'scatter', 'broadcast', 'allgather', 'reduce', 'allreduce', 'reducescatter'];   /* alltoall 双向直连无箭头（§04 定案豁免） */
 
   var LIVE = function (g, k, u) { return { p: [g, k], u: u || '' }; };
 
@@ -77,12 +78,12 @@
       { id: '04-flyDash',   t: 'Y', name: '飞行线虚线',   en: 'verbs 绘制', val: '9 7', sec: '04', kw: '', pages: P8, chk: 'truth' },
       { id: '04-glowColor', t: 'Y', name: '余辉线颜色',   en: 'verbs 绘制', val: '数据色 · 淡', sec: '04', kw: '', pages: P8, chk: 'truth' },
       { id: '04-glowWidth', t: 'Y', name: '余辉线宽度',   en: 'verbs 绘制', val: '1.6 / 1.8', sec: '04', kw: '', pages: P8, chk: 'truth' },
-      { id: '04-markerShape', t: 'Y', name: '箭头形状',   en: 'payload.marker', val: '三停箭头（defs 一份）', sec: '04', kw: '', pages: P8, chk: 'truth' },
-      { id: '04-markerSize',  t: 'Y', name: '箭头尺寸',   en: 'payload.marker', val: 'markerWidth × refX 现值', sec: '04', kw: '', pages: P8, chk: 'truth' },
-      { id: '04-markerFollow',t: 'Y', name: '箭头逐帧随色', en: 'payload.marker · fill', val: '随飞行数据色', sec: '04', kw: '', pages: P8, chk: 'truth' }
+      { id: '04-markerShape', t: 'Y', name: '箭头形状',   en: 'payload.marker', val: '三停箭头（defs 一份）', sec: '04', kw: '', pages: P7M, chk: 'truth' },
+      { id: '04-markerSize',  t: 'Y', name: '箭头尺寸',   en: 'payload.marker', val: 'markerWidth × refX 现值', sec: '04', kw: '', pages: P7M, chk: 'truth' },
+      { id: '04-markerFollow',t: 'Y', name: '箭头逐帧随色', en: 'payload.marker · fill', val: '随飞行数据色', sec: '04', kw: '', pages: P7M, chk: 'truth' }
     ] },
     { g: '05 · 数据包', rows: [
-      { id: '05-packDur',   t: 'D', name: '飞行时长',   en: 'packDur', val: LIVE('05-packet', 'packDur', 's'), sec: '05', kw: '动态', pages: P8, chk: 'link' },
+      { id: '05-packDur',   t: 'D', name: '飞行时长',   en: 'packDur', val: LIVE('05-packet', 'packDur', 's'), sec: '05', kw: '动态', pages: ['gather', 'scatter', 'broadcast', 'allgather'], chk: 'link' },
       { id: '05-packFade',  t: 'D', name: '送达淡出',   en: 'packFade', val: LIVE('05-packet', 'packFade', 's'), sec: '05', kw: '动态', pages: P8, chk: 'link' },
       { id: '05-packLead',  t: 'D', name: '起步让出',   en: 'packLead', val: LIVE('05-packet', 'packLead', ''), sec: '05', kw: '动态', pages: P8, chk: 'unit' },
       { id: '05-trailDist', t: 'D', name: '拖尾退后',   en: 'trailDist', val: LIVE('05-packet', 'trailDist', 'px'), sec: '05', kw: '动态', pages: P8, chk: 'unit' },
@@ -135,16 +136,16 @@
       { id: '10-dataCard', t: 'Y', name: '置灰（data-card）',   en: 'CV.chrome.focus', val: '卡片挂 data-card → 变灰', sec: '10', kw: '', pages: P8, chk: 'truth' }
     ] },
     { g: '11 · 舞台分层', rows: [
-      { id: '11-layers', t: 'Y', name: '层叠次序', en: 'engine/stage', val: '连线 < 包 < 卡 < 方框 < 聚焦', sec: '11', kw: '', pages: P8, chk: 'truth' }
+      { id: '11-layers', t: 'Y', name: '层叠次序', en: 'engine/stage', val: '卡 < 块 < 连线 < 包 < 标签', sec: '11', kw: '', pages: P8, chk: 'truth' }
     ] },
     { g: '编排 · 衔接（跨页 · orch 组）', rows: [
-      { id: 'OR-dimDur',    t: 'D', name: '变暗 / 复原时长', en: 'dimDur · orch 组', val: LIVE('orch', 'dimDur', 's'), sec: '03', kw: '', pages: P8, chk: 'link' },
-      { id: 'OR-revealDur', t: 'D', name: '显形时长', en: 'revealDur · orch 组', val: LIVE('orch', 'revealDur', 's'), sec: '03', kw: '', pages: P8, chk: 'link' },
+      { id: 'OR-dimDur',    t: 'D', name: '变暗 / 复原时长', en: 'dimDur · orch 组', val: LIVE('orch', 'dimDur', 's'), sec: '03', kw: '', pages: ['gather'], chk: 'link' },
+      { id: 'OR-revealDur', t: 'D', name: '显形时长', en: 'revealDur · orch 组', val: LIVE('orch', 'revealDur', 's'), sec: '03', kw: '', pages: CHOREO, chk: 'link' },
       { id: 'OR-wireLit',   t: 'D', name: '点亮时长（解说层）', en: 'narration.js · css .wire', val: '0.30s', sec: '04', kw: '', pages: P8, chk: 'src' },
       { id: 'OR-recv',      t: 'D', name: '转接收位（解说层）', en: 'narration.js', val: '0.30s', sec: '02', kw: '', pages: P8, chk: 'src' },
       { id: 'OR-takeoff',   t: 'D', name: '起飞渐显', en: 'takeoffFade · orch 组', val: LIVE('orch', 'takeoffFade', ''), sec: '05', kw: '动态', pages: P8, chk: 'link' },
-      { id: 'OR-trailChoreo', t: 'D', name: '余辉比率 · 单流（40%）', en: 'trailChoreo · orch 组', val: LIVE('orch', 'trailChoreo', ''), sec: '04', kw: '', pages: CHOREO, chk: 'link' },
-      { id: 'OR-trailFam',    t: 'D', name: '余辉比率 · 家族（45%）', en: 'trailFam · orch 组', val: LIVE('orch', 'trailFam', ''), sec: '04', kw: '', pages: ['allgather', 'reduce'], chk: 'link' },
+      { id: 'OR-trailChoreo', t: 'D', name: '余辉比率 · 单流（40%）', en: 'trailChoreo · orch 组', val: LIVE('orch', 'trailChoreo', ''), sec: '04', kw: '', pages: ['gather', 'scatter', 'broadcast', 'allgather'], chk: 'link' },
+      { id: 'OR-trailFam',    t: 'D', name: '余辉比率 · 家族（45%）', en: 'trailFam · orch 组', val: LIVE('orch', 'trailFam', ''), sec: '04', kw: '', pages: ['reduce'], chk: 'link' },
       { id: 'OR-trailReduce', t: 'D', name: '余辉比率 · 归约族（42%）', en: 'trailReduce · orch 组', val: LIVE('orch', 'trailReduce', ''), sec: '04', kw: '', pages: ['allreduce', 'reducescatter'], chk: 'link' },
       { id: 'OR-trailATA',    t: 'D', name: '余辉比率 · 全换（30%）', en: 'trailATA · orch 组', val: LIVE('orch', 'trailATA', ''), sec: '04', kw: '', pages: ['alltoall'], chk: 'link' },
       { id: 'OR-seatDelay', t: 'D', name: '落位延迟', en: 'seatDelay · orch 组', val: LIVE('orch', 'seatDelay', 's'), sec: '08', kw: '', pages: P8, chk: 'link' }
@@ -169,9 +170,11 @@
       return out;
     },
     forPage: function (page) {
+      var inP8 = P8.indexOf(page) >= 0;
       return this.all().filter(function (r) {
-        return r.pages === 'demo' ? false :
-          (r.pages === 8 || r.pages === P8) ? true : r.pages.indexOf(page) >= 0;
+        if (r.pages === 'demo') return false;
+        if (r.pages === 8 || r.pages === P8) return inP8;   /* 「全部原语页」不含 index / docs */
+        return Array.isArray(r.pages) && r.pages.indexOf(page) >= 0;
       });
     }
   };

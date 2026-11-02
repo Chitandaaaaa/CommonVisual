@@ -209,7 +209,12 @@
     var CHh = reduceHeights(L);
     var TM = CH.TM, flows = CH.flows;
 
-    function mergeE(p, i) { return clamp((p * TM.merge - i * CV.dur('gap')) / (CV.specVal('fuseDur') || 0.55), 0, 1); }
+    function mergeE(p, i) {
+      if (p >= 1 - 1e-9) return 1;
+   /* 窗口走完（p≥1）强制收敛到 1：(fuse+3·gap−3·gap)/fuse 的浮点尾差会让
+      末列 e 永远差一丝 <1，被「0<e<1 交给 fuse」分支永久跳过（3.44 抓过） */
+      return clamp((p * TM.merge - i * CV.dur('gap')) / (CV.specVal('fuseDur') || 0.55), 0, 1);
+    }
     function doneParts(sec) {
       var n = 1;
       flows.forEach(function (f) { if (sec >= f.mergeEnd) n++; });
@@ -651,6 +656,7 @@
     }
 
     function mergeE(p, i) {
+      if (p >= 1 - 1e-9) return 1;   /* 同 overlayReduce：窗口走完强制收敛，浮点尾差不进 (0,1) 分支 */
       return clamp((p * TM.merge - i * CV.dur('gap')) / (CV.specVal('fuseDur') || 0.55), 0, 1);
     }
 

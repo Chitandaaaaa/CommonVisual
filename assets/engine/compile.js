@@ -213,11 +213,23 @@
          与 choreo 页（choreo() 内同款变换）同一口径。speed=1 时零操作。 */
       var speed = (CV.params && CV.params.get('global', 'pageSpeed')) || 1;
       if (speed > 0 && speed !== 1) {
+        /* 锚点（COLLAPSE_AT / EXPAND_AT）与窗口时长键同除 —— 漏一个就会出现
+           「窗口在缩放系、锚点在原系」的混系错位（narrate 闭合断言当场抓过） */
         var TF = { s: 1, e: 1, sec: 1, start: 1, end: 1, arrive: 1, popStart: 1, popEnd: 1,
-                   growEnd: 1, mergeEnd: 1, fadeEnd: 1, seatStart: 1, seatEnd: 1,
-                   travelEnd: 1, fadeSec: 1, stag: 1 };
+                   growEnd: 1, mergeEnd: 1, mergeStart: 1, calcStart: 1, calcEnd: 1,
+                   fadeEnd: 1, seatStart: 1, seatEnd: 1, seatBase: 1, done: 1,
+                   travelEnd: 1, fadeSec: 1, stag: 1,
+                   COLLAPSE_AT: 1, EXPAND_AT: 1, POP_SPAN: 1,
+                   POP: 1, SEATG: 1, FUSE: 1, MGAP: 1,
+                   CALC_UP: 1, CALC_DOWN: 1, CALC_FADE: 1,
+                   init: 1, prealloc: 1, fly: 1, land: 1, pop: 1,
+                   growCalc: 1, merge: 1, calcDown: 1, gap: 1,
+                   grow: 1, shrink: 1, collapse: 1 };
+        var seen = [];   /* split.js 的 AT/win 共享同一窗口对象 —— 同一引用只缩一次 */
         (function walk(o) {
           if (!o || typeof o !== 'object') return;
+          if (seen.indexOf(o) >= 0) return;
+          seen.push(o);
           if (Array.isArray(o)) { o.forEach(walk); return; }
           Object.keys(o).forEach(function (k) {
             var v = o[k];
@@ -226,7 +238,11 @@
           });
         })(tl);
         if (typeof tl.total === 'number') tl.total = tl.total / speed;
+        /* at() 闭包里是旧 total，缩放后按新 total 重绑 */
+        var T2 = tl.total;
+        tl.at = function (sec) { return T2 ? sec / T2 : 0; };
       }
+      tl.speed = speed;   /* narration 自算跨度要与 CH 同系（speed=1 时零操作） */
       return tl;
     }
 

@@ -186,12 +186,27 @@
       if (!cur) { idleWire(wire); return; }
       var color = P(cur.f.color).color;
       var flying = sec < cur.w.travelEnd;
-      wire.path.setAttribute('stroke', color);
-      wire.path.setAttribute('stroke-width', flying ? '2.6' : '1.8');
-      wire.path.setAttribute('stroke-dasharray', flying ? '9 7' : '8 7');
-      wire.path.setAttribute('stroke-opacity', '1');
-      wire.path.setAttribute('opacity', flying ? '1' : '.45');
-      wire.marker.setAttribute('fill', color);
+      /* 余辉计时回灰（orch·trailChoreo）：与 move.render 同一套——抵达后保留
+         数据色 ratio×飞行时长，然后回灰；此前 ring 是常亮到下一轮（漏接） */
+      var glowWinR = (cur.w.travelEnd - cur.w.s) * (CV.specVal(S.trailKey) || 0.4);
+      if (flying) {
+        wire.path.setAttribute('stroke', color);
+        wire.path.setAttribute('stroke-width', '2.6');
+        wire.path.setAttribute('stroke-dasharray', '9 7');
+        wire.path.setAttribute('stroke-opacity', '1');
+        wire.path.setAttribute('opacity', '1');
+        wire.marker.setAttribute('fill', color);
+      } else if (sec < cur.w.travelEnd + glowWinR) {
+        wire.path.setAttribute('stroke', color);
+        wire.path.setAttribute('stroke-width', '1.8');
+        wire.path.setAttribute('stroke-dasharray', '8 7');
+        wire.path.setAttribute('stroke-opacity', '1');
+        wire.path.setAttribute('opacity', '.45');
+        wire.marker.setAttribute('fill', color);
+      } else {
+        idleWire(wire);
+        wire.path.setAttribute('stroke-opacity', '1');
+      }
     });
   };
 

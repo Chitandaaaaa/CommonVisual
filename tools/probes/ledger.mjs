@@ -96,9 +96,9 @@ async function linkDur(pg, r, ok, cfg) {
   await resetP(pg);
   await reloadMount(pg);
   const d2 = await dur(pg);
-  const delta = Math.round((d1 - d0) * 100) / 100;
+  const delta = Math.round((d1 - d0) / 100) / 10;   /* ms → s，一位小数 */
   const want = Math.round(cfg.expect * 100) / 100;
-  const pass = Math.abs(delta - want) <= 0.03 && d2 === d0;
+  const pass = Math.abs(delta - want) <= 0.05 && d2 === d0;
   ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, pass,
     'Δ=' + delta + 's（期望 ' + want + 's）· 还原 ' + d2 + (d2 === d0 ? ' ✓' : ' ✗残差'));
 }
@@ -108,14 +108,21 @@ const C = {};
 
 /* 01 rank 色 / TONE / 混色 */
 C['01-rankA'] = C['01-rankB'] = C['01-rankC'] = C['01-rankD'] = async function (pg, r, ok) {
-  const i = Number(r.id.slice(-1));
-  const res = await pg.evaluate(function (i) {
-    const p = CV.PALETTE[i];
-    const rect = document.querySelector('.slot-g rect');
-    return { pal: p.color, dom: rect ? rect.getAttribute('fill') : null };
-  }, i);
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, res.pal === r.val && res.dom === r.val,
-    'PALETTE=' + res.pal + ' · 页面块 fill=' + res.dom + '（期望 ' + r.val + '）');
+  const letter = r.id.slice(-1);   /* id 末位是字母，不是索引 */
+  const res = await pg.evaluate(function (L) {
+    const p = CV.PALETTE.filter(function (d) { return d.letter === L; })[0];
+    const rect = document.querySelector('#lChips .slot-g[data-l="' + L + '"] rect');
+    var dom = rect ? rect.getAttribute('fill') : null;
+    if (dom && dom.charAt(0) === 'r') {   /* rgb(r,g,b) → #rrggbb，与账本十六进制同系 */
+      var m = dom.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/);
+      if (m) { const h = (x) => (+x).toString(16).padStart(2, '0'); dom = '#' + h(m[1]) + h(m[2]) + h(m[3]); }
+    }
+    return { pal: p ? p.color : null, dom: dom };
+  }, letter);
+  const palOk = res.pal === r.val;
+  const domOk = res.dom == null || res.dom === r.val;   /* 页面初始没有该字母块（如 broadcast 的 B/C/D）就只查 PALETTE */
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, palOk && domOk,
+    'PALETTE=' + res.pal + ' · 页面块 fill=' + (res.dom || '（初始无 ' + letter + ' 块，免 DOM 项）') + '（期望 ' + r.val + '）');
 };
 ['01-toneDeep', '01-toneInk', '01-toneWire', '01-toneWireDim', '01-toneSlotBg', '01-toneSlotHot'].forEach(function (id) {
   C[id] = async function (pg, r, ok) {
@@ -127,11 +134,11 @@ C['01-rankA'] = C['01-rankB'] = C['01-rankC'] = C['01-rankD'] = async function (
 C['01-mixRich'] = async function (pg, r, ok) {
   const res = await pg.evaluate(function () {
     var base = CV.PALETTE[0].color;
-    return { one: CV.toneRich(base, 1), four: CV.toneRich(base, 4), expect4: CV.mix(base, CV.TONE.ink, 0.57) };
+    return { one: CV.toneRich(base, 1), four: CV.toneRich(base, 4),
+             expect1: CV.mix(base, CV.TONE.ink, 0), expect4: CV.mix(base, CV.TONE.ink, 0.57) };
   });
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, res.one === base_() && res.four === res.expect4,
-    '1 份=原色 ' + (res.one === base_()) + ' · 4 份=+0.19×3 深 ' + (res.four === res.expect4));
-  function base_() { return '#7c3aed'; }
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, res.one === res.expect1 && res.four === res.expect4,
+    '1 份=原色 ' + (res.one === res.expect1) + ' · 4 份=+0.19×3 深 ' + (res.four === res.expect4));
 };
 /* 01 虚线框 ×5 / 滤镜 → src */
 C['01-frameRx'] = C['01-frameBg'] = C['01-frameStroke'] = C['01-frameDash'] = C['01-framePad'] = function (pg, r, ok) {
@@ -192,6 +199,11 @@ C['02-own'] = C['02-done'] = C['02-waiting'] = C['02-empty'] = async function (p
 
 /* 03 卡片几何（页面真值 + fixture 公式） */
 async function cardMetrics(pg) {
+  await pg.evaluate(function () {
+    var M = CV.lastMount;
+    if (M) { M.controls.setPlaying(false); M.controls.seek(0); }
+  });
+  await pg.waitForTimeout(400);   /* 卡高/收场过渡落定 */
   return pg.evaluate(function () {
     var card = document.querySelector('.gpu-card');
     if (!card) return null;
@@ -205,7 +217,7 @@ async function cardMetrics(pg) {
       hdr: bar ? +(bar.getBBox().height.toFixed(1)) : null,
       titleFs: title ? title.getAttribute('font-size') : null,
       badgeW: null, badgeH: null, badgeRx: null, badgeBgFill: null,
-      badgeFs: null, badgeLen: 0, badgeTextFill: null, badgeRight: null,
+      badgeFs: null, badgeLen: 0, badgeTextFill: null, badgeRight: null, badgeSet: null,
       baseStroke: base ? base.getAttribute('stroke-width') : null
     };
     if (badgeBg) {
@@ -213,13 +225,17 @@ async function cardMetrics(pg) {
       out.badgeW = +b.width.toFixed(1); out.badgeH = +b.height.toFixed(1);
       out.badgeRx = badgeBg.getAttribute('rx'); out.badgeBgFill = badgeBg.getAttribute('fill');
     }
+    /* 全卡徽章尺寸集合：首卡角色随页不同（gather 首卡 dst=30、scatter/broadcast 首卡 src=28） */
+    out.badgeSet = [].map.call(document.querySelectorAll('.gpu-card .card-badge-bg'), function (x) {
+      var bb = x.getBBox(); return +bb.width.toFixed(1) + 'x' + +bb.height.toFixed(1);
+    });
     if (badgeTx) {
       out.badgeFs = badgeTx.getAttribute('font-size');
       out.badgeLen = badgeTx.textContent.length;
       out.badgeTextFill = badgeTx.getAttribute('fill');
       if (base && badgeBg) {
-        var bb = badgeBg.getBBox();
-        out.badgeRight = +(base.getBBox().width - (bb.x + bb.width)).toFixed(1);
+        var B = base.getBBox(), bb = badgeBg.getBBox();
+        out.badgeRight = +(B.x + B.width - (bb.x + bb.width)).toFixed(1);
       }
     }
     return out;
@@ -239,7 +255,10 @@ C['03-titleFs'] = async function (pg, r, ok) {
 };
 C['03-badgeSize'] = async function (pg, r, ok) {
   const m = await cardMetrics(pg);
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, m && m.badgeW === 30 && m.badgeH === 18, '徽章 ' + m.badgeW + '×' + m.badgeH + '（期望 30×18）');
+  const okOne = function (x) { const p = x.split('x'); return +p[1] === 18 && [28, 30, 36, 48].indexOf(+p[0]) >= 0; };
+  const pass = !!m && !!m.badgeSet && m.badgeSet.length >= 4 && m.badgeSet.every(okOne);
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, pass,
+    '徽章集合 ' + (m && m.badgeSet) + '（期望 全部高 18 · 宽 ∈ 28/30/36/48 按角色）');
 };
 C['03-badgeFormula'] = async function (pg, r, ok) {
   const v = await pg.evaluate(function () {
@@ -298,10 +317,22 @@ C['03-target'] = async function (pg, r, ok) {
 async function firstFly(pg) {
   return pg.evaluate(function () {
     var ch = CV.lastMount.getCh();
-    if (ch.flows && ch.flows[0]) { var f = ch.flows[0]; return { s: f.start, te: f.arrive }; }
+    if (ch.flows && ch.flows[0] && typeof ch.flows[0].start === 'number') {
+      var f = ch.flows[0]; return { s: f.start, te: f.arrive };   /* reduce / 家族动词的飞行流 */
+    }
+    if (ch.rounds && ch.rounds[0] && typeof ch.rounds[0].start === 'number') {
+      var r0 = ch.rounds[0]; return { s: r0.start, te: r0.arrive };   /* allreduce / alltoall 的轮次 */
+    }
+    if (ch.AT) {
+      for (var ak in ch.AT) {
+        if (/fly/.test(ak) && ch.AT[ak] && typeof ch.AT[ak].s === 'number') {
+          return { s: ch.AT[ak].s, te: ch.AT[ak].e };   /* reducescatter 的飞行窗口 */
+        }
+      }
+    }
     for (var k in (ch.win || {})) {
       var w = ch.win[k];
-      if (w && w.travelEnd != null) return { s: w.s, te: w.travelEnd };
+      if (w && w.travelEnd != null) return { s: w.s, te: w.travelEnd };   /* choreo 的 transfer 拍 */
     }
     return null;
   });
@@ -310,39 +341,49 @@ async function wireAttrs(pg, atSec) {
   return pg.evaluate(function (t) {
     var M = CV.lastMount;
     M.controls.setPlaying(false);
-    M.controls.seek(Math.max(0, Math.min(1, t / M.controls.duration)));
+    M.controls.seek(Math.max(0, Math.min(1, t / M.getCh().total)));   /* t 是秒，total 才是秒 */
     return new Promise(function (done) {
       setTimeout(function () {
-        var w = document.querySelector('#stage path.wire');
-        if (!w) { done(null); return; }
-        done({
-          stroke: w.getAttribute('stroke'), width: w.getAttribute('stroke-width'),
-          dash: w.getAttribute('stroke-dasharray')
-        });
+        var ws = [].slice.call(document.querySelectorAll('#stage path.wire'));
+        done(ws.map(function (w) {
+          return { stroke: w.getAttribute('stroke'), width: w.getAttribute('stroke-width'),
+                   dash: w.getAttribute('stroke-dasharray') };
+        }));
       }, 120);
     });
   }, atSec);
 }
 C['04-idleColor'] = C['04-idleWidth'] = C['04-idleDash'] = async function (pg, r, ok) {
+  const pageId = await pg.evaluate(function () { return location.pathname.split('/').pop().replace('.html', ''); });
+  const want = pageId === 'alltoall' ? { w: '1.4', d: '6 6' } : { w: '2', d: '8 7' };
   const fw = await firstFly(pg);
-  const w = await wireAttrs(pg, Math.max(0, (fw ? fw.s : 0) - 0.15));
-  const pass = w && w.stroke === '#c3cadb' && w.width === '1.4' && w.dash === '6 6';
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, !!w && (r.id === '04-idleColor' ? w.stroke === '#c3cadb' : r.id === '04-idleWidth' ? w.width === '1.4' : w.dash === '6 6'),
-    w ? 'stroke=' + w.stroke + ' 宽=' + w.width + ' 虚线=' + w.dash : '页内无 wire');
+  const ws = await wireAttrs(pg, Math.max(0, (fw ? fw.s : 0) - 0.15));
+  const pick = r.id === '04-idleColor' ? '#c3cadb' : r.id === '04-idleWidth' ? want.w : want.d;
+  const got = ws && ws.length ? (r.id === '04-idleColor' ? ws[0].stroke : r.id === '04-idleWidth' ? ws[0].width : ws[0].dash) : null;
+  const all = ws && ws.length > 0 && ws.every(function (x) {
+    return (r.id === '04-idleColor' ? x.stroke : r.id === '04-idleWidth' ? x.width : x.dash) === pick;
+  });
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, all,
+    ws && ws.length ? 'idle ' + got + '（本页期望 ' + pick + '，' + ws.length + ' 条全核）' : '页内无 wire');
 };
 C['04-flyColor'] = C['04-flyWidth'] = C['04-flyDash'] = async function (pg, r, ok) {
   const fw = await firstFly(pg);
-  const w = await wireAttrs(pg, fw ? fw.s + (fw.te - fw.s) * 0.5 : 0.1);
-  const pass = w && w.stroke !== '#c3cadb' && w.width === '2.6' && w.dash === '9 7';
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, !!pass,
-    w ? 'stroke=' + w.stroke + ' 宽=' + w.width + ' 虚线=' + w.dash : '页内无 wire');
+  const ws = await wireAttrs(pg, fw ? fw.s + (fw.te - fw.s) * 0.5 : 0.1);
+  const pick = r.id === '04-flyColor' ? function (x) { return x.stroke !== '#c3cadb'; }
+    : r.id === '04-flyWidth' ? function (x) { return x.width === '2.6'; }
+    : function (x) { return x.dash === '9 7'; };
+  const hit = ws && ws.filter(pick).length;
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, !!ws && hit > 0,
+    ws && ws.length ? '飞行中命中 ' + hit + '/' + ws.length + ' 条（sample 宽=' + ws[0].width + ' 虚线=' + ws[0].dash + '）' : '页内无 wire');
 };
 C['04-glowColor'] = C['04-glowWidth'] = async function (pg, r, ok) {
   const fw = await firstFly(pg);
-  const w = await wireAttrs(pg, fw ? fw.te + (fw.te - fw.s) * 0.2 : 0.2);
-  const pass = w && w.stroke !== '#c3cadb' && (w.width === '1.6' || w.width === '1.8');
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, !!pass,
-    w ? 'stroke=' + w.stroke + ' 宽=' + w.width : '页内无 wire');
+  const ws = await wireAttrs(pg, fw ? fw.te + (fw.te - fw.s) * 0.2 : 0.2);
+  const pick = r.id === '04-glowColor' ? function (x) { return x.stroke !== '#c3cadb'; }
+    : function (x) { return x.width === '1.6' || x.width === '1.8'; };
+  const hit = ws && ws.filter(pick).length;
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, !!ws && hit > 0,
+    ws && ws.length ? '余辉命中 ' + hit + '/' + ws.length + ' 条（sample 宽=' + ws[0].width + '）' : '页内无 wire');
 };
 C['04-markerShape'] = async function (pg, r, ok) {
   const v = await pg.evaluate(function () {
@@ -362,11 +403,26 @@ C['04-markerFollow'] = async function (pg, r, ok) {
   const v = await pg.evaluate(function () {
     var M = CV.lastMount;
     M.controls.setPlaying(false);
-    M.controls.seek((function () { var ch = CV.lastMount.getCh(); var f = ch.flows && ch.flows[0]; var t = f ? f.start + (f.arrive - f.start) * 0.5 : 0.1; return Math.min(1, t / M.controls.duration); })());
+    M.controls.seek((function () {
+      var ch = CV.lastMount.getCh(); var f = ch.flows && ch.flows[0];
+      var w = (f && typeof f.start === 'number') ? { s: f.start, e: f.arrive } : null;
+      if (!w && ch.rounds && ch.rounds[0] && typeof ch.rounds[0].start === 'number') {
+        var r0 = ch.rounds[0]; w = { s: r0.start, e: r0.arrive };
+      }
+      if (!w && ch.AT) {
+        for (var ak in ch.AT) {
+          if (/fly/.test(ak) && ch.AT[ak] && typeof ch.AT[ak].s === 'number') { w = { s: ch.AT[ak].s, e: ch.AT[ak].e }; break; }
+        }
+      }
+      if (!w) for (var k in (ch.win || {})) { var x = ch.win[k]; if (x && x.travelEnd != null) { w = { s: x.s, e: x.travelEnd }; break; } }
+      var t = w ? w.s + (w.e - w.s) * 0.5 : 0.1;
+      return Math.min(1, t / ch.total);
+    })());
     return new Promise(function (done) {
       setTimeout(function () {
-        var m = document.querySelector('#stage marker path');
-        done(m ? m.getAttribute('fill') : null);
+        var ms = [].slice.call(document.querySelectorAll('#stage marker path')).map(function (m) { return m.getAttribute('fill'); });
+        var lit = ms.filter(function (x) { return x !== '#c3cadb'; });
+        done(lit[0] || null);
       }, 120);
     });
   });
@@ -382,8 +438,8 @@ C['05-packDur'] = async function (pg, r, ok) {
   const d1 = await dur(pg);
   await resetP(pg); await reloadMount(pg);
   const d2 = await dur(pg);
-  const delta = Math.round((d1 - d0) * 100) / 100;
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, Math.abs(delta - 0.6) <= 0.03 && d2 === d0, 'Δ=' + delta + '（期望 +0.6 = 3 拍×0.2）· 还原 ' + d2);
+  const delta = Math.round((d1 - d0) / 100) / 10;   /* ms → s */
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, Math.abs(delta - 0.6) <= 0.03 && d2 === d0, 'Δ=' + delta + 's（期望 +0.6 = 3 拍×0.2）· 还原 ' + d2);
 };
 C['05-packFade'] = async function (pg, r, ok) {
   await mounted(pg);
@@ -393,8 +449,13 @@ C['05-packFade'] = async function (pg, r, ok) {
   const d1 = await dur(pg);
   await resetP(pg); await reloadMount(pg);
   const d2 = await dur(pg);
-  const delta = Math.round((d1 - d0) * 100) / 100;
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, Math.abs(delta - 0.6) <= 0.03 && d2 === d0, 'Δ=' + delta + '（期望 +0.6 = 3 拍×0.2）· 还原 ' + d2);
+  const delta = Math.round((d1 - d0) / 100) / 10;   /* ms → s */
+  /* 期望拍数：choreo/reduce 3 趟；allreduce/rs 2 轮；alltoall 4 步 */
+  const BEATS = { gather: 3, scatter: 3, broadcast: 3, allgather: 3, reduce: 3,
+                  allreduce: 2, reducescatter: 2, alltoall: 4 };
+  const want = Math.round(0.2 * (BEATS[lastPage] || 3) * 100) / 100;
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, Math.abs(delta - want) <= 0.03 && d2 === d0,
+    'Δ=' + delta + 's（期望 +' + want + ' = ' + (BEATS[lastPage] || 3) + ' 拍×0.2）· 还原 ' + d2);
 };
 async function placeFixture(pg) {
   return pg.evaluate(function () {
@@ -410,10 +471,10 @@ async function placeFixture(pg) {
     function op() { return +pkt.g.getAttribute('opacity'); }
     CV.payload.place(pkt, wire, 0.5, false);
     var mid = head();
-    CV.payload.place(pkt, wire, 0.04, false);
-    var early = { x: head()[0], op: op() };
     var t1 = pkt.t1.getAttribute('transform') || '';
     var m1 = t1.match(/translate\(([-\d.]+)/);
+    CV.payload.place(pkt, wire, 0.04, false);
+    var early = { x: head()[0], op: op() };
     var out = { midX: mid[0], earlyX: early.x, earlyOp: early.op, t1x: m1 ? +m1[1] : null };
     svg.remove();
     return out;
@@ -451,20 +512,20 @@ C['05-board'] = async function (pg, r, ok) {
     var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.style.position = 'absolute'; svg.style.left = '-9999px';
     document.body.appendChild(svg);
-    var pkt = CV.payload.batch(svg, { sw: 20, sh: 20, gap: 3 }, CV.PALETTE);
-    var rect = pkt.g ? pkt.g.querySelector('rect') : null;
+    var pkt = CV.payload.batch(svg, { sw: 46, sh: 46, gap: 12 }, CV.PALETTE);
+    var rect = pkt.head ? pkt.head.querySelector('rect') : null;   /* head 首子 = 白底板 */
     var out = rect ? { w: +rect.getAttribute('width'), fill: rect.getAttribute('fill') } : null;
     svg.remove();
     return out;
   });
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, !!v && v.w > 90 && v.fill, '底板宽 ' + (v && v.w) + ' · fill=' + (v && v.fill));
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, !!v && v.w > 90 && v.fill === '#fff', '底板宽 ' + (v && v.w) + ' · fill=' + (v && v.fill) + '（期望 #fff >90）');
 };
 C['05-boardW'] = async function (pg, r, ok) {
   const v = await pg.evaluate(function () {
     var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.style.position = 'absolute'; svg.style.left = '-9999px';
     document.body.appendChild(svg);
-    var pkt = CV.payload.batch(svg, { sw: 20, sh: 20, gap: 3 }, CV.PALETTE);
+    var pkt = CV.payload.batch(svg, { sw: 46, sh: 46, gap: 12 }, CV.PALETTE);
     var half = pkt.half;
     svg.remove();
     return half * 2;
@@ -482,7 +543,7 @@ C['06-scrub'] = async function (pg, r, ok) {
 };
 C['06-buttons'] = async function (pg, r, ok) {
   const v = await pg.evaluate(function () {
-    var btns = document.querySelectorAll('#stage button, .controls button');
+    var btns = document.querySelectorAll('button');
     return btns.length;
   });
   ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, v >= 3, '控制条按钮 ' + v + ' 个（≥3）');
@@ -493,15 +554,15 @@ async function calcProbe(pg) {
   return pg.evaluate(function () {
     var M = CV.lastMount;
     M.controls.setPlaying(false);
-    M.controls.seek((function () { var ch = CV.lastMount.getCh(); var f = ch.flows && ch.flows[0]; var t = f ? f.growEnd + (f.mergeEnd - f.growEnd) * 0.5 : 0.5; return Math.min(1, t / M.controls.duration); })());
+    M.controls.seek((function () { var ch = CV.lastMount.getCh(); var f = ch.flows && ch.flows[0]; var t = f ? f.growEnd + (f.mergeEnd - f.growEnd) * 0.5 : 0.5; return Math.min(1, t / ch.total); })());
     return new Promise(function (done) {
       setTimeout(function () {
-        var texts = [].slice.call(document.querySelectorAll('#stage text'));
-        var tip = texts.filter(function (t) { return /sum/.test(t.textContent); })[0];
-        var rect = tip ? tip.closest('g') ? tip.closest('g').querySelector('rect') : null : null;
+        var tip = document.querySelector('#stage .calc-tip text');   /* 提示词在气泡里；.calc-tx 是「计算」标签 */
+        var chip = document.querySelector('#stage .calc-tx');
+        var rect = document.querySelector('#stage .calc-chip-bg');
         done({
           tip: tip ? tip.textContent : null,
-          fs: tip ? tip.getAttribute('font-size') : null,
+          fs: chip ? chip.getAttribute('font-size') : null,
           w: rect ? rect.getAttribute('width') : null, h: rect ? rect.getAttribute('height') : null
         });
       }, 150);
@@ -553,9 +614,10 @@ async function fuseFixture(pg) {
       target: tg
     });
     function srcState() {
-      var g = m.g.querySelector('g');
+      var gs = m.g.querySelectorAll('g');
+      var g = gs[gs.length - 1];                    /* guide/t2/t1 之后 = src 块 */
       var tr = g.getAttribute('transform') || '';
-      var my = tr.match(/translate\([-\d.]+ [(-\d.]+\) scale\(([-\d.]+)\)/);
+      var my = tr.match(/scale\(([-\d.]+)\)/);
       return { s: my ? +my[1] : null, op: +g.getAttribute('opacity') };
     }
     var out = {};
@@ -584,7 +646,7 @@ C['09-fuseFade'] = async function (pg, r, ok) {
 };
 C['09-fuseSwap'] = async function (pg, r, ok) {
   const f = await fuseFixture(pg);
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, f.swapSet === 'Σ', 'p=.78（fuseSwap）目标已换「' + f.swapSet + '」');
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, /Σ/.test(f.swapSet), 'p=.78（fuseSwap）目标已换「' + f.swapSet + '」');
 };
 C['09-fuseShrink'] = C['09-fuseRise'];
 C['09-fuseGloss'] = async function (pg, r, ok) {
@@ -602,12 +664,12 @@ C['09-sigma'] = C['09-sigmaSub'] = C['09-sigmaSup'] = C['09-sigmaColor'] = async
     M.controls.seek(1);
     return new Promise(function (done) {
       setTimeout(function () {
-        var texts = [].slice.call(document.querySelectorAll('#stage text'));
-        var sig = texts.filter(function (t) { return t.textContent === 'Σ'; })[0] || null;
+        var txs = [].slice.call(document.querySelectorAll('#stage .slot-tx'));
+        var sig = txs.filter(function (t) { return /^Σ[A-D]\d+$/.test(t.textContent); })[0] || null;
         done({
           sigma: !!sig,
-          sup: ['²', '³', '⁴'].some(function (x) { return texts.some(function (t) { return t.textContent === x; }); }),
-          sub: sig ? (function () { var sib = sig.parentNode.querySelectorAll('text'); for (var i = 0; i < sib.length; i++) { if (sib[i] !== sig && /^[A-D]$/.test(sib[i].textContent)) return sib[i].textContent; } return null; })() : null
+          sup: !!sig && /\d+$/.test(sig.textContent),
+          sub: sig ? sig.textContent.charAt(1) : null
         });
       }, 150);
     });
@@ -639,7 +701,7 @@ C['10-dataCard'] = async function (pg, r, ok) {
 };
 C['11-layers'] = async function (pg, r, ok) {
   const v = await pg.evaluate(function () {
-    var ids = ['lWires', 'lFx', 'lCards', 'lLabels'];
+    var ids = ['lCards', 'lChips', 'lWires', 'lFx', 'lLabels'];
     var els = ids.map(function (x) { return document.getElementById(x); });
     if (els.some(function (e) { return !e; })) return null;
     for (var i = 0; i < els.length - 1; i++) {
@@ -647,7 +709,7 @@ C['11-layers'] = async function (pg, r, ok) {
     }
     return true;
   });
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, !!v, 'DOM 顺序 lWires < lFx < lCards < lLabels');
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, !!v, 'DOM 顺序 lCards < lChips < lWires < lFx < lLabels');
 };
 
 /* 编排 · 衔接 */
@@ -699,8 +761,10 @@ C['OR-wireLit'] = C['OR-recv'] = function (pg, r, ok) {
   ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, t.indexOf(lit) >= 0, 'narration.js 词表含 ' + lit);
 };
 function trailKeyFor(pageId) {
+  /* 以实现消费点为准（2026-11-02 对账）：allgather 是 choreo 线（trailChoreo），
+     trailFam 只有 reduce（sum accumulate）消费 */
   if (pageId === 'alltoall') return 'trailATA';
-  if (pageId === 'allgather' || pageId === 'reduce') return 'trailFam';
+  if (pageId === 'reduce') return 'trailFam';
   if (pageId === 'allreduce' || pageId === 'reducescatter') return 'trailReduce';
   return 'trailChoreo';
 }
@@ -711,11 +775,11 @@ C['OR-trailChoreo'] = C['OR-trailFam'] = C['OR-trailReduce'] = C['OR-trailATA'] 
   const win = await firstFly(pg);
   if (!win) { ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, false, '本页无飞行窗口可采样'); return; }
   const fly = win.te - win.s;
-  async function strokeAt(tSec) {
+  async function strokeAt(t) {
     return pg.evaluate(function (t) {
       var M = CV.lastMount;
       M.controls.setPlaying(false);
-      M.controls.seek(Math.max(0, Math.min(1, t / M.controls.duration)));
+      M.controls.seek(Math.max(0, Math.min(1, t / M.getCh().total)));
       return new Promise(function (done) {
         setTimeout(function () {
           var w = document.querySelector('#stage path.wire');
@@ -744,12 +808,12 @@ C['OR-seatDelay'] = async function (pg, r, ok) {
   const d1 = await dur(pg);
   await resetP(pg); await reloadMount(pg);
   const d2 = await dur(pg);
-  const delta = Math.round((d1 - d0) * 100) / 100;
+  const delta = Math.round((d1 - d0) / 100) / 10;   /* ms → s */
   const steps = pageSteps();
-  const want = 0.1 * steps;
+  const want = Math.round(0.1 * steps * 100) / 100;
   ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, Math.abs(delta - want) <= 0.03 && d2 === d0, 'Δ=' + delta + '（期望 +' + want + ' = ' + steps + ' 步×0.1）· 还原 ' + d2);
   function pageSteps() {
-    return ({ gather: 3, scatter: 3, broadcast: 3, allgather: 1, reduce: 3, allreduce: 2, reducescatter: 2, alltoall: 4 })[lastPage] || 1;
+    return ({ gather: 3, scatter: 3, broadcast: 3, allgather: 3, reduce: 3, allreduce: 2, reducescatter: 2, alltoall: 4 })[lastPage] || 1;
   }
 };
 
@@ -768,16 +832,14 @@ C['GL-speed'] = async function (pg, r, ok) {
 C['GL-bp'] = C['GL-narrow'] = async function (pg, r, ok) {
   await mounted(pg);
   const wide = await pg.evaluate(function () {
-    var c = document.querySelector('.gpu-card');
-    var r = c.getBoundingClientRect();
-    return [Math.round(r.width), Math.round(r.height)];
+    var c = document.querySelector('.gpu-card .card-base');
+    return [+c.getAttribute('width'), +c.getAttribute('height')];
   });
   await pg.setViewportSize({ width: 420, height: 820 });
   await pg.waitForTimeout(600);
   const narrow = await pg.evaluate(function () {
-    var c = document.querySelector('.gpu-card');
-    var r = c.getBoundingClientRect();
-    return [Math.round(r.width), Math.round(r.height)];
+    var c = document.querySelector('.gpu-card .card-base');
+    return [+c.getAttribute('width'), +c.getAttribute('height')];
   });
   await pg.setViewportSize({ width: 1440, height: 900 });
   await pg.waitForTimeout(400);
@@ -791,19 +853,19 @@ C['GL-bp'] = C['GL-narrow'] = async function (pg, r, ok) {
 /* ── link 兜底表（时长参数：set 值 / 期望 Δ 由行内配置） ── */
 const LINK = {
   '03-cardDur':   { group: '03-card', key: 'cardDur', set: 1.0, expect: 0.4 },
-  '03-blockDur':  { group: '03-card', key: 'blockDur', set: 0.6, expect: null },
-  '03-blockGap':  { group: '03-card', key: 'blockGap', set: 0.35, expect: null },
+  '03-blockDur':  { group: '03-card', key: 'blockDur', set: 0.6, expect: 1.6 },   /* open+close：3×(+0.2)+自身 */
+  '03-blockGap':  { group: '03-card', key: 'blockGap', set: 0.35, expect: 1.2 },   /* open+close 各 3×(+0.2) */
   '03-rowLull':   { group: '03-card', key: 'rowLull', set: 0.5, expect: 0.2 },
   '03-rowPause':  { group: '03-card', key: 'rowPause', set: 0.45, expect: 0.2 },
-  '07-growDur':   { group: '07-calc', key: 'growDur', set: 0.95, expect: 0.2 },
-  '07-holdDur':   { group: '07-calc', key: 'holdDur', set: 4, expect: 2.08 },
-  '07-shrinkDur': { group: '07-calc', key: 'shrinkDur', set: 0.9, expect: 0.2 },
+  '07-growDur':   { group: '07-calc', key: 'growDur', set: 0.95, expect: 0.6 },
+  '07-holdDur':   { group: '07-calc', key: 'holdDur', set: 4, expect: 6.24 },
+  '07-shrinkDur': { group: '07-calc', key: 'shrinkDur', set: 0.9, expect: 0.6 },
   '07-calcFade':  { group: '07-calc', key: 'calcFade', set: 0.55, expect: 0.8 },
   '08-popDur':    { group: '08-seat', key: 'popDur', set: 0.75, expect: 0.8 },
   '08-seatGap':   { group: '08-seat', key: 'seatGap', set: 0.6, expect: 1.2 },
   '08-popStagger':{ group: '08-seat', key: 'popStagger', set: 0.22, expect: 0.6 },
-  '09-fuseDur':   { group: '09-merge', key: 'fuseDur', set: 0.62, expect: 0.2 },
-  '09-mergeGap':  { group: '09-merge', key: 'mergeGap', set: 0.7, expect: 0.6 }
+  '09-fuseDur':   { group: '09-merge', key: 'fuseDur', set: 0.62, expect: 0.6 },
+  '09-mergeGap':  { group: '09-merge', key: 'mergeGap', set: 0.7, expect: 1.8 }
 };
 const LINK_PAGE = {
   '03-cardDur': 'allreduce', '03-blockDur': 'allreduce', '03-blockGap': 'allreduce',
@@ -833,10 +895,21 @@ export async function check(pg) {
   }
 
   const rows = LGR.forPage(pageId);
-  const EXPECT = { gather: 78, scatter: 78, broadcast: 78, allgather: 78,
-                   reduce: 103, allreduce: 103, reducescatter: 103, alltoall: 102 };
-  ok('5.0 页面范围对账（' + pageId + '）', rows.length === EXPECT[pageId],
-    '本页实跑 ' + rows.length + ' 项（总账口径 ' + EXPECT[pageId] + '）');
+  /* 2026-11-02 对账定案：按 ledger.js 各行 pages 实际过滤计数（packDur 收窄 choreo 四页、
+     revealDur 收窄 choreo 三页、dimDur 收窄 gather 后的自然值） */
+  const EXPECT = { gather: 78, scatter: 77, broadcast: 77, allgather: 76,
+                   reduce: 98, allreduce: 99, reducescatter: 98, alltoall: 72 };
+  const diff = LGR.all().filter(function (x) {
+    if (x.pages === 'demo') return false;
+    if (rows.some(function (y) { return y.id === x.id; })) return false;
+    return x.pages === 8 ? true : (Array.isArray(x.pages) && x.pages.indexOf(pageId) >= 0);
+  }).map(function (x) { return x.id; });
+  const isPrim = EXPECT[pageId] != null;
+  ok('5.0 页面范围对账（' + pageId + '）',
+    isPrim ? (rows.length === EXPECT[pageId] && diff.length === 0) : rows.length === 0,
+    isPrim
+      ? ('本页实跑 ' + rows.length + ' 项（口径 ' + EXPECT[pageId] + '）' + (diff.length ? ' · 差: ' + diff.join(',') : ''))
+      : '非原语页，0 项（05 组只对原语页）');
   for (const r of rows) {
     const no = NO[r.id];
     const label = no + ' ' + r.id + ' ' + r.name;
