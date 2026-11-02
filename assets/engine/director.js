@@ -105,6 +105,11 @@
 
     /* ── 建场 ── */
     function buildStage() {
+      /* 建场前按 __src 重建几何：geo 组参数改了，重建即用新坐标（reload 路径也走这里） */
+      if (scene.geo && scene.geo.__src) {
+        scene.geo = CV.geo(scene.geo.__src);
+        S.L = scene.geo[S.mode];
+      }
       var v = S.L.view;
       CV.stage.viewBox(svg, v);
       CV.stage.clear(S);

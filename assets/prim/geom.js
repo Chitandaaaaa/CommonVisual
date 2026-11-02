@@ -2,7 +2,8 @@
    CommonVisual v2 · L1 几何
    ------------------------------------------------------------
    坐标只有这里会算：
-   · GEO_BASE   两套尺寸（桌面 1130×680 / 窄屏 380×720）+ 公共尺寸
+   · geo 组     两套尺寸（桌面 1130×680 / 窄屏 380×720）+ 公共尺寸 + 预设坐标
+                  全部从 spec.js 现读（B4a 入表），页面只写差异
    · CV.geo     页面只写差异，基线别抄
    · preset     两种布局：col34（左 1 + 右 3 竖列）、grid（2×2）
    · 端点/路径   弧线、法向偏移（双向车道）、直线中心交叉（alltoall）
@@ -10,21 +11,20 @@
 (function (CV) {
   'use strict';
 
-  /* ── 公共尺寸基线：8 页的卡片/槽位/字号/画布完全一致 ── */
-  CV.GEO_BASE = {
-    desktop: {
-      view: { w: 1130, h: 680 },
-      card: { w: 300, h: 170 },
-      slot: { sw: 46, sh: 46, gap: 12 },
-      hdr: 36, title: 15, badge: 10
-    },
-    narrow: {
-      view: { w: 380, h: 720 },
-      card: { w: 146, h: 126 },
-      slot: { sw: 25, sh: 25, gap: 5 },
-      hdr: 28, title: 12.5, badge: 8.5
+  /* ── 公共尺寸基线：从 spec.js 的 geo 组现读（B4a 入表，改值重建舞台） ── */
+  function geoBase() {
+    function mode(vw, vh, cw, ch, sw, sh, sg, hd, ti, bd) {
+      return { view: { w: CV.spec(vw), h: CV.spec(vh) },
+               card: { w: CV.spec(cw), h: CV.spec(ch) },
+               slot: { sw: CV.spec(sw), sh: CV.spec(sh), gap: CV.spec(sg) },
+               hdr: CV.spec(hd), title: CV.spec(ti), badge: CV.spec(bd) };
     }
-  };
+    /* 键名显式列出（不拼接）：5.1a 靠字面量对账消费点 */
+    return {
+      desktop: mode('dtViewW', 'dtViewH', 'dtCardW', 'dtCardH', 'dtSlotSw', 'dtSlotSh', 'dtSlotGap', 'dtHdr', 'dtTitleFs', 'dtBadgeFs'),
+      narrow:  mode('nrViewW', 'nrViewH', 'nrCardW', 'nrCardH', 'nrSlotSw', 'nrSlotSh', 'nrSlotGap', 'nrHdr', 'nrTitleFs', 'nrBadgeFs')
+    };
+  }
 
   /* 深合并两套几何：base 打底，overrides 覆盖（嵌套一层展开，不递归） */
   function mergeMode(base, ov) {
@@ -45,26 +45,31 @@
     return out;
   }
 
-  /* 页面用：CV.geo({ preset:'col34', desktop:{...差异}, narrow:{...} }) */
-  var PRESETS = {
-    /* 左 1 张 + 右 3 张竖列（gather/scatter/broadcast/reduce） */
-    col34: {
-      desktop: { target: { x: 10, y: 255 }, source: { x: 820, ys: [50, 255, 460] }, legendY: 50 },
-      narrow:  { target: { x: 6,  y: 297 }, source: { x: 226, ys: [40, 297, 554] }, legendY: 40 }
-    },
-    /* 2×2 网格（allgather/allreduce/reducescatter/alltoall） */
-    grid: {
-      desktop: { grid: { x: 175, y: 136, dx: 480, dy: 330 }, legendY: 17 },
-      narrow:  { grid: { x: 8,   y: 185, dx: 218, dy: 300 }, legendY: 113 }
-    }
-  };
+  /* 页面用：CV.geo({ preset:'col34', desktop:{...差异}, narrow:{...} })
+     坐标预设同样从 spec.js 的 geo 组现读；__src 记住页面差异，
+     供导演在每次 buildStage 重建几何（调试台改坐标即时生效）。 */
+  function preset(o) {
+    if (o === 'col34') return {
+      desktop: { target: { x: CV.spec('c34dtTx'), y: CV.spec('c34dtTy') },
+                 source: { x: CV.spec('c34dtSx'), ys: [CV.spec('c34dtSy1'), CV.spec('c34dtSy2'), CV.spec('c34dtSy3')] }, legendY: CV.spec('c34dtLy') },
+      narrow:  { target: { x: CV.spec('c34nrTx'), y: CV.spec('c34nrTy') },
+                 source: { x: CV.spec('c34nrSx'), ys: [CV.spec('c34nrSy1'), CV.spec('c34nrSy2'), CV.spec('c34nrSy3')] }, legendY: CV.spec('c34nrLy') }
+    };
+    if (o === 'grid') return {
+      desktop: { grid: { x: CV.spec('grdtX'), y: CV.spec('grdtY'), dx: CV.spec('grdtDx'), dy: CV.spec('grdtDy') }, legendY: CV.spec('grdtLy') },
+      narrow:  { grid: { x: CV.spec('grnrX'), y: CV.spec('grnrY'), dx: CV.spec('grnrDx'), dy: CV.spec('grnrDy') }, legendY: CV.spec('grnrLy') }
+    };
+    return {};
+  }
 
   CV.geo = function (o) {
     o = o || {};
-    var pre = PRESETS[o.preset] || {};
+    var pre = preset(o.preset);
+    var base = geoBase();
     return {
-      desktop: mergeMode(mergeMode(CV.GEO_BASE.desktop, pre.desktop), o.desktop),
-      narrow:  mergeMode(mergeMode(CV.GEO_BASE.narrow,  pre.narrow),  o.narrow)
+      desktop: mergeMode(mergeMode(base.desktop, pre.desktop), o.desktop),
+      narrow:  mergeMode(mergeMode(base.narrow,  pre.narrow),  o.narrow),
+      __src: o
     };
   };
 
@@ -90,23 +95,25 @@
     return { sx: ac.x, sy: ac.y + t * a.h / 2, tx: bc.x, ty: bc.y - t * b.h / 2, horiz: false };
   };
 
-  /* 弧线：控制点在两端 42% 处（全站同一条曲率） */
+  /* 弧线：控制点在两端 arcK 处（全站同一条曲率，spec geo.arcK） */
   CV.arcPath = function (sx, sy, tx, ty) {
+    var k = CV.spec('arcK');
     var dx = tx - sx, dy = ty - sy;
     return 'M ' + sx + ' ' + sy +
-           ' C ' + (sx + dx * 0.42) + ' ' + (sy + dy * 0.42) + ', ' +
-                 (tx - dx * 0.42) + ' ' + (ty - dy * 0.42) + ', ' +
+           ' C ' + (sx + dx * k) + ' ' + (sy + dy * k) + ', ' +
+                 (tx - dx * k) + ' ' + (ty - dy * k) + ', ' +
                  tx + ' ' + ty;
   };
 
   /* 法向偏移后的弧线：双向交换的两条车道各偏 +off（方向本身已相反，不再补符号） */
   CV.humpPath = function (e, off) {
+    var k = CV.spec('arcK');
     var dx = e.tx - e.sx, dy = e.ty - e.sy;
     var len = Math.sqrt(dx * dx + dy * dy) || 1;
     var nx = -dy / len * (off || 0), ny = dx / len * (off || 0);
     return 'M ' + (e.sx + nx) + ' ' + (e.sy + ny) +
-           ' C ' + (e.sx + dx * 0.42 + nx) + ' ' + (e.sy + dy * 0.42 + ny) + ', ' +
-                 (e.tx - dx * 0.42 + nx) + ' ' + (e.ty - dy * 0.42 + ny) + ', ' +
+           ' C ' + (e.sx + dx * k + nx) + ' ' + (e.sy + dy * k + ny) + ', ' +
+                 (e.tx - dx * k + nx) + ' ' + (e.ty - dy * k + ny) + ', ' +
                  (e.tx + nx) + ' ' + (e.ty + ny);
   };
 

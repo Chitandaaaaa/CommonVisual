@@ -92,13 +92,14 @@
       anchor: 'sub-07-3',   /* 07 的第 3 个 h3 =「动态 · 方框长出与收回」（2026-11-01 拆 tab 后顺延） */
       groups: [
         { label: '耗时', keys: ['growDur', 'holdDur', 'shrinkDur'] },
-        { label: '衔接', keys: ['calcFade'] }
+        { label: '衔接', keys: ['calcFade', 'shrinkFade'] }
       ],
       keys: {
         growDur:   { label: '卡片伸长', unit: 's', def: 0.75, min: 0.1, max: 2, step: 0.05, chk: 'link' },
         holdDur:   { label: '方框展示', unit: 's', def: 0.95, min: 0.2, max: 4, step: 0.05, chk: 'link' },
         shrinkDur: { label: '卡片缩回', unit: 's', def: 0.7,  min: 0.1, max: 2, step: 0.05, chk: 'link' },
-        calcFade:  { label: '方框过渡', unit: 's', def: 0.35, min: 0,   max: 1.5, step: 0.05, chk: 'link' }
+        calcFade:  { label: '方框过渡', unit: 's', def: 0.35, min: 0,   max: 1.5, step: 0.05, chk: 'link' },
+        shrinkFade:{ label: '收场淡出比例', unit: '', def: 0.45, min: 0.1, max: 0.9, step: 0.01, chk: 'unit', read: '07 章 fixture：先淡后缩的分段点' }
       }
     },
     '08-seat': {
@@ -153,6 +154,66 @@
         trailReduce: { label: '余辉·归约族', unit: '', def: 0.42, min: 0,  max: 1,   step: 0.01, chk: 'link' },
         trailATA:    { label: '余辉·全换', unit: '', def: 0.3,  min: 0,   max: 1,   step: 0.01, chk: 'link' },
         seatDelay:   { label: '落位延迟', unit: 's', def: 0.5,  min: 0,    max: 1.5, step: 0.05, chk: 'link' }
+      }
+    },
+    geo: {
+      label: '舞台几何 · 曲线',
+      /* 无 anchor：跨章骨架（02/03 尺寸 + 预设坐标 + 弧线车道），改值重建舞台（api.reload） */
+      groups: [
+        { label: '桌面骨架', keys: ['dtViewW','dtViewH','dtCardW','dtCardH','dtSlotSw','dtSlotSh','dtSlotGap','dtHdr','dtTitleFs','dtBadgeFs'] },
+        { label: '窄屏骨架', keys: ['nrViewW','nrViewH','nrCardW','nrCardH','nrSlotSw','nrSlotSh','nrSlotGap','nrHdr','nrTitleFs','nrBadgeFs'] },
+        { label: 'col34 坐标（左1右3）', keys: ['c34dtTx','c34dtTy','c34dtSx','c34dtSy1','c34dtSy2','c34dtSy3','c34dtLy','c34nrTx','c34nrTy','c34nrSx','c34nrSy1','c34nrSy2','c34nrSy3','c34nrLy'] },
+        { label: 'grid 坐标（2×2）', keys: ['grdtX','grdtY','grdtDx','grdtDy','grdtLy','grnrX','grnrY','grnrDx','grnrDy','grnrLy'] },
+        { label: '曲线 / 车道', keys: ['arcK','humpH','humpV'] }
+      ],
+      keys: {
+        dtViewW: { label: '桌面·画布宽', unit: 'px', def: 1130, min: 900, max: 1400, step: 10, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        dtViewH: { label: '桌面·画布高', unit: 'px', def: 680, min: 520, max: 820, step: 10, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        dtCardW: { label: '桌面·卡宽', unit: 'px', def: 300, min: 220, max: 380, step: 2, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        dtCardH: { label: '桌面·卡高', unit: 'px', def: 170, min: 130, max: 220, step: 2, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        dtSlotSw: { label: '桌面·槽宽', unit: 'px', def: 46, min: 34, max: 60, step: 1, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        dtSlotSh: { label: '桌面·槽高', unit: 'px', def: 46, min: 34, max: 60, step: 1, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        dtSlotGap: { label: '桌面·槽距', unit: 'px', def: 12, min: 6, max: 20, step: 1, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        dtHdr: { label: '桌面·卡头高', unit: 'px', def: 36, min: 26, max: 48, step: 1, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        dtTitleFs: { label: '桌面·标题字号', unit: 'px', def: 15, min: 10, max: 20, step: 0.5, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        dtBadgeFs: { label: '桌面·徽章字号', unit: 'px', def: 10, min: 6, max: 14, step: 0.5, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        nrViewW: { label: '窄屏·画布宽', unit: 'px', def: 380, min: 320, max: 460, step: 5, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        nrViewH: { label: '窄屏·画布高', unit: 'px', def: 720, min: 600, max: 860, step: 5, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        nrCardW: { label: '窄屏·卡宽', unit: 'px', def: 146, min: 110, max: 190, step: 2, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        nrCardH: { label: '窄屏·卡高', unit: 'px', def: 126, min: 96, max: 170, step: 2, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        nrSlotSw: { label: '窄屏·槽宽', unit: 'px', def: 25, min: 18, max: 34, step: 1, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        nrSlotSh: { label: '窄屏·槽高', unit: 'px', def: 25, min: 18, max: 34, step: 1, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        nrSlotGap: { label: '窄屏·槽距', unit: 'px', def: 5, min: 2, max: 12, step: 1, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        nrHdr: { label: '窄屏·卡头高', unit: 'px', def: 28, min: 20, max: 38, step: 1, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        nrTitleFs: { label: '窄屏·标题字号', unit: 'px', def: 12.5, min: 9, max: 17, step: 0.5, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        nrBadgeFs: { label: '窄屏·徽章字号', unit: 'px', def: 8.5, min: 6, max: 12, step: 0.5, chk: 'truth', read: 'GEO 派生（账本 02/03 章行实测）' },
+        c34dtTx: { label: 'col34·桌面 目标卡x', unit: 'px', def: 10, min: 0, max: 200, step: 2, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        c34dtTy: { label: 'col34·桌面 目标卡y', unit: 'px', def: 255, min: 120, max: 420, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        c34dtSx: { label: 'col34·桌面 源列x', unit: 'px', def: 820, min: 640, max: 1000, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        c34dtSy1: { label: 'col34·桌面 源1y', unit: 'px', def: 50, min: 20, max: 120, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        c34dtSy2: { label: 'col34·桌面 源2y', unit: 'px', def: 255, min: 160, max: 360, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        c34dtSy3: { label: 'col34·桌面 源3y', unit: 'px', def: 460, min: 380, max: 600, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        c34dtLy: { label: 'col34·桌面 图例y', unit: 'px', def: 50, min: 10, max: 120, step: 2, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        c34nrTx: { label: 'col34·窄屏 目标卡x', unit: 'px', def: 6, min: 0, max: 60, step: 2, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        c34nrTy: { label: 'col34·窄屏 目标卡y', unit: 'px', def: 297, min: 160, max: 420, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        c34nrSx: { label: 'col34·窄屏 源列x', unit: 'px', def: 226, min: 160, max: 300, step: 2, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        c34nrSy1: { label: 'col34·窄屏 源1y', unit: 'px', def: 40, min: 10, max: 100, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        c34nrSy2: { label: 'col34·窄屏 源2y', unit: 'px', def: 297, min: 180, max: 420, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        c34nrSy3: { label: 'col34·窄屏 源3y', unit: 'px', def: 554, min: 420, max: 660, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        c34nrLy: { label: 'col34·窄屏 图例y', unit: 'px', def: 40, min: 10, max: 120, step: 2, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        grdtX: { label: 'grid·桌面 原点x', unit: 'px', def: 175, min: 60, max: 320, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        grdtY: { label: 'grid·桌面 原点y', unit: 'px', def: 136, min: 60, max: 240, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        grdtDx: { label: 'grid·桌面 列距', unit: 'px', def: 480, min: 380, max: 620, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        grdtDy: { label: 'grid·桌面 行距', unit: 'px', def: 330, min: 240, max: 460, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        grdtLy: { label: 'grid·桌面 图例y', unit: 'px', def: 17, min: 5, max: 60, step: 1, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        grnrX: { label: 'grid·窄屏 原点x', unit: 'px', def: 8, min: 0, max: 40, step: 2, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        grnrY: { label: 'grid·窄屏 原点y', unit: 'px', def: 185, min: 90, max: 280, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        grnrDx: { label: 'grid·窄屏 列距', unit: 'px', def: 218, min: 160, max: 280, step: 2, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        grnrDy: { label: 'grid·窄屏 行距', unit: 'px', def: 300, min: 220, max: 400, step: 5, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        grnrLy: { label: 'grid·窄屏 图例y', unit: 'px', def: 113, min: 40, max: 200, step: 1, chk: 'truth', read: 'preset 坐标派生（卡位）' },
+        arcK: { label: '弧线曲率', unit: '', def: 0.42, min: 0.2, max: 0.6, step: 0.01, chk: 'truth', read: '连线 path 控制点（42% 弦长）' },
+        humpH: { label: '车道偏移·横', unit: 'px', def: 22, min: 6, max: 60, step: 1, chk: 'truth', read: 'allreduce 横向互换车道（hump）' },
+        humpV: { label: '车道偏移·纵', unit: 'px', def: 54, min: 20, max: 120, step: 2, chk: 'truth', read: 'allreduce 纵向互换车道（hump）' }
       }
     },
     global: {

@@ -240,7 +240,7 @@
         cur = f;
       } else {
         var s = clamp((sec - f.mergeEnd) / TM.shrink, 0, 1);
-        var FADE = 0.45;
+        var FADE = CV.spec('shrinkFade');   /* 收场先淡后缩的分段点：07 组 */
         chipA = 1 - clamp(s / FADE, 0, 1);
         growCal = 1 - CV.easeInOutQuad(clamp((s - FADE) / (1 - FADE), 0, 1));
       }
@@ -530,7 +530,7 @@
              at: function (sec) { return TOTAL ? sec / TOTAL : 0; } };
   };
 
-  var HUMP_H = 22, HUMP_V = 54;
+  var HUMP_H = CV.spec('humpH'), HUMP_V = CV.spec('humpV');   /* 车道偏移：geo 组 */
   var PRE_WIDEN = { desktop: 25, narrow: 12 };
 
   verbs.sum.buildAllreduce = function (S, scene) {
