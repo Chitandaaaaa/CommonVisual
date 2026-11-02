@@ -220,8 +220,6 @@ body {
   font-family: var(--sans); font-weight: 700; fill: var(--tx);
 }
 .slot-g { transition: opacity var(--cv-revealDur) ease; }
-.slot-bg { transition: fill var(--cv-slotCross) ease, stroke var(--cv-slotCross) ease; }
-
 /* ───────── 悬停聚焦：指向某类数据块时，其余类缓缓褪成灰 ─────────
    SVG 元素上 CSS filter 兼容性不稳（实测 grayscale 未生效），
    改为覆盖 fill + 降低不透明度，并给足 0.5s 缓动，避免颜色硬切。
@@ -232,7 +230,7 @@ body {
 }
 #stage [data-l] rect,
 #stage [data-l] text {
-  transition: fill .5s cubic-bezier(.45, .05, .55, .95);
+  transition: fill var(--cv-slotCross) cubic-bezier(.45, .05, .55, .95);
 }
 
 /* 数据块可点击「钉住」聚焦，给出指针反馈 */
@@ -288,7 +286,6 @@ body {
 
 .slot-tx {
   font-family: var(--mono); font-weight: 700;
-  transition: fill var(--cv-slotCross) ease;
 }
 .dst-badge {
   font-family: var(--mono); font-weight: 700; letter-spacing: .06em;
@@ -353,7 +350,7 @@ body {
 .ring {
   fill: none;                     /* 必须显式设 none，否则 SVG 默认用黑色填充成实心圆 */
   transform-box: fill-box; transform-origin: center;
-  animation: ringOut var(--cv-ringDur) ease-out forwards;
+  animation: ringOut 1.05s ease-out forwards;
 }
 @keyframes ringOut {
   0%   { transform: scale(.32); opacity: .85; stroke-width: 4; }

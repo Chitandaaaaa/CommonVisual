@@ -90,7 +90,7 @@
 <div class="wrap">
 
   <h1>CommonVisual · 验证用例清单</h1>
-  <div class="sub">222 条：通用 3 ＋ 全站通用 29 ＋ 原语页 63 ＋ index 与规范页 15 ＋ 规范符合性 112。已实现 222 条，待补 0 条（第 2/3/4 组在 <code>tools/probes/</code>，随 verify.mjs 跑）。<b>结构断言每次改完都跑；截图与人工观感留到提交前和每日定时。</b></div>
+  <div class="sub">225 条：通用 3 ＋ 全站通用 29 ＋ 原语页 63 ＋ index 与规范页 15 ＋ 规范符合性 115。已实现 225 条，待补 0 条（第 2/3/4 组在 <code>tools/probes/</code>，随 verify.mjs 跑）。<b>结构断言每次改完都跑；截图与人工观感留到提交前和每日定时。</b></div>
   <div class="rule-top">以本页为准 · 改本页需同步 AGENTS.md 一 与 MEMORY.md</div>
   <div class="lead">本页只列<b>用例</b>——能判「过或不过」的验证动作，每条写明<b>作用在哪个页面</b>与<b>通过标准</b>；拆分、入册等条数沿革见页尾变更日志。<b>左侧红条</b>＝口径已按实现对齐的条目，补断言以红条文案为准；<b>橙条</b>＝2026-10-31 拆分新增的行；<b>紫条</b>＝待处理条目（当前 0 条，已了结的登记见页尾日志）。</div>
     <div class="boundary warn"><b>待处理（审计登记、未排期——只记录，不改代码）：</b>历史登记的紫条均已了结，当前门禁 0 紫；下列为现行已知的弱断言缺口。<br>
@@ -307,13 +307,14 @@
 
   <!-- ===================== 05 ===================== -->
   <section id="sec-05">
-    <div class="sechead"><span class="no">05</span><h2>规范符合性 · 账本单源</h2><span class="meta">112 条 · 每次改完跑（verify 对全部页面自动挂载） · 已实现 112</span></div>
+    <div class="sechead"><span class="no">05</span><h2>规范符合性 · 账本单源</h2><span class="meta">115 条 · 每次改完跑（verify 对全部页面自动挂载） · 已实现 115</span></div>
     <div class="role">单源 = <code>assets/ledger.js</code>（规范总账 107 项，动效 39 + 样式 68；与 docs/visual.html 00 章同源渲染）。每行按四种检查型之一对页面：<b>link</b> 改参数 → reload → 可量 Δ → 还原无残差；<b>unit</b> 页面内最小 fixture 直调规范函数断言输出；<b>truth</b> 页面 DOM / 常量真值逐项对照；<b>src</b> 源码消费点 / 字面量检查。页面范围（pages）按实现消费点登记——某参数只在部分页消费就只对那些页跑，5.0 对账保证「账上该跑的没漏、跑的没有账外项」。</div>
     <table style="margin-top:12px">
       <thead><tr><th class="c-no">序号</th><th class="c-p" style="width:150px">页面</th><th>检查项</th><th class="c-v">检查型 · 当前值 · 章节</th><th>状态 / 脚本</th></tr></thead>
       <tbody>
         <tr class="new"><td class="c-no"><span class="n">5.0</span></td><td class="c-p">8 原语页（docs 页 0 项）</td><td><span class="t">页面范围对账</span></td><td class="c-v" data-l="断言">按 <code>ledger.js</code> 各行 pages 过滤出的本页检查项数 = 口径数，且全账没有「应跑未跑」的差项；非原语页恒 0 项（05 组不对 index / docs 出手）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/ledger.mjs</span></td></tr>
         <tr class="new"><td class="c-no"><span class="n">5.1</span></td><td class="c-p">全站（源码层）</td><td><span class="t">特效函数被使用 · 参数键被消费</span></td><td class="c-v" data-l="断言">六个规范特效函数（beat.fuse / seat / dim / popAt、chrome.focus、payload.place）在页面侧（规范页之外）必须有调用点；<code>spec.js</code>（CV.SPEC）每个参数键必须被引擎 / 部件消费——自动抓死函数与死参数。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/ledger.mjs</span></td></tr>
+        <tr class="new"><td class="c-no"><span class="n">5.1b</span></td><td class="c-p">全站（源码层）</td><td><span class="t">每键可验：chk 齐备 · truth/css 型 read 齐备</span></td><td class="c-v" data-l="断言">spec.js 每个键必须带 <code>chk</code>（怎么验）；<code>chk:truth/css</code> 的键必须带 <code>read</code>（DOM / 计算样式哪里量）——「入了表但验不了」当场红。探针按 read 的选择器现量，期望值一律 <code>CV.spec()</code> 表值（账本不再存 hex / 裸秒副本）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/ledger.mjs</span></td></tr>
         <tr class="new"><td class="c-no"><span class="n">5.1c</span></td><td class="c-p">全站（源码层）</td><td><span class="t">消费端只经 CV.spec 读表 · 无兜底字面量</span></td><td class="c-v" data-l="断言">engine / parts / prim / blocks / scenes 源码（剥块注释后）里不得出现 <code>CV.params.get(</code>、<code>specVal(</code>、<code>specNum(</code>，<code>CV.spec(…)</code> 之后不得接 <code>|| 数字</code>，<code>spec(键, 默认值)</code> 两参形式不得存在——默认值只许 spec.js 的表给（参数总线方案 §4.1；paramEditor.js 按 schema 遍历出控件，豁免）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/ledger.mjs</span></td></tr>
         <tr class="new"><td class="c-no"><span class="n">5.1d</span></td><td class="c-p">全站（源码层）</td><td><span class="t">CSS 侧只读 var(--cv-键) · 舞台过程规则无裸值</span></td><td class="c-v" data-l="断言">stage-page.css 的过程选择器（字幕色块 / 卡片 / 槽 / 连线 / 弹跳 / 涟漪）规则体内不得有裸色值（#fff 白字豁免）与裸秒，过渡一律 <code>var(--cv-*)</code>；<code>data-dim / data-focus / :not(</code> 交互规则豁免；全部 assets CSS 里的 <code>var(--cv-X)</code> 必须是 spec.js 中 sink=css/both 的键。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/ledger.mjs</span></td></tr>
         <tr class="new"><td class="c-no"><span class="n">5.1e</span></td><td class="c-p">全站（源码层）</td><td><span class="t">JS 侧无色板字面量副本</span></td><td class="c-v" data-l="断言">spec.js 色键的 def 值不得以字面量出现在 engine / parts / prim / scenes / theme.js / blocks（anatomy.js 暂除外，B3 随 00 章生成收编）；色块 / 表块 / 演示绘制一律读 <code>CV.PALETTE / CV.TONE</code>。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/ledger.mjs</span></td></tr>

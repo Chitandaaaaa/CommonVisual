@@ -86,7 +86,7 @@ function check5_1d() {
   const cssPath = path.join(ROOT, 'assets', 'theme', 'stage-page.css');
   const css = fs.readFileSync(cssPath, 'utf8');
   const bad = [];
-  const STAGE = ['cap-text', 'gpu-card', 'slot-g', 'slot-bg', 'slot-tx', 'wire', 'slot-pop', 'ring'];
+  const STAGE = ['cap-text', 'gpu-card', 'slot-g', 'slot-bg', 'slot-tx', 'wire', 'slot-pop'];   /* ring 涟漪定稿关闭，不入名单 */
   const rules = css.match(/[^{}]+\{[^{}]*\}/g) || [];
   rules.forEach(function (r) {
     const sel = r.slice(0, r.indexOf('{'));
@@ -207,6 +207,9 @@ async function reloadMount(pg) {
 const dur = (pg) => pg.evaluate(function () { return CV.lastMount.controls.duration; });
 const setP = (pg, g, k, v) => pg.evaluate(function (x) { CV.params.set(x[0], x[1], x[2]); }, [g, k, v]);
 const resetP = (pg) => pg.evaluate(function () { CV.params.reset(); });
+/* 表值现读：B3 起色值行的期望一律从 CV.params 取（账本行 val 是 LIVE 对象），
+   检查器只验「派生链与 DOM 都跟表走」，不再对账本里的手抄字面量。 */
+const specOf = (pg, key) => pg.evaluate(function (k) { return CV.spec(k); }, key);
 
 /* link：set → reload → dur Δ 与期望倍数相符 → 还原无残差 */
 async function linkDur(pg, r, ok, cfg) {
@@ -241,16 +244,19 @@ C['01-rankA'] = C['01-rankB'] = C['01-rankC'] = C['01-rankD'] = async function (
     }
     return { pal: p ? p.color : null, dom: dom };
   }, letter);
-  const palOk = res.pal === r.val;
-  const domOk = res.dom == null || res.dom === r.val;   /* 页面初始没有该字母块（如 broadcast 的 B/C/D）就只查 PALETTE */
+  const want = await specOf(pg, 'rank' + letter);
+  const palOk = res.pal === want;
+  const domOk = res.dom == null || res.dom === want;   /* 页面初始没有该字母块（如 broadcast 的 B/C/D）就只查 PALETTE */
   ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, palOk && domOk,
-    'PALETTE=' + res.pal + ' · 页面块 fill=' + (res.dom || '（初始无 ' + letter + ' 块，免 DOM 项）') + '（期望 ' + r.val + '）');
+    'PALETTE=' + res.pal + ' · 页面块 fill=' + (res.dom || '（初始无 ' + letter + ' 块，免 DOM 项）') + '（表值 ' + want + '）');
 };
 ['01-toneDeep', '01-toneInk', '01-toneWire', '01-toneWireDim', '01-toneSlotBg', '01-toneSlotHot'].forEach(function (id) {
   C[id] = async function (pg, r, ok) {
     const key = { '01-toneDeep': 'deep', '01-toneInk': 'ink', '01-toneWire': 'wire', '01-toneWireDim': 'wireDim', '01-toneSlotBg': 'slotBg', '01-toneSlotHot': 'slotHot' }[id];
     const v = await pg.evaluate(function (k) { return CV.TONE[k]; }, key);
-    ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, v === r.val, 'CV.TONE.' + key + '=' + v + '（期望 ' + r.val + '）');
+    const want = await specOf(pg, 'tone' + key.charAt(0).toUpperCase() + key.slice(1)
+      .replace('wireDim', 'WireDim').replace('slotBg', 'SlotBg').replace('slotHot', 'SlotHot'));
+    ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, v === want, 'CV.TONE.' + key + '=' + v + '（表值 ' + want + '）');
   };
 });
 C['01-mixRich'] = async function (pg, r, ok) {
@@ -274,7 +280,8 @@ C['01-flood'] = async function (pg, r, ok) {
     var fe = document.querySelector('#stage feDropShadow');
     return fe ? fe.getAttribute('flood-color') : null;
   });
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, v === '#2a3352', '页内滤镜色=' + v + '（期望 #2a3352）');
+  const want = await specOf(pg, 'flood');
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, v === want, '页内滤镜色=' + v + '（表值 ' + want + '）');
 };
 
 /* 02 数据块（drawSlot/setSlot fixture） */
@@ -313,10 +320,26 @@ C['02-own'] = C['02-done'] = C['02-waiting'] = C['02-empty'] = async function (p
     return { fill: fill, tx: tx ? tx.textContent : '' };
   }, st);
   let pass = false, why = '';
-  if (st === 'own' || st === 'done') { pass = res.fill === '#7c3aed'; why = 'fill=' + res.fill + '（期望 rank 色 #7c3aed）'; }
-  if (st === 'waiting') { pass = res.fill === '#f3eeff' && res.tx === '···'; why = 'fill=' + res.fill + ' 字=' + res.tx; }
-  if (st === 'empty') { pass = res.fill === '#f7f8fc'; why = 'fill=' + res.fill + '（期望 slotBg）'; }
+  const rankA = await specOf(pg, 'rankA'), hot = await specOf(pg, 'toneSlotHot'), bg = await specOf(pg, 'toneSlotBg');
+  if (st === 'own' || st === 'done') { pass = res.fill === rankA; why = 'fill=' + res.fill + '（表值 rankA ' + rankA + '）'; }
+  if (st === 'waiting') { pass = res.fill === hot && res.tx === '···'; why = 'fill=' + res.fill + '（表值 slotHot ' + hot + '） 字=' + res.tx; }
+  if (st === 'empty') { pass = res.fill === bg; why = 'fill=' + res.fill + '（表值 slotBg ' + bg + '）'; }
   ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, pass, why);
+};
+
+/* css 型：spec.js chk:'css' 的键（sink=css）→ 量页面 computed transition-duration */
+C['02-cross'] = C['04-wireFade'] = async function (pg, r, ok) {
+  const sel = r.id === '02-cross' ? '#stage [data-l] rect' : '.wire';
+  const key = r.id === '02-cross' ? 'slotCross' : 'wireFade';
+  const want = await specOf(pg, key);
+  const got = await pg.evaluate(function (s) {
+    var el = document.querySelector(s);
+    if (!el) return null;
+    return getComputedStyle(el).transitionDuration;   /* 逗号列表，如 '0.3s, 0.3s' */
+  }, sel);
+  const pass = !!got && got.split(',').every(function (x) { return x.trim() === want + 's'; });
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, pass,
+    got ? sel + ' transition-duration=' + got + '（表值 ' + want + 's）' : '页内无 ' + sel);
 };
 
 /* 03 卡片几何（页面真值 + fixture 公式） */
@@ -478,9 +501,10 @@ async function wireAttrs(pg, atSec) {
 C['04-idleColor'] = C['04-idleWidth'] = C['04-idleDash'] = async function (pg, r, ok) {
   const pageId = await pg.evaluate(function () { return location.pathname.split('/').pop().replace('.html', ''); });
   const want = pageId === 'alltoall' ? { w: '1.4', d: '6 6' } : { w: '2', d: '8 7' };
+  const wire = await specOf(pg, 'toneWire');
   const fw = await firstFly(pg);
   const ws = await wireAttrs(pg, Math.max(0, (fw ? fw.s : 0) - 0.15));
-  const pick = r.id === '04-idleColor' ? '#c3cadb' : r.id === '04-idleWidth' ? want.w : want.d;
+  const pick = r.id === '04-idleColor' ? wire : r.id === '04-idleWidth' ? want.w : want.d;
   const got = ws && ws.length ? (r.id === '04-idleColor' ? ws[0].stroke : r.id === '04-idleWidth' ? ws[0].width : ws[0].dash) : null;
   const all = ws && ws.length > 0 && ws.every(function (x) {
     return (r.id === '04-idleColor' ? x.stroke : r.id === '04-idleWidth' ? x.width : x.dash) === pick;
@@ -491,7 +515,8 @@ C['04-idleColor'] = C['04-idleWidth'] = C['04-idleDash'] = async function (pg, r
 C['04-flyColor'] = C['04-flyWidth'] = C['04-flyDash'] = async function (pg, r, ok) {
   const fw = await firstFly(pg);
   const ws = await wireAttrs(pg, fw ? fw.s + (fw.te - fw.s) * 0.5 : 0.1);
-  const pick = r.id === '04-flyColor' ? function (x) { return x.stroke !== '#c3cadb'; }
+  const wire = await specOf(pg, 'toneWire');
+  const pick = r.id === '04-flyColor' ? function (x) { return x.stroke !== wire; }
     : r.id === '04-flyWidth' ? function (x) { return x.width === '2.6'; }
     : function (x) { return x.dash === '9 7'; };
   const hit = ws && ws.filter(pick).length;
@@ -501,7 +526,8 @@ C['04-flyColor'] = C['04-flyWidth'] = C['04-flyDash'] = async function (pg, r, o
 C['04-glowColor'] = C['04-glowWidth'] = async function (pg, r, ok) {
   const fw = await firstFly(pg);
   const ws = await wireAttrs(pg, fw ? fw.te + (fw.te - fw.s) * 0.2 : 0.2);
-  const pick = r.id === '04-glowColor' ? function (x) { return x.stroke !== '#c3cadb'; }
+  const wire = await specOf(pg, 'toneWire');
+  const pick = r.id === '04-glowColor' ? function (x) { return x.stroke !== wire; }
     : function (x) { return x.width === '1.6' || x.width === '1.8'; };
   const hit = ws && ws.filter(pick).length;
   ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, !!ws && hit > 0,
@@ -543,12 +569,13 @@ C['04-markerFollow'] = async function (pg, r, ok) {
     return new Promise(function (done) {
       setTimeout(function () {
         var ms = [].slice.call(document.querySelectorAll('#stage marker path')).map(function (m) { return m.getAttribute('fill'); });
-        var lit = ms.filter(function (x) { return x !== '#c3cadb'; });
+        var lit = ms.filter(function (x) { return x !== CV.TONE.wire; });
         done(lit[0] || null);
       }, 120);
     });
   });
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, !!v && v !== '#c3cadb', '飞行中 marker fill=' + v + '（随数据色）');
+  const wire = await specOf(pg, 'toneWire');
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, !!v && v !== wire, '飞行中 marker fill=' + v + '（随数据色，表值 ' + wire + '）');
 };
 
 /* 05 数据包 */
@@ -916,9 +943,10 @@ C['OR-trailChoreo'] = C['OR-trailFam'] = C['OR-trailReduce'] = C['OR-trailATA'] 
   await reloadMount(pg);
   const pastWin2 = await strokeAt(win.te + fly * 0.8);
   await resetP(pg); await reloadMount(pg);
-  const lit = inWin && inWin !== '#c3cadb';
-  const reverted = pastWin === '#c3cadb';
-  const stretched = pastWin2 && pastWin2 !== '#c3cadb';
+  const W = await specOf(pg, 'toneWire');
+  const lit = inWin && inWin !== W;
+  const reverted = pastWin === W;
+  const stretched = pastWin2 && pastWin2 !== W;
   ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, lit && reverted && stretched,
     '余辉窗口内=' + inWin + ' · 默认 0.4 回灰=' + reverted + ' · 改 0.9 后仍亮=' + stretched);
 };
@@ -1026,13 +1054,26 @@ export async function check(pg) {
     ok('5.1e JS 侧无色板字面量副本（源码层）',
       badE.length === 0,
       badE.length ? badE.join('；') : '色值只在 spec.js 的表里，JS 一律读 CV.PALETTE / CV.TONE');
+    const gapB = [];
+    const spec = win_SPEC();
+    Object.keys(spec).forEach(function (g) {
+      Object.keys(spec[g].keys).forEach(function (k) {
+        const d = spec[g].keys[k];
+        if (!d.chk) { gapB.push(g + '.' + k + ' 缺 chk'); return; }
+        if ((d.chk === 'truth' || d.chk === 'css') && !d.read) gapB.push(g + '.' + k + ' 缺 read');
+      });
+    });
+    ok('5.1b 每键可验：chk 齐备 · truth/css 型 read 齐备（源码层）',
+      gapB.length === 0,
+      gapB.length ? gapB.join('；') : Object.keys(spec).length + ' 组 ' +
+        Object.keys(spec).reduce(function (n, g) { return n + Object.keys(spec[g].keys).length; }, 0) + ' 键全部 chk/read 齐备');
   }
 
   const rows = LGR.forPage(pageId);
   /* 2026-11-02 对账定案：按 ledger.js 各行 pages 实际过滤计数（packDur 收窄 choreo 四页、
      revealDur 收窄 choreo 三页、dimDur 收窄 gather 后的自然值） */
-  const EXPECT = { gather: 78, scatter: 77, broadcast: 77, allgather: 76,
-                   reduce: 98, allreduce: 99, reducescatter: 98, alltoall: 72 };
+  const EXPECT = { gather: 80, scatter: 79, broadcast: 79, allgather: 78,
+                   reduce: 100, allreduce: 101, reducescatter: 100, alltoall: 74 };
   const diff = LGR.all().filter(function (x) {
     if (x.pages === 'demo') return false;
     if (rows.some(function (y) { return y.id === x.id; })) return false;

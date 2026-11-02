@@ -10,7 +10,8 @@
         ｜ src 源码消费检查（5.1 兜底）。
    覆盖判据：每个可改的东西必须有一行、入口列填得出 —— 填不出不许入表；
    清单加一行 = 00 章多一行 + 探针多一条 case 骨架。
-   2026-11-02 原子化定稿：107 行（动效 39 + 样式 68）。
+   2026-11-02 B3 起色值行改 LIVE（期望从 spec.js 表现取，账本不再存 hex 副本）。
+   2026-11-02 定稿：109 行（动效 41 + 样式 68）；涟漪定稿关闭不显示，不入表。
    ============================================================ */
 (function (root) {
   'use strict';
@@ -23,23 +24,23 @@
 
   var GROUPS = [
     { g: '01 · 完整数据', rows: [
-      { id: '01-rankA',   t: 'Y', name: 'rank 色 A',      en: 'CV.PALETTE[0] · theme.js', val: '#7c3aed', sec: '01', kw: '', pages: P8, chk: 'truth' },
-      { id: '01-rankB',   t: 'Y', name: 'rank 色 B',      en: 'CV.PALETTE[1] · theme.js', val: '#0891b2', sec: '01', kw: '', pages: P8, chk: 'truth' },
-      { id: '01-rankC',   t: 'Y', name: 'rank 色 C',      en: 'CV.PALETTE[2] · theme.js', val: '#059669', sec: '01', kw: '', pages: P8, chk: 'truth' },
-      { id: '01-rankD',   t: 'Y', name: 'rank 色 D',      en: 'CV.PALETTE[3] · theme.js', val: '#d97706', sec: '01', kw: '', pages: P8, chk: 'truth' },
-      { id: '01-toneDeep',   t: 'Y', name: 'TONE deep（Σ 终点色）',   en: 'CV.TONE.deep · theme.js',    val: '#4c1d95', sec: '01', kw: '', pages: P8, chk: 'unit' },
-      { id: '01-toneInk',    t: 'Y', name: 'TONE ink（越加越浓终点）', en: 'CV.TONE.ink · theme.js',     val: '#190d33', sec: '01', kw: '', pages: P8, chk: 'unit' },
-      { id: '01-toneWire',   t: 'Y', name: 'TONE wire（连线闲置）',   en: 'CV.TONE.wire · theme.js',    val: '#c3cadb', sec: '01', kw: '', pages: P8, chk: 'unit' },
-      { id: '01-toneWireDim',t: 'Y', name: 'TONE wireDim（网格灰）',  en: 'CV.TONE.wireDim · theme.js', val: '#8b93aa', sec: '01', kw: '', pages: P8, chk: 'unit' },
-      { id: '01-toneSlotBg', t: 'Y', name: 'TONE slotBg（空槽）',     en: 'CV.TONE.slotBg · theme.js',  val: '#f7f8fc', sec: '01', kw: '', pages: P8, chk: 'unit' },
-      { id: '01-toneSlotHot',t: 'Y', name: 'TONE slotHot（接收中）',  en: 'CV.TONE.slotHot · theme.js', val: '#f3eeff', sec: '01', kw: '', pages: P8, chk: 'unit' },
+      { id: '01-rankA',   t: 'Y', name: 'rank 色 A',      en: 'spec:rankA（PALETTE[0]）',    val: LIVE('01-color', 'rankA'),       sec: '01', kw: '', pages: P8, chk: 'truth' },
+      { id: '01-rankB',   t: 'Y', name: 'rank 色 B',      en: 'spec:rankB（PALETTE[1]）',    val: LIVE('01-color', 'rankB'),       sec: '01', kw: '', pages: P8, chk: 'truth' },
+      { id: '01-rankC',   t: 'Y', name: 'rank 色 C',      en: 'spec:rankC（PALETTE[2]）',    val: LIVE('01-color', 'rankC'),       sec: '01', kw: '', pages: P8, chk: 'truth' },
+      { id: '01-rankD',   t: 'Y', name: 'rank 色 D',      en: 'spec:rankD（PALETTE[3]）',    val: LIVE('01-color', 'rankD'),       sec: '01', kw: '', pages: P8, chk: 'truth' },
+      { id: '01-toneDeep',   t: 'Y', name: 'TONE deep（Σ 终点色）',   en: 'spec:toneDeep（CV.TONE.deep）',    val: LIVE('01-color', 'toneDeep'),    sec: '01', kw: '', pages: P8, chk: 'unit' },
+      { id: '01-toneInk',    t: 'Y', name: 'TONE ink（越加越浓终点）', en: 'spec:toneInk（CV.TONE.ink）',      val: LIVE('01-color', 'toneInk'),     sec: '01', kw: '', pages: P8, chk: 'unit' },
+      { id: '01-toneWire',   t: 'Y', name: 'TONE wire（连线闲置）',   en: 'spec:toneWire（CV.TONE.wire）',    val: LIVE('01-color', 'toneWire'),    sec: '01', kw: '', pages: P8, chk: 'unit' },
+      { id: '01-toneWireDim',t: 'Y', name: 'TONE wireDim（网格灰）',  en: 'spec:toneWireDim（CV.TONE.wireDim）', val: LIVE('01-color', 'toneWireDim'), sec: '01', kw: '', pages: P8, chk: 'unit' },
+      { id: '01-toneSlotBg', t: 'Y', name: 'TONE slotBg（空槽）',     en: 'spec:toneSlotBg（CV.TONE.slotBg）', val: LIVE('01-color', 'toneSlotBg'),  sec: '01', kw: '', pages: P8, chk: 'unit' },
+      { id: '01-toneSlotHot',t: 'Y', name: 'TONE slotHot（接收中）',  en: 'spec:toneSlotHot（CV.TONE.slotHot）', val: LIVE('01-color', 'toneSlotHot'), sec: '01', kw: '', pages: P8, chk: 'unit' },
       { id: '01-mixRich',  t: 'Y', name: '归约混色公式',            en: 'CV.toneRich · theme.js',  val: '1 份原色 → 每份 +0.19 深 → 4 份 deep', sec: '01', kw: '', pages: P3, chk: 'unit' },
       { id: '01-frameRx',  t: 'Y', name: '整份虚线框圆角',          en: 'blocks/legend.js', val: 'rx 14', sec: '01', kw: '', pages: P8, chk: 'src' },
       { id: '01-frameBg',  t: 'Y', name: '整份虚线框底白',          en: 'blocks/legend.js', val: '白 72%', sec: '01', kw: '', pages: P8, chk: 'src' },
       { id: '01-frameStroke', t: 'Y', name: '整份虚线框描边',       en: 'blocks/legend.js', val: '#c1cadf 1.5', sec: '01', kw: '', pages: P8, chk: 'src' },
       { id: '01-frameDash',   t: 'Y', name: '整份虚线框虚线节距',  en: 'blocks/legend.js', val: '4 3', sec: '01', kw: '', pages: P8, chk: 'src' },
       { id: '01-framePad',    t: 'Y', name: '整份虚线框内边距',    en: 'blocks/legend.js', val: '0.24 × 块宽', sec: '01', kw: '', pages: P8, chk: 'src' },
-      { id: '01-flood',    t: 'Y', name: '滤镜 flood 色（全站一份）', en: 'parts/stage.js', val: '#2a3352（fGlow / fTrail）', sec: '01', kw: '', pages: P8, chk: 'truth' }
+      { id: '01-flood',    t: 'Y', name: '滤镜 flood 色（全站一份）', en: 'spec:flood（parts/stage.js 三滤镜）', val: LIVE('01-color', 'flood'), sec: '01', kw: '', pages: P8, chk: 'truth' }
     ] },
     { g: '02 · 数据块', rows: [
       { id: '02-size',    t: 'Y', name: '块尺寸（桌面 / 窄屏）', en: 'drawSlot · GEO', val: '46 / 25', sec: '02', kw: '', pages: P8, chk: 'truth' },
@@ -48,7 +49,8 @@
       { id: '02-done',    t: 'Y', name: '四态 done（与 own 同渲染）', en: 'move.js 四态机', val: '数据色实心（语义区分）', sec: '02', kw: '', pages: P8, chk: 'truth' },
       { id: '02-waiting', t: 'Y', name: '四态 waiting',          en: 'move.js 四态机 · setSlot', val: '#f3eeff +「···」', sec: '02', kw: '', pages: P8, chk: 'truth' },
       { id: '02-empty',   t: 'Y', name: '四态 empty',            en: 'move.js 四态机 · setSlot', val: '#f7f8fc + 虚线', sec: '02', kw: '', pages: P8, chk: 'truth' },
-      { id: '02-letterFs',t: 'Y', name: '块内字母字号',          en: 'setSlot', val: '0.33 × 块高（15 / 8）', sec: '02', kw: '', pages: P8, chk: 'truth' }
+      { id: '02-letterFs',t: 'Y', name: '块内字母字号',          en: 'setSlot', val: '0.33 × 块高（15 / 8）', sec: '02', kw: '', pages: P8, chk: 'truth' },
+      { id: '02-cross',   t: 'D', name: '槽位变色过渡',          en: 'slotCross · 02-slot 组', val: LIVE('02-slot', 'slotCross', 's'), sec: '02', kw: '动态', pages: P8, chk: 'css' }
     ] },
     { g: '03 · rank 卡片', rows: [
       { id: '03-cardDur',  t: 'D', name: '卡片伸缩',   en: 'cardDur', val: LIVE('03-card', 'cardDur', 's'), sec: '03', kw: '动态', pages: P8, chk: 'link' },
@@ -70,9 +72,10 @@
       { id: '03-target',   t: 'Y', name: '目标卡描边', en: 'drawCard · target', val: 'dst 加深', sec: '03', kw: '', pages: P8, chk: 'truth' }
     ] },
     { g: '04 · 连线与箭头', rows: [
-      { id: '04-idleColor', t: 'Y', name: '闲置线颜色',   en: 'verbs 绘制 · TONE.wire', val: '#c3cadb', sec: '04', kw: '', pages: P8, chk: 'truth' },
+      { id: '04-idleColor', t: 'Y', name: '闲置线颜色',   en: 'spec:toneWire（verbs 绘制）', val: LIVE('01-color', 'toneWire'), sec: '04', kw: '', pages: P8, chk: 'truth' },
       { id: '04-idleWidth', t: 'Y', name: '闲置线宽度',   en: 'verbs 绘制', val: '2（alltoall 直线 1.4）', sec: '04', kw: '', pages: P8, chk: 'truth' },
       { id: '04-idleDash',  t: 'Y', name: '闲置线虚线',   en: 'verbs 绘制', val: '8 7（alltoall 直线 6 6）', sec: '04', kw: '', pages: P8, chk: 'truth' },
+      { id: '04-wireFade',  t: 'D', name: '点亮 / 回灰过渡', en: 'wireFade · 04-wire 组', val: LIVE('04-wire', 'wireFade', 's'), sec: '04', kw: '动态', pages: P8, chk: 'css' },
       { id: '04-flyColor',  t: 'Y', name: '飞行线颜色',   en: 'verbs 绘制', val: '数据色', sec: '04', kw: '', pages: P8, chk: 'truth' },
       { id: '04-flyWidth',  t: 'Y', name: '飞行线宽度',   en: 'verbs 绘制', val: '2.6', sec: '04', kw: '', pages: P8, chk: 'truth' },
       { id: '04-flyDash',   t: 'Y', name: '飞行线虚线',   en: 'verbs 绘制', val: '9 7', sec: '04', kw: '', pages: P8, chk: 'truth' },
