@@ -152,23 +152,19 @@
              at: function (sec) { return TOTAL ? sec / TOTAL : 0; } };
   };
 
-  /* 三档卡高 + 卡内纵向落位（长高/收窄过程中行顶在 pad1↔pad2 之间插值，不跳） */
-  verbs.split.heights = function (L) {
-    var s = L.slot;
-    var h1 = L.card.h;
-    var pad1 = (h1 - L.hdr - 16 - s.sh) / 2;
-    var h2 = h1 + s.sh + L.rowGap - L.preWiden;
-    var pad2 = (h2 - L.hdr - (2 * s.sh + L.rowGap)) / 2;
-    var h3 = L.hdr + pad2 + (2 * s.sh + L.rowGap) + L.calcGap + L.calc.h + L.areaPad;
-    return { h1: h1, h2: h2, h3: h3, pad1: pad1, pad2: pad2 };
+  /* 三档卡高走 CV.cardGeo 单源（#5；preWiden 由 geo 的 L.preWiden 给）；
+     行内纵向落位：行顶在 pad1↔pad2 之间插值，行距/计算层距不缩放
+     （与 sum 族同一约定，2026-11-03 统一）。 */
+  verbs.split.heights = function (L, mode) {
+    return CV.cardGeo(L, mode);
   };
-  verbs.split.inner = function (L, h) {
-    var C = verbs.split.heights(L), s = L.slot;
+  verbs.split.inner = function (L, h, mode) {
+    var C = verbs.split.heights(L, mode), s = L.slot;
     var f2 = clamp((h - C.h1) / (C.h2 - C.h1), 0, 1);
     var f3 = clamp((h - C.h2) / (C.h3 - C.h2), 0, 1);
     var y1 = L.hdr + C.pad1 + (C.pad2 - C.pad1) * f2;
-    var y2 = y1 + s.sh + L.rowGap * f2;
-    var yc = y2 + s.sh + L.calcGap * f3;
+    var y2 = y1 + s.sh + L.rowGap;
+    var yc = y2 + s.sh + L.calcGap;
     return { y1: y1, y2: y2, yc: yc, f2: f2, f3: f3 };
   };
 
@@ -213,7 +209,7 @@
       var r = Number(rk);
       var g0 = CV.gridCard(L, r);
       var x0 = g0.x + (g0.w - totalW) / 2;
-      var IN0 = verbs.split.inner(L, g0.h);
+      var IN0 = verbs.split.inner(L, g0.h, S.mode);
       var y1 = g0.y + IN0.y1;
 
       S.chips[r] = [];
@@ -347,9 +343,9 @@
     var cl = CV.rowClose(sec - AT.collapse.s - CH.CALC_DOWN, 4);
     var cf = calcPhase(sec);
 
-    var C = verbs.split.heights(L);
+    var C = verbs.split.heights(L, S.mode);
     var h = C.h1 + (C.h2 - C.h1) * (op.g * cl.g) + (C.h3 - C.h2) * cf.e;
-    var IN = verbs.split.inner(L, h);
+    var IN = verbs.split.inner(L, h, S.mode);
     var rowStep = c0.sh + L.rowGap;
 
     /* 卡片几何：**顶边钉死，只往下长**（全站统一，2026-11-03）

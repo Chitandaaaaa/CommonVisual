@@ -732,6 +732,31 @@ C['07-chipTip'] = async function (pg, r, ok) {
   ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, v && /sum\s*·\s*avg\s*·\s*max\s*·\s*min/.test(v.tip), '提示词「' + (v && v.tip) + '」');
 };
 
+/* 07-rowPin：计算层伸缩时上排不动（cardGeo 统一 #5 的样板条款——
+   「规范要求能验证」的第一个落地：条款=ledger 行，探针=本检查器） */
+C['07-rowPin'] = async function (pg, r, ok) {
+  const pts = await pg.evaluate(async function () {
+    const M = CV.lastMount, ch = M.getCh();
+    let w = null;
+    if (ch.flows && ch.flows[0] && ch.flows[0].growEnd != null) w = [ch.flows[0].popEnd, ch.flows[0].growEnd];
+    else if (ch.rounds && ch.rounds[0] && ch.rounds[0].calcStart != null) w = [ch.rounds[0].calcStart, ch.rounds[0].calcEnd];
+    else if (ch.AT && ch.AT.r1calc) w = [ch.AT.r1calc.s, ch.AT.r1calc.e];
+    if (!w) return null;
+    M.controls.setPlaying(false);
+    const tops = [];
+    for (const p of [0.15, 0.5, 0.85]) {
+      M.controls.seek((w[0] + (w[1] - w[0]) * p) / ch.total);
+      await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
+      const ys = [...document.querySelectorAll('#lChips .slot-g')].map(g => g.getBoundingClientRect().top);
+      tops.push(Math.round(Math.min(...ys) * 10) / 10);
+    }
+    return tops;
+  });
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name,
+    !!pts && pts[0] === pts[1] && pts[1] === pts[2],
+    '计算层伸缩三点上排 y = ' + (pts ? pts.join(' / ') : '窗口不可用') + '（要求全等）');
+};
+
 /* 08 弹跳 */
 C['08-curve'] = async function (pg, r, ok) {
   const v = await pg.evaluate(function () {
@@ -1067,7 +1092,7 @@ export async function check(pg) {
   /* 2026-11-02 对账定案：按 ledger.js 各行 pages 实际过滤计数（packDur 收窄 choreo 四页、
      revealDur 收窄 choreo 三页、dimDur 收窄 gather 后的自然值） */
   const EXPECT = { gather: 80, scatter: 79, broadcast: 79, allgather: 78,
-                   reduce: 100, allreduce: 101, reducescatter: 100, alltoall: 74 };
+                   reduce: 101, allreduce: 102, reducescatter: 101, alltoall: 74 };
   const diff = LGR.all().filter(function (x) {
     if (x.pages === 'demo') return false;
     if (rows.some(function (y) { return y.id === x.id; })) return false;

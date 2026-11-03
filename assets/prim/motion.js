@@ -61,6 +61,26 @@
     return { g: 1 - CV.easeInOutQuad(seg01(T, shrinkAt, shrinkAt + S.cardDur)), v: v };
   };
 
+  /* ── 三档卡高与行内边距（统一批次 #5）────────────────────────
+     reduce / allreduce / reducescatter 共用一份公式（此前三页各写一份，
+     「顶边钉死只往下长」统一时 allreduce 漏改过一回）：
+     · h1 单排 → h2 双排（长高增量扣 preWiden：第二排往卡内既有留白里放）
+     · h3 双排 + 计算层（calcGap + calc.h + areaPad，由 pad2 精确推导，
+       卡底 = 计算框底 + areaPad，不再各自写 -16 类补差）
+     · pad1 / pad2 = 单排 / 双排状态下的行顶内边距
+     preWiden 取 geo 的 L.preWiden（RS 显式给），没给按模式默认桌面 25 / 窄屏 12。
+     纯数学不碰 DOM；调用方拿 h 做 CV.cast.resize、拿 pad 定行顶。 */
+  CV.cardGeo = function (L, mode) {
+    var s = L.slot;
+    var preWiden = (L.preWiden != null) ? L.preWiden : (mode === 'narrow' ? 12 : 25);
+    var h1 = L.card.h;
+    var pad1 = (h1 - L.hdr - 16 - s.sh) / 2;
+    var h2 = h1 + s.sh + L.rowGap - preWiden;
+    var pad2 = (h2 - L.hdr - 2 * s.sh - L.rowGap) / 2;
+    var h3 = L.hdr + pad2 + 2 * s.sh + L.rowGap + L.calcGap + L.calc.h + L.areaPad;
+    return { h1: h1, h2: h2, h3: h3, pad1: pad1, pad2: pad2 };
+  };
+
   /* ── 规范秒记号表 ──
      剧本（plan 段）里写记号而不是秒数，编译时在这里换成真秒 ——
      规范一改，全站跟着变，剧本不用动。

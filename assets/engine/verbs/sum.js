@@ -120,13 +120,9 @@
              at: function (sec) { return TOTAL ? sec / TOTAL : 0; } };
   };
 
-  /* reduce 的卡高：h1 → h2（预留两排）→ h3（计算层） */
-  function reduceHeights(L) {
-    var c0 = L.slot;
-    var h1 = L.card.h;
-    var h2 = h1 + c0.sh + L.rowGap - 25;
-    var h3 = h2 + L.calcGap + L.calc.h + L.areaPad - 16;
-    return { h1: h1, h2: h2, h3: h3 };
+  /* reduce 的卡高：CV.cardGeo 单源（#5，此前 -25/-16 是本页私有补差） */
+  function reduceHeights(L, mode) {
+    return CV.cardGeo(L, mode);
   }
 
   verbs.sum.buildReduce = function (S, scene) {
@@ -208,7 +204,7 @@
     var L = S.L, layer = S.layers;
     var EX = S.extra;
     var c0 = L.slot;
-    var CHh = reduceHeights(L);
+    var CHh = reduceHeights(L, S.mode);
     var TM = CH.TM, flows = CH.flows;
 
     function mergeE(p, i) {
@@ -523,7 +519,6 @@
   };
 
   var HUMP_H = CV.spec('humpH'), HUMP_V = CV.spec('humpV');   /* 车道偏移：geo 组 */
-  var PRE_WIDEN = { desktop: 25, narrow: 12 };
 
   verbs.sum.buildAllreduce = function (S, scene) {
     DATA = S.data;
@@ -610,9 +605,8 @@
     var EX = S.extra;
     var c0 = L.slot;
     var rowStep = c0.sh + L.rowGap;
-    var h1 = L.card.h;
-    var h2 = h1 + c0.sh + L.rowGap - (PRE_WIDEN[S.mode] || 25);
-    var h3 = h2 + L.calcGap + L.calc.h + L.areaPad - 16;
+    var G = CV.cardGeo(L, S.mode);
+    var h1 = G.h1, h2 = G.h2, h3 = G.h3;
     var TM = CH.TM, ROUNDS = CH.rounds;
 
     /* ① 一排↔两排：整页只两次；② 轮内「计算」层的收放与合并进度 */
@@ -680,9 +674,10 @@
       });
     });
 
-    var pOne = (h1 - L.hdr - 16 - c0.sh) / 2;
-    var pTwo = (h2 - L.hdr - 2 * c0.sh - L.rowGap) / 2;
-    var pT = pOne + (pTwo - pOne) * lift + (h3 - h2) / 2 * st.calc;
+    var pOne = G.pad1, pTwo = G.pad2;
+    /* 上排钉死只随预留插值：计算层伸缩只动卡边与计算框，数据行不挪
+       （2026-11-03 拍板「顶边钉死」全站统一——旧 (h3−h2)/2×st.calc 漏项删除） */
+    var pT = pOne + (pTwo - pOne) * lift;
 
     [0, 1, 2, 3].forEach(function (r) {
       var topY = S.cards[r].geo.y + L.hdr + pT;

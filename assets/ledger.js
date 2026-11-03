@@ -108,7 +108,8 @@
       { id: '07-gap2', t: 'D', name: '灭完→缩回衔接（演示编排）', en: 'anatomy · 07 章演示', val: '.2s（未入调试台）', sec: '07', kw: '动态', pages: 'demo', chk: 'src' },
       { id: '07-chipSize', t: 'Y', name: '方框尺寸', en: 'sum / split 方框段', val: '56×22', sec: '07', kw: '', pages: P3, chk: 'truth' },
       { id: '07-chipFs',   t: 'Y', name: '方框字号', en: 'sum / split 方框段', val: '11.5', sec: '07', kw: '', pages: P3, chk: 'truth' },
-      { id: '07-chipTip',  t: 'Y', name: '方框提示词', en: 'sum / split 方框段', val: 'sum · avg · max · min', sec: '07', kw: '', pages: P3, chk: 'truth' }
+      { id: '07-chipTip',  t: 'Y', name: '方框提示词', en: 'sum / split 方框段', val: 'sum · avg · max · min', sec: '07', kw: '', pages: P3, chk: 'truth' },
+      { id: '07-rowPin',   t: 'Y', name: '计算层伸缩时上排不动', en: 'cardGeo · 顶边钉死（样板条款）', val: 'calc 窗口内首行 y 恒定', sec: '07', kw: '动态', pages: P3, chk: 'truth' }
     ] },
     { g: '08 · 落位弹跳', rows: [
       { id: '08-popDur',    t: 'D', name: '弹跳时长', en: 'popDur', val: LIVE('08-seat', 'popDur', 's'), sec: '08', kw: '', pages: P8, chk: 'link' },
