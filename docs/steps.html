@@ -47,6 +47,18 @@
   table.lex td:nth-child(4){width:96px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:11px;white-space:nowrap}
   table.lex tr.act td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 
+  /* 齿轮表：行号 | 行名 | 时长 | 来源（默认基线，k 杆/参数改了会变） */
+  table.gr{width:100%;border-collapse:collapse;margin-top:10px}
+  table.gr td{padding:5px 8px;border-top:1px solid var(--line);font-size:12.5px}
+  table.gr td:first-child{width:64px;font-family:ui-monospace,Menlo,monospace;color:var(--muted);white-space:nowrap}
+  table.gr td:nth-child(3){width:96px;font-family:ui-monospace,Menlo,monospace;white-space:nowrap}
+  table.gr td:nth-child(4){width:250px;color:var(--muted);font-size:12px}
+  table.gr tr.hd td{font-weight:700;border-top:none;background:var(--panel-2, #f6f7fc)}
+  table.gr tr.hd td:first-child{color:var(--accent)}
+  table.gr tr.hd td:nth-child(4){color:var(--muted);font-weight:400}
+  .gr-cap{margin:14px 0 0;font-size:12.5px;color:var(--tx);font-weight:700}
+  .gr-note{margin:2px 0 0;font-size:12px;color:var(--muted)}
+
   /* 解说表：编号 | 开始 | 结束 | 解说 | 结果 */
   table.na{table-layout:fixed}
   table.na col.c-no{width:54px}
@@ -452,6 +464,7 @@
       </table>
     </div>
 
+    <div class="card">
       <h3>2.7 时序行名总表 <span class="todo" style="margin-left:8px">齿轮行全集</span></h3>
       <p class="role" style="margin:0 0 8px">八页齿轮「时序」页签的行名<b>只有下表这些</b>（2026-11-03 定稿）。同一语义全站同一个词；括注是类型差异，不另起新词。唯一出处是引擎（compile.js 的传递组 + sum / split / move 三个动词），本表是转写——改行名先改引擎再改这里。组头「<b>发送数据 ×N</b>」＝组内各行按轮数共用（reduce-scatter 因两轮之间夹「卡片收窄」，组名带「第 1 / 2 轮」）。</p>
       <table class="lex">
@@ -818,6 +831,18 @@ var PAGES = [
   { id: 'gather', cn: 'Gather · 收集', en: 'gather', dir: 'N → 1', dur: 15.65,
     board: '左边 1 张四槽卡（rank 0，接收方，边框发亮），右边竖排 3 张单槽卡（rank 1/2/3，发送方）',
     wire: '3 条弧线：各单槽卡左缘 → 四槽卡右缘',
+    gear: [
+      ['1', '说明', '0.60s', '编排秒'],
+      ['2', '预留缓冲', '0.60s', '编排秒'],
+      ['3–5', '发送数据 ×3', '', '组 · 每趟共用这一组'],
+      ['', '├ 飞行（数据包）', '1.50s', '规范 packDur + packFade ×k'],
+      ['', '├ 落位延迟', '0.50s', '规范 seatDelay'],
+      ['', '├ 落位弹跳（单颗）', '0.55s', '规范 popDur ×k'],
+      ['', '└ 轮歇', '1.00s', '编排秒'],
+      ['6', '完成', '2.00s', '编排秒'],
+    ],
+    gearRows: 7,
+
     steps: [
       { t: '第 1 步 · 说明 · 0.60 秒', span: '0.00 → 0.60', rows: [
         [0.00, 0.60, '画面 · 静止',
@@ -850,6 +875,18 @@ var PAGES = [
   { id: 'scatter', cn: 'Scatter · 分散', en: 'scatter', dir: '1 → N', dur: 15.65,
     board: '左边 1 张四槽卡（rank 0，源，持整份），右边竖排 3 张单槽卡（rank 1/2/3，接收方）',
     wire: '3 条弧线：四槽卡右缘 → 各单槽卡左缘',
+    gear: [
+      ['1', '说明', '0.60s', '编排秒'],
+      ['2', '预留缓冲', '0.60s', '编排秒'],
+      ['3–5', '发送数据 ×3', '', '组 · 每趟共用这一组'],
+      ['', '├ 飞行（数据包）', '1.50s', '规范 packDur + packFade ×k'],
+      ['', '├ 落位延迟', '0.50s', '规范 seatDelay'],
+      ['', '├ 落位弹跳（单颗）', '0.55s', '规范 popDur ×k'],
+      ['', '└ 轮歇', '1.00s', '编排秒'],
+      ['6', '完成', '2.00s', '编排秒'],
+    ],
+    gearRows: 7,
+
     steps: [
       { t: '第 1 步 · 说明 · 0.60 秒', span: '0.00 → 0.60', rows: [
         [0.00, 0.60, '画面 · 静止', '四槽卡四格 A B C D；三张单槽卡各 1 个空格但看不见；3 条弧线灰色']
@@ -881,6 +918,18 @@ var PAGES = [
   { id: 'broadcast', cn: 'Broadcast · 广播', en: 'broadcast', dir: '1 → N', dur: 15.65,
     board: '左边 1 张四槽卡（rank 0，源，持整份），右边竖排 3 张四槽卡（rank 1/2/3，各 4 格）',
     wire: '3 条弧线：四槽卡右缘 → 各四槽卡左缘',
+    gear: [
+      ['1', '说明', '0.60s', '编排秒'],
+      ['2', '预留缓冲', '0.60s', '编排秒'],
+      ['3–5', '发送数据 ×3', '', '组 · 每趟共用这一组'],
+      ['', '├ 飞行（数据包）', '1.50s', '规范 packDur + packFade ×k'],
+      ['', '├ 落位延迟', '0.50s', '规范 seatDelay'],
+      ['', '├ 落位弹跳（整包）', '0.55s', '规范 popDur ×k'],
+      ['', '└ 轮歇', '1.00s', '编排秒'],
+      ['6', '完成', '2.00s', '编排秒'],
+    ],
+    gearRows: 7,
+
     steps: [
       { t: '第 1 步 · 说明 · 0.60 秒', span: '0.00 → 0.60', rows: [
         [0.00, 0.60, '画面 · 静止', 'r0 四格 A B C D；r1 / r2 / r3 各 4 个空格但看不见；3 条弧线灰色']
@@ -912,6 +961,18 @@ var PAGES = [
   { id: 'allgather', cn: 'All-Gather · 全收集', en: 'all-gather', dir: 'N → N', dur: 14.55,
     board: '2×2 四张四槽卡（rank 0/1/2/3），各持 1 段，角标 1/4',
     wire: '4 条固定环边：0→1→3→2→0，每轮复用同一批线',
+    gear: [
+      ['1', '说明', '0.90s', '编排秒'],
+      ['2', '预留缓冲', '0.60s', '编排秒'],
+      ['3–5', '发送数据 ×3', '', '组 · 每轮共用这一组'],
+      ['', '├ 飞行（数据包）', '1.50s', '规范 packDur + packFade ×k'],
+      ['', '├ 落位延迟', '0.50s', '规范 seatDelay'],
+      ['', '├ 落位弹跳（齐弹）', '0.55s', '规范 popDur ×k'],
+      ['', '└ 轮歇', '1.00s', '编排秒'],
+      ['6', '完成', '0.60s', '编排秒'],
+    ],
+    gearRows: 7,
+
     steps: [
       { t: '第 1 步 · 说明 · 0.90 秒', span: '0.00 → 0.90', rows: [
         [0.00, 0.90, '画面 · 静止', '四张卡各 1 块（A / B / C / D），3 个空格看不见；4 条环边灰色']
@@ -938,21 +999,85 @@ var PAGES = [
   { id: 'reduce', cn: 'Reduce · 归约', en: 'reduce', dir: 'N → 1', dur: 30.11,
     board: '左边 1 张四槽卡（rank 0，接收方，会两次长高），右边竖排 3 张四槽卡（rank 1/2/3，各持一整份）',
     wire: '3 条弧线：各源卡左缘 → 四槽卡右缘',
+    gear: [
+      ['1', '说明', '0.60s', '编排秒'],
+      ['2', '预留缓冲', '3.15s', '开场公式（rowSpan）'],
+      ['3–9', '发送数据 ×3', '', '组 · 每趟共用这一组'],
+      ['', '├ 飞行（数据包）', '2.30s', '编排 1.70 + packFade 0.60'],
+      ['', '├ 落位延迟', '0.50s', '规范 seatDelay'],
+      ['', '├ 落位弹跳（整包）', '0.55s', '规范 popDur ×k'],
+      ['', '├ 计算开始', '0.75s', '规范 growDur ×k'],
+      ['', '├ 计算中', '1.92s', '公式 max(逐段和, 方框展示)'],
+      ['', '├ 计算结束', '0.70s', '规范 shrinkDur ×k'],
+      ['', '└ 轮歇', '0.55s', '编排秒'],
+      ['10', '完成（收场）', '5.10s', '收场公式 + 停驻 2s'],
+    ],
+    gearRows: 10,
+
     steps: reduceSteps() },
 
   { id: 'allreduce', cn: 'All-Reduce · 全归约', en: 'all-reduce', dir: 'N → N', dur: 22.54,
     board: '2×2 四张四槽卡（rank 0/1/2/3），各持一整份，角标 4 段',
     wire: '6 条直连：首轮左右两对（0↔1、2↔3），次轮上下两对（0↔2、1↔3）',
+    gear: [
+      ['1', '说明', '0.90s', '编排秒'],
+      ['2', '预留缓冲', '3.40s', '开场公式（rowSpan + 0.25）'],
+      ['3–9', '发送数据 ×2', '', '组 · 两轮共用这一组'],
+      ['', '├ 飞行（数据包）', '1.70s', '编排 1.10 + packFade 0.60'],
+      ['', '├ 落位延迟', '0.50s', '规范 seatDelay'],
+      ['', '├ 落位弹跳（齐弹）', '0.55s', '规范 popDur ×k'],
+      ['', '├ 计算开始', '0.75s', '规范 growDur ×k'],
+      ['', '├ 计算中', '1.92s', '公式 max(逐段和, 方框展示)'],
+      ['', '├ 计算结束', '0.70s', '规范 shrinkDur ×k'],
+      ['', '└ 轮歇', '0.55s', '编排秒'],
+      ['10', '完成（收场）', '4.05s', '收场公式（RS.close + 0.95）'],
+    ],
+    gearRows: 10,
+
     steps: allreduceSteps() },
 
   { id: 'reducescatter', cn: 'Reduce-Scatter · 归约分散', en: 'reduce-scatter', dir: 'N → N', dur: 22.85,
     board: '2×2 四张四槽卡（rank 0/1/2/3），各持一整份，角标 4 段',
     wire: '8 条直连：首轮同列（0↔2、1↔3），次轮同行（0↔1、2↔3）',
+    gear: [
+      ['1', '说明', '1.10s', '编排秒'],
+      ['2', '预留缓冲', '3.15s', '开场公式（rowSpan）'],
+      ['3–8', '发送数据 · 第 1 轮', '', '组 · 这一轮的六个相'],
+      ['', '├ 飞行（数据包）', '2.30s', '编排 1.70 + packFade 0.60'],
+      ['', '├ 落位延迟', '0.50s', '规范 seatDelay'],
+      ['', '├ 落位弹跳（齐弹）', '0.55s', '规范 popDur ×k'],
+      ['', '├ 计算开始', '1.10s', 'growDur + calcFade'],
+      ['', '├ 计算中', '1.00s', '公式 max(逐段和, 方框展示)'],
+      ['', '└ 计算结束', '1.05s', 'calcFade + shrinkDur'],
+      ['9', '卡片收窄', '0.40s', '规范 blockDur ×k'],
+      ['10–15', '发送数据 · 第 2 轮', '', '组 · 这一轮的六个相'],
+      ['', '├ 飞行（数据包）', '2.30s', '编排 1.70 + packFade 0.60'],
+      ['', '├ 落位延迟', '0.50s', '规范 seatDelay'],
+      ['', '├ 落位弹跳（齐弹）', '0.55s', '规范 popDur ×k'],
+      ['', '├ 计算开始', '1.10s', 'growDur + calcFade'],
+      ['', '├ 计算中', '1.00s', '公式 max(逐段和, 方框展示)'],
+      ['', '└ 计算结束', '1.05s', 'calcFade + shrinkDur'],
+      ['16', '完成（收场）', '4.10s', '收场公式 + 停驻 2s'],
+    ],
+    gearRows: 16,
+
     steps: rsSteps() },
 
   { id: 'alltoall', cn: 'All-to-All · 全互换', en: 'all-to-all', dir: 'N → N', dur: 19.70,
     board: '2×2 四张四槽卡（rank 0/1/2/3），上排待发、下排接收，角标 4 片',
     wire: '6 条双向直连（4 条正交边 + 2 条对角线），没有箭头',
+    gear: [
+      ['1', '说明', '0.90s', '编排秒'],
+      ['2', '预留缓冲', '0.60s', '编排秒'],
+      ['3–6', '发送数据 ×4', '', '组 · 每步共用这一组'],
+      ['', '├ 飞行（数据包）', '1.55s', '编排 0.95 + packFade 0.60'],
+      ['', '├ 落位延迟', '0.50s', '规范 seatDelay'],
+      ['', '├ 落位弹跳（错峰）', '2.05s', 'popDur + 3×seatGap ×k'],
+      ['', '└ 轮歇', '0.40s', '编排秒'],
+      ['7', '完成', '0.60s', '编排秒'],
+    ],
+    gearRows: 7,
+
     steps: atoaSteps() }
 ];
 
@@ -1005,6 +1130,19 @@ var PAGES = [
       }
     });
     html += '</tbody></table>';
+
+    /* 时序齿轮：本页齿轮「时序」页签的行全集（默认基线；倍数杆/参数改了会实时变） */
+    if (p.gear) {
+      html += '<p class="gr-cap">时序齿轮 · ' + p.gearRows + ' 行（默认基线）</p>';
+      html += '<p class="gr-note">行号 = 齿轮面板行序，组头行号范围 = 组内行挂的进度条段；倍数杆 / 03–09 章参数改了时长跟着变。</p>';
+      html += '<table class="gr"><thead><tr><th>行号</th><th>行名</th><th>时长</th><th>来源</th></tr></thead><tbody>';
+      p.gear.forEach(function (g) {
+        var hd = g[1].indexOf('发送数据') === 0;
+        html += '<tr' + (hd ? ' class="hd"' : '') + '><td>' + g[0] + '</td><td>' + g[1] +
+                '</td><td>' + g[2] + '</td><td>' + g[3] + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
 
     var sec = document.createElement('section');
     sec.id = 'p-' + p.id;
