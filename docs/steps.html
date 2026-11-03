@@ -428,7 +428,7 @@
           <tr class="act"><td class="nm">飞行</td><td>包沿路径前进，起终点缓入缓出，两层残影跟随。</td><td>不是匀速</td><td class="mono">1.50s</td></tr>
           <tr class="act"><td class="nm">抵达</td><td>包停在箭头尖 / 终点，位置不再变化。</td><td>瞬时</td><td class="mono">瞬时</td></tr>
           <tr class="act"><td class="nm">淡出</td><td>包不透明度线性 → 0。</td><td>包是被目标「吃进去」；完成后才轮到落位（2.6）</td><td class="mono">0.60s</td></tr>
-          <tr class="act"><td class="nm">余辉</td><td>线降到 40%（家族页 45%）保留数据色。</td><td><b>不是变灰</b>；比率各页不同：choreo 40% / reduce 45% / allreduce·rs 42% / alltoall 30%</td><td class="mono">瞬时</td></tr>
+          <tr class="act"><td class="nm">余辉</td><td>线降到 40%（家族页 45%）保留数据色；余辉结束后线与箭头一起在 0.30s 内渐变回灰（wireFade）。</td><td><b>不是变灰</b>；比率各页不同：choreo 40% / reduce 45% / allreduce·rs 42% / alltoall 30%。<b>箭头与线一体</b>：同色、同态、同时回灰，出口唯一 CV.wire.fade</td><td class="mono">瞬时 + 0.30s 渐变</td></tr>
           <tr class="act"><td class="nm">落位</td><td>接收位消失，该槽当场变成数据块。</td><td><b>不是渐变换色</b></td><td class="mono">瞬时</td></tr>
           <tr class="act"><td class="nm">弹跳</td><td>该槽从 35% 放大到 116% 再落回 100%。</td><td>多块<b>两口径</b>（2026-11-03 拍板）：同飞批与互换批齐弹——同到同弹（all-gather / reduce-scatter / all-reduce），整份包整包齐落（reduce / broadcast）；顺序到达错峰弹 <span class="k">seatGap</span>（all-to-all）。<span class="k">popStagger</span> 退役，参数保留 08 表备用（0＝齐弹）</td><td class="mono">0.55s</td></tr>
           <tr class="act"><td class="nm">长高</td><td>卡高增加一层。腾出<b>第二排</b>时 0.80s（cardDur），腾出<b>计算层</b>时 0.75s（growDur）。</td><td>开场只做一次，收场才收回</td><td class="mono">0.80 / 0.75s</td></tr>

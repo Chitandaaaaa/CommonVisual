@@ -537,6 +537,8 @@
             CV.wire.paint(w.path, 'done', DEEP); CV.wire.arrow(w.marker, DEEP);
           } else if (glowingS) {
             CV.wire.paint(w.path, 'glow', col); CV.wire.arrow(w.marker, col);
+          } else if ((sec - fw.e - residS) / CV.spec('wireFade') < 1) {
+            CV.wire.fade(w.path, w.marker, col, (sec - fw.e - residS) / CV.spec('wireFade'));
           } else {
             CV.wire.paint(w.path, 'idle'); CV.wire.arrow(w.marker, null);
           }

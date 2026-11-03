@@ -117,6 +117,7 @@
          ratio×飞行时长，然后回灰（idleWire）—— 比率不再是无上限的常亮 */
       var glowWin = (w.travelEnd - w.s) * (CV.spec('trailRatio'));
       var glowing = sec - w.travelEnd <= glowWin;
+      var fadeP = (sec - w.travelEnd - glowWin) / CV.spec('wireFade');
       if (flying) {
         var e = CV.easeInOutQuad((sec - w.s) / (w.travelEnd - w.s));
         /* 起步让出：整份包按半宽几何让出（封顶 0.32）；单色/曲线包按规范
@@ -136,10 +137,18 @@
         /* 已到箭头尖：不动了，原地把自己淡掉（这一段同时就是「停留」） */
         CV.payload.place(p, wire, 1, rev);
         CV.payload.fadeOut(p, sec - w.travelEnd, w.fadeSec);
-        if (styleWires) glowing ? afterGlow(wire, color) : idleWire(wire);
+        if (styleWires) {
+          if (glowing) afterGlow(wire, color);
+          else if (fadeP < 1) CV.wire.fade(wire.path, wire.marker, color, fadeP);
+          else idleWire(wire);
+        }
       } else if (parked || sec >= w.seatStart) {
         p.g.setAttribute('opacity', '0');
-        if (styleWires) glowing ? afterGlow(wire, color) : idleWire(wire);
+        if (styleWires) {
+          if (glowing) afterGlow(wire, color);
+          else if (fadeP < 1) CV.wire.fade(wire.path, wire.marker, color, fadeP);
+          else idleWire(wire);
+        }
       } else {
         p.g.setAttribute('opacity', '0');
         if (styleWires) idleWire(wire);
@@ -184,6 +193,9 @@
         CV.wire.paint(wire.path, 'glow', color);
         wire.path.setAttribute('stroke-opacity', '1');
         CV.wire.arrow(wire.marker, color);
+      } else if ((sec - cur.w.travelEnd - glowWinR) / CV.spec('wireFade') < 1) {
+        CV.wire.fade(wire.path, wire.marker, color, (sec - cur.w.travelEnd - glowWinR) / CV.spec('wireFade'));
+        wire.path.setAttribute('stroke-opacity', '1');
       } else {
         idleWire(wire);
         wire.path.setAttribute('stroke-opacity', '1');
@@ -633,8 +645,10 @@
           CV.payload.fadeOut(p, sec - rd.arrive);
           var glowWinA = (rd.arrive - rd.start) * CV.spec('trailRatio');
           var glowingA = sec - rd.arrive <= glowWinA;
-          glowingA ? CV.wire.paint(wire.path, 'glow', col)
-                   : CV.wire.paint(wire.path, 'idle', null, true);
+          var fadeA = (sec - rd.arrive - glowWinA) / CV.spec('wireFade');
+          if (glowingA) CV.wire.paint(wire.path, 'glow', col);
+          else if (fadeA < 1) CV.wire.fade(wire.path, null, col, fadeA, { muted: true });
+          else CV.wire.paint(wire.path, 'idle', null, true);
         } else {
           p.g.setAttribute('opacity', '0');
         }

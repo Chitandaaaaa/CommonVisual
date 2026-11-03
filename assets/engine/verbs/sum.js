@@ -399,9 +399,10 @@
         /* 余辉计时回灰（orch·trailRatio）：抵达后保留数据色 ratio×飞行时长 */
         var residF = (f.arrive - f.start) * CV.spec('trailRatio');
         var glowingF = sec - f.arrive <= residF;
-        glowingF ? CV.wire.paint(w.path, 'glow', color)
-                 : CV.wire.paint(w.path, 'idle');
-        CV.wire.arrow(w.marker, glowingF ? color : null);
+        var fadeF = (sec - f.arrive - residF) / CV.spec('wireFade');
+        if (glowingF) { CV.wire.paint(w.path, 'glow', color); CV.wire.arrow(w.marker, color); }
+        else if (fadeF < 1) CV.wire.fade(w.path, w.marker, color, fadeF);
+        else { CV.wire.paint(w.path, 'idle'); CV.wire.arrow(w.marker, null); }
       } else {
         p.g.setAttribute('opacity', '0');
         CV.wire.paint(w.path, 'idle');
@@ -801,7 +802,8 @@
           CV.beat.dim(S.cards[f.from], true);   /* 方案 A：发送中变暗全站生效 */
         } else if (sec >= R.arrive) {
           var allDone = sec >= ROUNDS[1].end;
-          /* 余辉计时回灰（orch·trailRatio）：抵达后保留数据色 ratio×飞行时长 */
+          /* 余辉计时回灰（orch·trailRatio）：抵达后保留数据色 ratio×飞行时长，
+             之后 wireFade 渐变到 rest（线与箭头一体，#6） */
           var residAR = (R.arrive - R.start) * CV.spec('trailRatio');
           var glowingAR = sec - R.arrive <= residAR;
           var roundDone = sec >= R.end;
@@ -812,6 +814,9 @@
             CV.wire.paint(W.path, 'done', DEEP); CV.wire.arrow(W.marker, DEEP);
           } else if (glowingAR && !roundDone) {
             CV.wire.paint(W.path, 'glow', color); CV.wire.arrow(W.marker, color);
+          } else if (!roundDone &&
+                     (sec - R.arrive - residAR) / CV.spec('wireFade') < 1) {
+            CV.wire.fade(W.path, W.marker, color, (sec - R.arrive - residAR) / CV.spec('wireFade'), { to: 'rest' });
           } else {
             CV.wire.paint(W.path, 'rest'); CV.wire.arrow(W.marker, null);
           }

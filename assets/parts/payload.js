@@ -69,6 +69,26 @@
     /* 箭头随线色（marker 的 fill 与 stroke 同源，别处各写一遍容易漏） */
     arrow: function (markerEl, color) {
       if (markerEl) markerEl.setAttribute('fill', color || CV.TONE.wire);
+    },
+    /* 余辉 → 目标态的渐变（统一批次 #6「箭头与线一体」）：
+       p ∈ [0,1]，0 = 余辉态（数据色）、1 = 到达目标态（idle / rest）。
+       线色、宽、透明度与箭头 fill 用同一插值——线与箭头一体过渡，
+       不再在余辉结束那一帧瞬跳回灰。时长 = 规范 04 · wireFade。 */
+    fade: function (path, markerEl, color, p, opts) {
+      opts = opts || {};
+      var w = CV.spec('wireW'), on = CV.spec('wireDashOn'),
+          off = CV.spec('wireDashOff'), op = CV.spec('wireOpIdle');
+      if (opts.to === 'rest') { w = CV.spec('wireWGlow'); op = CV.spec('wireRestOp'); }
+      else if (opts.muted) { w = CV.spec('wireWMuted'); }
+      var gw = CV.spec('wireWGlow'), gop = CV.spec('wireGlowOp');
+      var k = CV.clamp(p, 0, 1);
+      path.setAttribute('stroke', CV.mix(color, CV.TONE.wire, k));
+      path.setAttribute('stroke-width', String(gw + (w - gw) * k));
+      path.setAttribute('stroke-dasharray', on + ' ' + off);
+      path.setAttribute('stroke-dashoffset', '0');
+      path.setAttribute('opacity', String(gop + (op - gop) * k));
+      if (markerEl) markerEl.setAttribute('fill', CV.mix(color, CV.TONE.wire, k));
+      return path;
     }
   };
 

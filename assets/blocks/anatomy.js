@@ -1031,7 +1031,10 @@
     subTx(C, 30, 236, 'marker 随流染色 · 包沿前 8% 行程渐显（见 05）· 余晖是「刚送完」的记忆，ring 特例是「这条边还在被用」的记忆', '#939bb2', 9.5, 'start');
     h('p', 'specs', bSt).innerHTML =
       '<b>点亮 / 余辉</b> 点亮 0.30s（颜色渐变过去）；余辉保留数据色、比率各页不同' +
-      '（choreo 单流 40% · allgather/reduce 45% · allreduce/rs 42% · alltoall 30%）——编排级定数，全表见 13 章';
+      '（choreo 单流 40% · allgather/reduce 45% · allreduce/rs 42% · alltoall 30%）——编排级定数，全表见 13 章' +
+      '<br><b>箭头与线一体（2026-11-03 条款）</b>箭头 fill 与线 stroke 同源同色、同态变化：' +
+      '余辉结束不瞬跳回灰，按规范 04 的 <code>wireFade</code> 做一次「线 + 箭头」同插值渐变——' +
+      '出口唯一 <code>CV.wire.fade</code>（payload.js），调用方只报余辉终点时刻';
   })();
 
   /* ══════════════════════════════════════════════════════════
