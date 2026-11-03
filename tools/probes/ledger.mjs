@@ -1026,6 +1026,7 @@ const LINK = {
   '03-blockGap':  { group: '03-card', key: 'blockGap', set: 0.35, expect: 1.2 },   /* open+close 各 3×(+0.2) */
   '03-rowLull':   { group: '03-card', key: 'rowLull', set: 0.5, expect: 0.2 },
   '03-rowPause':  { group: '03-card', key: 'rowPause', set: 0.45, expect: 0.2 },
+  '03-preHold':   { group: '03-card', key: 'preHold', set: 0.8, expect: 0.4 },   /* 0.4→0.8：预留缓冲整页一次，+0.4 */
   '07-growDur':   { group: '07-calc', key: 'growDur', set: 0.95, expect: 0.6 },
   '07-holdDur':   { group: '07-calc', key: 'holdDur', set: 4, expect: 6.24 },
   '07-shrinkDur': { group: '07-calc', key: 'shrinkDur', set: 0.9, expect: 0.6 },
@@ -1038,7 +1039,7 @@ const LINK = {
 };
 const LINK_PAGE = {
   '03-cardDur': 'allreduce', '03-blockDur': 'allreduce', '03-blockGap': 'allreduce',
-  '03-rowLull': 'allreduce', '03-rowPause': 'allreduce',
+  '03-rowLull': 'allreduce', '03-rowPause': 'allreduce', '03-preHold': 'reduce',
   '07-growDur': 'reduce', '07-holdDur': 'reduce', '07-shrinkDur': 'reduce', '07-calcFade': 'reducescatter',
   '08-popDur': 'alltoall', '08-seatGap': 'alltoall', '08-popStagger': 'allreduce',
   '09-fuseDur': 'reduce', '09-mergeGap': 'reduce'
@@ -1092,7 +1093,7 @@ export async function check(pg) {
   /* 2026-11-02 对账定案：按 ledger.js 各行 pages 实际过滤计数（packDur 收窄 choreo 四页、
      revealDur 收窄 choreo 三页、dimDur 收窄 gather 后的自然值） */
   const EXPECT = { gather: 80, scatter: 79, broadcast: 79, allgather: 78,
-                   reduce: 101, allreduce: 102, reducescatter: 101, alltoall: 74 };
+                   reduce: 102, allreduce: 103, reducescatter: 102, alltoall: 74 };
   const diff = LGR.all().filter(function (x) {
     if (x.pages === 'demo') return false;
     if (rows.some(function (y) { return y.id === x.id; })) return false;
@@ -1144,9 +1145,9 @@ export async function check(pg) {
       out.fillBack = rect2 ? toHex(rect2.getAttribute('fill')) : null;
       return out;
     });
-    ok('6.1 外观页签在场（104 行渲染核）', !panel.err && panel.rows === 104,
+    ok('6.1 外观页签在场（105 行渲染核）', !panel.err && panel.rows === 105,
       panel.err || ('rows=' + panel.rows));
-    ok('6.2 默认锁定 · 解锁全放开', !panel.err && panel.locked0 === 104 && panel.locked1 === 0,
+    ok('6.2 默认锁定 · 解锁全放开', !panel.err && panel.locked0 === 105 && panel.locked1 === 0,
       panel.err || ('锁=' + panel.locked0 + ' → 解锁余锁=' + panel.locked1));
     /* 初始没有 A 块的页（reduce/allreduce 的 ghost 槽无 data-l）免 DOM 项——
        色链由有块的页验；rgb() 写值统一归一成 hex 再比 */
@@ -1167,7 +1168,7 @@ export async function check(pg) {
       var locked = document.querySelectorAll('.pc-row.locked').length;
       return { rows: rows, locked: locked };
     });
-    ok('6.5 锁不持久化（重开面板回锁）', lock2.rows === 104 && lock2.locked === 104,
+    ok('6.5 锁不持久化（重开面板回锁）', lock2.rows === 105 && lock2.locked === 105,
       '重开 rows=' + lock2.rows + ' 锁=' + lock2.locked);
   }
   if (pageId === 'visual') {
@@ -1179,7 +1180,7 @@ export async function check(pg) {
       var locked = document.querySelectorAll('.param-dock .pc-row.locked').length;
       return { rows: rows, locked: locked };
     });
-    ok('6.6 抽屉在场（与齿轮同核）· 默认锁定', !drawer.err && drawer.rows === 104 && drawer.locked === 104,
+    ok('6.6 抽屉在场（与齿轮同核）· 默认锁定', !drawer.err && drawer.rows === 105 && drawer.locked === 105,
       drawer.err || ('rows=' + drawer.rows + ' 锁=' + drawer.locked));
     const scope = await pg.evaluate(function () {
       var active = document.querySelector('.sec.is-active .sec-no');

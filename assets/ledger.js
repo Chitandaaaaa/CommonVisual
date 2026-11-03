@@ -58,6 +58,7 @@
       { id: '03-blockGap', t: 'D', name: '块间隔',     en: 'blockGap', val: LIVE('03-card', 'blockGap', 's'), sec: '03', kw: '动态', pages: P8, chk: 'link' },
       { id: '03-rowLull',  t: 'D', name: '长够→放块',  en: 'rowLull', val: LIVE('03-card', 'rowLull', 's'), sec: '03', kw: '动态', pages: P8, chk: 'link' },
       { id: '03-rowPause', t: 'D', name: '撤完→收卡',  en: 'rowPause', val: LIVE('03-card', 'rowPause', 's'), sec: '03', kw: '动态', pages: P8, chk: 'link' },
+      { id: '03-preHold',  t: 'D', name: '末格→下一步', en: 'preHold', val: LIVE('03-card', 'preHold', 's'), sec: '03', kw: '动态', pages: P3, chk: 'link' },
       { id: '03-size',     t: 'Y', name: '卡片尺寸（桌面 / 窄屏）', en: 'drawCard · GEO', val: '300×170 / 146×126', sec: '03', kw: '', pages: P8, chk: 'truth' },
       { id: '03-hdr',      t: 'Y', name: '卡头高',     en: 'drawCard', val: '36 / 28', sec: '03', kw: '', pages: P8, chk: 'truth' },
       { id: '03-titleFs',  t: 'Y', name: '标题字号',   en: 'drawCard · SVG 属性', val: '15 / 12.5', sec: '03', kw: '', pages: P8, chk: 'truth' },

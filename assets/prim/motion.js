@@ -30,14 +30,16 @@
      rowLull 0.3 / rowPause 0.25，调试台可调）。 */
   function rowSpec() {
     return { cardDur: CV.spec('cardDur'), blockDur: CV.spec('blockDur'), blockGap: CV.spec('blockGap'),
-             lull: CV.spec('rowLull'), pause: CV.spec('rowPause') };
+             lull: CV.spec('rowLull'), pause: CV.spec('rowPause'), preHold: CV.spec('preHold') };
   }
 
   CV.rowSpan = function (n) {
     var S = rowSpec(), step = S.blockDur + S.blockGap;
     var blocks = (n - 1) * step + S.blockDur;
-    return { open: S.cardDur + S.lull + blocks, close: blocks + S.pause + S.cardDur,
-             blocks: blocks, cardDur: S.cardDur, step: step };
+    /* open 末尾挂 preHold（2026-11-03 新参）：末格显形后停一拍再进下一步，
+       预留缓冲与后续动作的衔接不再突兀；close 侧不加（撤完→收卡已有 rowPause） */
+    return { open: S.cardDur + S.lull + blocks + S.preHold, close: blocks + S.pause + S.cardDur,
+             blocks: blocks, cardDur: S.cardDur, step: step, preHold: S.preHold };
   };
 
   /* T = 这一步开始以来的秒数。g = 卡片高度进度 0→1，v[i] = 第 i 块的可见度 */

@@ -55,14 +55,16 @@
       anchor: 'sub-03-5',   /* 03 的第 5 个 h3 =「动态 · 卡片长高与数据块增减」（2026-11-01 拆 tab 后顺延） */
       groups: [
         { label: '耗时', keys: ['cardDur', 'blockDur'] },
-        { label: '节奏', keys: ['blockGap', 'rowLull', 'rowPause'] }
+        { label: '节奏', keys: ['blockGap', 'rowLull', 'rowPause'] },
+        { label: '预留', keys: ['preHold'] }
       ],
       keys: {
         cardDur:  { label: '卡片伸缩', unit: 's', def: 0.8,  min: 0.3, max: 3,   step: 0.05, chk: 'link' },
         blockDur: { label: '单块时长', unit: 's', def: 0.4,  min: 0.1, max: 1.5, step: 0.05, chk: 'link' },
         blockGap: { label: '块间隔',   unit: 's', def: 0.15, min: 0,   max: 0.6, step: 0.01, chk: 'link' },
         rowLull:  { label: '长够→放块', unit: 's', def: 0.3,  min: 0,   max: 1,   step: 0.05, chk: 'link' },
-        rowPause: { label: '撤完→收卡', unit: 's', def: 0.25, min: 0,   max: 1,   step: 0.05, chk: 'link' }
+        rowPause: { label: '撤完→收卡', unit: 's', def: 0.25, min: 0,   max: 1,   step: 0.05, chk: 'link' },
+        preHold:  { label: '末格→下一步', unit: 's', def: 0.4, min: 0,   max: 1.5, step: 0.05, chk: 'link' }
       }
     },
     '05-packet': {

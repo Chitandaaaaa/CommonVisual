@@ -213,6 +213,8 @@
       rows.push([b0, b0 + CV.dur('blockDur') / SPD, '第二排-' + (k + 1) + ' · 显形',
         k === 0 ? '接收位（紫底 ···）' : '接收位']);
     }
+    /* preHold（2026-11-03 新参）：末格显形后停一拍再进下一步 */
+    rows.push(rest(p + TM.prealloc - RS.preHold, p + TM.prealloc, '末格已亮，停一拍'));
     out.push(G('第 2 步 · 预留缓冲', p, p + TM.prealloc, rows));
 
     CH.flows.forEach(function (f, k) {
@@ -270,7 +272,7 @@
           k === 0 ? '接收位（紫底 ···）' : '接收位']);
       }
       if (scene.narr.rest.open) {
-        rows.push(rest(x + RS.open, end, scene.narr.rest.open));
+        rows.push(rest(x + RS.open - RS.preHold, end, scene.narr.rest.open));
       }
       return rows;
     }
@@ -341,6 +343,7 @@
       rows.push([b0, b0 + CV.dur('blockDur') / SPD, '第二排-' + (k + 1) + ' · 显形',
         k === 0 ? '接收位（紫底 ···）' : '接收位']);
     }
+    rows.push(rest(AT.open.e - RS.preHold, AT.open.e, '末格已亮，停一拍'));
     out.push(G('第 2 步 · 预留两排', p, AT.open.e, rows));
 
     function roundRows(q, fly, seat, calc, merge, dly) {

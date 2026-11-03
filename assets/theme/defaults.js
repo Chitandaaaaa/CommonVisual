@@ -7,7 +7,8 @@ window.CV_PARAM_DEFAULTS = {
     "blockDur": 0.4,
     "blockGap": 0.15,
     "rowLull": 0.3,
-    "rowPause": 0.25
+    "rowPause": 0.25,
+    "preHold": 0.4
   },
   "04-wire": {
     "wireW": 2,
