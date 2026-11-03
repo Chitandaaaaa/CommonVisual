@@ -418,7 +418,7 @@
       <table class="lex">
         <thead><tr><th>名词</th><th>定义 &amp; 视觉后果</th><th>反直觉点</th><th>时长</th></tr></thead>
         <tbody>
-          <tr class="act"><td class="nm">变暗</td><td>卡整体不透明度 → 60%，表示它正在交出数据。</td><td>只有 gather 有；其余页用「交空」表示消耗</td><td class="mono">0.30s</td></tr>
+          <tr class="act"><td class="nm">强调</td><td>发送卡描边亮成该趟数据色（与连线同色）+ 轻 glow，落位复原。</td><td>发送是动作该<b>突出</b>而非压暗（2026-11-03 重设计）；ring 页每轮全员发送、不强调；其余页用「交空」表示消耗</td><td class="mono">0.30s</td></tr>
           <tr class="act"><td class="nm">复原</td><td>卡不透明度 → 100%。</td><td>在<b>包抵达</b>那一刻开始，不是落位时</td><td class="mono">0.30s</td></tr>
           <tr class="act"><td class="nm">交空</td><td>送出方那一格立刻变空（1 格或 4 格同时）。</td><td>是「消耗」，不是搬走后又长回来</td><td class="mono">瞬时</td></tr>
           <tr class="act"><td class="nm">显形</td><td>从不可见淡入为空格或接收位。</td><td>显形的是「位置」，不是数据</td><td class="mono">0.32s</td></tr>

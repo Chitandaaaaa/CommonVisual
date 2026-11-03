@@ -214,9 +214,11 @@
   };
 
   /* —— gather：目标卡 4 格，count 从 1 起跳（A 一开始就在）；在飞的那格显示占位 —— */
-  /* 发送中变暗（方案 A 全站生效）：本卡作为发出方、其包尚在飞行 → 暗，否则复原。
-     choreo 页看 scene.beats 的 move/copy 窗口；alltoall 看 CH.flows 分步。 */
-  verbs.move.dimCards = function (S, scene, CH, sec) {
+  /* 发送强调（方案 A 变暗的替代，#4 重设计）：本卡作为发出方、其包尚在
+     飞行 → 描边亮起该卡数据色（与连线同色），否则复原。
+     choreo 页看 scene.beats 的 move/copy 窗口；alltoall 看 CH.flows 分步。
+     ring 页不调用（每轮全员发送，强调无信息量——2026-11-03 拍板豁免）。 */
+  verbs.move.focusCards = function (S, scene, CH, sec) {
     Object.keys(S.cards).forEach(function (rk) {
       var r = Number(rk);
       var sending = false;
@@ -234,7 +236,14 @@
         if (sec >= rd2.start && sec < rd2.arrive &&
             list.some(function (fl) { return fl.from === r; })) sending = true;
       });
-      CV.beat.dim(S.cards[r], sending);
+      var g = S.cards[r].g;
+      if (sending && g.getAttribute('data-send') !== '1') {
+        g.setAttribute('data-send', '1');
+        CV.beat.sendFocus(S.cards[r], P(r).color, true);
+      } else if (!sending && g.getAttribute('data-send') === '1') {
+        g.removeAttribute('data-send');
+        CV.beat.sendFocus(S.cards[r], null, false);
+      }
     });
   };
 
@@ -269,7 +278,7 @@
     });
 
     /* 卡片透明度：发送中 .6，其余每帧写回 1（与旧页同一条写入路径） */
-    verbs.move.dimCards(S, scene, CH, sec);   /* 方案 A：发送中变暗全站生效 */
+    verbs.move.focusCards(S, scene, CH, sec);   /* 发送强调（#4）：描边亮数据色 */
     Object.keys(S.cards).forEach(function (rk) {
       var r = Number(rk);
     });
@@ -293,7 +302,7 @@
 
   /* —— scatter：源卡逐段腾空；目标卡就绪前隐藏 → 在飞占位 → 落位 —— */
   verbs.move.overlayScatter = function (S, scene, CH, sec) {
-    verbs.move.dimCards(S, scene, CH, sec);   /* 方案 A：发送中变暗全站生效 */
+    verbs.move.focusCards(S, scene, CH, sec);   /* 发送强调（#4）：描边亮数据色 */
     var seenM = verbs.move.seenMap();
     var readyAt = scene.preAt ? CH.win[scene.preAt].s : 0;
     var source = scene.target;   /* scatter 的 target 字段存的是「源」rank */
@@ -344,7 +353,7 @@
 
   /* —— allgather：own / done / waiting / empty 四态；徽章 n/4；一批四块齐弹 —— */
   verbs.move.overlayRing = function (S, scene, CH, sec) {
-    verbs.move.dimCards(S, scene, CH, sec);   /* 方案 A：发送中变暗全站生效 */
+    /* ring 豁免发送强调：每轮四卡全是发送方（2026-11-03 拍板） */
     var seenM = verbs.move.seenMap();
     var ROUNDS = scene.rounds || 3;
     var preAt = scene.preAt ? CH.win[scene.preAt].s : 0;   /* 预留缓冲前空槽看不见 */
@@ -566,7 +575,7 @@
     var areaY = L.hdr, areaH = L.card.h - L.hdr - 16;
     var padTop = (areaH - blockH) / 2;
 
-    verbs.move.dimCards(S, scene, CH, sec);   /* 方案 A：发送中变暗全站生效 */
+    verbs.move.focusCards(S, scene, CH, sec);   /* 发送强调（#4）：描边亮数据色 */
     Object.keys(S.cards).forEach(function (rk) {
       var r = Number(rk);
       /* 徽章看下排（结果排）：轮到自己当接收方才 0/4 → 4/4 */

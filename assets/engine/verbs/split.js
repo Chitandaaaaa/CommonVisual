@@ -519,9 +519,9 @@
           CV.payload.place(p, w, lead + ep * (1 - lead));
           CV.wire.paint(w.path, 'lit', col);
           CV.wire.arrow(w.marker, col);
-          CV.beat.dim(S.cards[r], true);   /* 方案 A：发送中变暗全站生效 */
+          CV.beat.sendFocus(S.cards[r], col, true);   /* 发送强调（#4） */
         } else if (fading) {
-          CV.beat.dim(S.cards[r], false);
+          CV.beat.sendFocus(S.cards[r], null, false);
           CV.payload.place(p, w, 1);
           CV.payload.fadeOut(p, sec - fw.e, PACKFADE);
           CV.wire.paint(w.path, 'glow', col);
@@ -531,7 +531,7 @@
           /* 余辉计时回灰（orch·trailRatio）：抵达后保留数据色 ratio×飞行时长 */
           var residS = (fw.e - fw.s) * CV.spec('trailRatio');
           var glowingS = sec - fw.e <= residS;
-          CV.beat.dim(S.cards[r], false);
+          CV.beat.sendFocus(S.cards[r], null, false);
           p.g.setAttribute('opacity', '0');
           if (done) {
             CV.wire.paint(w.path, 'done', DEEP); CV.wire.arrow(w.marker, DEEP);
@@ -543,7 +543,7 @@
             CV.wire.paint(w.path, 'idle'); CV.wire.arrow(w.marker, null);
           }
         } else {
-          CV.beat.dim(S.cards[r], false);
+          CV.beat.sendFocus(S.cards[r], null, false);
           p.g.setAttribute('opacity', '0');
           CV.wire.paint(w.path, 'idle');
           CV.wire.arrow(w.marker, null);

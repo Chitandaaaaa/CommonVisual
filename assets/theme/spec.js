@@ -163,12 +163,12 @@
       label: '编排·衔接',
       anchor: 'sub-00-1',   /* 00 章总表（2026-11-02 收编：原「编排级定数」纸面清单入册） */
       groups: [
-        { label: '衔接', keys: ['dimDur', 'revealDur'] },
+        { label: '衔接', keys: ['focusDur', 'revealDur'] },
         { label: '飞行', keys: ['takeoffFade', 'trailRatio'] },
         { label: '时序', keys: ['seatDelay'] }
       ],
       keys: {
-        dimDur:      { label: '变暗/复原', unit: 's', def: 0.3,  min: 0.1, max: 1,   step: 0.05, sink: 'css', chk: 'link' },
+        focusDur:    { label: '强调/复原', unit: 's', def: 0.3,  min: 0.1, max: 1,   step: 0.05, sink: 'css', chk: 'link' },
         revealDur:   { label: '显形时长', unit: 's', def: 0.32, min: 0.1, max: 1,   step: 0.02, sink: 'css', chk: 'link' },
         takeoffFade: { label: '起飞渐显', unit: '',  def: 0.08, min: 0.02, max: 0.5, step: 0.01, chk: 'link' },
         /* 余辉比率：抵达后线保留数据色的时长 = 飞行时长 × 此值，随后回灰。

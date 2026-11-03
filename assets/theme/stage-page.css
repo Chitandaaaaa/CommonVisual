@@ -213,7 +213,8 @@ body {
 /* 过程过渡的时长与字幕数据色一律走 --cv-<键>：spec.js 里 sink='css'|'both' 的键
    由 theme.js 开机写进 :root，调试台改完即时生效。这里不写裸秒 / 裸色值（5.1d 扫）。
    悬停聚焦 / hover 反馈是交互不是过程，保留字面量，不入表。 */
-.gpu-card { transition: opacity var(--cv-dimDur) ease; }
+.gpu-card { transition: filter var(--cv-focusDur) ease; }
+.gpu-card[data-send="1"] .card-base { stroke-width: 2.5; }
 /* 字号一律由绘制函数按 GEO 写在属性上（标题 15/12.5、徽章 10/8.5、块内字母 .33 × 块高）。
    CSS 只负责字体族与字重 —— 这里再写 font-size 会盖掉属性，窄屏就会顶着桌面的字号。 */
 .gpu-title {

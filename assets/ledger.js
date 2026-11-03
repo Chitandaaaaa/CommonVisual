@@ -69,7 +69,7 @@
       { id: '03-badgeRx',  t: 'Y', name: '徽章圆角',   en: 'badgeGeo', val: '6', sec: '03', kw: '徽章', pages: P8, chk: 'truth' },
       { id: '03-badgeBg',  t: 'Y', name: '徽章底色',   en: 'badgeGeo', val: '26% 白', sec: '03', kw: '徽章', pages: P8, chk: 'truth' },
       { id: '03-badgeText',t: 'Y', name: '徽章文字色', en: 'badgeGeo', val: '白 mono', sec: '03', kw: '徽章', pages: P8, chk: 'truth' },
-      { id: '03-dimOp',    t: 'Y', name: '发送中变暗（透明度）', en: 'CV.beat.dim', val: '.6（传播中唯一全卡信号）', sec: '03', kw: '', pages: P8, chk: 'unit' },
+      { id: '03-sendOp',   t: 'Y', name: '发送强调（描边+glow）', en: 'CV.beat.sendFocus', val: '描边=线色 + drop-shadow（#4 重设计）', sec: '03', kw: '', pages: P8, chk: 'unit' },
       { id: '03-target',   t: 'Y', name: '目标卡描边', en: 'drawCard · target', val: 'dst 加深', sec: '03', kw: '', pages: P8, chk: 'truth' }
     ] },
     { g: '04 · 连线与箭头', rows: [
@@ -143,7 +143,8 @@
       { id: '11-layers', t: 'Y', name: '层叠次序', en: 'engine/stage', val: '卡 < 块 < 连线 < 包 < 标签', sec: '11', kw: '', pages: P8, chk: 'truth' }
     ] },
     { g: '编排 · 衔接（跨页 · orch 组）', rows: [
-      { id: 'OR-dimDur',    t: 'D', name: '变暗 / 复原时长', en: 'dimDur · orch 组', val: LIVE('orch', 'dimDur', 's'), sec: '03', kw: '', pages: ['gather'], chk: 'link' },
+      { id: 'OR-focusDur',  t: 'D', name: '强调 / 复原时长', en: 'focusDur · orch 组', val: LIVE('orch', 'focusDur', 's'), sec: '03', kw: '', pages: ['gather'], chk: 'link' },
+      { id: 'OR-sendFocus', t: 'Y', name: '发送强调：仅发送卡、ring 豁免', en: 'sendFocus（样板条款 #2）', val: '飞行中发送卡描边=线色；allgather 全程无强调', sec: '03', kw: '', pages: ['gather', 'allgather'], chk: 'truth' },
       { id: 'OR-revealDur', t: 'D', name: '显形时长', en: 'revealDur · orch 组', val: LIVE('orch', 'revealDur', 's'), sec: '03', kw: '', pages: CHOREO, chk: 'link' },
       { id: 'OR-wireLit',   t: 'D', name: '点亮时长（解说层）', en: 'narration.js · css .wire', val: '0.30s', sec: '04', kw: '', pages: P8, chk: 'src' },
       { id: 'OR-recv',      t: 'D', name: '转接收位（解说层）', en: 'narration.js', val: '0.30s', sec: '02', kw: '', pages: P8, chk: 'src' },

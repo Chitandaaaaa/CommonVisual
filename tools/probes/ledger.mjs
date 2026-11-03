@@ -436,17 +436,22 @@ C['03-badgeText'] = async function (pg, r, ok) {
   const m = await cardMetrics(pg);
   ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, ['#fff', '#ffffff'].indexOf((m.badgeTextFill || '').toLowerCase()) >= 0, '文字色 ' + m.badgeTextFill + '（期望白）');
 };
-C['03-dimOp'] = async function (pg, r, ok) {
+C['03-sendOp'] = async function (pg, r, ok) {
   const res = await pg.evaluate(function () {
     var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    CV.beat.dim({ g: g }, true);
-    var on = g.getAttribute('opacity');
-    CV.beat.dim({ g: g }, false);
-    var off = g.getAttribute('opacity');
-    return { on: on, off: off };
+    var base = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    base.setAttribute('class', 'card-base');
+    g.appendChild(base);
+    CV.beat.sendFocus({ g: g }, '#123456', true);
+    var onStroke = base.style.stroke, onGlow = g.style.filter;
+    CV.beat.sendFocus({ g: g }, null, false);
+    return { onStroke: onStroke, onGlow: onGlow, offStroke: base.style.stroke, offGlow: g.style.filter };
   });
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, res.on === '.6' && res.off === '1', 'beat.dim → ' + res.on + ' / 复原 ' + res.off);
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name,
+    !!res.onStroke && res.onGlow.indexOf('drop-shadow') === 0 && !res.offStroke && !res.offGlow,
+    'sendFocus → 描边 ' + res.onStroke + ' / glow ' + (res.onGlow ? 'on' : 'off') + ' / 复原 ' + (res.offStroke === '' && res.offGlow === ''));
 };
+C['OR-dimDur'] = C['OR-dimDur'];
 C['03-target'] = async function (pg, r, ok) {
   const res = await pg.evaluate(function () {
     var cards = document.querySelectorAll('.gpu-card .card-base');
@@ -577,6 +582,30 @@ C['04-markerFollow'] = async function (pg, r, ok) {
   });
   const wire = await specOf(pg, 'toneWire');
   ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, !!v && v !== wire, '飞行中 marker fill=' + v + '（随数据色，表值 ' + wire + '）');
+};
+
+/* OR-sendFocus：发送强调样板条款（#4）——强调仅作用于发送卡；
+   ring 页每轮全员发送，不强调（2026-11-03 拍板） */
+C['OR-sendFocus'] = async function (pg, r, ok) {
+  await mounted(pg);
+  const id = await pg.evaluate(() => decodeURIComponent(location.pathname.split('/').pop()).replace(/\.html$/, ''));
+  const ch = await pg.evaluate(() => {
+    const c = CV.lastMount.getCh();
+    const b = (c.items || []).find(x => x.kind === 'transfer' || x.kind === 'copy');
+    if (b) return { mid: (b.s + (b.travelEnd != null ? b.travelEnd : b.e)) / 2, total: c.total };
+    const r0 = c.rounds && c.rounds[0];
+    return { mid: (r0.start + r0.arrive) / 2, total: c.total };
+  });
+  await pg.evaluate((t) => { const M = CV.lastMount; M.controls.setPlaying(false); M.controls.seek(t / M.getCh().total); }, ch.mid);
+  await pg.waitForTimeout(250);
+  const on = await pg.evaluate(() =>
+    [...document.querySelectorAll('.gpu-card[data-send="1"]')].map(g => g.getAttribute('data-card')));
+  const any = on.length > 0;
+  let pass;
+  if (id === 'allgather') pass = !any;
+  else pass = any;
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, pass,
+    id + ' 飞行中 data-send 卡 = [' + on.join(',') + ']（' + (id === 'allgather' ? '要求空=ring 豁免' : '要求非空') + '）');
 };
 
 /* 05 数据包 */
@@ -896,16 +925,16 @@ async function narrateRow(pg, kw) {
     return row ? [row.s, row.e] : null;
   }, kw);
 }
-C['OR-dimDur'] = async function (pg, r, ok) {
+C['OR-focusDur'] = async function (pg, r, ok) {
   await mounted(pg);
-  const a = await narrateRow(pg, '变暗');
-  await setP(pg, 'orch', 'dimDur', 0.6);
+  const a = await narrateRow(pg, '强调');
+  await setP(pg, 'orch', 'focusDur', 0.6);
   await reloadMount(pg);
-  const b = await narrateRow(pg, '变暗');
+  const b = await narrateRow(pg, '强调');
   await resetP(pg); await reloadMount(pg);
   const spanA = a ? Math.round((a[1] - a[0]) * 100) / 100 : null;
   const spanB = b ? Math.round((b[1] - b[0]) * 100) / 100 : null;
-  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, spanA === 0.3 && spanB === 0.6, '变暗行时长 ' + spanA + ' → 改后 ' + spanB + '（期望 .3→.6）');
+  ok('5.' + NO[r.id] + ' ' + r.id + ' ' + r.name, spanA === 0.3 && spanB === 0.6, '强调行时长 ' + spanA + ' → 改后 ' + spanB + '（期望 .3→.6）');
 };
 C['OR-revealDur'] = async function (pg, r, ok) {
   await mounted(pg);
@@ -1091,7 +1120,7 @@ export async function check(pg) {
   const rows = LGR.forPage(pageId);
   /* 2026-11-02 对账定案：按 ledger.js 各行 pages 实际过滤计数（packDur 收窄 choreo 四页、
      revealDur 收窄 choreo 三页、dimDur 收窄 gather 后的自然值） */
-  const EXPECT = { gather: 80, scatter: 79, broadcast: 79, allgather: 78,
+  const EXPECT = { gather: 81, scatter: 79, broadcast: 79, allgather: 79,
                    reduce: 102, allreduce: 102, reducescatter: 102, alltoall: 74 };
   const diff = LGR.all().filter(function (x) {
     if (x.pages === 'demo') return false;

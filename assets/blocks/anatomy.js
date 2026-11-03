@@ -23,7 +23,7 @@
 
    00 规范总账（2026-11-02 定稿）：全页唯一一章「列账不画图」——
    全量可改项总表（动效 39 + 样式 34 = 73 行，LEDGER 单源），点行跳章；
-   原编排级定数清单收编为参数表 orch 组（dimDur / revealDur / takeoffFade / seatDelay），
+   原编排级定数清单收编为参数表 orch 组（focusDur / revealDur / takeoffFade / seatDelay），
    原 12 两套尺寸 / 13 施工约定两章删除 —— 尺寸在各组件章、规矩拆成各章末
    「想改 → 去哪改」入口行（ENTRY_LINES）。
    ============================================================ */
@@ -694,11 +694,12 @@
       subTx(g, x1, 232, '窄屏一张卡只放一个块：四个块要 115px，内容区只有 114px', '#939bb2', 9, 'start');
     }
 
-    /* ── 发送中变暗：CV.beat.dim(card, on) —— 传播中唯一的全卡可视信号 ──
-       自己的包在天上就整卡降到 .6，落位回 1（gather 页的 overlayGather 同一条路径）。 */
+    /* ── 发送强调：CV.beat.sendFocus(card, color, on) —— 描边亮线色 + 轻 glow（#4 重设计）┚
+       自己的包在天上，卡描边就亮成该趟数据色（与连线同色，卡线一体），落位复原。
+       旧「变暗」退役：发送是动作该突出强调；ring 页全员发送不强调（调用方豁免）。 */
     function drawDim(host) {
       var A = demo(host, 620, 178,
-        '发送中的卡片整体降到 60% 不透明度：左边的卡正常，右边的卡正在发送');
+        '发送中的卡片描边亮成线色并带轻 glow：左边的卡正常，右边的卡正在发送');
       var c1 = CV.drawCard(A, {
         key: 0, geo: { x: 60, y: 44, w: 180, h: 106 }, color: DATA[0].color,
         title: 'rank 0', role: 'src', hdr: 30, titleSize: 11.5, badgeSize: 8.5
@@ -707,10 +708,10 @@
         key: 1, geo: { x: 360, y: 44, w: 180, h: 106 }, color: DATA[1].color,
         title: 'rank 1', role: 'src', hdr: 30, titleSize: 11.5, badgeSize: 8.5
       });
-      CV.beat.dim(c2, true);                     /* 整卡 opacity .6 —— 与 gather 页同一条写入路径 */
-      subTx(A, 150, 30, '平时 · opacity 1', '#5f6780', 10);
-      subTx(A, 450, 30, '发送中 · opacity .6', '#5f6780', 10);
-      subTx(A, 40, 172, 'CV.beat.dim(card, on)：包起飞即变暗、落位回 1 —— 数据正在离开谁，一眼可辨', '#939bb2', 9.5, 'start');
+      CV.beat.sendFocus(c2, DATA[1].color, true);   /* 描边+glow —— 与 gather 页同一条写入路径 */
+      subTx(A, 150, 30, '平时 · 默认描边', '#5f6780', 10);
+      subTx(A, 450, 30, '发送中 · 描边=线色', '#5f6780', 10);
+      subTx(A, 40, 172, 'CV.beat.sendFocus(card, color, on)：包起飞即亮描边、落位复原 —— 数据正在离开谁，一眼可辨', '#939bb2', 9.5, 'start');
     }
 
     /* ── 动态拆成两个场景：一排变两排 / 两排变一排 ──

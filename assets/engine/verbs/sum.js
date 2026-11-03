@@ -308,11 +308,11 @@
       }
     });
 
-    /* 源卡：交出去就不再留着（消耗语义）；发送中变暗（方案 A 全站生效） */
+    /* 源卡：交出去就不再留着（消耗语义）；发送强调（#4：描边=线色=整份包色） */
     [1, 2, 3].forEach(function (r) {
       var f = flows[r - 1];
       var off = sec >= f.start;   /* 交出 = 消耗：包一离开这一格就空（不是等到达） */
-      CV.beat.dim(S.cards[r], sec >= f.start && sec < f.arrive);
+      CV.beat.sendFocus(S.cards[r], DATA[0].color, sec >= f.start && sec < f.arrive);
       S.chips[r].forEach(function (s, i) {
         CV.cast.set(s, off ? null : DATA[i], {});
       });
@@ -799,7 +799,7 @@
           CV.payload.place(p, W, e);
           CV.wire.paint(W.path, 'lit', color);
           CV.wire.arrow(W.marker, color);
-          CV.beat.dim(S.cards[f.from], true);   /* 方案 A：发送中变暗全站生效 */
+          CV.beat.sendFocus(S.cards[f.from], color, true);   /* 发送强调（#4） */
         } else if (sec >= R.arrive) {
           var allDone = sec >= ROUNDS[1].end;
           /* 余辉计时回灰（orch·trailRatio）：抵达后保留数据色 ratio×飞行时长，
@@ -807,7 +807,7 @@
           var residAR = (R.arrive - R.start) * CV.spec('trailRatio');
           var glowingAR = sec - R.arrive <= residAR;
           var roundDone = sec >= R.end;
-          CV.beat.dim(S.cards[f.from], false);
+          CV.beat.sendFocus(S.cards[f.from], null, false);
           CV.payload.place(p, W, 1);
           CV.payload.fadeOut(p, sec - R.arrive);
           if (allDone) {
@@ -821,7 +821,7 @@
             CV.wire.paint(W.path, 'rest'); CV.wire.arrow(W.marker, null);
           }
         } else {
-          CV.beat.dim(S.cards[f.from], false);
+          CV.beat.sendFocus(S.cards[f.from], null, false);
           p.g.setAttribute('opacity', '0');
           CV.wire.paint(W.path, 'idle');
           CV.wire.arrow(W.marker, null);

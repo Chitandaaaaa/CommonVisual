@@ -15,10 +15,10 @@
   'use strict';
 
   /* ── 词表（steps.html §02.5）。value 只是给文档面板参考的规范/编排秒，参与校验的只有键。
-     注意：这里的秒都是 1× 基线文案 —— dimDur / revealDur / takeoffFade / 余辉比率
+     注意：这里的秒都是 1× 基线文案 —— focusDur / revealDur / takeoffFade / 余辉比率
      已入参数表（orch 组），杆改了词表文案不跟（steps §12.4：解说禁嵌参数插值）。 ── */
   CV.NARR_LEX = {
-    '变暗': '0.30s', '复原': '0.30s', '交空': '瞬时', '显形': '0.32s',
+    '强调': '0.30s', '复原': '0.30s', '交空': '瞬时', '显形': '0.32s',
     '转接收位': '0.30s', '点亮': '0.30s', '起飞': '行程前 8%', '飞行': '按编排',
     '抵达': '瞬时', '淡出': '0.60s（packFade）', '余辉': '瞬时',
     '落位': '瞬时', '弹跳': '0.55s', '长高': '0.80s / 0.75s',
@@ -39,7 +39,7 @@
   /* orch 组收编（2026-11-02）：显形 / 变暗复原 / 起飞渐显的时长从参数表现读，
      行的时间点依旧「锚点 + 动作时长」，参数改了重编译即跟变。 */
   function REVEAL() { return spec('revealDur'); }
-  function DIM() { return spec('dimDur'); }
+  function DIM() { return spec('focusDur'); }
   function TAKEOFF() { return CV.spec('takeoffFade'); }   /* 比例：分母已是缩放后的行程，不经 SPD（比值无纲） */
 
   /* ── 校验：词表 + 闭合。出错抛 Error（verify 的 problems 会回显）。 ── */
@@ -176,7 +176,7 @@
           : (scene.overlay === 'gather' ? cardName(scene, f.from[0]) : slotName(scene, f.from[0], f.from[1]));
         var slot = scene.overlay === 'gather' ? slotName(scene, f.to[0], f.to[1]) : cardName(scene, f.to[0]);
 
-        if (scene.overlay === 'gather') rows.push([s, s + DIM(), src + ' · 变暗', '60% 不透明']);
+        if (scene.overlay === 'gather') rows.push([s, s + DIM(), src + ' · 强调', '描边亮线色']);
         if (scene.overlay === 'scatter') rows.push([s, null, src + ' · 交空', '空格']);
         rows.push([s, s + 0.30 / SPD, wire + ' · 点亮', cw + '虚线']);
         rows.push([s, s + 0.30 / SPD, slot + ' · 转接收位' + (isCopy ? '（4 格）' : ''), '紫底 ···']);

@@ -260,7 +260,19 @@
   CV.createMerge = CV.beat.fuse;
 
   /* ---------- B4 dim：正在发送的卡变暗（传播中的唯一可视信号） ---------- */
-  CV.beat.dim = function (card, on) {
-    card.g.setAttribute('opacity', on ? '.6' : '1');
+  /* 发送强调（2026-11-03 重设计，统一批次 #4）：发送卡描边变该趟数据色
+     （与连线同色，卡线一体）+ 轻 glow。旧「方案 A 变暗」退役——发送是
+     动作该突出强调，压暗方向反了；ring 页每轮全员发送、强调无信息量，
+     由调用方豁免。on=false 复原。过渡走 .card-base 既有 stroke 过渡 +
+     .gpu-card 的 filter 过渡（--cv-focusDur）。 */
+  CV.beat.sendFocus = function (card, color, on) {
+    var base = card.g.querySelector('.card-base');
+    if (on && color) {
+      if (base) { base.style.stroke = color; base.style.strokeWidth = '2.5'; }
+      card.g.style.filter = 'drop-shadow(0 0 5px ' + color + '88)';
+    } else {
+      if (base) { base.style.stroke = ''; base.style.strokeWidth = ''; }
+      card.g.style.filter = '';
+    }
   };
 })(window.CV = window.CV || {});

@@ -52,7 +52,7 @@ window.CV_PARAM_DEFAULTS = {
     "fuseTrail": 18
   },
   "orch": {
-    "dimDur": 0.3,
+    "focusDur": 0.3,
     "revealDur": 0.32,
     "takeoffFade": 0.08,
     "trailRatio": 0.4,

@@ -90,19 +90,27 @@ export async function check(pg) {
       `窗口最大重叠=${maxOv} 抽样(${sampled})最大=${worst}`);
   }
 
-  /* 3.6 传递中源卡变暗 0.6 */
+  /* 3.6 发送强调（2026-11-03 重设计）：飞行中源卡描边=线色（卡线一体），区间外复原 */
   {
     const w = W.r1;
     const midFly = sc((w.s + w.travelEnd) / 2, T);
     await seek(pg, midFly, 300);
-    const s1 = await scan(pg);
-    const dark = s1.cards.filter(c => c.k === 1)[0].op;
+    const s1 = await pg.evaluate(() => {
+      const g = [...document.querySelectorAll('.gpu-card[data-card="1"]')][0];
+      const b = g.querySelector('.card-base');
+      return { stroke: b.style.stroke, glow: g.style.filter, send: g.getAttribute('data-send') };
+    });
     const after = sc(w.travelEnd + (w.fadeEnd - w.travelEnd) / 2, T);
     await seek(pg, after, 300);
-    const s2 = await scan(pg);
-    const back = s2.cards.filter(c => c.k === 1)[0].op;
-    ok('3.6 传递中源卡变暗 0.6', Math.abs(dark - 0.6) < 0.01 && back === 1,
-      `飞行中=${dark} 区间外=${back}`);
+    const s2 = await pg.evaluate(() => {
+      const g = [...document.querySelectorAll('.gpu-card[data-card="1"]')][0];
+      const b = g.querySelector('.card-base');
+      return { stroke: b.style.stroke, glow: g.style.filter, send: g.getAttribute('data-send') };
+    });
+    ok('3.6 发送强调：描边亮线色、区间外复原',
+      !!s1.stroke && s1.send === '1' && s1.glow.indexOf('drop-shadow') === 0 &&
+      !s2.stroke && !s2.send,
+      `飞行中 stroke=${s1.stroke} glow=${s1.glow ? 'on' : 'off'} · 区间外 stroke=${s2.stroke || '复原'}`);
   }
 
   /* 3.7 / 3.8 终态 */
