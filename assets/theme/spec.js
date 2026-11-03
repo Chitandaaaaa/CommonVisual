@@ -131,12 +131,11 @@
       anchor: 'sub-08-1',
       groups: [
         { label: '耗时', keys: ['popDur'] },
-        { label: '节奏', keys: ['seatGap', 'popStagger'] }
+        { label: '节奏', keys: ['seatGap'] }
       ],
       keys: {
         popDur:     { label: '弹跳时长', unit: 's', def: 0.55, min: 0.1, max: 1.5, step: 0.05, sink: 'both' , chk: 'link' },
         seatGap:    { label: '多块错峰', unit: 's', def: 0.5,  min: 0,    max: 0.8, step: 0.01, chk: 'link' },
-        popStagger: { label: '同批错峰', unit: 's', def: 0.12, min: 0,    max: 0.4, step: 0.01, chk: 'link' }
       }
     },
     '09-merge': {

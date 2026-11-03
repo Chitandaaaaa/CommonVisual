@@ -115,7 +115,6 @@
     { g: '08 · 落位弹跳', rows: [
       { id: '08-popDur',    t: 'D', name: '弹跳时长', en: 'popDur', val: LIVE('08-seat', 'popDur', 's'), sec: '08', kw: '', pages: P8, chk: 'link' },
       { id: '08-seatGap',   t: 'D', name: '多块错峰', en: 'seatGap', val: LIVE('08-seat', 'seatGap', 's'), sec: '08', kw: '', pages: P8, chk: 'link' },
-      { id: '08-popStagger',t: 'D', name: '同批错峰', en: 'popStagger', val: LIVE('08-seat', 'popStagger', 's'), sec: '08', kw: '', pages: ['allreduce'], chk: 'link', note: '退役（2026-11-03 齐弹拍板）：无页面消费，Δ 恒 0，参数保留备用' },
       { id: '08-curve',     t: 'Y', name: '弹跳曲线（全站单源）', en: 'CV.POP_CURVE · beat.js', val: '0% .35 → 55% 1.16 → 100% 1 · 缓动 1.45', sec: '08', kw: '', pages: P8, chk: 'unit' },
       { id: '08-ring',      t: 'Y', name: '涟漪开关', en: 'CV.SHOW_RING', val: 'false（定稿不显示）', sec: '08', kw: '', pages: P8, chk: 'truth' }
     ] },
