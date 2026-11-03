@@ -33,8 +33,10 @@ CV.scene('allgather', (function () {
     preset: 'grid',
     overlay: 'ring',            /* 槽位四态：own / done / waiting / empty */
     wireStyle: 'ring',
+    seatPop: '齐弹',             /* 传递类型 = 齐传（并行单传）：落位弹跳（齐弹） */
     rounds: 3,
     parts: 4,
+    preAt: 'open',              /* 「预留缓冲」这一步开始时，空槽显形 */
 
     cards: [
       { rank: 0, badgeText: '1/4' },
@@ -52,7 +54,8 @@ CV.scene('allgather', (function () {
     /* 逐动作解说的静止行文案（docs/steps.html）；轮内收包/块数由 flows 现推 */
     narr: {
       rest: {
-        intro: '四张卡各 1 块（A / B / C / D）+ 3 个空格；4 条环边灰色',
+        intro: '四张卡各 1 块（A / B / C / D），3 个空格看不见；4 条环边灰色',
+        open: '四张卡各 1 块 + 3 个空格；4 条环边灰色',
         tail: '四张卡四格满 A B C D；4 条环边余辉'
       }
     },
@@ -69,6 +72,9 @@ CV.scene('allgather', (function () {
       { id: 'intro', kind: 'wait', label: '说明', sec: 0.9,
         text: rk(0) + rk(1) + rk(2) + rk(3) + ' 各持一段 ' + whole() },
 
+      { id: 'open', kind: 'wait', label: '预留缓冲', sec: 0.6,
+        text: '四张卡各亮出 3 个空格（接收位）' },
+
       /* 三轮：流由上面的环算法推导（数据，不是绘制逻辑）；键名按时序标准 1 起。
          同轮四包同飞，落位就同弹（2026-11-01 拍板，规范 08 双口径）：
          不声明 stagger，pop 段即单颗 popDur；弹跳段扩宽机制（compile.js）
@@ -78,7 +84,7 @@ CV.scene('allgather', (function () {
       { id: 'r2', kind: 'move', label: '第 2 轮', text: '第 2 轮：顺时针各发一份', flows: ROUND_FLOWS[1] },
       { id: 'r3', kind: 'move', label: '第 3 轮', text: '第 3 轮：顺时针各发一份', flows: ROUND_FLOWS[2] },
 
-      { id: 'tail', kind: 'wait', label: '收尾', sec: 0.6,
+      { id: 'tail', kind: 'wait', label: '完成', sec: 0.6,
         text: '四张卡都集齐 ' + whole() }
     ],
 

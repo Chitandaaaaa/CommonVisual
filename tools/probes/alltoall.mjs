@@ -61,7 +61,7 @@ export async function check(pg) {
   /* 3.54 挂载四张卡 */
   ok('3.54 挂载四张卡', common.t0.cards.length === 4, `cards=${common.t0.cards.length}`);
 
-  /* 3.55 初始态上排四片、下排空 */
+  /* 3.55 初始态上排四片、下排看不见（2026-11-03 加预留缓冲步：显形前整排隐藏） */
   {
     const t0 = common.t0;
     let ok49 = true, d49 = '';
@@ -69,10 +69,27 @@ export async function check(pg) {
       const { up, dn } = rows(t0, r);
       const upOk = up.length === 4 && up.every((x, j) => x.l === PAL[r].letter && x.op === 1 &&
         new RegExp('^' + PAL[r].letter + j + '$').test(x.t));
-      const dnOk = dn.length === 4 && dn.every(x => !x.l && x.op === 1);
-      if (!upOk || !dnOk) { ok49 = false; d49 = `卡${r}: up=[${up.map(x => x.t)}] dn空=${dn.filter(x => x.l).length}`; break; }
+      const dnOk = dn.length === 4 && dn.every(x => !x.l && x.op === 0);
+      if (!upOk || !dnOk) { ok49 = false; d49 = `卡${r}: up=[${up.map(x => x.t)}] dn可见=${dn.filter(x => x.op > 0).length}`; break; }
     }
-    ok('3.55 初始态上排四片、下排空', ok49, d49 || '4 卡 × (上 4 片 + 下 4 空)');
+    ok('3.55 初始态上排四片、下排看不见', ok49, d49 || '4 卡 × (上 4 片 + 下 4 藏)');
+  }
+
+  /* 3.55b 预留缓冲后下排显形（4 空格可见，与全站预留步同态） */
+  {
+    const at = await pg.evaluate(() => {
+      const c = window.CV.lastMount.getCh();
+      return Math.round((c.win.open.e - 0.05) / c.total * 1000);
+    });
+    await seek(pg, at, 300);
+    const s = await scan(pg);
+    let ok50 = true, d50 = '';
+    for (let r = 0; r < 4; r++) {
+      const { dn } = rows(s, r);
+      const dnOk = dn.length === 4 && dn.every(x => !x.l && x.op === 1);
+      if (!dnOk) { ok50 = false; d50 = `卡${r}: dn可见=${dn.filter(x => x.op === 1).length}`; break; }
+    }
+    ok('3.55b 预留缓冲后下排显形', ok50, d50 || '4 卡下排 4 空格可见');
   }
 
   /* 3.56 每步 3 个包同发同一目标；全页 12 条流 */

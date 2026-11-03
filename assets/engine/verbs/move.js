@@ -330,11 +330,12 @@
     });
   };
 
-  /* —— allgather：own / done / waiting / empty 四态；徽章 n/4；一批四块逐个弹 —— */
+  /* —— allgather：own / done / waiting / empty 四态；徽章 n/4；一批四块齐弹 —— */
   verbs.move.overlayRing = function (S, scene, CH, sec) {
     verbs.move.dimCards(S, scene, CH, sec);   /* 方案 A：发送中变暗全站生效 */
     var seenM = verbs.move.seenMap();
     var ROUNDS = scene.rounds || 3;
+    var preAt = scene.preAt ? CH.win[scene.preAt].s : 0;   /* 预留缓冲前空槽看不见 */
 
     /* 剧本里 letter 是字母（'A'），引擎内部统一换成段下标 */
     function idxOf(letter) {
@@ -371,9 +372,9 @@
         if (st === 'own' || st === 'done') {
           CV.cast.set(s, { letter: DATA[i].letter, color: DATA[i].color }, {});
         } else if (st === 'waiting') {
-          CV.cast.set(s, null, { active: true });
+          CV.cast.set(s, null, { active: true, hidden: sec < preAt });
         } else {
-          CV.cast.set(s, null, {});
+          CV.cast.set(s, null, { hidden: sec < preAt });
         }
       });
     });
@@ -422,22 +423,25 @@
 
   verbs.move.timeline = function (scene) {
     var P4 = scene.parts || 4;
-    /* 齿轮行：说明/收尾独立，一步的三段四步共用。落位窗口是 of 行
-       （单颗 popDur + 3×seatGap 顺序到达错峰，分量全来自规范 08），
-       k 杆整窗缩放，动画的错峰间隔与单颗秒都从这行的分量现取——
+    /* 齿轮行（2026-11-03 全站统一）：说明/预留缓冲/完成独立，发送数据组的
+       四段四步共用。飞行行 = 纯飞行编排秒 + 送达淡出（规范现读）；落位弹跳
+       （错峰）是 of 行（单颗 popDur + 3×seatGap 顺序到达错峰，分量全来自
+       规范 08），k 杆整窗缩放，动画的错峰间隔与单颗秒都从这行的分量现取——
        不是写死字面量（P4 全站恒 4；改 parts 时 of 数组要跟着拼）。 */
+    var FADE = CV.spec('packFade');   /* 送达淡出并入飞行行，秒从规范现读 */
     var rIntro = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.9 });
-    var rFly   = CV.timeRow(scene.id, { key: 'fly', label: '飞行', sec: 0.95 });
-    var rFade  = CV.timeRow(scene.id, { key: 'fade', label: '送达淡出', of: 'packFade' });
+    var rOpen  = CV.timeRow(scene.id, { key: 'open', label: '预留缓冲', sec: 0.6 });
+    var rFly   = CV.timeRow(scene.id, { key: 'fly', label: '飞行（数据包）', sec: 0.95 + FADE });
     var rDly   = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.spec('seatDelay') });
-    var rSeat  = CV.timeRow(scene.id, { key: 'seat', label: '落位窗口',
+    var rSeat  = CV.timeRow(scene.id, { key: 'seat', label: '落位弹跳（错峰）',
       of: ['popDur', 'seatGap', 'seatGap', 'seatGap'], specLabel: '弹跳+错峰' });
-    var rGap   = CV.timeRow(scene.id, { key: 'gap', label: '步间停顿', sec: 0.4 });
-    var rTail  = CV.timeRow(scene.id, { key: 'tail', label: '收尾', sec: 0.6 });
-    rIntro.no = 1; rTail.no = P4 + 3;
+    var rGap   = CV.timeRow(scene.id, { key: 'gap', label: '轮歇', sec: 0.4 });
+    var rTail  = CV.timeRow(scene.id, { key: 'tail', label: '完成', sec: 0.6 });
+    rIntro.no = 1; rOpen.no = 2; rTail.no = P4 + 3;
 
-    var TM = { init: rIntro.sec, fly: rFly.sec, gap: rGap.sec,
-               fade: rFade.sec, delay: rDly.sec };
+    var TM = { init: rIntro.sec, open: rOpen.sec,
+               fly: rFly.sec - FADE, gap: rGap.sec,
+               fade: FADE, delay: rDly.sec };
     /* 顺序到达错峰（规范 08 双口径）：第 i 块比第 i−1 块晚 seatGap×k 起跳，
        最后一块弹跳收尾 == 窗口末（of 分量之和 == 行秒，恒自洽）。
        串行律（steps 2.6）：抵达→淡出完→停 0.5→才开始落位（包 B 拍板，全站一致）。 */
@@ -447,7 +451,7 @@
 
     var R = [];
     for (var q = 0; q < P4; q++) {
-      var start = (q === 0) ? TM.init : (R[q - 1].done + TM.gap);
+      var start = (q === 0) ? TM.init + TM.open : (R[q - 1].done + TM.gap);
       var arrive = start + TM.fly;
       var fadeEnd = arrive + TM.fade;
       var seatBase = fadeEnd + TM.delay;
@@ -457,11 +461,14 @@
     var TOTAL = R[P4 - 1].done + rTail.sec;
 
     var caps = scene.captions;
-    var PLAN = [{ id: 'intro', s: 0, e: TM.init, text: caps[0] }];
+    var PLAN = [
+      { id: 'intro', s: 0, e: TM.init, text: caps[0] },
+      { id: 'open', s: TM.init, e: TM.init + TM.open, text: caps[1] }
+    ];
     R.forEach(function (rd, q) {
-      PLAN.push({ id: 'r' + (q + 1), s: rd.start, e: rd.done, text: caps[q + 1] });
+      PLAN.push({ id: 'r' + (q + 1), s: rd.start, e: rd.done, text: caps[q + 2] });
     });
-    PLAN.push({ id: 'tail', s: TOTAL - 0.6, e: TOTAL, text: caps[P4 + 1] });
+    PLAN.push({ id: 'tail', s: TOTAL - 0.6, e: TOTAL, text: caps[P4 + 2] });
 
     var steps = [], win = {};
     PLAN.forEach(function (p) {
@@ -471,9 +478,9 @@
 
     return {
       total: TOTAL, steps: steps, win: win,
-      rows: [rIntro,
-        { type: 'group', label: '发送一步 ×' + P4, noTxt: '2–' + (P4 + 3), note: '每步共用这一组',
-          rows: [rFly, rFade, rDly, rSeat, rGap] },
+      rows: [rIntro, rOpen,
+        { type: 'group', label: '发送数据 ×' + P4, noTxt: '3–' + (P4 + 2), note: '每步共用这一组',
+          rows: [rFly, rDly, rSeat, rGap] },
         rTail],
       rounds: R,
       seat: rSeat,   /* 落位窗口行（of 分量），narration 与 overlay 从这里取错峰/单颗秒 */
@@ -540,6 +547,7 @@
     var P4 = scene.parts || 4;
     var SEATK = CH.seat.subs[1].sec;   /* 错峰间隔 = seatGap × k（落位行分量） */
     var POPK  = CH.seat.subs[0].sec;   /* 单颗弹跳秒 = popDur × k */
+    var preAt = scene.preAt ? CH.win[scene.preAt].s : 0;   /* 预留缓冲前下排看不见 */
     var L = S.L;
     var c0 = L.slot;
     var totalW = P4 * c0.sw + (P4 - 1) * c0.gap;
@@ -566,11 +574,13 @@
       });
 
       /* 下排：轮到自己当接收方的第 r 步才一次填满，一块一块落（串行律：
-         淡出+延迟完才从 seatBase 起落，块间仍按 seatGap×k 错峰） */
+         淡出+延迟完才从 seatBase 起落，块间仍按 seatGap×k 错峰）；
+         预留缓冲前整排看不见（2026-11-03 加预留步，空槽显形对齐全站） */
       S.extra.downRow[r].forEach(function (s, i) {
         var at = CV.seatAt(i, R[r].seatBase, SEATK);
         if (sec < at) {
-          CV.cast.set(s, null, sec >= R[r].start ? { active: true } : {});
+          CV.cast.set(s, null, sec < preAt ? { hidden: true }
+            : (sec >= R[r].start ? { active: true } : {}));
           delete seenM['d' + r + i];
         } else {
           CV.cast.set(s, { letter: DATA[i].letter, color: DATA[i].color, sub: r }, {});

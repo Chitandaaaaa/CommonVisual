@@ -1877,10 +1877,9 @@
       '<b>多块落位两口径</b> 顺序到达的批（all-to-all 一步收的块）用错峰弹：第 k 个比第 k−1 个晚 <code>' + nx2(seatGap()) + 's</code> 起跳 ' +
         '（规范 08 · <code>seatGap</code>＝顺序到达），页面用 <code>CV.seatAt(i, base, gap)</code> 算每个块的时刻，<b>不是</b> setTimeout：' +
         '进度条要能来回拖，定时器拖不回来；' +
-        '同飞的批（all-gather / reduce-scatter，2026-11-01 拍板）则齐弹——同到同弹，弹跳不拉错峰窗口；' +
-        '互换批（all-reduce 一轮四块）的窗口带同批错峰 <code>' + nx2(popStagger()) + 's</code>' +
-        '（规范 08 · <code>popStagger</code>，<code>0</code>＝齐弹）——' +
-        '这些秒页面在时序面板以倍数杆整窗配置（弹跳 + 错峰一起缩放）<br>' +
+        '同飞的批与互换的批（all-gather / reduce-scatter / all-reduce）齐弹——同到同弹，弹跳不拉错峰窗口' +
+        '（2026-11-03 拍板，互换批废除同批错峰）；整份包（reduce / broadcast）整包齐落，块间无间隔；' +
+        '<code>popStagger</code> 参数保留在规范 08（<code>' + nx2(popStagger()) + 's</code>，<code>0</code>＝齐弹），当前无页面消费，留给将来需要的页<br>' +
       '<b>不属于 08 的间隔</b> 两趟传递之间停多久仍是每页自己排的节奏；' +
         '「抵达→淡出→落位延迟→弹跳」的顺序与默认值归 <code>steps 2.6</code>（衔接带）管——' +
         '落位延迟全站默认 0.50s，不是每页自排<br>' +

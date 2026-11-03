@@ -279,7 +279,7 @@
         [r.arrive, r.fadeEnd, '整份包 · 淡出', '透明'],
         [r.arrive, null, '两条直连 · 余辉', '42% 数据色'],
         rest(r.fadeEnd, r.popStart, '第二排保持接收位'),
-        [r.popStart, r.popEnd, '第二排 · 落位（4 块错峰）', '每卡各收 4 块'],
+        [r.popStart, r.popEnd, '第二排 · 落位（齐弹）', '每卡各收 4 块'],
         [r.calcStart, r.calcEnd, '双排卡 · 长高', '腾出计算层'],
         [r.calcEnd, r.mergeStart, '计算框 · 浮现', 'sum · avg · max · min'],
         [r.mergeStart, r.mergeEnd, '四段 · 折进（错峰）',
@@ -294,15 +294,15 @@
     out.push(G('第 4 步 · 轮间停顿', R[0].end, R[1].start,
       [rest(R[0].end, R[1].start, scene.narr.rest.gap)]));
     out.push(G('第 5 步 · 第 2 轮（纵向互换）', R[1].start, R[1].end, roundRows(R[1], 1)));
-    out.push(G('第 6 步 · 终点展示', R[1].end, CH.COLLAPSE_AT,
-      [rest(R[1].end, CH.COLLAPSE_AT, scene.narr.rest.tail)]));
 
+    /* 先收场（复原动画）再完成（终态停驻）——2026-11-03 拍板，全站唯一终态顺序 */
     var c = CH.COLLAPSE_AT;
-    out.push(G('第 7 步 · 收场', c, CH.total, [
+    out.push(G('第 6 步 · 收场', c, c + RS.close, [
       [c, c + RS.blocks, '第二排 · 逐块撤（从右往左）', '4 个接收位撤掉'],
-      [c + RS.blocks + 0.25 / SPD, c + RS.close, '四张卡 · 收回', '单排卡'],
-      rest(c + RS.close, CH.total, scene.narr.rest.collapse)
+      [c + RS.blocks + 0.25 / SPD, c + RS.close, '四张卡 · 收回', '单排卡']
     ]));
+    out.push(G('第 7 步 · 终点展示', c + RS.close, CH.total,
+      [rest(c + RS.close, CH.total, scene.narr.rest.collapse)]));
     return out;
   }
 
@@ -384,7 +384,16 @@
     var out = [], R = CH.rounds, P4 = scene.parts || 4;
     var SEATG = CH.seat.subs[1].sec;   /* 错峰间隔 = seatGap × k（落位行分量） */
 
-    out.push(G('第 1 步 · 说明', 0, R[0].start, [rest(0, R[0].start, scene.narr.rest.intro)]));
+    var OPEN = CH.win.open;
+    out.push(G('第 1 步 · 说明', 0, OPEN.s, [rest(0, OPEN.s, scene.narr.rest.intro)]));
+
+    /* 预留缓冲（2026-11-03 加步）：四张卡下排空槽显形，与全站预留步同词 */
+    var orows = [];
+    for (var k = 0; k < 4; k++) {
+      orows.push([OPEN.s, OPEN.s + REVEAL(), 'r' + k + ' 下排 · 显形（4 格）', '4 个空格']);
+    }
+    orows.push(rest(OPEN.s + REVEAL(), OPEN.e, scene.narr.rest.open));
+    out.push(G('第 2 步 · 预留缓冲', OPEN.s, OPEN.e, orows));
 
     R.forEach(function (r, q) {
       var take = TAKEOFF() * (r.arrive - r.start);
@@ -407,10 +416,10 @@
         end = R[q + 1].start;
         rows.push(rest(r.done, end, '四张卡上排少 1 片，下排有 ' + (q + 1) + ' 块'));
       }
-      out.push(G('第 ' + (q + 2) + ' 步 · 第 ' + (q + 1) + ' 片互换', r.start, end, rows));
+      out.push(G('第 ' + (q + 3) + ' 步 · 第 ' + (q + 1) + ' 片互换', r.start, end, rows));
     });
 
-    out.push(G('第 6 步 · 收尾', CH.win.tail.s, CH.total,
+    out.push(G('第 7 步 · 收尾', CH.win.tail.s, CH.total,
       [rest(CH.win.tail.s, CH.total, scene.narr.rest.tail)]));
     return out;
   }

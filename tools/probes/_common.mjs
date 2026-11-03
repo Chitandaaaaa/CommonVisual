@@ -670,6 +670,7 @@ export async function commonChecks(pg, cfg) {
     const before = await scan(pg);
     await pg.evaluate(() => {
       const inp = [...document.querySelectorAll('.gear-pop .gear-row[data-key="travel"] .gear-k')][0] ||
+        [...document.querySelectorAll('.gear-pop .gear-grp-body .gear-row.is-spec .gear-k')][0] ||
         [...document.querySelectorAll('.gear-pop .gear-grp-body .gear-k')][0];
       inp.value = '2';
       inp.dispatchEvent(new Event('input', { bubbles: true }));
@@ -690,6 +691,7 @@ export async function commonChecks(pg, cfg) {
     /* ↺ 回基线（2.11 的「↺ 能回基线」半截） */
     await pg.evaluate(() => {
       const btn = [...document.querySelectorAll('.gear-pop .gear-row[data-key="travel"] .gear-rs')][0] ||
+        [...document.querySelectorAll('.gear-pop .gear-grp-body .gear-row.is-spec .gear-rs')][0] ||
         [...document.querySelectorAll('.gear-pop .gear-grp-body .gear-rs')][0];
       btn.click();
     });

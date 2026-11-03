@@ -1007,7 +1007,7 @@ const LINK = {
   '07-calcFade':  { group: '07-calc', key: 'calcFade', set: 0.55, expect: 0.8 },
   '08-popDur':    { group: '08-seat', key: 'popDur', set: 0.75, expect: 0.8 },
   '08-seatGap':   { group: '08-seat', key: 'seatGap', set: 0.6, expect: 1.2 },
-  '08-popStagger':{ group: '08-seat', key: 'popStagger', set: 0.22, expect: 0.6 },
+  '08-popStagger':{ group: '08-seat', key: 'popStagger', set: 0.22, expect: 0 },   /* 退役（2026-11-03 齐弹拍板）：无页面消费，Δ 恒 0 */
   '09-fuseDur':   { group: '09-merge', key: 'fuseDur', set: 0.62, expect: 0.6 },
   '09-mergeGap':  { group: '09-merge', key: 'mergeGap', set: 0.7, expect: 1.8 }
 };

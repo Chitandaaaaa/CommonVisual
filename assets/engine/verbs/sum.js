@@ -45,29 +45,31 @@
     var SHRINK = CV.spec('shrinkDur');
     var HOLD = CV.spec('holdDur');
 
-    /* 齿轮行：说明/预留/收场独立，折一份的七段三趟共用。
-       飞是编排秒直接填；淡出/弹跳/撑开/收回走规范 of 行（k 杆整窗缩放），
-       落位延迟是全站同默认 0.50（steps 2.6），复合值（折进=max(逐段和, 方框展示)）直接填秒。
+    /* 齿轮行：说明/预留/完成（收场）独立，发送数据组的六段三趟共用。
+       飞行行 = 纯飞行编排秒 + 送达淡出（packFade）合并（2026-11-03 全站统一，
+       TM.fade 从规范表现读）；弹跳/撑开/收回走规范 of 行（k 杆整窗缩放），
+       落位延迟是全站同默认 0.50（steps 2.6），复合值（计算中=max(逐段和, 方框展示)）直接填秒。
        串行律：抵达 → 淡出完 → 停 0.5 → 才弹（popStart = arrive + fade + delay）。 */
-    /* 预留/折进保持 abs 行（2026-11-01 包 C 决策点）：sec 是公式
+    /* 预留/计算中保持 abs 行（2026-11-01 包 C 决策点）：sec 是公式
        （RS.open = cardDur+rowLull+blocks、merge = max(逐段和, 展示)），
        of 数组表达不了——每次编译都从 03/07/09 章参数现算，调试台改完
        reload 即跟变，不 of 化也不会焊死。 */
+    var FADE = CV.spec('packFade');   /* 送达淡出并入飞行行，秒从规范现读 */
     var rInit = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.6 });
     var rPre  = CV.timeRow(scene.id, { key: 'pre', label: '预留缓冲', sec: RS.open });
-    var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '传递', sec: 1.7 });
-    var rFade = CV.timeRow(scene.id, { key: 'fade', label: '送达淡出', of: 'packFade' });
+    var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '飞行（数据包）', sec: 1.7 + FADE });
     var rDly  = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.spec('seatDelay') });
-    var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳', of: 'popDur' });
-    var rGrow = CV.timeRow(scene.id, { key: 'grow', label: '撑开计算层', of: 'growDur' });
-    var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '逐段折进', sec: Math.max(SEG + 3 * GAP, HOLD) });
-    var rShr  = CV.timeRow(scene.id, { key: 'shrink', label: '收回计算层', of: 'shrinkDur' });
-    var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '收场', sec: RS.close + 0.5 });
-    rInit.no = 1; rPre.no = 2; rCol.no = 11;
+    var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳（整包）', of: 'popDur' });
+    var rGrow = CV.timeRow(scene.id, { key: 'grow', label: '计算开始', of: 'growDur' });
+    var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '计算中', sec: Math.max(SEG + 3 * GAP, HOLD) });
+    var rShr  = CV.timeRow(scene.id, { key: 'shrink', label: '计算结束', of: 'shrinkDur' });
+    var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '完成（收场）', sec: RS.close + 2 });
+    rInit.no = 1; rPre.no = 2; rCol.no = 9;
 
     var TM = {
-      init: rInit.sec, prealloc: rPre.sec, fly: rFly.sec,
-      fade: rFade.sec, delay: rDly.sec, pop: rPop.sec,
+      init: rInit.sec, prealloc: rPre.sec,
+      fade: FADE, fly: rFly.sec - FADE,
+      delay: rDly.sec, pop: rPop.sec,
       grow: rGrow.sec, merge: rMrg.sec, shrink: rShr.sec, collapse: rCol.sec
     };
     var CYCLE = TM.fly + TM.fade + TM.delay + TM.pop + TM.grow + TM.merge + TM.shrink;
@@ -111,8 +113,8 @@
 
     return { total: TOTAL, steps: steps, win: win,
              rows: [rInit, rPre,
-               { type: 'group', label: '折一份 ×3', noTxt: '3–10', note: '每趟共用这一组',
-                 rows: [rFly, rFade, rDly, rPop, rGrow, rMrg, rShr] },
+               { type: 'group', label: '发送数据 ×3', noTxt: '3–8', note: '每趟共用这一组',
+                 rows: [rFly, rDly, rPop, rGrow, rMrg, rShr] },
                rCol],
              flows: flows, TM: TM, COLLAPSE_AT: COLLAPSE_AT,
              at: function (sec) { return TOTAL ? sec / TOTAL : 0; } };
@@ -319,9 +321,8 @@
 
     /* 下排：刚飞到的整份，弹出 → 逐段上折 → 消失
        （串行律：抵达→淡出→延迟期间第二排保持接收位，弹从 popStart 起）
-       四段逐块落位：同批错峰 popStagger（08-seat），不是一个 pop 全落
-       —— 2026-11-03 统一「多块传递必须一块一块落」 */
-    var STG = CV.spec('popStagger');
+       整包齐落（2026-11-03 拍板）：reduce 是连发，传输单元 = 整份包，
+       四块一拍同时弹出、块间无间隔；块的逐个节奏属于「计算中」的折进。 */
     flows.forEach(function (f) {
       var list = EX.ghost[f.from];
       var on = sec >= f.popStart && sec < f.mergeEnd;
@@ -336,9 +337,7 @@
           return;
         }
         var e = mergeE(p, i);
-        /* 逐块落位：第 i 块比第 i−1 块晚 popStagger 起跳（q<0 时 popAt 给 o=0，
-           所以还没轮到的块是「隐形等着」，不是提前冒头） */
-        var pop = CV.beat.popAt(clamp((sec - f.popStart - i * STG) / TM.pop, 0, 1));
+        var pop = CV.beat.popAt(clamp((sec - f.popStart) / TM.pop, 0, 1));
         /* 方案 A（2026-11-02）：折进的块飞行交给规范函数 beat.fuse ——
            唤醒/上浮/白光/拖尾按 09 章参数逐帧驱动，fuseSwap 处目标换 Σ。 */
         if (e > 0 && e < 1) {
@@ -430,37 +429,34 @@
     var SHRINK = CV.spec('shrinkDur');
     var CALC_FADE = CV.spec('calcFade');   /* 方框过渡 = 规范 07 的 calcFade */
 
-    /* 齿轮行：说明/预留/终点/收场独立，一轮的八段两轮共用（轮间隔也在组里）。
-       弹跳行＝整段窗口的 of 行（单颗 popDur + 3×同批错峰 popStagger，全来自
-       规范 08，k 杆整窗缩放，动画逐帧从这行的分量取秒——不是写死字面量）；
-       淡出走规范 packFade、落位延迟全站 0.50（steps 2.6 串行律）；
-       撑开/收回走规范倍数，方框浮现的 0.35s 固定衔接不进面板。 */
+    /* 齿轮行：说明/预留/完成（收场）独立，发送数据组的七段两轮共用（轮歇也在组里）。
+       弹跳行 = 单颗 popDur 齐弹（2026-11-03 拍板：齐传每卡同时起落，
+       旧的 popDur + 3×popStagger 同批错峰窗退役）；淡出并入飞行行（TM.fade
+       从规范现读）、落位延迟全站 0.50（steps 2.6 串行律）；
+       计算三行走规范倍数，方框浮现的 0.35s 固定衔接不进面板。 */
+    var FADE = CV.spec('packFade');   /* 送达淡出并入飞行行，秒从规范现读 */
     var rInit = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.9 });
-    var rExp  = CV.timeRow(scene.id, { key: 'expand', label: '预留两排', sec: RS.open + 0.25 });
-    var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '飞行', sec: 1.1 });
-    var rFade = CV.timeRow(scene.id, { key: 'fade', label: '送达淡出', of: 'packFade' });
+    var rExp  = CV.timeRow(scene.id, { key: 'expand', label: '预留缓冲', sec: RS.open + 0.25 });
+    var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '飞行（数据包）', sec: 1.1 + FADE });
     var rDly  = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.spec('seatDelay') });
-    var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳',
-      of: ['popDur', 'popStagger', 'popStagger', 'popStagger'], specLabel: '弹跳+错峰' });
-    var rGrow = CV.timeRow(scene.id, { key: 'grow', label: '撑开计算层', of: 'growDur' });
-    var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '逐段折进', sec: Math.max(SEG + 3 * MGAP, HOLD) });
-    var rDwn  = CV.timeRow(scene.id, { key: 'down', label: '收层收回', of: 'shrinkDur' });
-    var rGap  = CV.timeRow(scene.id, { key: 'gap', label: '轮间停顿', sec: 0.55 });
-    var rFin  = CV.timeRow(scene.id, { key: 'fin', label: '终点展示', sec: 0.35 });
-    var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '收场', sec: RS.close + 0.6 });
-    rInit.no = 1; rExp.no = 2; rFin.no = 12; rCol.no = 13;
+    var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳（齐弹）', of: 'popDur' });
+    var rGrow = CV.timeRow(scene.id, { key: 'grow', label: '计算开始', of: 'growDur' });
+    var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '计算中', sec: Math.max(SEG + 3 * MGAP, HOLD) });
+    var rDwn  = CV.timeRow(scene.id, { key: 'down', label: '计算结束', of: 'shrinkDur' });
+    var rGap  = CV.timeRow(scene.id, { key: 'gap', label: '轮歇', sec: 0.55 });
+    var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '完成（收场）', sec: RS.close + 0.95 });
+    rInit.no = 1; rExp.no = 2; rCol.no = 10;
 
     var TM = {
-      init: rInit.sec, fly: rFly.sec,
-      fade: rFade.sec, delay: rDly.sec,   /* 串行律：抵达→淡出完→停 0.5→才弹（旧 land 0.1 退役） */
-      pop: rPop.subs[0].sec,          /* 单颗弹跳 = popDur × k（跟 k 杆与 08 调试台） */
-      stag: rPop.subs[1].sec,         /* 同批错峰 = popStagger × k */
+      init: rInit.sec,
+      fade: FADE, fly: rFly.sec - FADE,
+      delay: rDly.sec, pop: rPop.sec,   /* 单颗弹跳 = popDur × k（齐弹：整窗即单颗） */
       growCalc: rGrow.sec,
       merge: rMrg.sec,
       calcDown: CALC_FADE + rDwn.sec,
       gap: rGap.sec
     };
-    var POP_SPAN = rPop.sec;          /* 整段窗口 = 单颗 + 3×错峰，k 杆整窗缩放 */
+    var POP_SPAN = rPop.sec;          /* 齐弹：整窗 = 单颗 popDur */
 
     function mkRound(start) {
       var r = { start: start };
@@ -479,7 +475,7 @@
     var EXPAND_AT = TM.init;
     var ROUNDS = [mkRound(EXPAND_AT + rExp.sec)];
     ROUNDS.push(mkRound(ROUNDS[0].end + TM.gap));
-    var COLLAPSE_AT = ROUNDS[1].end + rFin.sec;
+    var COLLAPSE_AT = ROUNDS[1].end;   /* 先收场（复原动画）再完成（终态停驻），2026-11-03 拍板 */
     var TOTAL = COLLAPSE_AT + rCol.sec;
 
     var ROUNDS_DEF = [
@@ -507,8 +503,8 @@
       { id: 'r2fly', s: ROUNDS[1].start, e: ROUNDS[1].popStart, text: c[6] },
       { id: 'r2calc', s: ROUNDS[1].popStart, e: ROUNDS[1].mergeStart, text: c[7] },
       { id: 'r2merge', s: ROUNDS[1].mergeStart, e: ROUNDS[1].end, text: c[8] },
-      { id: 'tail', s: ROUNDS[1].end, e: COLLAPSE_AT, text: c[9] },
-      { id: 'collapse', s: COLLAPSE_AT, e: TOTAL, text: c[10] }
+      { id: 'collapse', s: COLLAPSE_AT, e: COLLAPSE_AT + RS.close, text: c[10] },
+      { id: 'tail', s: COLLAPSE_AT + RS.close, e: TOTAL, text: c[9] }
     ];
 
     var steps = [], win = {};
@@ -519,9 +515,9 @@
 
     return { total: TOTAL, steps: steps, win: win,
              rows: [rInit, rExp,
-               { type: 'group', label: '互换一轮 ×2', noTxt: '3–11', note: '两轮共用这一组',
-                 rows: [rFly, rFade, rDly, rPop, rGrow, rMrg, rDwn, rGap] },
-               rFin, rCol],
+               { type: 'group', label: '发送数据 ×2', noTxt: '3–9', note: '两轮共用这一组',
+                 rows: [rFly, rDly, rPop, rGrow, rMrg, rDwn, rGap] },
+               rCol],
              rounds: ROUNDS, route: route, TM: TM, POP_SPAN: POP_SPAN,
              EXPAND_AT: EXPAND_AT, COLLAPSE_AT: COLLAPSE_AT, CALC_FADE: CALC_FADE,
              at: function (sec) { return TOTAL ? sec / TOTAL : 0; } };
@@ -751,7 +747,7 @@
             return;
           }
           moveSlot(s, botY);
-          var popP = clamp((sec - R.popStart - i * TM.stag) / TM.pop, 0, 1);
+          var popP = clamp((sec - R.popStart) / TM.pop, 0, 1);   /* 齐弹：四块同刻起弹 */
           var pop = CV.beat.popAt(popP);
           var e = st.merge > 0 ? mergeE(st.merge, i) : 0;
           /* 方案 A（2026-11-02）：折进的块飞行交给规范函数 beat.fuse ——

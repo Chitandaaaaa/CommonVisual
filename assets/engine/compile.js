@@ -4,7 +4,7 @@
    两种时间轴：
    ① choreo（gather/scatter/broadcast/allgather 用）：
       剧本列节拍（wait / move / copy），move|copy 自动展开成
-      传递 → 落位延迟 → 落位弹跳 → 间隔 四段；有规范值的段走
+      飞行（含淡出）→ 落位延迟 → 落位弹跳 → 轮歇 四段；有规范值的段走
       规范值 × 页面倍数，倍数可被齿轮改（cv.cfg.page.v1，页名为键）。
    ② family（reduce/allreduce/reducescatter/alltoall 用）：
       各自的动词（sum/split/move）按规范值 + 编排秒算出显式分段表，
@@ -78,16 +78,21 @@
              sec: s, store: p.key + '.sec', def: (p.sec == null ? 0 : p.sec) };
   };
 
-  /* ── 一次传递的四段（规范值走倍数，编排秒直接填） ── */
+  /* ── 一次传递的四段（规范值走倍数，编排秒直接填） ──
+     行名全站统一（2026-11-03 拍板）：飞行（含淡出）/ 落位延迟 /
+     落位弹跳（括注按 scene.seatPop：单颗|整包|齐弹）/ 轮歇。 */
   var SEAT_PARTS = [
-    /* 「传递」= 数据包组件自己的整段：飞行（packDur）+ 送达淡出（packFade） */
-    { key: 'travel', label: '传递',     of: ['packDur', 'packFade'], specLabel: '数据包' },
+    /* 「飞行」= 数据包组件自己的整段：飞行（packDur）+ 送达淡出（packFade） */
+    { key: 'travel', label: '飞行（数据包）', of: ['packDur', 'packFade'], specLabel: '数据包' },
     /* 包停在箭头尖 → 弹跳开始之间的呼吸（页面自定） */
     { key: 'delay',  label: '落位延迟', sec: CV.spec('seatDelay') },
     { key: 'pop',    label: '落位弹跳', of: 'popDur' },
     /* 这一趟结束后到下一趟之间停多久（页面编排） */
-    { key: 'hold',   label: '间隔',     sec: 1 }
+    { key: 'hold',   label: '轮歇',     sec: 1 }
   ];
+  function popLabel(seatPop) {
+    return '落位弹跳' + (seatPop ? '（' + seatPop + '）' : '');
+  }
 
   /* ══════════ choreo：节拍表 → 时间轴（与旧引擎同一套数） ══════════ */
   CV.choreo = function (page, segs) {
@@ -116,7 +121,10 @@
           var ofL = ['popDur'];
           for (var spi = 1; spi < sg.stagger; spi++) ofL.push('seatGap');
           srcs = SEAT_PARTS.slice();
-          srcs[2] = { key: 'pop', label: '落位弹跳', specLabel: '弹跳+错峰', of: ofL };
+          srcs[2] = { key: 'pop', label: popLabel(sg.seatPop), specLabel: '弹跳+错峰', of: ofL };
+        } else if (sg.seatPop) {
+          srcs = SEAT_PARTS.slice();
+          srcs[2] = { key: 'pop', label: popLabel(sg.seatPop), of: 'popDur' };
         }
         var parts = srcs.map(function (p) {
           var o = part(p);
@@ -158,7 +166,7 @@
         grouped = true;
         rows.push({
           type: 'group',
-          label: '数据传递' + (tNos.length > 1 ? ' ×' + tNos.length : ''),
+          label: '发送数据' + (tNos.length > 1 ? ' ×' + tNos.length : ''),
           noTxt: noText(tNos),
           note: it.note || '每趟共用这一组',
           rows: it.parts
@@ -260,7 +268,7 @@
         return { id: b.id, kind: 'wait', label: b.label || '说明', sec: b.sec, text: b.text, short: b.short };
       }
       return { id: b.id, kind: 'transfer', label: b.label, text: b.text, short: b.short,
-               stagger: b.stagger, note: b.note };
+               stagger: b.stagger, note: b.note, seatPop: scene.seatPop };
     });
     var ch = CV.choreo(page, segs);
     ch.beats = scene.beats;

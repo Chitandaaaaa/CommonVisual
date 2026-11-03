@@ -10,6 +10,7 @@ CV.scene('gather', (function () {
     preset: 'col34',
     overlay: 'gather',          /* 槽位读法：目标卡 count 从 1 起跳 */
     wireStyle: 'gather',        /* 源卡左缘 → 目标卡右缘，落点按槽位分布 */
+    seatPop: '单颗',             /* 传递类型 = 单传：落位弹跳（单颗） */
     target: 0,                  /* 汇聚到 rank 0 */
     preAt: 'open',              /* 「预留缓冲」这一步开始时，空槽才显形 */
 
@@ -60,7 +61,7 @@ CV.scene('gather', (function () {
       { id: 'r3', kind: 'move', label: 'D 传递', text: rk(3) + ' 发送 ' + seg(3),
         flows: [{ from: [3, 0], to: [0, 3], letter: 'D', color: 3 }] },
 
-      { id: 'tail', kind: 'wait', label: '收尾', sec: 2,
+      { id: 'tail', kind: 'wait', label: '完成', sec: 2,
         text: rk(0) + ' 集齐 ' + seg(0) + ' ' + seg(1) + ' ' + seg(2) + ' ' + seg(3) }
     ],
 

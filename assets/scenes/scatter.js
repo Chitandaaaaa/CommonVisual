@@ -10,8 +10,9 @@ CV.scene('scatter', (function () {
     preset: 'col34',
     overlay: 'scatter',         /* 槽位读法：源卡逐段腾空 */
     wireStyle: 'scatter',       /* 源卡右缘 → 目标卡左缘 */
+    seatPop: '单颗',             /* 传递类型 = 单传：落位弹跳（单颗） */
     target: 0,                  /* target 字段存「源」rank（scatter 的主角） */
-    preAt: 'open',              /* 「接收位就绪」这一步开始时，空槽显形 */
+    preAt: 'open',              /* 「预留缓冲」这一步开始时，空槽显形 */
 
     cards: [
       { rank: 0, col: 'left',  role: 'src', target: true },
@@ -48,7 +49,7 @@ CV.scene('scatter', (function () {
       { id: 'intro', kind: 'wait', label: '说明', sec: 0.6,
         text: rk(0) + ' 持有 ' + seg(0) + ' ' + seg(1) + ' ' + seg(2) + ' ' + seg(3) },
 
-      { id: 'open', kind: 'wait', label: '接收位就绪', sec: 0.6,
+      { id: 'open', kind: 'wait', label: '预留缓冲', sec: 0.6,
         text: rk(1) + ' ' + rk(2) + ' ' + rk(3) + ' 接收位就绪' },
 
       { id: 'r1', kind: 'move', label: 'B 传递', text: rk(0) + ' 发送 ' + seg(1) + ' 给 ' + rk(1),
@@ -58,7 +59,7 @@ CV.scene('scatter', (function () {
       { id: 'r3', kind: 'move', label: 'D 传递', text: rk(0) + ' 发送 ' + seg(3) + ' 给 ' + rk(3),
         flows: [{ from: [0, 3], to: [3, 0], letter: 'D', color: 3 }] },
 
-      { id: 'tail', kind: 'wait', label: '收尾', sec: 2,
+      { id: 'tail', kind: 'wait', label: '完成', sec: 2,
         text: rk(0) + ' ' + rk(1) + ' ' + rk(2) + ' ' + rk(3) + ' 各持 1 段' }
     ],
 

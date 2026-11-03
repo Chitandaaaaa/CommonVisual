@@ -10,6 +10,7 @@ CV.scene('broadcast', (function () {
     preset: 'col34',
     overlay: 'copy',            /* 槽位读法：源卡常满；目标行就绪前隐藏 → 占位 → 整份填满 */
     wireStyle: 'scatter',
+    seatPop: '整包',             /* 传递类型 = 连发（整份 4 块合包）：落位弹跳（整包） */
     target: 0,                  /* 源 rank */
     preAt: 'open',
 
@@ -43,7 +44,7 @@ CV.scene('broadcast', (function () {
       { id: 'intro', kind: 'wait', label: '说明', sec: 0.6,
         text: rk(0) + ' 持有整份 ' + whole() },
 
-      { id: 'open', kind: 'wait', label: '接收位就绪', sec: 0.6,
+      { id: 'open', kind: 'wait', label: '预留缓冲', sec: 0.6,
         text: rk(1) + rk(2) + rk(3) + ' 接收位就绪' },
 
       { id: 'r1', kind: 'copy', label: '广播给 B', text: rk(0) + ' 广播整份给 ' + rk(1),
@@ -53,7 +54,7 @@ CV.scene('broadcast', (function () {
       { id: 'r3', kind: 'copy', label: '广播给 D', text: rk(0) + ' 广播整份给 ' + rk(3),
         flows: [{ from: [0, 0], to: [3, 0], whole: 0 }] },
 
-      { id: 'tail', kind: 'wait', label: '收尾', sec: 2,
+      { id: 'tail', kind: 'wait', label: '完成', sec: 2,
         text: '四张卡各持整份 ' + whole() }
     ],
 

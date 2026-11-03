@@ -63,6 +63,20 @@ export async function check(pg) {
       one.map(l => l[0] && l[0].l).join(','));
   }
 
+  /* 3.31b 空槽预留前看不见、预留缓冲后显形（2026-11-03 加预留步，与全站同态） */
+  {
+    const hidden0 = byCard(common.t0, 1).filter(x => !x.l && x.op === 0).length;
+    const at = await pg.evaluate(() => {
+      const c = window.CV.lastMount.getCh();
+      return Math.round((c.win.open.e - 0.05) / c.total * 1000);
+    });
+    await seek(pg, at, 300);
+    const s = await scan(pg);
+    const shown = byCard(s, 1).filter(x => !x.l && x.op === 1).length;
+    ok('3.31b 空槽预留前看不见、预留后显形', hidden0 === 3 && shown === 3,
+      `初始隐藏=${hidden0}/3 · 显形=${shown}/3`);
+  }
+
   /* 3.32 轮次为 3 轮 */
   ok('3.32 轮次为 3 轮', rounds.length === 3, `transfer 窗口=${rounds.length}`);
 
