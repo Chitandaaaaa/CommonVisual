@@ -90,7 +90,7 @@
 <div class="wrap">
 
   <h1>CommonVisual · 验证用例清单</h1>
-  <div class="sub">234 条：通用 3 ＋ 全站通用 29 ＋ 原语页 63 ＋ index 与规范页 15 ＋ 规范符合性 116 ＋ 参数面板 8。已实现 234 条，待补 0 条（第 2/3/4 组在 <code>tools/probes/</code>，随 verify.mjs 跑）。<b>结构断言每次改完都跑；截图与人工观感留到提交前和每日定时。</b></div>
+  <div class="sub">235 条：通用 3 ＋ 全站通用 29 ＋ 原语页 64 ＋ index 与规范页 15 ＋ 规范符合性 116 ＋ 参数面板 8。已实现 235 条，待补 0 条（第 2/3/4 组在 <code>tools/probes/</code>，随 verify.mjs 跑）。<b>结构断言每次改完都跑；截图与人工观感留到提交前和每日定时。</b></div>
   <div class="rule-top">以本页为准 · 改本页需同步 AGENTS.md 一 与 MEMORY.md</div>
   <div class="lead">本页只列<b>用例</b>——能判「过或不过」的验证动作，每条写明<b>作用在哪个页面</b>与<b>通过标准</b>；拆分、入册等条数沿革见页尾变更日志。<b>左侧红条</b>＝口径已按实现对齐的条目，补断言以红条文案为准；<b>橙条</b>＝2026-10-31 拆分新增的行；<b>紫条</b>＝待处理条目（当前 0 条，已了结的登记见页尾日志）。</div>
     <div class="boundary warn"><b>待处理（审计登记、未排期——只记录，不改代码）：</b>历史登记的紫条均已了结，当前门禁 0 紫；下列为现行已知的弱断言缺口。<br>
@@ -264,6 +264,7 @@
         <tr class="fix"><td class="c-no"><span class="n">3.53</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">终态每卡一段、合起来是 Σ</span></td><td class="c-v" data-l="断言">刻度 1000：每张卡 1 块、四块互不相同；四块的来源标记合起来正好覆盖 A/B/C/D 全集。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/reducescatter.mjs</span></td></tr>
         <tr class="new"><td class="c-no"><span class="n">3.54</span></td><td class="c-p" data-l="页面">reducescatter</td><td><span class="t">第 1 轮两段同刻齐弹</span></td><td class="c-v" data-l="断言">刷新后干净采样：r1fly.e+0.15 处 8 个 ghost 全部可见（4 卡 × 2 段同刻落位，2026-11-01 拍板）；错峰口径下此刻只有 idx0 的 4 个。<b>〔2026-11-01 新增〕</b></td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/reducescatter.mjs</span></td></tr>
 
+        <tr><td class="c-no"><span class="n">3.54b</span></td><td class="c-p">reducescatter</td><td><span class="t">折进块对准本卡收到的列</span></td><td class="c-v" data-l="断言">r1 折进中段：每个 fuse 飞行块 x 落在本卡 RECV 列中心（2026-11-03 修「C 块飞去 A 列融合」3.12 bug 的防复发——目标列认全局列号 seg，不认本卡接收序号 idx）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/reducescatter.mjs</span></td></tr>
         <tr class="grp"><td colspan="5"><span class="gp">alltoall</span><span class="gs">每人发一段收一段：四卡各收四份</span></td></tr>
         <tr><td class="c-no"><span class="n">3.54</span></td><td class="c-p" data-l="页面">alltoall</td><td><span class="t">挂载四张卡</span></td><td class="c-v" data-l="断言"><code>cards=4</code>。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/alltoall.mjs</span></td></tr>
         <tr class="fix"><td class="c-no"><span class="n">3.55</span></td><td class="c-p" data-l="页面">alltoall</td><td><span class="t">初始态上排四片、下排看不见</span></td><td class="c-v" data-l="断言">刻度 0：每卡上排 4 片（自己的 A/B/C/D）、下排 4 格隐藏（2026-11-03 加预留缓冲步，显形前下排不可见）。</td><td data-l="状态"><span class="pill yes">已实现</span> <span class="mono">probes/alltoall.mjs</span></td></tr>

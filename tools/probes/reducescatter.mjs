@@ -135,5 +135,55 @@ export async function check(pg) {
     ok('3.54 第 1 轮两段同刻齐弹', vis === 8, `${atS}: 可见 ghost=${vis} (want 8)`);
   }
 
+  /* 3.54b 折进目标 = 全局列（2026-11-03 修 3.12 bug 的防复发断言）。
+     r1 折进中段：每个 fuse 飞行块的 x 必须落在「本卡收到的列」中心上
+     （fuse 全程 x = 目标列中心，beat.fuse 的 o.x）——旧 bug 用本卡接收
+     序号当列号，r2/r3 的 C/D 块飞去 A/B 列融合。 */
+  {
+    const ch = common.ch;
+    const w = ch && ch.win && ch.win.r1merge;
+    let pass = false, atS = '', d = '';
+    if (w) {
+      const at = sc(w.s + (w.e - w.s) * 0.25, ch.total);
+      await seek(pg, at, 300);
+      atS = `@${at}`;
+      const res = await pg.evaluate(() => {
+        const chc = CV.lastMount.getCh();
+        const round = (v) => Math.round(v * 10) / 10;
+        /* 槽位归属卡片按几何包含（与 _common.scan 同法）：卡框 .gpu-card[data-card] */
+        const cards = [...document.querySelectorAll('.gpu-card[data-card]')].map(g => {
+          const b = g.getBoundingClientRect();
+          return { r: +g.getAttribute('data-card'), b };
+        });
+        const slots = [...document.querySelectorAll('#lChips .slot-g')].map(g => {
+          const b = g.getBoundingClientRect();
+          return { x: b.left + b.width / 2, y: b.top + b.height / 2, cx: b.left + b.width / 2 };
+        });
+        const byCard = [];
+        slots.forEach(sl => {
+          const hit = cards.find(c => sl.x >= c.b.left && sl.x <= c.b.right && sl.y >= c.b.top && sl.y <= c.b.bottom);
+          if (hit) (byCard[hit.r] = byCard[hit.r] || []).push(sl);
+        });
+        byCard.forEach(list => list.sort((a, b) => a.y - b.y || a.x - b.x));
+        const want = new Set();
+        for (let r = 0; r < 4; r++) {
+          (chc.RECV[0][r] || []).forEach(c => {
+            const sl = (byCard[r] || [])[c];
+            if (sl) want.add(round(sl.cx));
+          });
+        }
+        const fuseXs = [...document.querySelectorAll('#lFx .fuse')].map(g => {
+          const b = g.getBoundingClientRect();
+          return round(b.left + b.width / 2);
+        });
+        return { want: [...want], fuseXs };
+      });
+      const bad = res.fuseXs.filter(x => !res.want.some(wx => Math.abs(wx - x) <= 2));
+      pass = (res.fuseXs.length === 4 || res.fuseXs.length === 8) && bad.length === 0;
+      d = `fuse=${res.fuseXs.length} (want 4|8) · 越列=${bad.length ? bad.join(',') : '0'} · 期望列中心=[${res.want.join(', ')}]`;
+    }
+    ok('3.54b 折进块对准本卡收到的列', pass, d || (atS + ' 窗口不可用'));
+  }
+
   return out;
 }

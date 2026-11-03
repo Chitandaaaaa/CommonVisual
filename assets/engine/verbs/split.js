@@ -462,19 +462,23 @@
          rs 每列份数翻倍：resetTo=Σ^(已持有)、to=Σ^(×2)，换 Σ 在 fuseSwap。 */
       if (e > 0 && e < 1) {
         if (!EX.fuseCol[fk]) {
-          var chp = S.chips[gh.r][gh.idx];
+          /* 折进目标与换 Σ 身份认全局列号 gh.seg（2026-11-03 修 3.12 bug：
+             旧用本卡接收序号 gh.idx，r2/r3 第 1 轮收列 2/3（idx=0/1）时
+             C/D 块飞去 A/B 列融合、下标也错；r0/r1 恰好 idx==seg 掩盖了它）。
+             错峰节奏仍按本卡接收序（mergeE 的 idx 不动）。 */
+          var chp = S.chips[gh.r][gh.seg];
           var nb = 1;
           for (var qq2 = 0; qq2 < gh.q; qq2++) {
-            if (CH.RECV[qq2][gh.r].indexOf(gh.idx) >= 0) nb *= 2;
+            if (CH.RECV[qq2][gh.r].indexOf(gh.seg) >= 0) nb *= 2;
           }
           EX.fuseCol[fk] = CV.beat.fuse(layer.fx, {
             x: chp.cx, y0: gh.slot.cy, y1: chp.cy, size: c0.sh,
             data: { letter: DATA[gh.seg].letter, color: CV.toneFor(gh.seg, gh.q + 1) },
-            resetTo: rsChipState(gh.idx, nb), to: rsChipState(gh.idx, nb * 2), target: chp
+            resetTo: rsChipState(gh.seg, nb), to: rsChipState(gh.seg, nb * 2), target: chp
           });
         }
-        var pk2 = 'm' + gh.q + gh.r + gh.idx;
-        if (e >= 0.92 && !EX.seen[pk2]) { EX.seen[pk2] = 1; CV.beat.seat(layer.fx, S.chips[gh.r][gh.idx]); }
+        var pk2 = 'm' + gh.q + gh.r + gh.seg;
+        if (e >= 0.92 && !EX.seen[pk2]) { EX.seen[pk2] = 1; CV.beat.seat(layer.fx, S.chips[gh.r][gh.seg]); }
         else if (e < 0.92 && EX.seen[pk2]) { delete EX.seen[pk2]; }
         EX.fuseCol[fk].apply(e);
         gh.outer.setAttribute('opacity', '0');
