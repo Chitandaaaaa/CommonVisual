@@ -86,7 +86,8 @@
       row('calc2',   '计算开始', CALC_UP),
       row('merge2',  '计算中', MRG2),
       row('shrink',  '计算结束', CALC_DOWN),
-      row('fin',     '完成（收场）', RS.close + 2.2)
+      row('collapse', '收场', RS.close),
+      row('fin',     '完成', 2.2)
     ];
 
     /* 面板行：两轮各成一组（行号并起来仍是进度条第几段）。
@@ -98,7 +99,7 @@
       ROWS[8],
       { type: 'group', label: '发送数据 · 第 2 轮', note: '这一轮的六个相',
         rows: ROWS.slice(9, 15) },
-      ROWS[15]
+      ROWS[15], ROWS[16]
     ]);
 
     var c = scene.captions;
@@ -120,8 +121,9 @@
       { id: 'r2seat',  sec: PACKFADE + rDly2.sec + rSeat2.sec, text: c[9] },
       { id: 'r2calc',  sec: ROWS[12].sec, text: c[10] },
       { id: 'r2merge', sec: ROWS[13].sec, text: c[11] },
-      { id: 'collapse', sec: ROWS[14].sec + RS.close, text: c[12] },
-      { id: 'tail',    sec: ROWS[15].sec - RS.close, text: c[13] }
+      { id: 'r2down',  sec: ROWS[14].sec, text: c[12] },
+      { id: 'collapse', sec: ROWS[15].sec, text: c[13] },
+      { id: 'tail',    sec: ROWS[16].sec, text: c[14] }
     ];
 
     var AT = {}, TOTAL = 0, acc = 0;

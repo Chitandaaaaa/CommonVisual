@@ -247,11 +247,12 @@
     });
 
     var c = CH.COLLAPSE_AT;
-    out.push(G('第 8 步 · 收场', c, CH.total, [
+    out.push(G('第 8 步 · 收场', c, c + RS.close, [
       [c, c + RS.blocks, '第二排 · 逐块撤（从右往左）', '4 个接收位撤掉'],
-      [c + RS.blocks + 0.25 / SPD, c + RS.close, '四槽卡 · 收回', '单排卡'],
-      rest(c + RS.close, CH.total, scene.narr.rest.collapse)
+      [c + RS.blocks + 0.25 / SPD, c + RS.close, '四槽卡 · 收回', '单排卡']
     ]));
+    out.push(G('第 9 步 · 完成', c + RS.close, CH.total,
+      [rest(c + RS.close, CH.total, scene.narr.rest.tail || scene.narr.rest.collapse)]));
     return out;
   }
 
@@ -306,7 +307,7 @@
       [c, c + RS.blocks, '第二排 · 逐块撤（从右往左）', '4 个接收位撤掉'],
       [c + RS.blocks + 0.25 / SPD, c + RS.close, '四张卡 · 收回', '单排卡']
     ]));
-    out.push(G('第 7 步 · 终点展示', c + RS.close, CH.total,
+    out.push(G('第 7 步 · 完成', c + RS.close, CH.total,
       [rest(c + RS.close, CH.total, scene.narr.rest.collapse)]));
     return out;
   }
@@ -371,15 +372,17 @@
       [[AT.r2open.s, AT.r2open.e, '第二排 · 收窄', '每卡撤掉这一轮用不上的那格']]));
 
     var r2 = roundRows(1, AT.r2fly, AT.r2seat, AT.r2calc, AT.r2merge, AT.r2dly);
-    out.push(G('第 5 步 · 第 2 轮（同行互换）', AT.r2fly.s, AT.r2merge.e, r2));
+    /* 计算结束（框淡出 + 收层）归入第 2 轮组，与齿轮对齐（2026-11-03 完成/收场拆分） */
+    r2.push([AT.r2merge.e, AT.collapse.s, '计算框 · 淡出 → 收层', '退回双排卡']);
+    out.push(G('第 5 步 · 第 2 轮（同行互换）', AT.r2fly.s, AT.collapse.s, r2));
 
     var w = AT.collapse.s;
-    out.push(G('第 6 步 · 收场', w, CH.total, [
-      [w, w + CH.CALC_DOWN, '计算框 · 淡出 → 收层', '退回双排卡'],
-      [w + CH.CALC_DOWN, w + CH.CALC_DOWN + RS.blocks, '第二排 · 逐块撤（从右往左）', '接收位撤光'],
-      [w + CH.CALC_DOWN + RS.blocks + 0.25 / SPD, w + CH.CALC_DOWN + RS.close, '四张卡 · 收回', '单排卡'],
-      rest(AT.tail.s, CH.total, scene.narr.rest.tail)
+    out.push(G('第 6 步 · 收场', w, w + RS.close, [
+      [w, w + RS.blocks, '第二排 · 逐块撤（从右往左）', '接收位撤光'],
+      [w + RS.blocks + 0.25 / SPD, w + RS.close, '四张卡 · 收回', '单排卡']
     ]));
+    out.push(G('第 7 步 · 完成', AT.tail.s, CH.total,
+      [rest(AT.tail.s, CH.total, scene.narr.rest.tail)]));
     return out;
   }
 

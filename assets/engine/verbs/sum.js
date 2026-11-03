@@ -64,17 +64,19 @@
     var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '计算中', sec: Math.max(SEG + 3 * GAP, HOLD) });
     var rShr  = CV.timeRow(scene.id, { key: 'shrink', label: '计算结束', of: 'shrinkDur' });
     var rGap  = CV.timeRow(scene.id, { key: 'gap', label: '轮歇', sec: 0.55 });
-    var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '完成（收场）', sec: RS.close + 2 });
+    var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '收场', sec: RS.close });
+    var rFin  = CV.timeRow(scene.id, { key: 'fin', label: '完成', sec: 2 });
 
     var TM = {
       init: rInit.sec, prealloc: rPre.sec,
       fade: FADE, fly: rFly.sec - FADE,
       delay: rDly.sec, pop: rPop.sec,
-      grow: rGrow.sec, merge: rMrg.sec, shrink: rShr.sec, gap: rGap.sec, collapse: rCol.sec
+      grow: rGrow.sec, merge: rMrg.sec, shrink: rShr.sec, gap: rGap.sec,
+      collapse: rCol.sec, fin: rFin.sec
     };
     var CYCLE = TM.fly + TM.fade + TM.delay + TM.pop + TM.grow + TM.merge + TM.shrink;
     var COLLAPSE_AT = TM.init + TM.prealloc + CYCLE * 3 + TM.gap * 2;   /* 轮歇只算两轮之间 */
-    var TOTAL = COLLAPSE_AT + TM.collapse;
+    var TOTAL = COLLAPSE_AT + TM.collapse + TM.fin;
 
     var flows = [];
     (function () {
@@ -103,7 +105,8 @@
       raw.push({ id: 'r' + (k + 1) + 'fly', s: f.start, e: f.popEnd, text: c[2 + k * 2] });
       raw.push({ id: 'r' + (k + 1) + 'calc', s: f.popEnd, e: f.end, text: c[3 + k * 2] });
     });
-    raw.push({ id: 'collapse', s: flows[2].end, e: TOTAL, text: c[8] });
+    raw.push({ id: 'collapse', s: flows[2].end, e: flows[2].end + TM.collapse, text: c[8] });
+    raw.push({ id: 'tail', s: flows[2].end + TM.collapse, e: TOTAL, text: c[9] });
 
     var steps = [], win = {};
     raw.forEach(function (p) {
@@ -115,7 +118,7 @@
              rows: CV.numberGearRows([rInit, rPre,
                { type: 'group', label: '发送数据 ×3', note: '每趟共用这一组（轮歇在两趟之间）',
                  rows: [rFly, rDly, rPop, rGrow, rMrg, rShr, rGap] },
-               rCol]),
+               rCol, rFin]),
              flows: flows, TM: TM, COLLAPSE_AT: COLLAPSE_AT,
              at: function (sec) { return TOTAL ? sec / TOTAL : 0; } };
   };
@@ -440,7 +443,8 @@
     var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '计算中', sec: Math.max(SEG + 3 * MGAP, HOLD) });
     var rDwn  = CV.timeRow(scene.id, { key: 'down', label: '计算结束', of: 'shrinkDur' });
     var rGap  = CV.timeRow(scene.id, { key: 'gap', label: '轮歇', sec: 0.55 });
-    var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '完成（收场）', sec: RS.close + 0.95 });
+    var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '收场', sec: RS.close });
+    var rFin  = CV.timeRow(scene.id, { key: 'fin', label: '完成', sec: 0.95 });
 
     var TM = {
       init: rInit.sec,
@@ -471,7 +475,7 @@
     var ROUNDS = [mkRound(EXPAND_AT + rExp.sec)];
     ROUNDS.push(mkRound(ROUNDS[0].end + TM.gap));
     var COLLAPSE_AT = ROUNDS[1].end;   /* 先收场（复原动画）再完成（终态停驻），2026-11-03 拍板 */
-    var TOTAL = COLLAPSE_AT + rCol.sec;
+    var TOTAL = COLLAPSE_AT + rCol.sec + rFin.sec;
 
     var ROUNDS_DEF = [
       { pairs: [[0, 1], [2, 3]] },
@@ -512,7 +516,7 @@
              rows: CV.numberGearRows([rInit, rExp,
                { type: 'group', label: '发送数据 ×2', note: '两轮共用这一组',
                  rows: [rFly, rDly, rPop, rGrow, rMrg, rDwn, rGap] },
-               rCol]),
+               rCol, rFin]),
              rounds: ROUNDS, route: route, TM: TM, POP_SPAN: POP_SPAN,
              EXPAND_AT: EXPAND_AT, COLLAPSE_AT: COLLAPSE_AT, CALC_FADE: CALC_FADE,
              at: function (sec) { return TOTAL ? sec / TOTAL : 0; } };
