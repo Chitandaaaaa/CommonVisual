@@ -437,7 +437,6 @@
       of: ['popDur', 'seatGap', 'seatGap', 'seatGap'], specLabel: '弹跳+错峰' });
     var rGap   = CV.timeRow(scene.id, { key: 'gap', label: '轮歇', sec: 0.4 });
     var rTail  = CV.timeRow(scene.id, { key: 'tail', label: '完成', sec: 0.6 });
-    rIntro.no = 1; rOpen.no = 2; rTail.no = P4 + 3;
 
     var TM = { init: rIntro.sec, open: rOpen.sec,
                fly: rFly.sec - FADE, gap: rGap.sec,
@@ -478,10 +477,10 @@
 
     return {
       total: TOTAL, steps: steps, win: win,
-      rows: [rIntro, rOpen,
-        { type: 'group', label: '发送数据 ×' + P4, noTxt: '3–' + (P4 + 2), note: '每步共用这一组',
+      rows: CV.numberGearRows([rIntro, rOpen,
+        { type: 'group', label: '发送数据 ×' + P4, note: '每步共用这一组',
           rows: [rFly, rDly, rSeat, rGap] },
-        rTail],
+        rTail]),
       rounds: R,
       seat: rSeat,   /* 落位窗口行（of 分量），narration 与 overlay 从这里取错峰/单颗秒 */
       flows: R.map(function (rd) {

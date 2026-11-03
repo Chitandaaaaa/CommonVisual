@@ -65,7 +65,6 @@
     var rShr  = CV.timeRow(scene.id, { key: 'shrink', label: '计算结束', of: 'shrinkDur' });
     var rGap  = CV.timeRow(scene.id, { key: 'gap', label: '轮歇', sec: 0.55 });
     var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '完成（收场）', sec: RS.close + 2 });
-    rInit.no = 1; rPre.no = 2; rCol.no = 10;
 
     var TM = {
       init: rInit.sec, prealloc: rPre.sec,
@@ -113,10 +112,10 @@
     });
 
     return { total: TOTAL, steps: steps, win: win,
-             rows: [rInit, rPre,
-               { type: 'group', label: '发送数据 ×3', noTxt: '3–9', note: '每趟共用这一组（轮歇在两趟之间）',
+             rows: CV.numberGearRows([rInit, rPre,
+               { type: 'group', label: '发送数据 ×3', note: '每趟共用这一组（轮歇在两趟之间）',
                  rows: [rFly, rDly, rPop, rGrow, rMrg, rShr, rGap] },
-               rCol],
+               rCol]),
              flows: flows, TM: TM, COLLAPSE_AT: COLLAPSE_AT,
              at: function (sec) { return TOTAL ? sec / TOTAL : 0; } };
   };
@@ -446,7 +445,6 @@
     var rDwn  = CV.timeRow(scene.id, { key: 'down', label: '计算结束', of: 'shrinkDur' });
     var rGap  = CV.timeRow(scene.id, { key: 'gap', label: '轮歇', sec: 0.55 });
     var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '完成（收场）', sec: RS.close + 0.95 });
-    rInit.no = 1; rExp.no = 2; rCol.no = 10;
 
     var TM = {
       init: rInit.sec,
@@ -515,10 +513,10 @@
     });
 
     return { total: TOTAL, steps: steps, win: win,
-             rows: [rInit, rExp,
-               { type: 'group', label: '发送数据 ×2', noTxt: '3–9', note: '两轮共用这一组',
+             rows: CV.numberGearRows([rInit, rExp,
+               { type: 'group', label: '发送数据 ×2', note: '两轮共用这一组',
                  rows: [rFly, rDly, rPop, rGrow, rMrg, rDwn, rGap] },
-               rCol],
+               rCol]),
              rounds: ROUNDS, route: route, TM: TM, POP_SPAN: POP_SPAN,
              EXPAND_AT: EXPAND_AT, COLLAPSE_AT: COLLAPSE_AT, CALC_FADE: CALC_FADE,
              at: function (sec) { return TOTAL ? sec / TOTAL : 0; } };

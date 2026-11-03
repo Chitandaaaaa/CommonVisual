@@ -94,6 +94,24 @@
     return '落位弹跳' + (seatPop ? '（' + seatPop + '）' : '');
   }
 
+  /* ── family 页组头行号现算（#11②）：面板行号 = 展示顺序逐行计数，
+     组占其行数（sum/split/move 的组是「N 轮共用一组」，行号即齿轮行序）。
+     choreo 的组号 = 进度条段号（beats），由 choreo() 自己算，不走这里。 ── */
+  CV.numberGearRows = function (rows) {
+    var n = 1;
+    rows.forEach(function (r) {
+      if (r && r.type === 'group') {
+        var m = (r.rows || []).length;
+        r.noTxt = m > 1 ? n + '–' + (n + m - 1) : String(n);
+        n += m;
+      } else if (r) {
+        r.no = n;
+        n += 1;
+      }
+    });
+    return rows;
+  };
+
   /* ══════════ choreo：节拍表 → 时间轴（与旧引擎同一套数） ══════════ */
   CV.choreo = function (page, segs) {
     var speed = CV.spec('pageSpeed');

@@ -88,19 +88,18 @@
       row('shrink',  '计算结束', CALC_DOWN),
       row('fin',     '完成（收场）', RS.close + 2.2)
     ];
-    ROWS.forEach(function (r, i) { r.no = i + 1; });
 
     /* 面板行：两轮各成一组（行号并起来仍是进度条第几段）。
        时长键不变，本机调参不失效。 */
-    var PANEL_ROWS = [
+    var PANEL_ROWS = CV.numberGearRows([
       ROWS[0], ROWS[1],
-      { type: 'group', label: '发送数据 · 第 1 轮', noTxt: '3–8', note: '这一轮的六个相',
+      { type: 'group', label: '发送数据 · 第 1 轮', note: '这一轮的六个相',
         rows: ROWS.slice(2, 8) },
       ROWS[8],
-      { type: 'group', label: '发送数据 · 第 2 轮', noTxt: '10–15', note: '这一轮的六个相',
+      { type: 'group', label: '发送数据 · 第 2 轮', note: '这一轮的六个相',
         rows: ROWS.slice(9, 15) },
       ROWS[15]
-    ];
+    ]);
 
     var c = scene.captions;
     /* 键名按时序标准（assets/rounds.js 头注释）：r<轮号 1 起><相>；
