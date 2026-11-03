@@ -11,13 +11,12 @@ CV.scene('alltoall', (function () {
     family: 'alltoall',
     parts: 4,
     gear: true,
-    preAt: 'open',              /* 「预留缓冲」这一步开始时，下排空槽显形 */
 
     /* 逐动作解说的静止行文案（docs/steps.html）；步间状态由引擎现推 */
     narr: {
       rest: {
-        intro: '四张卡上排 A0–A3（各带下标），下排看不见；6 条直连灰色',
-        open: '四张卡上排 A0–A3、下排 4 个空格；6 条直连灰色',
+        intro: '四张卡上排 A0–A3（各带下标、单排居中），下排看不见；6 条直连灰色',
+        open: '四张双排卡：上排 A0–A3 归位，下排 4 个接收位；6 条直连灰色',
         tail: '四张卡上排空、下排 A B C D（来源全换）'
       }
     },
@@ -48,7 +47,7 @@ CV.scene('alltoall', (function () {
       var list = [
         rk(0) + rk(1) + rk(2) + rk(3) + ' 各把自己那份切成四片：上排是待发出的片，下排看不见'
       ];
-      list.push('预留缓冲：四张卡同时亮出下排 4 个空格（接收位）');
+      list.push('预留缓冲：卡片长高二排——上排上移归位，下排 4 个接收位逐块亮出，末格停一拍');
       for (var q = 0; q < 4; q++) {
         list.push('第 ' + (q + 2) + ' 步：各卡把第 ' + (q + 1) + ' 片发给 ' + rk(q) + '，自己那片原地不动');
       }
@@ -57,7 +56,7 @@ CV.scene('alltoall', (function () {
     })(),
     shorts: (function () {
       var list = ['四卡各切四片，下排看不见'];
-      list.push('亮出下排接收位');
+      list.push('长高二排，亮出接收位');
       for (var q = 0; q < 4; q++) {
         list.push('第 ' + (q + 2) + ' 步 各卡第 ' + (q + 1) + ' 片 → rank' + q);
       }

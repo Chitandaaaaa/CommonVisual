@@ -79,7 +79,8 @@
     var pad1 = (h1 - L.hdr - 16 - s.sh) / 2;
     var h2 = h1 + s.sh + L.rowGap - preWiden;
     var pad2 = (h2 - L.hdr - 2 * s.sh - L.rowGap) / 2;
-    var h3 = L.hdr + pad2 + 2 * s.sh + L.rowGap + L.calcGap + L.calc.h + L.areaPad;
+    /* h3 需要计算层参数（L.calc）；没有计算层的页（alltoall 只用 h1/h2）给 null */
+    var h3 = L.calc ? L.hdr + pad2 + 2 * s.sh + L.rowGap + L.calcGap + L.calc.h + L.areaPad : null;
     return { h1: h1, h2: h2, h3: h3, pad1: pad1, pad2: pad2 };
   };
 

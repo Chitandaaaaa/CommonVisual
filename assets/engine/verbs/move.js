@@ -450,8 +450,9 @@
        规范 08），k 杆整窗缩放，动画的错峰间隔与单颗秒都从这行的分量现取——
        不是写死字面量（P4 全站恒 4；改 parts 时 of 数组要跟着拼）。 */
     var FADE = CV.spec('packFade');   /* 送达淡出并入飞行行，秒从规范现读 */
+    var RS = CV.rowSpan(4);           /* 开场公式：长高 + 逐格显形 + preHold（#8 与计算页同构） */
     var rIntro = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.9 });
-    var rOpen  = CV.timeRow(scene.id, { key: 'open', label: '预留缓冲', sec: 0.6 });
+    var rOpen  = CV.timeRow(scene.id, { key: 'open', label: '预留缓冲', sec: RS.open });
     var rFly   = CV.timeRow(scene.id, { key: 'fly', label: '飞行（数据包）', sec: 0.95 + FADE });
     var rDly   = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.spec('seatDelay') });
     var rSeat  = CV.timeRow(scene.id, { key: 'seat', label: '落位弹跳（错峰）',
@@ -519,12 +520,15 @@
     var P4 = scene.parts || 4;
     var c0 = L.slot;
     var totalW = P4 * c0.sw + (P4 - 1) * c0.gap;
-    var blockH = c0.sh * 2 + L.rowGap;
-    var areaY = L.hdr, areaH = L.card.h - L.hdr - 16;
-    var padTop = (areaH - blockH) / 2;
+    /* 开场重做（#8）：intro 单排居中（卡高 h1），预留缓冲长高到 h2——
+       行位走 cardGeo 的 pad1→pad2，与计算页同构；y 每帧在 overlay 里插值 */
+    var G = CV.cardGeo(L, S.mode);
+    var areaY = L.hdr;
+    var padTop = G.pad1;   /* 单排居中 */
 
     S.extra.upRow = {};
     S.extra.downRow = {};
+    S.extra.geoA = G;
 
     Object.keys(S.cards).forEach(function (rk) {
       var r = Number(rk);
@@ -567,17 +571,30 @@
     var P4 = scene.parts || 4;
     var SEATK = CH.seat.subs[1].sec;   /* 错峰间隔 = seatGap × k（落位行分量） */
     var POPK  = CH.seat.subs[0].sec;   /* 单颗弹跳秒 = popDur × k */
-    var preAt = scene.preAt ? CH.win[scene.preAt].s : 0;   /* 预留缓冲前下排看不见 */
     var L = S.L;
     var c0 = L.slot;
     var totalW = P4 * c0.sw + (P4 - 1) * c0.gap;
-    var blockH = c0.sh * 2 + L.rowGap;
-    var areaY = L.hdr, areaH = L.card.h - L.hdr - 16;
-    var padTop = (areaH - blockH) / 2;
+    /* 开场重做（#8）：intro 单排居中（h1），预留缓冲长高到 h2——
+       卡高与行位走 cardGeo/rowOpen，与计算页同构；下排显形由 op.v 驱动
+       （不再用 preAt 整排隐藏）。 */
+    var G = S.extra.geoA || CV.cardGeo(L, S.mode);
+    var areaY = L.hdr;
+    var OPEN_AT = CH.win.open ? CH.win.open.s : 0;
+    var op = CV.rowOpen(sec - OPEN_AT, P4);
+    var h = G.h1 + (G.h2 - G.h1) * op.g;
+    var pT = G.pad1 + (G.pad2 - G.pad1) * op.g;
+    var padTop = pT;
+    var areaH = G.h2 - L.hdr - 16;
 
     verbs.move.focusCards(S, scene, CH, sec);   /* 发送强调（#4）：描边亮数据色 */
-    Object.keys(S.cards).forEach(function (rk) {
+    [0, 1, 2, 3].forEach(function (rk) {
       var r = Number(rk);
+      /* 卡片：顶边钉死只往下长（cardGeo h1→h2 随 rowOpen） */
+      var geo0 = CV.gridCard(L, r);
+      var nh = G.h1 + (G.h2 - G.h1) * op.g;
+      if (S.cards[r].geo.h !== nh || S.cards[r].geo.y !== geo0.y) {
+        CV.cast.resize(S.cards[r], { x: geo0.x, y: geo0.y, w: geo0.w, h: nh });
+      }
       /* 徽章看下排（结果排）：轮到自己当接收方才 0/4 → 4/4 */
       var bt = (sec >= R[r].arrive ? P4 : 0) + '/' + P4;
       if (S.cards[r].badgeTx.textContent !== bt) S.cards[r].badgeTx.textContent = bt;
@@ -599,8 +616,10 @@
       S.extra.downRow[r].forEach(function (s, i) {
         var at = CV.seatAt(i, R[r].seatBase, SEATK);
         if (sec < at) {
-          CV.cast.set(s, null, sec < preAt ? { hidden: true }
+          /* 显形 = rowOpen v[i]（预留缓冲窗口内逐格淡入）；接收等待期转接收位 */
+          CV.cast.set(s, null, op.v[i] < 0.99 ? { hidden: op.v[i] <= 0.01 }
             : (sec >= R[r].start ? { active: true } : {}));
+          s.g.style.opacity = op.v[i].toFixed(3);
           delete seenM['d' + r + i];
         } else {
           CV.cast.set(s, { letter: DATA[i].letter, color: DATA[i].color, sub: r }, {});
@@ -624,6 +643,17 @@
         if (s.x !== nx) { s.rect.setAttribute('x', nx); s.text.setAttribute('x', nx + s.w / 2); s.x = nx; s.cx = nx + s.w / 2; }
         if (s.y !== yDn) { s.rect.setAttribute('y', yDn); s.text.setAttribute('y', yDn + s.h / 2); s.y = yDn; s.cy = yDn + s.h / 2; }
       });
+    });
+
+    /* 连线端点跟行距走（行位随开场插值，#8）——先重算几何再统一退灰 */
+    var wireY = S.cards[0].geo.y + areaY + pT + c0.sh + L.rowGap / 2;
+    (scene.wires || []).forEach(function (wd) {
+      var w = S.wires[wd.a + '_' + wd.b];
+      var ga = S.cards[wd.a].geo, gb = S.cards[wd.b].geo;
+      var e = CV.hitEnds(ga, gb, wireY);
+      w.path.setAttribute('d', CV.linePath(e));
+      w.len = w.path.getTotalLength();
+      w.sx = e.sx; w.sy = e.sy; w.tx = e.tx; w.ty = e.ty;
     });
 
     /* 先统一退灰（必须在流之前，否则后一步会把前一步刚点亮的线抹掉） */

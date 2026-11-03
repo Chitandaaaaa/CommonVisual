@@ -398,12 +398,15 @@
     var OPEN = CH.win.open;
     out.push(G('第 1 步 · 说明', 0, OPEN.s, [rest(0, OPEN.s, scene.narr.rest.intro)]));
 
-    /* 预留缓冲（2026-11-03 加步）：四张卡下排空槽显形，与全站预留步同词 */
-    var orows = [];
+    /* 预留缓冲（#8 开场重做）：长高二排 → 下排逐格显形 → 末格停一拍，与计算页同构 */
+    var RS = rowSpan4();
+    var orows = [[OPEN.s, OPEN.s + RS.cardDur, '四张卡 · 长高（同时）', '一排变两排（上排上移归位）']];
     for (var k = 0; k < 4; k++) {
-      orows.push([OPEN.s, OPEN.s + REVEAL(), 'r' + k + ' 下排 · 显形（4 格）', '4 个空格']);
+      var b0 = OPEN.s + RS.cardDur + 0.3 / SPD + k * RS.step;
+      orows.push([b0, b0 + CV.dur('blockDur') / SPD, 'r' + k + ' 下排 · 显形',
+        k === 0 ? '接收位（紫底 ···）' : '接收位']);
     }
-    orows.push(rest(OPEN.s + REVEAL(), OPEN.e, scene.narr.rest.open));
+    orows.push(rest(OPEN.e - RS.preHold, OPEN.e, '末格已亮，停一拍'));
     out.push(G('第 2 步 · 预留缓冲', OPEN.s, OPEN.e, orows));
 
     R.forEach(function (r, q) {
