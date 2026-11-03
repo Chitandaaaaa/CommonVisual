@@ -372,7 +372,7 @@
     out.push(G('第 3 步 · 第 1 轮（同列互换）', AT.r1fly.s, AT.r1down.e, r1));
 
     out.push(G('第 4 步 · 收窄', AT.r2open.s, AT.r2open.e,
-      [[AT.r2open.s, AT.r2open.e, '第二排 · 收窄', '每卡撤掉这一轮用不上的那格']]));
+      [[AT.r2open.s, AT.r2open.e, '卡片收窄到保留两列', '撤掉用不上的接收格；r0/r1 缩右缘、r2/r3 缩左缘']]));
 
     var r2 = roundRows(1, AT.r2fly, AT.r2seat, AT.r2calc, AT.r2merge, AT.r2dly);
     /* 计算结束（框淡出 + 收层）归入第 2 轮组，与齿轮对齐（2026-11-03 完成/收场拆分） */

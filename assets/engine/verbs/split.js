@@ -132,8 +132,7 @@
       acc += p.sec;
     });
     TOTAL = acc;
-    /* 收窄的淡出时长跟随 slim 行的窗口（默认＝规范 blockDur） */
-    BLOCKD = ROWS[9].sec;
+    BLOCKD = ROWS[8].sec;   /* slim 行（卡片收窄）—— 送达淡出并入飞行行后 ROWS 序号左移一位，旧 ROWS[9]（=fly2 2.3s）是错值 */
     var steps = [], win = {};
     PLAN.forEach(function (p) {
       steps.push({ t: AT[p.id].s / TOTAL, text: p.text, short: scene.shorts ? scene.shorts[steps.length] : undefined });
@@ -352,18 +351,37 @@
 
     /* 卡片几何：**顶边钉死，只往下长**（全站统一，2026-11-03）
        预留第二排和计算层都加在卡片下方，上面不留空。 */
+    var totalW = 4 * c0.sw + 3 * c0.gap;
+
+    /* 卡片真收窄（#2，2026-11-03）：slim 窗口内每卡收窄到保留的两列——
+       r0/r1 保留列 0,1（左缘钉死缩右缘）、r2/r3 保留列 2,3（右缘钉死缩左缘）；
+       第 2 轮全程窄卡；收场随 rowClose（cl.g 1→0）复原全宽。
+       槽位绝对坐标不动（保留列本就在窄卡内），卡外空槽由下面的 hidden 隐藏。
+       旧实现只淡出接收格、卡宽从不变——「名为收窄实不收窄」的 3.12 报告项。 */
+    var narrowF = CV.easeInOutQuad(clamp((sec - AT.r2open.s) / CH.BLOCKD, 0, 1)) * cl.g;
     var R = {};
     [0, 1, 2, 3].forEach(function (r) {
       var b = CV.gridCard(L, r);
-      R[r] = { x: b.x, y: b.y, w: b.w, h: h };
+      var keepLeft = r < 2;
+      var padX = (b.w - totalW) / 2;
+      var nw = 2 * c0.sw + c0.gap + 2 * padX;
+      var nx = keepLeft ? b.x : b.x + 2 * (c0.sw + c0.gap);
+      R[r] = {
+        x: b.x + (nx - b.x) * narrowF,
+        y: b.y,
+        w: b.w + (nw - b.w) * narrowF,
+        h: h
+      };
       CV.cast.resize(S.cards[r], R[r]);
     });
 
-    var totalW = 4 * c0.sw + 3 * c0.gap;
-
     [0, 1, 2, 3].forEach(function (r) {
       var g = R[r];
-      var x0 = g.x + (g.w - totalW) / 2;
+      var bFull = CV.gridCard(L, r);
+      /* 槽位绝对坐标按全宽卡推导（收窄只改卡框，保留列不动）——
+         按窄卡居中会让 (g.w−totalW)/2 变负、整排左移出卡 */
+      var x0 = bFull.x + (bFull.w - totalW) / 2;
+      var keepLeft = r < 2;
       var y1 = g.y + IN.y1, y2 = g.y + IN.y2;
       var left = 0;
 
@@ -371,6 +389,8 @@
         var s = S.chips[r][i];
         moveSlot(s, y1);
         var st = partState(r, i, sec);
+        /* 卡外空槽隐藏：收窄后保留列之外的顶排格（必为空）不画虚线框 */
+        var outside = narrowF > 0.02 && (keepLeft ? i >= 2 : i < 2);
         /* 方案 A：折进中（0<e<1）该列交给 beat.fuse 接管（换 Σ/白光在它那里） */
         var foldE = -1;
         for (var qg2 = 0; qg2 < 2; qg2++) {
@@ -383,9 +403,9 @@
         if (foldE >= 0) {
           /* beat.fuse 驱动中：chip 保持折进前形态，换 Σ 在 fuseSwap */
         } else if (st.gone) {
-          CV.cast.set(s, null, {});
+          CV.cast.set(s, null, { hidden: outside });
         } else if (st.sending) {
-          CV.cast.set(s, null, {});
+          CV.cast.set(s, null, { hidden: outside });
         } else {
           var sig = st.n >= 1.5;
           CV.cast.set(s, sig

@@ -185,5 +185,47 @@ export async function check(pg) {
     ok('3.54b 折进块对准本卡收到的列', pass, d || (atS + ' 窗口不可用'));
   }
 
+
+  /* 3.54c 卡片真收窄（2026-11-03 #2 防复发）：slim 后每卡收窄到保留两列——
+     宽 = 全宽 − 2×(块宽+块距)；r0/r1 左缘钉死、r2/r3 右缘钉死；卡外空槽不可见。 */
+  {
+    const ch = common.ch;
+    const w = ch && ch.win && ch.win.r2fly;
+    let pass = false, d = '';
+    if (w) {
+      /* 全宽基准显式 seek(0) 采样（不依赖上一探针的停留位置） */
+      await seek(pg, 0, 300);
+      const full = await pg.evaluate(() =>
+        [...document.querySelectorAll('.gpu-card[data-card]')].sort((a, b) =>
+          +a.getAttribute('data-card') - +b.getAttribute('data-card'))
+          .map(g => { const b = g.getBoundingClientRect(); return { l: b.left, r: b.right, w: b.width }; }));
+      const at = sc((w.s + w.e) / 2, ch.total);
+      await seek(pg, at, 300);
+      const nar = await pg.evaluate(() => {
+        const cards = [...document.querySelectorAll('.gpu-card[data-card]')].sort((a, b) =>
+          +a.getAttribute('data-card') - +b.getAttribute('data-card'))
+          .map(g => { const b = g.getBoundingClientRect(); return { l: b.left, r: b.right, w: b.width }; });
+        const slots = [...document.querySelectorAll('#lChips .slot-g')]
+          .filter(g => parseFloat(g.style.opacity || '1') > 0.05)
+          .map(g => { const b = g.getBoundingClientRect(); return { x: b.left + b.width / 2, cx: b.left, cy: b.top + b.height / 2 }; });
+        const cardsBox = [...document.querySelectorAll('.gpu-card[data-card]')].map(g => g.getBoundingClientRect());
+        const outside = slots.filter(sl =>
+          !cardsBox.some(b => sl.x >= b.left && sl.x <= b.right && sl.cy >= b.top && sl.cy <= b.bottom)).length;
+        return { cards, outside };
+      });
+      const shrink = nar.cards.map((c, i) => Math.round((full[i].w - c.w) * 10) / 10);
+      const colSpan = Math.round((full[0].w - shrink[0] * 0) * 0);   /* 占位 */
+      const sw = (common.t0.slots && 0) || 0;
+      /* 期望收窄量 = 两列宽：从全宽卡的槽位间距推（t0 槽 4 列，列距 = (槽4.x-槽0.x)/3） */
+      const t0slots = common.t0.slots.filter(x => x.card === 0).sort((a, b) => a.y - b.y || a.x - b.x).slice(0, 4);
+      const colW = t0slots.length >= 4 ? Math.round((t0slots[3].x - t0slots[0].x) / 3 * 10) / 10 : 0;
+      const wantShrink = colW * 2;
+      const edgesOk = Math.abs(nar.cards[0].l - full[0].l) <= 1 && Math.abs(nar.cards[1].l - full[1].l) <= 1 &&
+                      Math.abs(nar.cards[2].r - full[2].r) <= 1 && Math.abs(nar.cards[3].r - full[3].r) <= 1;
+      pass = shrink.every(x => Math.abs(x - wantShrink) <= 3) && edgesOk && nar.outside === 0;
+      d = `收窄量 ${shrink.join(',')}（期望 ${wantShrink}）· 左缘钉死 ${Math.abs(nar.cards[0].l - full[0].l) <= 1} · 右缘钉死 ${Math.abs(nar.cards[2].r - full[2].r) <= 1} · 卡外可见槽 ${nar.outside}`;
+    }
+    ok('3.54c 卡片真收窄到保留两列', pass, d || '窗口不可用');
+  }
   return out;
 }

@@ -481,7 +481,7 @@
           <tr><td class="nm">计算开始</td><td>reduce / allreduce / reduce-scatter</td><td>卡片长出计算层、「计算」方框浮现（先长空间、后填内容）。</td><td class="mono">growDur + calcFade</td></tr>
           <tr><td class="nm">计算中</td><td>同上三页</td><td>各段依次折进累加器，列间有间隔；份数逐轮翻倍（Σ² → Σ⁴）。</td><td class="mono">公式 max(逐段和, 方框展示)</td></tr>
           <tr><td class="nm">计算结束</td><td>同上三页</td><td>方框先淡出、计算层收回，卡片退回双排。</td><td class="mono">shrinkDur（+calcFade 衔接）</td></tr>
-          <tr><td class="nm">卡片收窄</td><td>reduce-scatter 专有</td><td>第 1 轮后撤掉第 2 轮用不上的那格接收位。</td><td class="mono">规范 blockDur</td></tr>
+          <tr><td class="nm">卡片收窄</td><td>reduce-scatter 专有</td><td>卡片真收窄到保留的两列（r0/r1 缩右缘、r2/r3 缩左缘），撤掉用不上的接收格；第 2 轮全程窄卡，收场复原全宽。</td><td class="mono">规范 blockDur</td></tr>
           <tr><td class="nm">轮歇</td><td>allreduce / reduce</td><td>两轮之间的停顿，画面静止（reduce 2026-11-03 补齐；末轮没有，直接进完成）。</td><td class="mono">编排秒 0.55</td></tr>
           <tr><td class="nm">收场</td><td>reduce / allreduce / reduce-scatter</td><td>舞台复原动画：方框先没 → 第二排逐块撤 → 卡片收回单排。只有「舞台被改造过」的页有。</td><td class="mono">收场公式</td></tr>
           <tr><td class="nm">完成</td><td>8 页全有</td><td>终态停驻：画面静止展示结果。收场页在收场<b>之后</b>（先复原再停驻，全站唯一终态顺序），其余五页舞台没变过、直接停驻。</td><td class="mono">编排秒</td></tr>
@@ -1082,7 +1082,7 @@ var PAGES = [
         [10.05, 11.1, "计算框 · 淡出 → 收层", "退回双排卡（第二排留着）"],
       ]},
       { t: "第 4 步 · 收窄 · 0.40 秒", span: "11.10 → 11.50", rows: [
-        [11.1, 11.5, "第二排 · 收窄", "每卡撤掉这一轮用不上的那格"],
+        [11.1, 11.5, "卡片收窄到保留两列", "撤掉用不上的接收格；r0/r1 缩右缘、r2/r3 缩左缘"],
       ]},
       { t: "第 5 步 · 第 2 轮（同行互换）· 6.45 秒", span: "11.50 → 17.95", rows: [
         [11.5, '', "四张卡 · 交空（各 1 格）", "交出最后一段"],
