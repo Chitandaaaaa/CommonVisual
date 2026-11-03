@@ -592,7 +592,8 @@ body {
 
 .gear-row {
   display: grid;
-  grid-template-columns: 30px 74px minmax(0, 1fr) 72px 46px 18px;
+  /* 名称列 112px：装下最长的「落位弹跳（错峰）」（8 字 × 13px + 余量，2026-11-03 放宽） */
+  grid-template-columns: 30px 112px minmax(0, 1fr) 72px 46px 18px;
   align-items: center; gap: 6px;
   padding: 5px 2px;
 }

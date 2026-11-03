@@ -17,6 +17,7 @@ CV.scene('reduce', (function () {
     narr: {
       rest: {
         intro: '四张四槽卡各 4 格：都是 A B C D（四份形状相同的数据）',
+        gap: '上一份已折进累加器（Σ 更浓一档），下一份还没起飞',
         collapse: '四槽卡四格 ΣA⁴ ΣB⁴ ΣC⁴ ΣD⁴；三张源卡空着'
       }
     },

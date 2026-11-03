@@ -238,11 +238,16 @@
         [f.mergeEnd, f.mergeEnd + 0.45 / SPD * SHRINK, '计算框 · 淡出', '透明'],
         [f.mergeEnd + 0.45 / SPD * SHRINK, f.end, '计算态卡 · 收层', '退回双排卡']
       ];
-      out.push(G('第 ' + (k + 3) + ' 步 · r' + f.from + ' 的整份', s, f.end, rows));
+      out.push(G('第 ' + (k * 2 + 3) + ' 步 · r' + f.from + ' 的整份', s, f.end, rows));
+      /* 轮歇（2026-11-03 加步）：两轮之间的停顿，末轮没有（直接进收场） */
+      if (k < CH.flows.length - 1) {
+        out.push(G('第 ' + (k * 2 + 4) + ' 步 · 轮歇', f.end, f.end + TM.gap,
+          [rest(f.end, f.end + TM.gap, scene.narr.rest.gap)]));
+      }
     });
 
     var c = CH.COLLAPSE_AT;
-    out.push(G('第 6 步 · 收场', c, CH.total, [
+    out.push(G('第 8 步 · 收场', c, CH.total, [
       [c, c + RS.blocks, '第二排 · 逐块撤（从右往左）', '4 个接收位撤掉'],
       [c + RS.blocks + 0.25 / SPD, c + RS.close, '四槽卡 · 收回', '单排卡'],
       rest(c + RS.close, CH.total, scene.narr.rest.collapse)

@@ -440,14 +440,38 @@
     <div class="card">
       <h3>2.6 衔接 · 一个包的一生 <span class="todo" style="margin-left:8px">顺序律</span></h3>
       <p class="role" style="margin:0 0 8px">一次传递里，同一个包的各相<b>串行推进，一次只有一个主导相</b>。默认链（秒数随参数全局变）：</p>
-      <p class="k" style="margin:0 0 10px">起飞 → 飞行（1.50）→ 抵达 → 淡出（0.60）→ 落位延迟（0.50）→ 落位 → 弹跳（0.55）→（家族页）撑开 → 折进</p>
+      <p class="k" style="margin:0 0 10px">起飞 → 飞行（1.50）→ 抵达 → 淡出（0.60）→ 落位延迟（0.50）→ 落位 → 弹跳（0.55）→（计算页）计算开始 → 计算中</p>
       <table class="lex">
         <thead><tr><th>律</th><th>条文</th><th>备注</th></tr></thead>
         <tbody>
           <tr><td class="nm">串行律</td><td>淡出未完成，不得落位；家族页弹跳未完成不得折进（中间隔着撑开）。并行是分叉，不是风格。</td><td>与「先逐块撤再收回」「方框早于卡片退场」同一族</td></tr>
           <tr><td class="nm">落位延迟</td><td>抵达（含淡出）到起弹之间停 <span class="k">0.50s</span>，全站同默认；时序面板有对应行（choreo 页行名即「落位延迟」）。</td><td>页面不许把这一拍写死进动词</td></tr>
-          <tr><td class="nm">组件口径</td><td>弹跳的时长与多块节奏读 <b>visual 08</b>（<span class="k">popDur</span> / <span class="k">seatGap</span> / <span class="k">popStagger</span>），不许在页面复制第二份曲线或秒数。</td><td>08 管组件长什么样，本条管它何时上场</td></tr>
-          <tr><td class="nm">面板行语义</td><td>「落位弹跳」行＝<b>完整弹跳窗口</b>：分量（单颗 <span class="k">popDur</span>，错峰 <span class="k">popStagger</span> / <span class="k">seatGap</span>）全来自 visual 08，时序面板一根 k 杆整窗缩放，动画逐帧从行分量取秒；落位延迟不折进该行。</td><td>窗口＝单颗，多块靠错峰依次起跳；防假规范行回归＝2.29</td></tr>
+          <tr><td class="nm">组件口径</td><td>弹跳的时长与多块节奏读 <b>visual 08</b>（<span class="k">popDur</span> / <span class="k">seatGap</span>），不许在页面复制第二份曲线或秒数。</td><td>08 管组件长什么样，本条管它何时上场</td></tr>
+          <tr><td class="nm">面板行语义</td><td>「落位弹跳」行＝<b>完整弹跳窗口</b>：分量（单颗 <span class="k">popDur</span>，错峰 <span class="k">seatGap</span>）全来自 visual 08，时序面板一根 k 杆整窗缩放，动画逐帧从行分量取秒；落位延迟不折进该行。</td><td>窗口＝单颗，多块靠错峰依次起跳；防假规范行回归＝2.29</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+      <h3>2.7 时序行名总表 <span class="todo" style="margin-left:8px">齿轮行全集</span></h3>
+      <p class="role" style="margin:0 0 8px">八页齿轮「时序」页签的行名<b>只有下表这些</b>（2026-11-03 定稿）。同一语义全站同一个词；括注是类型差异，不另起新词。唯一出处是引擎（compile.js 的传递组 + sum / split / move 三个动词），本表是转写——改行名先改引擎再改这里。组头「<b>发送数据 ×N</b>」＝组内各行按轮数共用（reduce-scatter 因两轮之间夹「卡片收窄」，组名带「第 1 / 2 轮」）。</p>
+      <table class="lex">
+        <thead><tr><th>行名</th><th>出现页</th><th>这一段做什么</th><th>时长来源</th></tr></thead>
+        <tbody>
+          <tr><td class="nm">说明</td><td>8 页全有</td><td>开场：字幕交代各卡持有、连线初始态（画面前提表，不动格）。</td><td class="mono">编排秒 0.6–1.1</td></tr>
+          <tr><td class="nm">预留缓冲</td><td>8 页全有</td><td>接收位亮出：gather / scatter / broadcast 空槽显形；计算页一排变两排；all-to-all 下排整排显形。</td><td class="mono">计算页＝开场公式；其余 0.6s</td></tr>
+          <tr><td class="nm">飞行（数据包）</td><td>8 页全有</td><td>包的整段旅途：起飞 → 飞行 → 抵达 → 送达淡出（<b>淡出并入本行</b>，不再单列）。</td><td class="mono">choreo＝packDur+packFade；计算页＝编排秒+packFade</td></tr>
+          <tr><td class="nm">落位延迟</td><td>8 页全有</td><td>抵达后的呼吸：串行律「抵达 → 淡出完 → 停一拍 → 才弹」。</td><td class="mono">规范 seatDelay 0.50</td></tr>
+          <tr><td class="nm">落位弹跳（单颗）</td><td>gather / scatter</td><td>单传：一块一拍落位，一次弹跳。</td><td class="mono">规范 popDur</td></tr>
+          <tr><td class="nm">落位弹跳（整包）</td><td>broadcast / reduce</td><td>连发：整份 4 块合包<b>一拍齐落</b>，块间无间隔；块粒度只在「计算中」出现。</td><td class="mono">规范 popDur</td></tr>
+          <tr><td class="nm">落位弹跳（齐弹）</td><td>allgather / allreduce / reduce-scatter</td><td>齐传：同轮多块同刻起弹、同刻落定。</td><td class="mono">规范 popDur</td></tr>
+          <tr><td class="nm">落位弹跳（错峰）</td><td>alltoall</td><td>汇传：顺序到达，第 i 块比前一块晚 seatGap 起跳，末块弹跳收尾＝窗口末。</td><td class="mono">popDur + 3×seatGap</td></tr>
+          <tr><td class="nm">计算开始</td><td>reduce / allreduce / reduce-scatter</td><td>卡片长出计算层、「计算」方框浮现（先长空间、后填内容）。</td><td class="mono">growDur + calcFade</td></tr>
+          <tr><td class="nm">计算中</td><td>同上三页</td><td>各段依次折进累加器，列间有间隔；份数逐轮翻倍（Σ² → Σ⁴）。</td><td class="mono">公式 max(逐段和, 方框展示)</td></tr>
+          <tr><td class="nm">计算结束</td><td>同上三页</td><td>方框先淡出、计算层收回，卡片退回双排。</td><td class="mono">shrinkDur（+calcFade 衔接）</td></tr>
+          <tr><td class="nm">卡片收窄</td><td>reduce-scatter 专有</td><td>第 1 轮后撤掉第 2 轮用不上的那格接收位。</td><td class="mono">规范 blockDur</td></tr>
+          <tr><td class="nm">轮歇</td><td>allreduce / reduce</td><td>两轮之间的停顿，画面静止（reduce 2026-11-03 补齐；末轮没有，直接进完成）。</td><td class="mono">编排秒 0.55</td></tr>
+          <tr><td class="nm">完成</td><td>gather / scatter / broadcast / allgather / alltoall</td><td>终态停驻：画面静止展示结果，没有复原动作（舞台没变过）。</td><td class="mono">编排秒</td></tr>
+          <tr><td class="nm">完成（收场）</td><td>reduce / allreduce / reduce-scatter</td><td>先<b>收场</b>（方框先没 → 撤第二排 → 收回单排）再<b>停驻</b>展示终态；全站唯一终态顺序。</td><td class="mono">收场公式 + 停驻 2s</td></tr>
         </tbody>
       </table>
     </div>
@@ -589,7 +613,7 @@ function allgatherRound(s, o) {
    串行律落地（2026-11-01 收编包 B）：抵达→淡出 0.60（packFade）→停 0.50→落位
    0.55（popDur），每趟 CYC 5.62→6.72，总长 24.21→27.51。 */
 function reduceSteps() {
-  var st = [], CYC = 6.72;
+  var st = [], CYC = 6.72, GAP = 0.55;
   st.push({ t: '第 1 步 · 说明 · 0.60 秒', span: '0.00 → 0.60', rows: [
     [0.00, 0.60, '画面 · 静止', '四张四槽卡各 4 格：都是 A B C D（四份形状相同的数据）']
   ]});
@@ -601,8 +625,8 @@ function reduceSteps() {
     [3.35, 3.75, '第二排-4 · 显形', '接收位']
   ]});
   ['r1', 'r2', 'r3'].forEach(function (who, k) {
-    var s = 3.75 + CYC * k, src = 'r' + (k + 1) + '/四槽卡', w = '弧线 ' + (k + 1), sup = String(k + 2);
-    st.push({ t: '第 ' + (k + 3) + ' 步 · ' + who + ' 的整份 · 6.72 秒',
+    var s = 3.75 + (CYC + GAP) * k, src = 'r' + (k + 1) + '/四槽卡', w = '弧线 ' + (k + 1), sup = String(k + 2);
+    st.push({ t: '第 ' + (k * 2 + 3) + ' 步 · ' + who + ' 的整份 · 6.72 秒',
       span: fmt(s) + ' → ' + fmt(s + CYC), rows: [
       [s, '', src + ' · 交空（4 格）', '空格'],
       [s, s + 0.30, w + ' · 点亮', '数据色'],
@@ -619,15 +643,20 @@ function reduceSteps() {
         'ΣA' + sup + ' ΣB' + sup + ' ΣC' + sup + ' ΣD' + sup],
       /* 框淡出止 = 折进止 + 0.45×0.70：浮点舍入逐趟不同（10.08/16.81/23.53），
          相对式表达不了——按 4.17 对账现量写绝对值 */
-      [s + 6.02, [10.08, 16.81, 23.53][k], '计算框 · 淡出', '透明'],
-      [[10.08, 16.81, 23.53][k], s + 6.72, '计算态卡 · 收层', '退回双排卡']
+      [s + 6.02, [10.08, 17.36, 24.63][k], '计算框 · 淡出', '透明'],
+      [[10.08, 17.36, 24.63][k], s + CYC, '计算态卡 · 收层', '退回双排卡']
+    ]});
+    /* 轮歇（2026-11-03 加步）：只落在两轮之间，末轮直接进收场 */
+    if (k < 2) st.push({ t: '第 ' + (k * 2 + 4) + ' 步 · 轮歇 · 0.55 秒',
+      span: fmt(s + CYC) + ' → ' + fmt(s + CYC + GAP), rows: [
+      [s + CYC, s + CYC + GAP, '画面 · 静止', '上一份已折进累加器（Σ 更浓一档），下一份还没起飞']
     ]});
   });
-  /* 完成（收场）：先复原（撤块+收回）再停驻 2.00s（2026-11-03 拍板，总长 +1.50） */
-  st.push({ t: '第 6 步 · 收场 · 5.10 秒', span: '23.91 → 29.01', rows: [
-    [23.91, 25.96, '第二排 · 逐块撤（从右往左）', '4 个接收位撤掉'],
-    [26.21, 27.01, '四槽卡 · 收回', '单排卡'],
-    [27.01, 29.01, '画面 · 静止', '四槽卡四格 ΣA⁴ ΣB⁴ ΣC⁴ ΣD⁴；三张源卡空着']
+  /* 完成（收场）：先复原（撤块+收回）再停驻 2.00s（2026-11-03 拍板） */
+  st.push({ t: '第 8 步 · 收场 · 5.10 秒', span: '25.01 → 30.11', rows: [
+    [25.01, 27.06, '第二排 · 逐块撤（从右往左）', '4 个接收位撤掉'],
+    [27.31, 28.11, '四槽卡 · 收回', '单排卡'],
+    [28.11, 30.11, '画面 · 静止', '四槽卡四格 ΣA⁴ ΣB⁴ ΣC⁴ ΣD⁴；三张源卡空着']
   ]});
   return st;
 }
@@ -906,7 +935,7 @@ var PAGES = [
     ]
   },
 
-  { id: 'reduce', cn: 'Reduce · 归约', en: 'reduce', dir: 'N → 1', dur: 29.01,
+  { id: 'reduce', cn: 'Reduce · 归约', en: 'reduce', dir: 'N → 1', dur: 30.11,
     board: '左边 1 张四槽卡（rank 0，接收方，会两次长高），右边竖排 3 张四槽卡（rank 1/2/3，各持一整份）',
     wire: '3 条弧线：各源卡左缘 → 四槽卡右缘',
     steps: reduceSteps() },

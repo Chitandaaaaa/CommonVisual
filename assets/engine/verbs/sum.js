@@ -63,17 +63,18 @@
     var rGrow = CV.timeRow(scene.id, { key: 'grow', label: '计算开始', of: 'growDur' });
     var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '计算中', sec: Math.max(SEG + 3 * GAP, HOLD) });
     var rShr  = CV.timeRow(scene.id, { key: 'shrink', label: '计算结束', of: 'shrinkDur' });
+    var rGap  = CV.timeRow(scene.id, { key: 'gap', label: '轮歇', sec: 0.55 });
     var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '完成（收场）', sec: RS.close + 2 });
-    rInit.no = 1; rPre.no = 2; rCol.no = 9;
+    rInit.no = 1; rPre.no = 2; rCol.no = 10;
 
     var TM = {
       init: rInit.sec, prealloc: rPre.sec,
       fade: FADE, fly: rFly.sec - FADE,
       delay: rDly.sec, pop: rPop.sec,
-      grow: rGrow.sec, merge: rMrg.sec, shrink: rShr.sec, collapse: rCol.sec
+      grow: rGrow.sec, merge: rMrg.sec, shrink: rShr.sec, gap: rGap.sec, collapse: rCol.sec
     };
     var CYCLE = TM.fly + TM.fade + TM.delay + TM.pop + TM.grow + TM.merge + TM.shrink;
-    var COLLAPSE_AT = TM.init + TM.prealloc + CYCLE * 3;
+    var COLLAPSE_AT = TM.init + TM.prealloc + CYCLE * 3 + TM.gap * 2;   /* 轮歇只算两轮之间 */
     var TOTAL = COLLAPSE_AT + TM.collapse;
 
     var flows = [];
@@ -90,7 +91,7 @@
           end: s + TM.fly + TM.fade + TM.delay + TM.pop + TM.grow + TM.merge + TM.shrink
         };
         flows.push(f);
-        s = f.end;
+        s = f.end + TM.gap;   /* 轮歇：只落在两轮之间（末轮直接进收场） */
       }
     })();
 
@@ -103,7 +104,7 @@
       raw.push({ id: 'r' + (k + 1) + 'fly', s: f.start, e: f.popEnd, text: c[2 + k * 2] });
       raw.push({ id: 'r' + (k + 1) + 'calc', s: f.popEnd, e: f.end, text: c[3 + k * 2] });
     });
-    raw.push({ id: 'collapse', s: COLLAPSE_AT, e: TOTAL, text: c[8] });
+    raw.push({ id: 'collapse', s: flows[2].end, e: TOTAL, text: c[8] });
 
     var steps = [], win = {};
     raw.forEach(function (p) {
@@ -113,8 +114,8 @@
 
     return { total: TOTAL, steps: steps, win: win,
              rows: [rInit, rPre,
-               { type: 'group', label: '发送数据 ×3', noTxt: '3–8', note: '每趟共用这一组',
-                 rows: [rFly, rDly, rPop, rGrow, rMrg, rShr] },
+               { type: 'group', label: '发送数据 ×3', noTxt: '3–9', note: '每趟共用这一组（轮歇在两趟之间）',
+                 rows: [rFly, rDly, rPop, rGrow, rMrg, rShr, rGap] },
                rCol],
              flows: flows, TM: TM, COLLAPSE_AT: COLLAPSE_AT,
              at: function (sec) { return TOTAL ? sec / TOTAL : 0; } };
