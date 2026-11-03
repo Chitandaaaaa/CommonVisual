@@ -42,7 +42,7 @@
       '.pc-group.open .pc-group-body{display:block}' +
       '.pc-sub{margin:4px 0 2px;font-size:10px;color:var(--tx-3,#939bb2)}' +
       '.pc-row{display:grid;grid-template-columns:1fr 92px 58px 16px 20px;align-items:center;gap:6px;padding:3px 0}' +
-      '.pc-label{font-size:11px;color:var(--tx-2,#5f6780);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      '.pc-label{font-size:11px;color:var(--tx-2,#5f6780);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .pc-label[data-hint]{text-decoration:underline dotted var(--tx-3,#939bb2);text-underline-offset:3px;cursor:help}' +
       '.pc-range{width:92px;accent-color:var(--accent,#6d28d9)}' +
       '.pc-num,.pc-hex{width:58px;padding:2px 4px;font-family:var(--mono,ui-monospace,monospace);font-size:11px;' +
         'border:1px solid var(--line,#e5e8f1);border-radius:6px;color:var(--tx,#161b2e);background:#fff;text-align:right}' +
@@ -74,6 +74,12 @@
           '" step="' + spec.step + '" value="' + val + '">') +
       '<span class="pc-unit">' + (spec.unit || '') + '</span>' +
       '<button class="pc-reset" title="重置此项">↺</button>';
+
+    if (spec.hint) {
+      var lb = row.querySelector('.pc-label');
+      lb.setAttribute('data-hint', spec.hint);
+      lb.title = spec.hint;
+    }
 
     var a = row.querySelector(isColor ? '.pc-color' : '.pc-range');
     var b = row.querySelector(isColor ? '.pc-hex' : '.pc-num');

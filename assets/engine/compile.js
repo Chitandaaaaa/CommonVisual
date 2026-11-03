@@ -66,7 +66,7 @@
         subs.push({ key: kk, spec: v, sec: v * k });
         spec += v; sec += v * k;
       });
-      return { key: p.key, label: p.label, mode: 'spec', of: p.of, ofList: keys,
+      return { key: p.key, label: p.label, hint: p.hint, mode: 'spec', of: p.of, ofList: keys,
                specLabel: keys.length > 1 ? (p.specLabel || keys.join('+')) : keys[0],
                spec: Math.round(spec * 1000) / 1000,
                k: k, sec: Math.round(sec * 1000) / 1000,
@@ -74,7 +74,7 @@
     }
     var s = num(ov[p.key + '.sec']);
     if (s == null) s = (p.sec == null ? 0 : p.sec);
-    return { key: p.key, label: p.label, mode: 'abs',
+    return { key: p.key, label: p.label, hint: p.hint, mode: 'abs',
              sec: s, store: p.key + '.sec', def: (p.sec == null ? 0 : p.sec) };
   };
 

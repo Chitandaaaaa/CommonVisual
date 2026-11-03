@@ -393,6 +393,7 @@
       var row = el('div', 'gear-row' + (isSpec ? ' is-spec' : ' abs') + (isSub ? ' sub' : ''));
       row.setAttribute('data-key', r.key);
       row.setAttribute('data-mode', r.mode);
+      if (r.hint) row.title = r.hint;
 
       var no = el('span', 'gear-no' + (isSub ? ' gear-no-sub' : ''), isSub ? '' : noTxt);
       row.appendChild(no);

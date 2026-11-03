@@ -471,19 +471,19 @@
         <thead><tr><th>行名</th><th>出现页</th><th>这一段做什么</th><th>时长来源</th></tr></thead>
         <tbody>
           <tr><td class="nm">说明</td><td>8 页全有</td><td>开场：字幕交代各卡持有、连线初始态（画面前提表，不动格）。</td><td class="mono">编排秒 0.6–1.1</td></tr>
-          <tr><td class="nm">预留缓冲</td><td>8 页全有</td><td>接收位亮出：gather / scatter / broadcast 空槽显形；计算页一排变两排；all-to-all 下排整排显形。</td><td class="mono">计算页＝开场公式；其余 0.6s</td></tr>
-          <tr><td class="nm">飞行（数据包）</td><td>8 页全有</td><td>包的整段旅途：起飞 → 飞行 → 抵达 → 送达淡出（<b>淡出并入本行</b>，不再单列）。</td><td class="mono">choreo＝packDur+packFade；计算页＝编排秒+packFade</td></tr>
-          <tr><td class="nm">落位延迟</td><td>8 页全有</td><td>抵达后的呼吸：串行律「抵达 → 淡出完 → 停一拍 → 才弹」。</td><td class="mono">规范 seatDelay 0.50</td></tr>
-          <tr><td class="nm">落位弹跳（单颗）</td><td>gather / scatter</td><td>单传：一块一拍落位，一次弹跳。</td><td class="mono">规范 popDur</td></tr>
-          <tr><td class="nm">落位弹跳（整包）</td><td>broadcast / reduce</td><td>连发：整份 4 块合包<b>一拍齐落</b>，块间无间隔；块粒度只在「计算中」出现。</td><td class="mono">规范 popDur</td></tr>
-          <tr><td class="nm">落位弹跳（齐弹）</td><td>allgather / allreduce / reduce-scatter</td><td>齐传：同轮多块同刻起弹、同刻落定。</td><td class="mono">规范 popDur</td></tr>
-          <tr><td class="nm">落位弹跳（错峰）</td><td>alltoall</td><td>汇传：顺序到达，第 i 块比前一块晚 seatGap 起跳，末块弹跳收尾＝窗口末。</td><td class="mono">popDur + 3×seatGap</td></tr>
-          <tr><td class="nm">计算开始</td><td>reduce / allreduce / reduce-scatter</td><td>卡片长出计算层、「计算」方框浮现（先长空间、后填内容）。</td><td class="mono">growDur + calcFade</td></tr>
-          <tr><td class="nm">计算中</td><td>同上三页</td><td>各段依次折进累加器，列间有间隔；份数逐轮翻倍（Σ² → Σ⁴）。</td><td class="mono">公式 max(逐段和, 方框展示)</td></tr>
-          <tr><td class="nm">计算结束</td><td>同上三页</td><td>方框先淡出、计算层收回，卡片退回双排。</td><td class="mono">shrinkDur（+calcFade 衔接）</td></tr>
-          <tr><td class="nm">卡片收窄</td><td>reduce-scatter 专有</td><td>卡片真收窄到保留的两列（r0/r1 缩右缘、r2/r3 缩左缘），撤掉用不上的接收格；第 2 轮全程窄卡，收场复原全宽。</td><td class="mono">规范 blockDur</td></tr>
+          <tr><td class="nm">预留缓冲</td><td>8 页全有</td><td>接收位亮出：gather / scatter / broadcast 空槽显形；计算页一排变两排；all-to-all 下排整排显形。</td><td class="mono">计算页＝cardDur＋rowLull＋4×blockDur＋3×blockGap＋preHold（03 章）；其余 0.6s 编排秒</td></tr>
+          <tr><td class="nm">飞行（数据包）</td><td>8 页全有</td><td>包的整段旅途：起飞 → 飞行 → 抵达 → 送达淡出（<b>淡出并入本行</b>，不再单列）。</td><td class="mono">choreo＝packDur＋packFade（05 章）；计算页＝编排秒＋packFade（05 章）</td></tr>
+          <tr><td class="nm">落位延迟</td><td>8 页全有</td><td>抵达后的呼吸：串行律「抵达 → 淡出完 → 停一拍 → 才弹」。</td><td class="mono">orch·seatDelay 0.50（visual 13 章）</td></tr>
+          <tr><td class="nm">落位弹跳（单颗）</td><td>gather / scatter</td><td>单传：一块一拍落位，一次弹跳。</td><td class="mono">08 章 popDur ×k</td></tr>
+          <tr><td class="nm">落位弹跳（整包）</td><td>broadcast / reduce</td><td>连发：整份 4 块合包<b>一拍齐落</b>，块间无间隔；块粒度只在「计算中」出现。</td><td class="mono">08 章 popDur ×k</td></tr>
+          <tr><td class="nm">落位弹跳（齐弹）</td><td>allgather / allreduce / reduce-scatter</td><td>齐传：同轮多块同刻起弹、同刻落定。</td><td class="mono">08 章 popDur ×k</td></tr>
+          <tr><td class="nm">落位弹跳（错峰）</td><td>alltoall</td><td>汇传：顺序到达，第 i 块比前一块晚 seatGap 起跳，末块弹跳收尾＝窗口末。</td><td class="mono">08 章 popDur＋3×seatGap ×k</td></tr>
+          <tr><td class="nm">计算开始</td><td>reduce / allreduce / reduce-scatter</td><td>卡片长出计算层、「计算」方框浮现（先长空间、后填内容）。</td><td class="mono">07 章 growDur＋calcFade</td></tr>
+          <tr><td class="nm">计算中</td><td>同上三页</td><td>各段依次折进累加器，列间有间隔；份数逐轮翻倍（Σ² → Σ⁴）。</td><td class="mono">max(fuseDur＋列数×mergeGap, holdDur)（09 章）</td></tr>
+          <tr><td class="nm">计算结束</td><td>同上三页</td><td>方框先淡出、计算层收回，卡片退回双排。</td><td class="mono">07 章 shrinkDur＋calcFade</td></tr>
+          <tr><td class="nm">卡片收窄</td><td>reduce-scatter 专有</td><td>卡片真收窄到保留的两列（r0/r1 缩右缘、r2/r3 缩左缘），撤掉用不上的接收格；第 2 轮全程窄卡，收场复原全宽。</td><td class="mono">03 章 blockDur ×k</td></tr>
           <tr><td class="nm">轮歇</td><td>allreduce / reduce</td><td>两轮之间的停顿，画面静止（reduce 2026-11-03 补齐；末轮没有，直接进完成）。</td><td class="mono">编排秒 0.55</td></tr>
-          <tr><td class="nm">收场</td><td>reduce / allreduce / reduce-scatter</td><td>舞台复原动画：方框先没 → 第二排逐块撤 → 卡片收回单排。只有「舞台被改造过」的页有。</td><td class="mono">收场公式</td></tr>
+          <tr><td class="nm">收场</td><td>reduce / allreduce / reduce-scatter</td><td>舞台复原动画：方框先没 → 第二排逐块撤 → 卡片收回单排。只有「舞台被改造过」的页有。</td><td class="mono">4×blockDur＋rowPause＋cardDur（03 章）</td></tr>
           <tr><td class="nm">完成</td><td>8 页全有</td><td>终态停驻：画面静止展示结果。收场页在收场<b>之后</b>（先复原再停驻，全站唯一终态顺序），其余五页舞台没变过、直接停驻。</td><td class="mono">编排秒</td></tr>
         </tbody>
       </table>

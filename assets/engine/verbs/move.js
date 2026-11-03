@@ -452,12 +452,12 @@
     var FADE = CV.spec('packFade');   /* 送达淡出并入飞行行，秒从规范现读 */
     var RS = CV.rowSpan(4);           /* 开场公式：长高 + 逐格显形 + preHold（#8 与计算页同构） */
     var rIntro = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.9 });
-    var rOpen  = CV.timeRow(scene.id, { key: 'open', label: '预留缓冲', sec: RS.open });
+    var rOpen  = CV.timeRow(scene.id, { key: 'open', label: '预留缓冲', sec: RS.open, hint: '秒 = cardDur + rowLull + 4×块显形 + preHold（03 章现算）' });
     var rFly   = CV.timeRow(scene.id, { key: 'fly', label: '飞行（数据包）', sec: 0.95 + FADE });
     var rDly   = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.spec('seatDelay') });
     var rSeat  = CV.timeRow(scene.id, { key: 'seat', label: '落位弹跳（错峰）',
       of: ['popDur', 'seatGap', 'seatGap', 'seatGap'], specLabel: '弹跳+错峰' });
-    var rGap   = CV.timeRow(scene.id, { key: 'gap', label: '轮歇', sec: 0.4 });
+    var rGap   = CV.timeRow(scene.id, { key: 'gap', label: '轮歇', sec: 0.4, hint: '步与步之间的停顿（编排秒）' });
     var rTail  = CV.timeRow(scene.id, { key: 'tail', label: '完成', sec: 0.6 });
 
     var TM = { init: rIntro.sec, open: rOpen.sec,

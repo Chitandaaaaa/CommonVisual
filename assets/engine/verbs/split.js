@@ -67,8 +67,11 @@
     /* 齿轮行（2026-11-03 全站统一）：飞行行 = 纯飞行 + 送达淡出（PACKFADE 规范现读）；
        落位/计算三行是窗口（内部动画仍按规范值走），落位延迟全站 0.50（steps 2.6），
        只有卡片收窄是纯规范值（走倍数）。两轮各成一组，行标签全站同词。 */
-    function row(key, label, sec) {
-      return CV.timeRow(scene.id, { key: key, label: label, sec: sec });
+    var H_PRE = '秒 = cardDur + rowLull + 4×块显形 + preHold（03 章现算）';
+    var H_MRG = '秒 = max(fuseDur + 列数×mergeGap, holdDur)（09 章现算）';
+    var H_FIN = '秒 = 4×块撤 + rowPause + cardDur + 停驻（03 章现算）';
+    function row(key, label, sec, hint) {
+      return CV.timeRow(scene.id, { key: key, label: label, sec: sec, hint: hint });
     }
     var rFly1  = row('fly1',    '飞行（数据包）', 1.7 + PACKFADE);
     var rDly1  = row('delay1',  '落位延迟', CV.spec('seatDelay'));
@@ -76,18 +79,18 @@
     var rDly2  = row('delay2',  '落位延迟', CV.spec('seatDelay'));
     var ROWS = [
       row('intro',   '说明', 1.1),
-      row('reserve', '预留缓冲', RS.open),
+      row('reserve', '预留缓冲', RS.open, H_PRE),
       rFly1, rDly1, rSeat1,
-      row('calc1',   '计算开始', CALC_UP),
-      row('merge1',  '计算中', MRG1),
+      row('calc1',   '计算开始', CALC_UP, '秒 = growDur + calcFade（07 章现算）'),
+      row('merge1',  '计算中', MRG1, H_MRG),
       row('down1',   '计算结束', CALC_DOWN),
       CV.timeRow(scene.id, { key: 'slim', label: '卡片收窄', of: 'blockDur' }),
       rFly2, rDly2, rSeat2,
-      row('calc2',   '计算开始', CALC_UP),
-      row('merge2',  '计算中', MRG2),
-      row('shrink',  '计算结束', CALC_DOWN),
-      row('collapse', '收场', RS.close),
-      row('fin',     '完成', 2.2)
+      row('calc2',   '计算开始', CALC_UP, '秒 = growDur + calcFade（07 章现算）'),
+      row('merge2',  '计算中', MRG2, H_MRG),
+      row('shrink',  '计算结束', CALC_DOWN, '秒 = calcFade + shrinkDur（07 章现算）'),
+      row('collapse', '收场', RS.close, H_FIN),
+      row('fin',     '完成', 2.2, '终态停驻（编排秒）')
     ];
 
     /* 面板行：两轮各成一组（行号并起来仍是进度条第几段）。

@@ -56,15 +56,15 @@
        reload 即跟变，不 of 化也不会焊死。 */
     var FADE = CV.spec('packFade');   /* 送达淡出并入飞行行，秒从规范现读 */
     var rInit = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.6 });
-    var rPre  = CV.timeRow(scene.id, { key: 'pre', label: '预留缓冲', sec: RS.open });
+    var rPre  = CV.timeRow(scene.id, { key: 'pre', label: '预留缓冲', sec: RS.open, hint: '秒 = cardDur + rowLull + 4×块显形 + preHold（03 章现算）' });
     var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '飞行（数据包）', sec: 1.7 + FADE });
     var rDly  = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.spec('seatDelay') });
     var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳（整包）', of: 'popDur' });
     var rGrow = CV.timeRow(scene.id, { key: 'grow', label: '计算开始', of: 'growDur' });
-    var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '计算中', sec: Math.max(SEG + 3 * GAP, HOLD) });
+    var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '计算中', sec: Math.max(SEG + 3 * GAP, HOLD), hint: '秒 = max(fuseDur + 3×mergeGap, holdDur)（09 章现算）' });
     var rShr  = CV.timeRow(scene.id, { key: 'shrink', label: '计算结束', of: 'shrinkDur' });
     var rGap  = CV.timeRow(scene.id, { key: 'gap', label: '轮歇', sec: 0.55 });
-    var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '收场', sec: RS.close });
+    var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '收场', sec: RS.close, hint: '秒 = 4×块撤 + rowPause + cardDur（03 章现算）' });
     var rFin  = CV.timeRow(scene.id, { key: 'fin', label: '完成', sec: 2 });
 
     var TM = {
@@ -436,7 +436,7 @@
        计算三行走规范倍数，方框浮现的 0.35s 固定衔接不进面板。 */
     var FADE = CV.spec('packFade');   /* 送达淡出并入飞行行，秒从规范现读 */
     var rInit = CV.timeRow(scene.id, { key: 'intro', label: '说明', sec: 0.9 });
-    var rExp  = CV.timeRow(scene.id, { key: 'expand', label: '预留缓冲', sec: RS.open + 0.25 });
+    var rExp  = CV.timeRow(scene.id, { key: 'expand', label: '预留缓冲', sec: RS.open + 0.25, hint: '秒 = cardDur + rowLull + 4×块显形 + preHold + 0.25（03 章现算）' });
     var rFly  = CV.timeRow(scene.id, { key: 'fly', label: '飞行（数据包）', sec: 1.1 + FADE });
     var rDly  = CV.timeRow(scene.id, { key: 'delay', label: '落位延迟', sec: CV.spec('seatDelay') });
     var rPop  = CV.timeRow(scene.id, { key: 'pop', label: '落位弹跳（齐弹）', of: 'popDur' });
@@ -444,7 +444,7 @@
     var rMrg  = CV.timeRow(scene.id, { key: 'merge', label: '计算中', sec: Math.max(SEG + 3 * MGAP, HOLD) });
     var rDwn  = CV.timeRow(scene.id, { key: 'down', label: '计算结束', of: 'shrinkDur' });
     var rGap  = CV.timeRow(scene.id, { key: 'gap', label: '轮歇', sec: 0.55 });
-    var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '收场', sec: RS.close });
+    var rCol  = CV.timeRow(scene.id, { key: 'collapse', label: '收场', sec: RS.close, hint: '秒 = 4×块撤 + rowPause + cardDur（03 章现算）' });
     var rFin  = CV.timeRow(scene.id, { key: 'fin', label: '完成', sec: 0.95 });
 
     var TM = {
