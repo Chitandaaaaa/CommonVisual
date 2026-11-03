@@ -90,7 +90,7 @@
 <div class="wrap">
 
   <h1>CommonVisual · 验证用例清单</h1>
-  <div class="sub">235 条：通用 3 ＋ 全站通用 29 ＋ 原语页 65 ＋ index 与规范页 15 ＋ 规范符合性 117 ＋ 参数面板 8。已实现 237 条，待补 0 条（第 2/3/4 组在 <code>tools/probes/</code>，随 verify.mjs 跑）。<b>结构断言每次改完都跑；截图与人工观感留到提交前和每日定时。</b></div>
+  <div class="sub">234 条：通用 3 ＋ 全站通用 29 ＋ 原语页 67 ＋ index 与规范页 15 ＋ 规范符合性 112 ＋ 参数面板 8。已实现 234 条，待补 0 条（第 2/3/4 组在 <code>tools/probes/</code>，随 verify.mjs 跑）。<b>结构断言每次改完都跑；截图与人工观感留到提交前和每日定时。</b></div>
   <div class="rule-top">以本页为准 · 改本页需同步 AGENTS.md 一 与 MEMORY.md</div>
   <div class="lead">本页只列<b>用例</b>——能判「过或不过」的验证动作，每条写明<b>作用在哪个页面</b>与<b>通过标准</b>；拆分、入册等条数沿革见页尾变更日志。<b>左侧红条</b>＝口径已按实现对齐的条目，补断言以红条文案为准；<b>橙条</b>＝2026-10-31 拆分新增的行；<b>紫条</b>＝待处理条目（当前 0 条，已了结的登记见页尾日志）。</div>
     <div class="boundary warn"><b>待处理（审计登记、未排期——只记录，不改代码）：</b>历史登记的紫条均已了结，当前门禁 0 紫；下列为现行已知的弱断言缺口。<br>
@@ -187,7 +187,7 @@
 
   <!-- ===================== 03 ===================== -->
   <section>
-    <div class="sechead"><span class="no">03</span><h2>原语页用例 · 一页一组</h2><span class="meta">63 条 · 每次改完跑 · 已实现 63</span></div>
+    <div class="sechead"><span class="no">03</span><h2>原语页用例 · 一页一组</h2><span class="meta">67 条 · 每次改完跑 · 已实现 63</span></div>
     <div class="role">同一页的断言共用一次挂载，按<b>时间顺序</b>排：挂载 → 初始态 → 过程中 → 终态。红条 = 口径已按实现对齐（历史轮次见页末），照文案补断言即可。</div>
     <table class="spec">
       <colgroup><col style="width:6%"><col style="width:10%"><col style="width:16%"><col style="width:50%"><col style="width:18%"></colgroup>
@@ -311,7 +311,7 @@
 
   <!-- ===================== 05 ===================== -->
   <section id="sec-05">
-    <div class="sechead"><span class="no">05</span><h2>规范符合性 · 账本单源</h2><span class="meta">117 条 · 每次改完跑（verify 对全部页面自动挂载） · 已实现 117</span></div>
+    <div class="sechead"><span class="no">05</span><h2>规范符合性 · 账本单源</h2><span class="meta">112 条 · 每次改完跑（verify 对全部页面自动挂载） · 已实现 117</span></div>
     <div class="role">单源 = <code>assets/ledger.js</code>（规范总账 104 项，动效 39 + 样式 68；与 docs/visual.html 00 章同源渲染）。每行按四种检查型之一对页面：<b>link</b> 改参数 → reload → 可量 Δ → 还原无残差；<b>unit</b> 页面内最小 fixture 直调规范函数断言输出；<b>truth</b> 页面 DOM / 常量真值逐项对照；<b>src</b> 源码消费点 / 字面量检查。页面范围（pages）按实现消费点登记——某参数只在部分页消费就只对那些页跑，5.0 对账保证「账上该跑的没漏、跑的没有账外项」。</div>
     <table style="margin-top:12px">
       <thead><tr><th class="c-no">序号</th><th class="c-p" style="width:150px">页面</th><th>检查项</th><th class="c-v">检查型 · 当前值 · 章节</th><th>状态 / 脚本</th></tr></thead>
