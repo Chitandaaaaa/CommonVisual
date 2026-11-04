@@ -1,0 +1,56 @@
+/* src/assets/stage.css · 舞台与面板外观（⑦；颜色只读④派生变量） */
+* { box-sizing: border-box; }
+body { margin: 0; background: #f5f6f8; color: #1c2130;
+  font: 14px/1.6 -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+.cv-hd { padding: 18px 24px 6px; }
+.cv-hd h1 { margin: 0; font-size: 21px; letter-spacing: -.3px; }
+.cv-sub { color: #7a8296; font-size: 12px; }
+.cv-stage-wrap { padding: 8px 24px; }
+#cv-stage { width: 100%; height: auto; display: block; background: #fbfbfd;
+  border: 1px solid #e4e7ee; border-radius: 12px; }
+.cv-ctl { display: flex; gap: 12px; align-items: center; padding: 6px 24px 24px; }
+.cv-ctl button { border: 1px solid #ddd4fb; background: #f1ecfe; color: #7c3aed;
+  border-radius: 8px; padding: 6px 14px; cursor: pointer; font-size: 13px; }
+#cvScrub { flex: 1; accent-color: #7c3aed; }
+.cv-time { font: 12px ui-monospace, Menlo, monospace; color: #7a8296; min-width: 120px; text-align: right; }
+
+.cv-gear-btn { position: fixed; right: 18px; bottom: 18px; width: 44px; height: 44px;
+  border-radius: 50%; border: 1px solid #ddd4fb; background: #fff; color: #7c3aed;
+  font-size: 20px; cursor: pointer; box-shadow: 0 4px 14px rgba(20,25,40,.14); z-index: 30; }
+.cv-panel { position: fixed; right: 18px; bottom: 70px; width: 660px; max-height: 72vh;
+  background: #fff; border: 1px solid #e4e7ee; border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(20,25,40,.16); display: flex; flex-direction: column; z-index: 30; }
+.cv-panel.hidden { display: none; }
+.cv-tabs { display: flex; gap: 6px; padding: 10px 12px; border-bottom: 1px solid #eef0f5; }
+.cv-tabs button { border: 1px solid #eef0f5; background: #fff; border-radius: 7px;
+  padding: 5px 12px; cursor: pointer; font-size: 12.5px; color: #4b5364; }
+.cv-tabs button.on { border-color: #ddd4fb; color: #7c3aed; background: #f1ecfe; }
+.cv-follow { margin-left: auto; }
+.cv-body { overflow: auto; padding: 10px 12px 14px; }
+
+table.cv-gr, table.cv-na { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+table.cv-gr td, table.cv-gr th, table.cv-na td, table.cv-na th {
+  padding: 5px 8px; border-bottom: 1px solid #eef0f5; text-align: left; vertical-align: top; }
+table.cv-gr th, table.cv-na th { background: #fafbfd; color: #4b5364; font-size: 11.5px; }
+table.cv-gr tr.hd td { font-weight: 700; color: #5b3fbe; background: #f6f4ff; }
+table.cv-na { table-layout: fixed; }
+table.cv-na .c1 { width: 54px; } table.cv-na .c2 { width: 76px; }
+table.cv-na .c3 { width: 62px; } table.cv-na .c5 { width: 200px; }
+table.cv-na td.t { font: 11.5px ui-monospace, Menlo, monospace; color: #3f4658; white-space: nowrap; }
+table.cv-na td.no { font: 600 11.5px ui-monospace, Menlo, monospace; color: #7c3aed; }
+table.cv-na td.res { color: #7a8296; font-size: 12px; }
+table.cv-na tr.rest td.what { color: #7a8296; }
+table.cv-na tr.grp td { background: #f6f4ff; color: #5b3fbe; font-weight: 700; }
+table.cv-na tr.grp .gs { font: 400 11px ui-monospace, Menlo, monospace; color: #7a72a0; margin-left: 8px; }
+table.cv-na td.sim { background: #f7f4ff; font-weight: 600; color: #5b3fbe; }
+table.cv-na td.sim .same { display: block; margin-top: 2px; font-size: 9px; color: #7c3aed;
+  background: #efe8ff; border-radius: 5px; padding: 1px 4px; text-align: center; }
+table.cv-na tr.on td { background: #fbf8ff; }
+table.cv-na tr.on td.what { color: #7c3aed; font-weight: 600; }
+.cv-tip { margin-top: 8px; font-size: 11.5px; color: #a6adc0; }
+.cv-skin h4 { margin: 10px 0 4px; font-size: 12.5px; color: #5b3fbe; }
+.cv-skin label { display: flex; align-items: center; gap: 8px; font-size: 12px;
+  padding: 2px 0; color: #4b5364; }
+.cv-skin label input[type="range"] { flex: 1; accent-color: #7c3aed; }
+.cv-skin button { margin-top: 10px; border: 1px solid #eef0f5; background: #fff;
+  border-radius: 7px; padding: 5px 12px; cursor: pointer; }

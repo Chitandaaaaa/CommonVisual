@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:,">
+<title>All-to-All · 动态演示</title>
+<link rel="stylesheet" href="assets/stage.css">
+</head>
+<body>
+<div id="app"></div>
+<!-- 层序：L0 参数 → L4 事实 → L5 词表 → L3 曲线/几何 → L2 零件 → L3 引擎 → L3 面板 → L6 剧本 -->
+<script src="assets/spec.js"></script>
+<script src="assets/facts.js"></script>
+<script src="assets/lexicon.js"></script>
+<script src="assets/curves.js"></script>
+<script src="assets/geom.js"></script>
+<script src="assets/parts/card.js"></script>
+<script src="assets/parts/wire.js"></script>
+<script src="assets/parts/packet.js"></script>
+<script src="assets/engine/compile.js"></script>
+<script src="assets/engine/narrate.js"></script>
+<script src="assets/engine/director.js"></script>
+<script src="assets/chrome.js"></script>
+<script src="assets/scenes/alltoall.js"></script>
+<script>CV.boot('alltoall')</script>
+</body>
+</html>
