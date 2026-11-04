@@ -429,6 +429,7 @@
     var all4 = [0, 1, 2, 3];
     var t = introOpen(T, scene, cards);
     for (var k = 1; k <= 2; k++) {
+      var round = k;   /* 惰性回调捕获本轮号（var k 循环结束后 = 3，直接引用会越界） */
       var s = t;
       var st = step(T, '第 ' + (k + 1) + ' 步 · 第 ' + k + ' 轮（' + (k === 1 ? '横向' : '纵向') + '互换）', s, 0, '组内相 + 编排合成');
       var pairs = CV.FACTS.allreduce.rounds.edges[k - 1];
@@ -452,7 +453,7 @@
       row(st, s + flight, fadeEnd, '整份包 · 淡出', '透明');
       row(st, s + flight, null, wname + ' · 余辉', '保留数据色');
       ev(T, fadeEnd + flight * sp('trailRatio'), function (S) {
-        scene.wireIds[k - 1].forEach(function (w) { S.wires[w] = { st: 'rest' }; });
+        scene.wireIds[round - 1].forEach(function (w) { S.wires[w] = { st: 'rest' }; });
       });
       var landT = fadeEnd + sp('seatDelay');
       row(st, fadeEnd, landT, '画面 · 静止', '第二排保持接收位');
@@ -488,6 +489,7 @@
     var all4 = [0, 1, 2, 3];
     var t = introOpen(T, scene, cards);
     for (var k = 1; k <= 2; k++) {
+      var round = k;   /* 惰性回调捕获本轮号（同 buildExchange） */
       var s = t;
       var st = step(T, '第 ' + (k + 1) + ' 步 · 第 ' + k + ' 轮（' + (k === 1 ? '同列' : '同行') + '互换）', s, 0, '组内相 + 编排合成');
       var pairs = CV.FACTS.reducescatter.rounds.edges[k - 1];
@@ -520,7 +522,7 @@
       row(st, s + flight, fadeEnd, '单体包 · 淡出', '透明');
       row(st, s + flight, null, '直连 · 余辉', '保留数据色');
       ev(T, fadeEnd + flight * sp('trailRatio'), function (S) {
-        scene.wireIds[k - 1].forEach(function (w) { S.wires[w] = { st: 'rest' }; });
+        scene.wireIds[round - 1].forEach(function (w) { S.wires[w] = { st: 'rest' }; });
       });
       var landT = fadeEnd + sp('seatDelay');
       row(st, fadeEnd, landT, '画面 · 静止', '第二排保持接收位');
