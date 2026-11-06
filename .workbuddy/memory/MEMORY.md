@@ -6,7 +6,9 @@ NCCL 八个原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducesc
 - `MEMORY.md`（本文件）= 长期约定与坑，人工提炼，每次开工先读。
 - `YYYY-MM-DD.md` = 当天工作日志，**append-only**，只记有跨会话价值的落地与坑，不记临时路径/报错。
 - `from-070d080b-20261030/` = 2026-10-30 从已删除开发 worktree 抢救出的旧日志快照，**仅供参考，不是现行约定**。
+- `from-hammer-20261107/` = 2026-11-07 本机（hammer）与远端同日各记一份日志时**本机**版本的快照，**仅供参考**；其中仍有效的组件约定已并入本文件「组件约定」节。
 - `.workbuddy/memory/` 已纳入 git（`.gitignore` 只放行这一支），换设备 `git clone` 即可续用；日志是单机 append-only，别在多台机器同时改同一份日志（会冲突）。
+  **已知坑（2026-11-07 实测）**：memory 入库前若某台机器的 `.workbuddy/` 仍被整目录忽略，该机的 memory 是「ignored 未跟踪文件」——`git pull` 遇到同名文件会**静默覆盖**、不报冲突（输出只有 `create mode`，看不出丢东西）。拉取前先 `cp -r .workbuddy/memory .tmp-memory-backup`，拉完逐文件比对。
 - 日志索引见文末「日志索引」。
 
 ## 页面清单（2026-10-31 提根后：根目录即页面集，v1 已删）
@@ -43,9 +45,18 @@ NCCL 八个原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducesc
 - 数据色 A`#7c3aed`/B`#0891b2`/C`#059669`/D`#d97706`，rank 与数据同色；终态深紫 `#4c1d95`(Σ)；整份包 `#8b93a6`。聚焦=hover||pinned。循环常开，倍速/循环开关已移除。
 - **组件文档判据：参数 = 能被独立赋值的自由度**。凡「A 必然等于 B」或「A 由内容算出来」，A 不是参数：删掉、关系写进上一级描述，或换成真正决定它的量。已按此削：1.1.2 无 宽度/圆角（随卡片）、3.2.1 无 宽度（内边距 9 + 最小宽度 30）、层序搬到 `0.5`。
 
+## 组件约定（2026-11-07 从本机日志并入，路径已对到 v2）
+- **一排 ↔ 两排**：`CV.rowSpan(n)` / `CV.rowOpen(T,n)` / `CV.rowClose(T,n)`（`assets/prim/motion.js`）。顺序是**串行两步**，绝不边宽边加 / 边撤边收：开 = ① 卡片绕中心长够 → ② 第二排空块逐块出现；收 = ① 空块从右往左逐块撤 → ② 卡片收回。消费页 reduce / allreduce / reducescatter 统一「开场一次 open + 收场一次 close」，循环期间停在两排高（只在「计算」那一拍临时长一层放方框）。
+- **三页步骤顺序（用户定死，别改）**：预留（一排变两排，只一次）→ 循环「传递 → 落位 → 计算 → 合并」→ 收场（两排变一排，只一次）。「计算」是循环里的独立一拍、必须在传递之后：`CALC_UP 0.4`（长 h3 + 方框淡入）→ 合并 → `CALC_DOWN 0.7`（前 .35 只淡方框，之后 h3→h2）。收场三层依次「计算层先退 → 第二排逐块撤 → 卡片收回」，方框必须早于卡片退场，否则卡片一矮计算框就跑到卡外成虚影。别每轮重来一次长高/收回（看着像每轮搬家）。
+- **槽位三态**（`CV.setSlot` = `CV.cast.set`，`assets/parts/cast.js`）：有数据 `{letter,color}` 实色块+字母 / 接收中 `(s,null,{active:true})` 紫底 `#f3eeff`+紫框+`···`（**只给接收位**）/ 空 `(s,null,{})` 灰底+灰虚线+无字。**送出的那一格写「空」，不是「接收中」**——早期用 `{active:true}` 语义正好反了。
+- **Σ 结果块标记法**：折进 2 份起的块显示 Σ + 下标列字母 + 上标已折份数，传 `{letter:'Σ', sub:'A', count:2}`（`count` 是上标 tspan，dy 按两级字号换算）；份数随每次相加 +1。`CV.createMerge`（= `CV.beat.fuse`，`assets/parts/beat.js`）的 `to` 同款。
+- **reduce-scatter 轮次之间撤多余空位**是独立一拍 `slim`（`assets/engine/verbs/split.js`，of `blockDur`）：第 1 轮每卡交 2 收 2、第 2 轮交 1 收 1；别在第二轮飞行时顺带淡掉（会被读成第二轮也收两段）。现行实现已升级为「卡片真收窄到保留两列」（2026-11-03 #2）。
+- `.pkt` 不能有 `transition: opacity`（逐帧写 opacity 会把过渡反复重启）。
+- **探针量几何的坑**：单章视图下 `display:none` 的节 `getBBox` 返回空、出界检查会静默跳过——先临时展开全部节再量；rAF 守恒判定要等 >500ms（计数窗 500ms）。docs/visual.html 的 h3 数量 ↔ 调试台锚点耦合（`assets/theme/spec.js` SCHEMA 的 `anchor`，如 03-card→`sub-03-5`，随节号顺延），增删该页 h3 必查那张表。
+
 ## 参数与时序（v2）
-- 组件规范参数表在 `assets/theme/theme.js`（03-card / 05-packet / 07-calc / 08-seat / 09-merge / global），取值入口 `CV.specVal(key)` / `CV.dur(记号)`；规范值走记号/倍数，页面编排值直接写秒。
-- 覆盖链 = 代码基线 ← localStorage：参数基线 `assets/theme/defaults.js`（`CV_PARAM_DEFAULTS`，须在 theme.js 前加载）← `localStorage('cv.params.v1')`；每页时序基线 `assets/scenes/pages-base.js`（`CV_PAGE_DEFAULTS`）← `localStorage('cv.page.<页>.v1')`。**两个基线文件在但尚未被任何页面加载 ——「保存到代码」落盘无效（BUGS 已记，待修）**。
+- 组件规范参数表在 `assets/theme/spec.js`（`CV.SPEC`，03-card / 05-packet / 07-calc / 08-seat / 09-merge / global），唯一读法 `CV.spec('键')`（表外键抛错）；`specVal / specNum` 与消费端 `|| 字面量` 兜底已全部退役（参数总线 B1，探针 5.1c 守门）。规范值走记号/倍数，页面编排值直接写秒。
+- 覆盖链 = 代码基线 ← localStorage：参数基线 `assets/theme/defaults.js`（`CV_PARAM_DEFAULTS`，须在 spec.js 之前加载）← `localStorage('cv.params.v1')`；每页时序基线 `assets/scenes/pages-base.js`（`CV_PAGE_DEFAULTS`）← `localStorage('cv.page.<页>.v1')`。**两个基线文件八页均已加载**（2026-11-07 核；早期"在但未被加载、落盘无效"的账已销）。
 - 齿轮 = `parts/chrome.js` X5：规范行填倍数（规范键/规范值/×k/秒），abs 行直接填秒；改值 → boot 的 onChange → `director.reload()`；**面板内改值只更新秒数列，别重建 DOM（失焦）**。
 - `CV.choreo`（compile.js）：wait/transfer 节拍 → 显式分段表；transfer 自动展开 传递→落位延迟→落位弹跳→间隔（串行 travelEnd→fadeEnd→seatStart→seatEnd）。family 页 timeline（sum/split/move 动词）自算分段并产齿轮 rows；reduce/allreduce/alltoall 重复段共用一组（组头标进度条段号区间），reducescatter 平铺 14 行（行号=段号）。
 - **逐动作解说**（2026-10-31 落地）：`assets/engine/narration.js` = 词表 CV.NARR_LEX（表外动作抛错）+ 五种时间轴生成器，秒数只从编译产物现取；齿轮第二页签渲染，高亮走 bar 的 onPaint 钩子。改文案：动作加词表、静止行写 scene `narr.rest`，别在生成器外手写句子。口径细则见 docs/steps.html §12。
@@ -63,13 +74,13 @@ NCCL 八个原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducesc
 ## 新增一个原语（v2 流程，全流程见 docs/blueprint.html）
 1. `assets/scenes/<id>.js` 剧本 + 薄壳 `<id>.html`（脚本列表照抄现成页）。
 2. `assets/registry.js` 登记 `pre / post / rel / verbs`。
-3. `tools/probes/<id>.mjs` 断言 + `docs/testing.html` 补用例行。
+3. `tools/probes/<id>.mjs` 断言 + `docs/test-cases.html` 补用例行。
 
 ## 验证（流程在 AGENTS，这里只记落点）
-- **用例清单唯一来源 = `docs/testing.html`**（**100 条**：① 通用 3 ② 全站通用 20 ③ 原语页 60 ④ 静态页 17；2026-10-31 由 83 条拆分重排而来，旧编号映射见其页尾）。
+- **用例清单唯一来源 = `docs/test-cases.html`**（**234 条**＝通用 3 + 全站通用 29 + 原语页 67 + index 与规范页 15 + 规范符合性 112 + 参数面板 8；口径同步在 AGENTS「口径有出处」条，旧编号映射见该页页尾——旧会话/旧提交引用的是旧编号）。
 - 全部已实现于 `tools/probes/<页>.mjs`（与页面同名自动配对；`_common.mjs` = 全站 20 条 + V1–V8 视觉契约，期望值 2026-10-30 实测；V4 空槽两态合法：`#f7f8fc` 空闲 / `#f3eeff` 接收中）。
-- 当前门禁仅 3 紫：3.42 / 3.43（allreduce 采样锚点被字幕误匹配）、3.51（reducescatter 结束帧 −20 提前量）—— 待时序标准定稿后采样改 `win.*` 现算；另有审计发现登记在 testing.html 顶部③（只记录未排期，含 2.13a sum 族四页齿轮漏跑：场景声明 gear:true、探针写死 false）。
-- 实测：12 页 `--no-shot` 约 2 分 20 秒。缺陷统一记 `docs/BUGS.md`（只记录，不改业务代码）。
+- 2026-10-31 口径下门禁 3 紫：3.42 / 3.43（allreduce 采样锚点被字幕误匹配）、3.51（reducescatter 结束帧 −20 提前量）—— 待时序标准定稿后采样改 `win.*` 现算；另有审计发现登记在 test-cases.html 顶部③（只记录未排期，含 2.13a sum 族四页齿轮漏跑：场景声明 gear:true、探针写死 false）。现状以 `node tools/verify.mjs <页>` 实跑为准，别照抄本节。
+- 实测：12 页 `--no-shot` 约 2 分 20 秒。缺陷统一记 `docs/bugs.md`（只记录，不改业务代码）。
 - 写探针的坑：同卡多排槽位必须先按 y 再按 x（同 x 上下两排会交错）；t0 快照前先 seek(0)（页面自动播放）；rs/ar 块色走 `CV.mix` 输出 rgb() 串，比色前要归一；reduce 系槽→卡归属用「中心落卡内 + 底边 12px 容差」；`pg.goto` 只吃绝对 URL；anatomy 是单章视图（目录点击=切节，无真实 sec-NN 锚元素）。
 - 依赖扫描：`node tools/arch.mjs [--json]`，改完公共层重跑（`docs/specs.html` 的图会过期）。
 
@@ -87,6 +98,7 @@ NCCL 八个原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducesc
 |---|---|
 | 2026-10-22.md | 立项：Gather 页设计 |
 | 2026-10-23.md | Broadcast 页（1→N，复制整份） |
+| 2026-10-24.md | 子页面关系导航重做（relmap 改单行 flex） |
 | 2026-10-26.md | All-Reduce 页 |
 | 2026-10-27.md | 首页原语树悬停高亮方向 bug |
 | 2026-10-28.md | 规范页与对齐改造，提交推送 |
@@ -95,6 +107,7 @@ NCCL 八个原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducesc
 | 2026-10-30-gear-family.md | 四个 family 页接时序齿轮 |
 | 2026-10-30-probes.md | 断言探针全套（tools/probes） |
 | 2026-10-31.md | specs 清单对齐，提根到根目录 |
+| 2026-11-01.md | 规范 #9 时序编排 · pages-base.js 落地（齿轮「保存到代码」闭环） |
 | 2026-11-02.md | 方案 A 校准收尾 + 05 组全绿 |
 | 2026-11-03.md | 时序步骤名全站统一 |
 | 2026-11-05.md | docs/组件文档.md 结构调整 |
