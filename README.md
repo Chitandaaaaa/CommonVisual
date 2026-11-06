@@ -102,7 +102,8 @@ CommonVisual/
 │   ├── visual.html         组件与动效规范：1:1 真值 + 参数调试台（原根 anatomy.html）
 │   ├── steps.html          原语动态步骤规范：名词表 + 逐动作解说文案（原 docs/action.html）
 │   ├── test-cases.html     验证用例清单（112 条，含旧编号映射）
-│   └── bugs.md             缺陷台账（回归与人工验证统一追加）
+│   ├── bugs.md             缺陷台账（回归与人工验证统一追加）
+│   └── 迭代轨迹.md         逐版过程归档（「第 N 版 / 轮」从 memory 日志抽出，日志只留结论与坑）
 ├── tools/
 │   ├── serve.mjs           开发服务 + 「保存到代码」写盘端点（POST /__cv/save，白名单两个基线文件）
 │   ├── verify.mjs          页面验证：报错检查 + 几何探针 + 最小截图集
