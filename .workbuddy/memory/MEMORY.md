@@ -6,7 +6,6 @@ NCCL 八个原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducesc
 - `MEMORY.md`（本文件）= 长期约定与坑，人工提炼，每次开工先读。
 - `YYYY-MM-DD.md` = 当天工作日志，**append-only**，只记有跨会话价值的落地与坑，不记临时路径/报错。
 - `from-070d080b-20261030/` = 2026-10-30 从已删除开发 worktree 抢救出的旧日志快照，**仅供参考，不是现行约定**。
-- `from-hammer-20261107/` = 2026-11-07 本机（hammer）与远端同日各记一份日志时**本机**版本的快照，**仅供参考**；其中仍有效的组件约定已并入本文件「组件约定」节。
 - `.workbuddy/memory/` 已纳入 git（`.gitignore` 只放行这一支），换设备 `git clone` 即可续用；日志是单机 append-only，别在多台机器同时改同一份日志（会冲突）。
   **已知坑（2026-11-07 实测）**：memory 入库前若某台机器的 `.workbuddy/` 仍被整目录忽略，该机的 memory 是「ignored 未跟踪文件」——`git pull` 遇到同名文件会**静默覆盖**、不报冲突（输出只有 `create mode`，看不出丢东西）。拉取前先 `cp -r .workbuddy/memory .tmp-memory-backup`，拉完逐文件比对。
 - 日志索引见文末「日志索引」。
