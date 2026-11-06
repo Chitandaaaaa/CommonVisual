@@ -1,5 +1,8 @@
 .DS_Store
-.workbuddy/
+# .workbuddy 只放行 memory（项目长期约定 + 工作日志，需跨设备可用）
+.workbuddy/*
+!.workbuddy/memory/
+!.workbuddy/memory/**
 .zcode/
 node_modules/
 *.log
