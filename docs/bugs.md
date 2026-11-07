@@ -32,6 +32,7 @@ node tools/verify.mjs index gather scatter broadcast reduce allgather allreduce 
 | 2026-11-01 | assets/rounds.js | reduce 条目锚点声明 `tail.e`，但该页编译产物最后一拍是 `collapse`（winKeys 无 tail）——锚点是探针采样标准（3.42 / 3.43 / 3.51 按它采），声明漂在轴外 | `node tools/verify.mjs reduce --no-shot`（2.26 rounds 契约） | 已修（2026-11-01 tail.e → collapse.e；docs/algorithms.html 锚点行随数据源自动更正） |
 | 2026-11-02 | docs/steps.html | 手写稿再次漂移：reduce / allreduce / reducescatter 共 12 行「第二排-k · 显形」结束列空（瞬时），引擎自 11-02「方案 A」起按 blockDur 给 0.4s 窗（narration 三处 `b0 + CV.dur('blockDur')`）——4.15 对账红，HEAD 上即红、与参数总线 B1 无关 | `node tools/verify.mjs docs/steps.html --no-shot`（4.15） | 已修（2026-11-02 稿内 12 行结束列按 narrate 现值补 +0.40；文案未动） |
 | 2026-11-06 | docs/组件文档.md | 缺自检规则：每个三级节至少要有一个尺寸参数和一个位置参数；纯文字节必须有字号/字体/字重/颜色/位置。现在全靠人工扫 91 节，加组件必漏 | 解析 `####` 下参数表，按字段集合断言 | 待办（未排期，用户要求先记，后做） |
+| 2026-11-07 | allreduce | 页面静止行写「6 条直连灰色」，probe t=0 实测 lWires 8 条直线（4 对正交 × 双向车道：横向车道距 44＝2×humpH、纵向 108＝2×humpV）＋ 8 枚箭头，无对角线——文案条数与真值不符 | `node tools/probe.mjs allreduce 0:"数 lWires path"` | 待修（文案改「8 条车道线」；probe 真值已核，随《剧本》续写 1.6 布局节落册） |
 
 ## 巡检历史
 
