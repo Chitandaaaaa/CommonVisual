@@ -17,6 +17,7 @@
   .tile { background:#f4f6fb; border:1px solid #dfe3ee; border-radius:10px; padding:10px 10px 6px; }
   .tile svg { display:block; width:100%; height:auto; }
   .mini-t svg { max-width:110px; margin:0 auto; }
+  .grid.wide svg { max-width:800px; margin:0 auto; }
   .cap { font-size:12px; color:#6b7488; text-align:center; padding:4px 0 2px;
          font-family:Consolas,monospace; }
   .cap b { color:#444d66; }
@@ -92,11 +93,12 @@ function fShadow(svg, id, dy, blur, color, op) { // 投影/外发光滤镜
   E('feDropShadow', { dx: 0, dy: dy, stdDeviation: blur / 2, 'flood-color': color, 'flood-opacity': op }, f);
   return 'url(#' + id + ')';
 }
-function fBlur(svg, id, blur, op) {
-  const f = E('filter', { id: id, x: '-80%', y: '-80%', width: '260%', height: '260%' }, defsOf(svg));
-  E('feGaussianBlur', { stdDeviation: blur / 2 }, f);
-  const m = E('feComponentTransfer', {}, f);
-  E('feFuncA', { type: 'linear', slope: op }, m);
+/* 拖尾滤镜：与 assets/parts/stage.js 的 fTrail 同构 —— feDropShadow 只在块外补一层软影，
+   块本体不透明度由浓度直接给。早期这里用 feGaussianBlur + feFuncA(0.14) 作用在色块上，
+   alpha 被乘成 0.14，再乘浓度 0.55 → 实际 0.077，拖尾几乎看不见（2026-11-09 修）。 */
+function fTrail(svg, id, std, op) {
+  const f = E('filter', { id: id, x: '-90%', y: '-90%', width: '280%', height: '280%' }, defsOf(svg));
+  E('feDropShadow', { dx: 0, dy: 0, stdDeviation: std, 'flood-color': '#2a3352', 'flood-opacity': op }, f);
   return 'url(#' + id + ')';
 }
 function mix(h1, h2, t) { // 颜色插值（动画演示用）
@@ -220,46 +222,65 @@ function cardG(svg, g, o) {
       slotRow(r, x + (w - n * 46 - (n - 1) * 12) / 2, row.y, n, row.states, o); }
   return r;
 }
-/* 箭头 marker（4.1.2：平头小三角，尖在中点、底边贴满外框左边） */
+/* 箭头 marker（4.1.2：平头小三角 —— 尖是一小段平边、底边贴满外框左边）
+   路径与 assets/parts/payload.js 的 CV.payload.marker 同一份：viewBox 8 宽，
+   size = 箭头大小（11 / 14.3 / 9.9 ＝ 5.5 × 线宽）。 */
 function markerOf(svg, color, size) {
   const id = 'ar' + (++UID);
-  const m = E('marker', { id: id, viewBox: '0 0 11 11', refX: 11, refY: 5.5,
+  const m = E('marker', { id: id, viewBox: '0 0 8 8', refX: 8, refY: 4,
     markerWidth: size, markerHeight: size, markerUnits: 'userSpaceOnUse',
     orient: 'auto' }, defsOf(svg));
-  E('path', { d: 'M 0 0 L 11 5.5 L 0 11 Z', fill: color }, m);
+  E('path', { d: 'M 0 0 L 8 3.27 L 8 4.73 L 0 8 Z', fill: color }, m);
   return 'url(#' + id + ')';
 }
-/* 弧线（4.1.1）：S 形，曲率 0.42；a 起点 b 终点 */
-function arcPath(a, b, k) {
+/* 弧线（4.1.1）：S 形，曲率 0.42。
+   控制点沿**主轴**摆（geom.js · CV.arcPath）：横长的线水平进/水平出，纵长的
+   线垂直进/垂直出。两端等高时四点共线、贝塞尔退化成直线 —— 所以样片里两端
+   必须有高差，别摆成同一水平线。 */
+function arcPath(sx, sy, tx, ty, k) {
   k = k == null ? 0.42 : k;
-  const dx = (b[0] - a[0]) * k;
-  return 'M ' + a[0] + ' ' + a[1] + ' C ' + (a[0] + dx) + ' ' + a[1] + ' ' +
-         (b[0] - dx) + ' ' + b[1] + ' ' + b[0] + ' ' + b[1];
+  const dx = tx - sx, dy = ty - sy;
+  if (Math.abs(dx) >= Math.abs(dy))
+    return 'M ' + sx + ' ' + sy + ' C ' + (sx + dx * k) + ' ' + sy + ', ' +
+           (tx - dx * k) + ' ' + ty + ', ' + tx + ' ' + ty;
+  return 'M ' + sx + ' ' + sy + ' C ' + sx + ' ' + (sy + dy * k) + ', ' +
+         tx + ' ' + (ty - dy * k) + ', ' + tx + ' ' + ty;
 }
-/* 数据包（5.1–5.4）：dir = 弧度制朝向，拖尾永远拖在来路上 */
-function packetG(svg, g, x, y, kind, colors, deg) {
+/* 数据包（5.1–5.4）：dir = 弧度制朝向，拖尾永远拖在来路上。
+   sig 有值时包内装的是规约块：单块款在包体上写 Σ（文字整体缩 24/46），
+   两块/四块款把小块画成规约数据块（文字随块缩 20/46）。 */
+function packetG(svg, g, x, y, kind, colors, deg, sig) {
   const r = E('g', { transform: 'translate(' + x + ' ' + y + ') rotate(' + (deg || 0) + ')' }, g);
   const glow = fShadow(svg, 'pg' + (++UID), 0, 8, '#2a3352', 0.22);
-  function trail(d, size, rx, op, blur) {
+  function trail(d, size, rx, op, std, color) {
     E('rect', { x: -d - size / 2, y: -size / 2, width: size, height: size, rx: rx,
-      fill: colors[0], filter: fBlur(svg, 'tb' + (++UID), blur, 0.14), opacity: op }, r);
+      fill: color || colors[0], filter: fTrail(svg, 'tb' + (++UID), std, 0.14), opacity: op }, r);
   }
   if (kind === 1) {
     trail(46, 9.6, 2.7, 0.28, 3); trail(24, 16, 4.4, 0.55, 4);
     E('rect', { x: -12, y: -12, width: 24, height: 24, rx: 6.5, fill: colors[0], filter: glow }, r);
-    const t = E('text', { x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'central',
-      'font-family': MONO_FONT, 'font-weight': 700, 'font-size': 13, fill: '#fff' }, r);
-    t.textContent = colors.txt;
+    if (sig) sigText(r, 0, 0, sig, 24 / 46);
+    else {
+      const t = E('text', { x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+        'font-family': MONO_FONT, 'font-weight': 700, 'font-size': 13, fill: '#fff' }, r);
+      t.textContent = colors.txt;
+    }
   } else {
     const n = kind === 2 ? 2 : 4, bw = 20, gap = 3, pad = 6;
     const bwAll = n * bw + (n - 1) * gap;
-    trail(46, 9.6, 2.7, kind === 2 ? 0.24 : 0.24, 3);
-    trail(24, 16, 4.4, kind === 2 ? 0.48 : 0.48, 4);
+    /* 按《组件文档》5.2.4 / 5.2.5：拖尾「复用 5.1.3 / 5.1.4」＝单方块 16 / 9.6，
+       只改浓度 0.48 / 0.24，退后 24 / 46。底色取第一块的数据色（见 0.1）。
+       注意：按此画法拖尾几乎整块被白底板挡住，只露出前缘几像素——
+       与 assets/parts/payload.js 的「整组小块 ×0.8 / ×0.6」实现不一致，
+       差异已登记 docs/bugs.md，待评审后再定画法。 */
+    trail(46, 9.6, 2.7, 0.24, 3, colors[0].c);
+    trail(24, 16, 4.4, 0.48, 4, colors[0].c);
     E('rect', { x: -bwAll / 2 - pad, y: -16, width: bwAll + pad * 2, height: 32, rx: 10,
       fill: 'rgba(255,255,255,.97)', filter: glow }, r);
     for (let i = 0; i < n; i++) {
       const bx = -bwAll / 2 + i * (bw + gap);
       E('rect', { x: bx, y: -10, width: bw, height: 20, rx: 5, fill: colors[i].c }, r);
+      if (colors[i].key) { sigText(r, bx + bw / 2, 0, colors[i].key, 20 / 46); continue; }
       const t = E('text', { x: bx + bw / 2, y: 0, 'text-anchor': 'middle',
         'dominant-baseline': 'central', 'font-family': MONO_FONT, 'font-weight': 700,
         'font-size': 11, fill: '#fff' }, r);
@@ -268,11 +289,16 @@ function packetG(svg, g, x, y, kind, colors, deg) {
   }
   return r;
 }
-/* 规约块文字缩放包装（5.4：整体缩放 0.52） */
-function sigmaInto(g, x, y, key, scale) {
-  const w = E('g', { transform: 'translate(' + x + ' ' + y + ') scale(' + (scale || 1) + ')' }, g);
-  block(w, -23, -23, 46, 'data', { letter: 'Σ', sub: key[1], cnt: key[2], color: SIG[key] });
-  return w;
+/* 规约块文字（2.3.2 的 Σ＋下标列字母＋上标份数，按块尺寸等比缩）：k = 块尺寸 ÷ 46。
+   key 形如 'A2'（列字母 + 份数）。与 block() 的字号/偏移同一套算式，
+   只是不画方块（方块由包体或小块自己给）。 */
+function sigText(parent, cx, cy, key, k) {
+  const tx = E('text', { x: cx, y: cy, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+    'font-family': MONO_FONT, 'font-weight': 700, 'font-size': 15 * k, fill: '#fff' }, parent);
+  tx.appendChild(document.createTextNode('Σ'));
+  E('tspan', { 'font-size': 9.3 * k, dy: 5.1 * k, 'font-weight': 700 }, tx).textContent = key[0];
+  E('tspan', { 'font-size': 7.8 * k, dy: -24.3 * k, 'font-weight': 600 }, tx).textContent = key[1];
+  return tx;
 }
 
 /* ================= 第一部分 · 组件 ================= */
@@ -297,7 +323,7 @@ E('line', { x1: 12, y1: 30, x2: 96, y2: 30, stroke: GRAY, 'stroke-width': 2, 'st
 grid = SEC(comp, '0.3', '规约块底色', '12 种内容各一个固定底色，直接查表');
 for (const k in SIG) {
   s = MONO(grid, 80, 80, k);
-  block(s, 17, 17, 46, 'data', { letter: 'Σ', sub: k[1], cnt: k[2], color: SIG[k] });
+  block(s, 17, 17, 46, 'data', { letter: 'Σ', sub: k[0], cnt: k[1], color: SIG[k] });
 }
 grid = SEC(comp, '0.4', '层序', '六层从下往上：背景 → 卡片 → 数据块 → 连线 → 特效 → 标签');
 s = TILE(grid, 340, 190, '① 背景（网格）② 卡片 ③ 数据块 ④ 连线 ⑤ 数据包 ⑥ 计算方牌');
@@ -356,103 +382,146 @@ for (const key of SUBS) {
 grid = SEC(comp, '2.3', '规约数据块', 'Σ＋下标列字母＋上标份数（下标 9.3 · 上标 7.8/600）');
 for (const k in SIG) {
   s = MONO(grid, 80, 80, k);
-  block(s, 17, 17, 46, 'data', { letter: 'Σ', sub: k[1], cnt: k[2], color: SIG[k] });
+  block(s, 17, 17, 46, 'data', { letter: 'Σ', sub: k[0], cnt: k[1], color: SIG[k] });
 }
 grid = SEC(comp, '2.4 / 2.5 / 2.6', '空态 · 接收态 · 聚焦置灰态');
 s = MONO(grid, 80, 80, '2.4 空态'); block(s, 17, 17, 46, 'empty');
 s = MONO(grid, 80, 80, '2.5 接收态'); block(s, 17, 17, 46, 'recv');
 s = MONO(grid, 80, 80, '2.6 置灰'); block(s, 17, 17, 46, 'dim', { letter: 'A' });
 /* ---- 3 徽章 ---- */
+/* 徽章样片按 1:1 真实像素显示：画布 130×52 不随列宽放大 */
+function narrowGrid(grid) { grid.style.gridTemplateColumns = 'repeat(auto-fill,minmax(170px,1fr))'; }
 function strip(grid, cap, kind, text, st) {
-  const s = TILE(grid, 130, 52, cap);
+  const t = document.createElement('div'); t.className = 'tile';
+  t.style.cssText = 'display:flex;flex-direction:column;align-items:center';
+  grid.appendChild(t);
+  const s = E('svg', { viewBox: '0 0 130 52' }, t);
+  s.style.cssText = 'width:130px;max-width:100%;height:auto';
   E('rect', { x: 10, y: 8, width: 110, height: 36, rx: 6, fill: DATA.A }, s);
   const w = kind === 'role' ? (text === 'dst' ? 30 : 28) : 36;
   badge(s, 10 + (110 - w) / 2, 17, kind, text, st);
+  if (cap) { const c = document.createElement('div'); c.className = 'cap'; c.innerHTML = cap; t.appendChild(c); }
 }
 grid = SEC(comp, '3.1', '角色徽章', '28（src）/ 30（dst）× 18 · 圆角 6 · 字 10 白');
+narrowGrid(grid);
 strip(grid, 'src', 'role', 'src'); strip(grid, 'dst', 'role', 'dst');
 grid = SEC(comp, '3.2', '进度徽章', '36×18');
+narrowGrid(grid);
 for (const t of ['0/4', '1/4', '2/4', '3/4', '4/4']) strip(grid, t, 'prog', t);
 grid = SEC(comp, '3.3', '标注徽章', '36×18');
+narrowGrid(grid);
 strip(grid, '4 段', 'note', '4 段'); strip(grid, '4 片', 'note', '4 片');
 grid = SEC(comp, '3.4', '徽章聚焦置灰态', '底色 rgba(158,168,188,.12) · 文字 #b8bfcd');
+narrowGrid(grid);
 strip(grid, '置灰', 'role', 'src', 'dim');
 
 /* ---- 4 连线与箭头 ---- */
-function cardStub(s, x, y, w, h) {
-  E('rect', { x: x, y: y, width: w, height: h, rx: 8, fill: '#fff', stroke: '#c9cfdf', 'stroke-width': 1.2 }, s);
+/* 4.x 一律用真实卡片（300×170 单排卡）＋舞台真实卡距：横向空当 180、纵向 160 */
+const W4 = 800, SRC4 = 490;
+function wideGrid(g) { g.classList.add('wide'); g.style.gridTemplateColumns = 'repeat(auto-fill,minmax(620px,1fr))'; }
+function wireCard(s, x, y, rank) {
+  return cardG(s, s, { x: x, y: y, rank: rank,
+    rows: [{ y: y + 72, states: [{ st: 'data', letter: RLETTER[rank] },
+      { st: 'empty' }, { st: 'empty' }, { st: 'empty' }] }] });
 }
-grid = SEC(comp, '4.1', '弧线箭头', 'S 形 · 曲率 0.42 · 三线间距 37.4 以空白区中线居中 · 箭头 11');
-s = TILE(grid, 340, 190);
-cardStub(s, 4, 10, 26, 170); cardStub(s, 310, 10, 26, 170);
-for (const yy of [57.6, 95, 132.4])
-  E('path', { d: arcPath([30, yy], [310, yy]), fill: 'none', stroke: GRAY, 'stroke-width': 2,
-    'stroke-dasharray': '8 7', 'marker-end': markerOf(s, GRAY, 11) }, s);
+grid = SEC(comp, '4.1', '弧线箭头', 'S 形 · 曲率 0.42（控制点沿主轴）· 两端都在空白区中线 · 箭头 11（真页同族三条线，间距 37.4）');
+wideGrid(grid);
+s = TILE(grid, W4, 310);
+wireCard(s, 10, 120, 0); wireCard(s, SRC4, 20, 1);
+/* 一条就够：源卡左缘（空白区中线 20+36+67=123）→ 目标卡右缘（120+36+67=223）。
+   两卡错开 100，S 形才看得出来；若两端等高，控制点共线就成了直线。 */
+E('path', { d: arcPath(SRC4, 123, 310, 223), fill: 'none', stroke: GRAY, 'stroke-width': 2,
+  'stroke-linecap': 'round', 'stroke-dasharray': '8 7', 'marker-end': markerOf(s, GRAY, 11) }, s);
 grid = SEC(comp, '4.2', '直线箭头', '任意走向直连 · 箭头 11');
-s = TILE(grid, 340, 190);
-cardStub(s, 4, 65, 70, 60); cardStub(s, 266, 40, 70, 60);
-E('line', { x1: 74, y1: 95, x2: 266, y2: 70, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
+wideGrid(grid);
+s = TILE(grid, W4, 270);
+wireCard(s, 10, 10, 0); wireCard(s, SRC4, 70, 1);
+E('line', { x1: 310, y1: 95, x2: SRC4, y2: 155, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
   'marker-end': markerOf(s, GRAY, 11) }, s);
-grid = SEC(comp, '4.3', '双排横向直线箭头', '两条线方向相反 · 空白区中线上/下方 22');
-s = TILE(grid, 340, 170);
-cardStub(s, 4, 35, 70, 100); cardStub(s, 266, 35, 70, 100);
-E('line', { x1: 74, y1: 107, x2: 266, y2: 107, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
+grid = SEC(comp, '4.3', '双排横向直线箭头', '两条线方向相反 · 空白区中线上/下方 22（卡 y=20 → 中线 123，线在 101 / 145）');
+wideGrid(grid);
+s = TILE(grid, W4, 240);
+wireCard(s, 10, 20, 0); wireCard(s, SRC4, 20, 1);
+E('line', { x1: 310, y1: 145, x2: SRC4, y2: 145, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
   'marker-end': markerOf(s, GRAY, 11) }, s);
-E('line', { x1: 266, y1: 63, x2: 74, y2: 63, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
+E('line', { x1: SRC4, y1: 101, x2: 310, y2: 101, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
   'marker-end': markerOf(s, GRAY, 11) }, s);
 grid = SEC(comp, '4.4', '双排纵向直线箭头', '上卡下边 ↔ 下卡上边 · 中线左/右 54');
-s = TILE(grid, 340, 200);
-cardStub(s, 110, 6, 120, 70); cardStub(s, 110, 124, 120, 70);
-E('line', { x1: 111, y1: 76, x2: 111, y2: 124, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
+wideGrid(grid);
+s = TILE(grid, W4, 520);
+wireCard(s, 250, 10, 0); wireCard(s, 250, 340, 1);
+E('line', { x1: 346, y1: 180, x2: 346, y2: 340, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
   'marker-end': markerOf(s, GRAY, 11) }, s);
-E('line', { x1: 229, y1: 124, x2: 229, y2: 76, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
+E('line', { x1: 454, y1: 340, x2: 454, y2: 180, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
   'marker-end': markerOf(s, GRAY, 11) }, s);
-grid = SEC(comp, '4.5', '双排交叉直线', '斜对卡 · 空当正中交叉 · 两条线都不画箭头');
-s = TILE(grid, 340, 190);
-cardStub(s, 20, 10, 90, 60); cardStub(s, 230, 120, 90, 60);
-cardStub(s, 230, 10, 90, 60); cardStub(s, 20, 120, 90, 60);
-E('line', { x1: 110, y1: 70, x2: 230, y2: 120, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7' }, s);
-E('line', { x1: 230, y1: 70, x2: 110, y2: 120, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7' }, s);
+grid = SEC(comp, '4.5', '双排交叉直线', '斜对卡 · 起终点取「朝向对方的那个角」· 空当正中交叉 · 无箭头');
+wideGrid(grid);
+s = TILE(grid, W4, 520);
+wireCard(s, 10, 10, 0); wireCard(s, SRC4, 10, 1);
+wireCard(s, 10, 340, 2); wireCard(s, SRC4, 340, 3);
+/* 4.5.1：不是边中点，是角 —— 左上卡右下角 (310,180) → 右下卡左上角 (490,340)，
+   反向同理；两条线交于空当正中 (400,260)。 */
+E('line', { x1: 310, y1: 180, x2: SRC4, y2: 340, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7' }, s);
+E('line', { x1: SRC4, y1: 180, x2: 310, y2: 340, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7' }, s);
 function wireState(grid, cap, color, w, dash, op, asize) {
-  const s = TILE(grid, 340, 120, cap);
-  cardStub(s, 4, 35, 40, 50); cardStub(s, 296, 35, 40, 50);
-  const ln = E('line', { x1: 44, y1: 60, x2: 296, y2: 60, stroke: color, 'stroke-width': w,
+  const s = TILE(grid, W4, 220, cap);
+  wireCard(s, 10, 20, 0); wireCard(s, SRC4, 20, 1);
+  const ln = E('line', { x1: 310, y1: 123, x2: SRC4, y2: 123, stroke: color, 'stroke-width': w,
     opacity: op, 'marker-end': markerOf(s, color, asize) }, s);
   if (dash) ln.setAttribute('stroke-dasharray', dash);
 }
 grid = SEC(comp, '4.6', '飞行态', '数据色 · 宽 2.6 · 虚线 9 7 · 箭头 14.3');
+wideGrid(grid);
 wireState(grid, '点亮（B）', DATA.B, 2.6, '9 7', 1, 14.3);
-grid = SEC(comp, '4.7', '余辉态', '数据色 · 宽 1.8 · 不透明度 0.42 · 箭头 9.9');
-wireState(grid, '余辉（B）', DATA.B, 1.8, null, 0.42, 9.9);
+grid = SEC(comp, '4.7', '余辉态', '数据色 · 宽 1.8 · 虚线 8 7 · 不透明度 0.42 · 箭头 9.9（余辉不是变灰，也不是实线）');
+wideGrid(grid);
+wireState(grid, '余辉（B）', DATA.B, 1.8, '8 7', 0.42, 9.9);
 grid = SEC(comp, '4.8', '连线聚焦置灰态', '#ccd2e0');
+wideGrid(grid);
 wireState(grid, '置灰', '#ccd2e0', 2, '8 7', 1, 11);
 
 /* ---- 5 数据包 ---- */
-grid = SEC(comp, '5.1', '单块数据包', '包体 24×24 · 拖尾两块（16 退 24 浓 0.55 / 9.6 退 46 浓 0.28）');
+/* 样片一律 1:1：画布统一 160×70，svg 宽度 = viewBox 宽度。
+   （早期 4 块款用 TILE 建壳，svg 被 .tile 的 width:100% 拉到 2 倍列宽；
+    后来又因列宽 170 装不下 200 的画布被压到 0.82 —— 同一套数据包一大一小。） */
+function pktTile(grid, cap) {
+  const t = document.createElement('div'); t.className = 'tile'; grid.appendChild(t);
+  const s = E('svg', { viewBox: '0 0 160 70' }, t);
+  s.style.cssText = 'width:160px;max-width:100%;height:auto;margin:0 auto';
+  if (cap) { const c = document.createElement('div'); c.className = 'cap'; c.innerHTML = cap; t.appendChild(c); }
+  return s;
+}
+function pktGrid(grid) { grid.style.gridTemplateColumns = 'repeat(auto-fill,minmax(190px,1fr))'; }
+/* 包心按「连拖尾一起算的可视中心」落在画布中线：单块 99 / 两块 92 / 四块 80，y 统一 35 */
+const PX1 = 99, PX2 = 92, PX3 = 80, PY = 35;
+grid = SEC(comp, '5.1', '单块数据包', '包体 24×24 · 圆角 6.5 · 字 13 · 拖尾 16 / 9.6（退后 24 / 46 · 浓度 0.55 / 0.28 · 软影 std 4 / 3）');
+pktGrid(grid);
 for (const k of ['A', 'B', 'C', 'D']) {
-  s = MONO(grid, 120, 70, '数据包' + k);
-  packetG(s, s, 78, 35, 1, { 0: DATA[k], txt: k }, 0);
+  s = pktTile(grid, '数据包' + k);
+  packetG(s, s, PX1, PY, 1, { 0: DATA[k], txt: k }, 0);
 }
-grid = SEC(comp, '5.2 / 5.3', '两块 / 四块数据包', '白底板（55 / 101 ×32 · 内边距 6）· 小块 20×20');
-s = MONO(grid, 150, 70, '数据包AB');
-packetG(s, s, 75, 35, 2, [{ c: DATA.A, t: 'A' }, { c: DATA.B, t: 'B' }], 0);
-s = MONO(grid, 150, 70, '数据包CD');
-packetG(s, s, 75, 35, 2, [{ c: DATA.C, t: 'C' }, { c: DATA.D, t: 'D' }], 0);
-s = TILE(grid, 200, 80, '数据包ABCD');
-packetG(s, s, 100, 40, 4, [{ c: DATA.A, t: 'A' }, { c: DATA.B, t: 'B' }, { c: DATA.C, t: 'C' }, { c: DATA.D, t: 'D' }], 0);
-grid = SEC(comp, '5.4', '规约数据包', '单块款＝包体 24 内装 46 块整体缩放 0.52');
+grid = SEC(comp, '5.2', '两块数据包', '白底板 55×32（内边距 6 · 圆角 10）· 小块 20×20 ×2 · 间距 3 · 字 11 · 拖尾 16 / 9.6（浓度 0.48 / 0.24）');
+pktGrid(grid);
+s = pktTile(grid, '数据包AB');
+packetG(s, s, PX2, PY, 2, [{ c: DATA.A, t: 'A' }, { c: DATA.B, t: 'B' }], 0);
+s = pktTile(grid, '数据包CD');
+packetG(s, s, PX2, PY, 2, [{ c: DATA.C, t: 'C' }, { c: DATA.D, t: 'D' }], 0);
+grid = SEC(comp, '5.3', '四块数据包', '白底板 101×32 · 小块 20×20 ×4 · 间距 3 · 字 11 · 拖尾同 5.2（16 / 9.6）');
+pktGrid(grid);
+s = pktTile(grid, '数据包ABCD');
+packetG(s, s, PX3, PY, 4, [{ c: DATA.A, t: 'A' }, { c: DATA.B, t: 'B' },
+  { c: DATA.C, t: 'C' }, { c: DATA.D, t: 'D' }], 0);
+grid = SEC(comp, '5.4', '规约数据包', '包体 / 底板 / 拖尾同 5.1–5.3 · 小块换规约数据块（Σ＋下标＋上标，文字随块等比缩）');
+pktGrid(grid);
 for (const k in SIG) {
-  s = MONO(grid, 120, 70, '数据包' + k);
-  packetG(s, s, 78, 35, 1, { 0: SIG[k], txt: '' }, 0);
-  sigmaInto(s, 78, 35, k, 0.52);
+  s = pktTile(grid, '数据包' + k);
+  packetG(s, s, PX1, PY, 1, { 0: SIG[k] }, 0, k);
 }
-s = MONO(grid, 150, 70, '两块款（例）');
-packetG(s, s, 75, 35, 2, [{ c: SIG.A2, t: '' }, { c: SIG.B2, t: '' }], 0);
-sigmaInto(s, 62, 35, 'A2', 0.435); sigmaInto(s, 88, 35, 'B2', 0.435);
-s = TILE(grid, 210, 80, '四块款（例）');
-packetG(s, s, 105, 40, 4, [{ c: SIG.A2, t: '' }, { c: SIG.B2, t: '' }, { c: SIG.C2, t: '' }, { c: SIG.D2, t: '' }], 0);
-sigmaInto(s, 66, 40, 'A2', 0.435); sigmaInto(s, 89, 40, 'B2', 0.435);
-sigmaInto(s, 112, 40, 'C2', 0.435); sigmaInto(s, 135, 40, 'D2', 0.435);
+s = pktTile(grid, '两块款（例）');
+packetG(s, s, PX2, PY, 2, [{ c: SIG.A2, key: 'A2' }, { c: SIG.B2, key: 'B2' }], 0);
+s = pktTile(grid, '四块款（例）');
+packetG(s, s, PX3, PY, 4, [{ c: SIG.A2, key: 'A2' }, { c: SIG.B2, key: 'B2' },
+  { c: SIG.C2, key: 'C2' }, { c: SIG.D2, key: 'D2' }], 0);
 /* ---- 6 舞台 ---- */
 grid = SEC(comp, '6.1', '画布', '底板 1130×680 · 网格 40（每格只画右边和下边）· 底色 #f4f6fb');
 s = TILE(grid, 1130, 680, '底板＋网格（等比缩小展示）');
@@ -616,6 +685,9 @@ function DSEC(num, name, note) {
   return g;
 }
 function dtile(grid, cap, w, h) { return TILE(grid, w || 340, h || 190, cap); }
+function cardStub(s, x, y, w, h) { // 动画示意用的卡片占位（不参与组件规范）
+  E('rect', { x: x, y: y, width: w, height: h, rx: 8, fill: '#fff', stroke: '#c9cfdf', 'stroke-width': 1.2 }, s);
+}
 
 /* ---- 第 1 章 数据包 ---- */
 grid = DSEC('第 1 章 数据包', '包出现 0.3s · 飞行 1.5s · 淡出 0.6s');
@@ -631,7 +703,7 @@ grid = DSEC('第 1 章 数据包', '包出现 0.3s · 飞行 1.5s · 淡出 0.6s
 {
   const s = dtile(grid, '1.2 包飞行 · packDur 1.5s · 匀速 · 拖尾随行');
   cardStub(s, 4, 65, 60, 60); cardStub(s, 276, 65, 60, 60);
-  E('path', { d: arcPath([64, 95], [276, 95]), fill: 'none', stroke: DATA.B, 'stroke-width': 2.6, 'stroke-dasharray': '9 7' }, s);
+  E('path', { d: arcPath(64, 95, 276, 95), fill: 'none', stroke: DATA.B, 'stroke-width': 2.6, 'stroke-dasharray': '9 7' }, s);
   const ar = arrowAt(s, 276, 95, 0); arrowSet(ar, 14.3, DATA.B);
   const pk = packetG(s, s, 64, 95, 1, { 0: DATA.B, txt: 'B' }, 0);
   const P0 = [64, 95], P1 = [276, 95], K = 0.42;
@@ -648,7 +720,8 @@ grid = DSEC('第 1 章 数据包', '包出现 0.3s · 飞行 1.5s · 淡出 0.6s
 {
   const s = dtile(grid, '1.3 包淡出消失 · packFade 0.6s · 匀速 · 箭头尖原位');
   cardStub(s, 4, 65, 60, 60); cardStub(s, 276, 65, 60, 60);
-  E('line', { x1: 64, y1: 95, x2: 276, y2: 95, stroke: DATA.B, 'stroke-width': 1.8, opacity: 0.42 }, s);
+  E('line', { x1: 64, y1: 95, x2: 276, y2: 95, stroke: DATA.B, 'stroke-width': 1.8,
+    'stroke-dasharray': '8 7', opacity: 0.42 }, s);
   const ar = arrowAt(s, 276, 95, 0); arrowSet(ar, 9.9, DATA.B);
   const pk = packetG(s, s, 276, 95, 1, { 0: DATA.B, txt: 'B' }, 0);
   LOOP(2.0, t => {
@@ -675,12 +748,13 @@ grid = DSEC('第 2 章 连线', '点亮 0.3s · 余辉保持 0.6s（变色 0s）
 {
   const s = dtile(grid, '2.2 转余辉态 · 变色 0s ＋ 保持 trailHold 0.6s（亮→余辉→亮）');
   cardStub(s, 4, 65, 60, 60); cardStub(s, 276, 65, 60, 60);
-  const ln = E('line', { x1: 64, y1: 95, x2: 276, y2: 95 }, s);
+  const ln = E('line', { x1: 64, y1: 95, x2: 276, y2: 95, 'stroke-dasharray': '8 7' }, s);
   const ar = arrowAt(s, 276, 95, 0);
   LOOP(2.2, t => {
     const glow = t >= 0.9 && t < 1.5;
     ln.setAttribute('stroke', DATA.B);
     ln.setAttribute('stroke-width', glow ? 1.8 : 2.6);
+    ln.setAttribute('stroke-dasharray', glow ? '8 7' : '9 7');
     ln.setAttribute('opacity', glow ? 0.42 : 1);
     arrowSet(ar, glow ? 9.9 : 14.3, DATA.B);
   });

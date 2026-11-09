@@ -1,6 +1,6 @@
 # CommonVisual · 项目长期约定
 
-NCCL 八个原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducescatter/alltoall）的 Web 可视化。内容源 `分布式通信原语详解.md` **只作参考、不作标准**：NCCL 底层算法（ring 等）、「本项目映射」场景表都不是本站口径，骨架/段数/文案以 `assets/scenes/*.js` 剧本 + `assets/registry.js`（终态）+ `docs/visual.html`（组件规范）+ `docs/steps.html`（文案与编排口径）为准，冲突时以实现为准（见 AGENTS 三①，2026-10-31 定）。**开工前读仓库根 `AGENTS.md`**（验证方法论）；结构看 `README.md` 目录树，规范清单与关系图看 `docs/specs.html`。本文件记「项目是什么、有哪些约定和坑」。
+NCCL 八个原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducescatter/alltoall）的 Web 可视化。内容源 `分布式通信原语详解.md` **只作参考、不作标准**：NCCL 底层算法（ring 等）、「本项目映射」场景表都不是本站口径——它与实现冲突时以实现为准（见 AGENTS 四「边界与禁区」）。**注意这条只管参考稿**：规范稿（`docs/组件文档.md`、`docs/术语表.md`、`docs/规范/*`、`docs/visual.html`、`docs/steps.html`）反过来是上游，与实现冲突时只准提报评审、不得自行改稿（见本文件「协作约定」第一条）。**开工前读仓库根 `AGENTS.md`**（验证方法论）；结构看 `README.md` 目录树，规范清单与关系图看 `docs/specs.html`。本文件记「项目是什么、有哪些约定和坑」。
 
 ## 文件构成（2026-11-07 起入库）
 - `MEMORY.md`（本文件）= 长期约定与坑，人工提炼，每次开工先读。
@@ -97,5 +97,7 @@ NCCL 八个原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducesc
 - `.workbuddy/memory/` 2026-11-07 起入库，删 worktree 不再需要手工备份 memory（旧约定作废）。
 
 ## 协作约定
+- **规范文档只读，改前必评审（2026-11-09 用户明令）**：`docs/组件文档.md`、`docs/术语表.md`、`docs/规范/*` 等规范稿，发现与实现/真值不一致时**只准登记 `docs/bugs.md` 提报**，把证据（代码位置 / 真值页 / 两种画法的截图）摆出来由用户裁决「改文档 or 改实现」，不得自行以「以实现为准」改稿。真值冲突时唯一合法动作是提报。
+  - 别把「内容源以实现为准」当通用口令：`AGENTS.md` 那条只针对参考稿《分布式通信原语详解.md》（那份不作标准）；规范稿的上游是 `docs/specs.html` 在册清单，裁决权在用户（`docs/纲领.md` 第 5 条「设计先于实现」、`docs/设计铁律.md` D1）。
 - 多个问题一次说清；说清「什么时候」（进度条百分比/步骤名/终态）；给目标态+参照页；给验收标准（能直接变断言）；标优先级；别用「优化一下」这类没靶子的词。
 - **每次任务收尾必须回溯本次所有中间步骤，给出 P0/P1/P2 分级改进意见**；P0 当场固化进工具或本文件。
