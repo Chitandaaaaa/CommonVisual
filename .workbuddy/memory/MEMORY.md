@@ -1,109 +1,60 @@
 # CommonVisual · 项目长期约定
 
-NCCL 八个原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducescatter/alltoall）的 Web 可视化。内容源 `v1/分布式通信原语详解.md` **只作参考、不作标准**：NCCL 底层算法（ring 等）、「本项目映射」场景表都不是本站口径——它与实现冲突时以实现为准（见 AGENTS 四「边界与禁区」）。**注意这条只管参考稿**：规范稿（`组件文档.md`、`v1/docs/术语表.md`、`v1/docs/规范/*`、`v1/docs/visual.html`、`v1/docs/steps.html`）反过来是上游，与实现冲突时只准提报评审、不得自行改稿（见本文件「协作约定」第一条）。**开工前读 `v1/AGENTS.md`**（验证方法论）；结构看 `v1/README.md` 目录树，规范清单与关系图看 `v1/docs/specs.html`。本文件记「项目是什么、有哪些约定和坑」。
+NCCL 八个原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducescatter/alltoall）的 Web 可视化。现在是**两代并存**：根目录在写新一代规范，`v1/` 是已定格的历史实现与其配套规范。
 
 ## 仓库布局（2026-11-09 重排，动手前先认这个）
-- **仓库根 = 新一代规范本身**，只有四份：`组件文档.md`、`特效动画.md`、`剧本.md`、`gallery.html`（组件×动画画谱，零依赖，双击即看）。这四份是**在写的新稿**，与 v1 那些同名旧稿不是一回事。
-- **`v1/` = 历史实现与历史规范**：8 原语页 + `index.html`、`assets/`、`src/`、`docs/`、`tools/`、`package.json`、`node_modules`、`README.md`、`AGENTS.md`、`分布式通信原语详解.md`。相对路径全在 v1 内自洽（页面挂 `assets/…`、docs 挂 `../assets/…`），**根目录不提供任何站点入口**——要看动画进 `v1/`。
-- **命令一律在 `v1/` 里跑**：`cd v1 && node tools/verify.mjs <页> --no-shot`。根目录跑 `node tools/…` 找不到文件。
-- `.workbuddy/`、`.zcode/`、`.git/`、`.gitignore` 留在根（记忆与计划属于整个仓库，不随代码退役）。
+- **根目录只有四份**：`组件文档.md`、`特效动画.md`、`剧本.md`、`gallery.html`（组件×动画画谱，零依赖，双击即看）。
+- **`v1/` = 历史实现 + 历史规范**：8 原语页 + `index.html`、`assets/`、`src/`、`docs/`、`tools/`、`package*.json`、`node_modules/`、`README.md`、`AGENTS.md`、`分布式通信原语详解.md`。相对路径全在 v1 内自洽，**根目录不提供站点入口**。
+- 命令一律在 `v1/` 里跑：`cd v1 && node tools/verify.mjs <页> --no-shot`（画谱是零依赖单文件，不需要 verify）。
+- `.workbuddy/`、`.zcode/`、`.git/`、`.gitignore` 留在根（记忆与计划属于整个仓库）。
 
-## 文件构成（2026-11-07 起入库）
-- `MEMORY.md`（本文件）= 长期约定与坑，人工提炼，每次开工先读。
-- `YYYY-MM-DD.md` = 当天工作日志，**append-only**，只记有跨会话价值的落地与坑，不记临时路径/报错。
-- `docs/迭代轨迹.md` = 从日志里抽出的「第 N 版 / 第 N 轮」逐版过程记录（2026-11-07 分离，覆盖 10-22 / 10-23 / 10-28 / 10-31 / 11-05 共 81 节）。**逐版过程不进日志**，日志只留结论与坑；中间态以现行实现为准。
-- `.workbuddy/memory/` 已纳入 git（`.gitignore` 只放行这一支），换设备 `git clone` 即可续用；日志是单机 append-only，别在多台机器同时改同一份日志（会冲突）。
-  **已知坑（2026-11-07 实测）**：memory 入库前若某台机器的 `.workbuddy/` 仍被整目录忽略，该机的 memory 是「ignored 未跟踪文件」——`git pull` 遇到同名文件会**静默覆盖**、不报冲突（输出只有 `create mode`，看不出丢东西）。拉取前先 `cp -r .workbuddy/memory .tmp-memory-backup`，拉完逐文件比对。
+## 口径（2026-11-09 用户定死，最容易踩的一条）
+- **只有根目录三份 md 是规范**；`v1/` 里的一切（含 `v1/docs/规范/*`、`v1/docs/visual.html`、`v1/AGENTS.md`、`v1/assets/*` 的实现）**都是参考，不是标准**。冲突时以根目录文档为准——不是「以实现为准」。
+- **但文档本身对不对由用户裁决**：发现文档与实现/观感冲突，唯一合法动作是**摆证据提报 + 等评审**，不得自行改稿（2026-11-09 已因此回退过一次擅自改 `组件文档.md` / `术语表.md`）。
+- 「以实现为准」这句话只在**旧 AGENTS 针对《分布式通信原语详解.md》那份参考内容源**时成立，别当通用口令套到规范稿上。
+- v1 有的东西文档没写（如舞台卡位），参照 v1 画时要**在代码注释里写明「这是参考实现的取值，文档未定义」**，不要伪装成规范值。
 
-## 本文件不收什么（2026-11-07 立，防复发）
-**凡能在仓库里 grep / `ls` / 读表得到的事实，都不写进本文件**——抄第二份只会漂，且没人会同步。具体三类不写：
-1. **不抄数字与清单**：尺寸/秒数/字号（在 `spec.js`）、章节编号（在 `anatomy.js`）、用例条数与编号（在 `test-cases.html`）、文件目录（`ls` 就有）。
-2. **不抄 AGENTS.md 的流程**：分频规则、时间预算、CDP 踩坑（第 1–16 条）、提交规矩。要写只写「AGENTS 没说的那一层」，并在 AGENTS 里补，不在本文件复述。
-3. **不记当下的红绿状态**：`verify` 跑一次就知道；记了就必漂（2026-10-30 清过一次同类重复，2026-11-07 又长出 10 处，故立此条）。
-能留的只有：**代码里看不出来 + 跨会话仍成立**的判据与语义（如「送出的那格是空不是接收中」「Σ 上标定义」「三页步骤顺序」）。
+## gallery.html（当前主战场）
+- 结构：`SEC(parent, 编号, 名称, 说明)` 先插 `h3.sec` 再插 `.note` 再插 `.grid` —— **取样片网格必须循环找 `.grid`**，`h3.nextElementSibling` 会拿到说明条。
+- **样片必须 1:1**：`.tile svg { width:100% }` 会把小件放大到列宽。小件一律自建 tile + 内联 `width:Npx`（`MONO` / `strip` / `pktTile` 三种壳），宽画布挂 `.grid.wide`（`max-width:800px` 封顶）。
+- 画法函数：`block()`（2.x 数据块/分片/规约/空/接收/置灰）、`slotRow()`、`badge()`、`cardG()`（1.x 卡片，300×170 或 h:203）、`packetG()`（5.x 数据包）、`wireCard()`（4.x 用真卡当端点）、`SEC` 之外的 `LOOP()` 驱动第二部分动画。
+- 说明条同时写进 `h3` 的 `<small>` 和 `.note`，同一句话一屏出现两遍 —— 待用户定夺是否删其一。
+- 画谱不引 `assets/`，数值全部照抄两份文档；所以**改文档数值后要手动同步画谱**。
 
-## 页面清单（2026-10-31 提根后：根目录即页面集，v1 已删）
-- 根目录 9 个 HTML = `index.html`（首页原语关系树）+ 8 个原语页薄壳 `<id>.html`（`CV.boot('<id>')`）；内容在 `assets/scenes/<id>.js` 剧本（纯数据：节拍 + 流 + 文案，绘制与时序在引擎/动词层）。
-- **规范页全在 `docs/`**：`prepost.html`（语义前后对照，boot 仍是 `'layout'`）/ `algorithms.html` / `visual.html`（**组件与动效规范，唯一来源**）/ `steps.html`（步骤与文案口径，§12 是文案细则）/ `specs.html`（规范文件清单与关系图）/ `test-cases.html`（用例清单）。原语页样式 `assets/theme/theme.css + stage-page.css`；文档页样式在 `assets/pages/`。
-- **终态唯一事实 = `assets/registry.js`**（每页 `pre / post / rel / verbs`）；关系导航、对照表、规范页、探针都读它，别解析动画终态。
-- 时序齿轮八页全接（2026-10-30）：`parts/chrome.js` X5 通用件，scene 声明 `gear:true`；family 页（reduce/allreduce/reducescatter/alltoall）的 rows 由各自动词产 `CV.timeRow`（`engine/compile.js`，与 choreo 同源）。改前存 win 基线比对，默认时间轴零漂移。
+## 几何判据（代码里看不出来、跨会话仍成立）
+- **空白区中线 = 卡顶 + 95**：标题栏 36 + 空白区 118 ÷ 2（1.1.5：空白区高 118、下沿距卡底 16）；数据格行顶 72 + 块高 46 → 中心也是 95。4.1/4.3/4.6 的连线 y 都按卡顶 + 95 算（曾误算成 103，整组偏高 8px）。
+- 4.x 卡与卡的空当（横 180 / 纵 160）**文档没定义**，取自 v1 舞台卡距，只为比例像真页。
+- **Σ 上下标走 em 语义**：`dy` 的 em 按**该 tspan 自身**的 font-size 换算。46 基准下 下标 9.3 字 ×0.34 = 3.16、上标 7.8 字 ×1.28 = 9.98（相对下标基线，净上移 6.82）。文档 2.2.2 / 2.3.2 写的 5.1 / 19.2 是把 em 按父级 15 换算，照它画上标会飞出色块顶 —— **已提报，等用户裁**。画谱用 `const SCRIPT = { sub: .34, sup: 1.28 }` 一处定义。
+- 弧线（4.1.1）：贝塞尔控制点沿**主轴**摆，两端等高时四点共线会退化成直线 —— 样片里两端必须有高差。
+- 箭头（4.1.2）：平头小三角，`viewBox 0 0 8 8`、`refX 8`，size = 箭头大小（11 / 14.3 / 9.9 = 5.5 × 线宽）。
+- 4.7 余辉仍是**虚线 8 7**（复用 4.1.1 的线型），只把宽度降到 1.8、不透明度 0.42。
 
-## docs/visual.html 规范（改组件必先改这里）
-- 一图胜千表：无表格说明段，一图一节+规则+chip。demo 调 `CV.draw*`，不手写 SVG，1:1 像素。页面是 JS 现画（`assets/blocks/anatomy.js`），节不在 HTML 里。
-- 章节 12 节：00 规范总账 / 01 完整数据 / 02 数据块 / 03 rank卡片(动态) / 04 连线箭头 / 05 数据包(动态) / 06 控制条 / 07 计算方框(动态) / 08 落位弹跳 / 09 融合 / 10 聚焦 / 11 舞台分层。（原 12 两套尺寸、13 施工约定已于 2026-11-02 删除：尺寸并进各组件章、规矩拆到各章末）
-- tab：`addTabs(host,labels,render)` 通吃多态；只有真有两套尺寸才加 tab，「动态」一律排最后态。
-- **03/07 动态**共用顶层 `easeIO/seg/anim/moveSlotY`，切 tab 前必停 rAF。03：h1 170→h2 203 绕中心扩，下排靠 opacity 现身。07：8s 循环，几何与内容拆两步，第二排透明度切换点必须落在 fade=0；占位框 ph 仅正向淡入。
-- **05 动态**：`CV.placePacket` 按弧长取点；两个/四个=一份里几个块（整份包），宽=n×20+(n−1)×3+12；终点不放框，包中心落箭头尖(x=542)，停住**原地淡出**（淡的过程即停留）；时间轴 `DUR1.5+FADE.6`；切 tab 先 `cancelAnimationFrame`。
-- **08 落位**：`.slot-pop` `.2,.9,.3,1.45`，峰值 1.29×@0.18s；重播 `删class→强制回流→加回`。**涟漪环不要**（`CV.SHOW_RING=false`）。
-- **09 融合** `CV.createMerge`：位移↑缩放↓透明度↓三量单调；目标块不缩放只被白光扫；需 `transformBox='view-box'`。
-- **10 聚焦** `attachFocus`：`hover||pinned`，状态写 `#stage` data-focus/data-pinned。
-- **11 分层**：六固定 `<g>` `#lBg→#lCards→#lChips→#lWires→#lFx→#lLabels`，顺序永不动。
-- 左侧 `.toc` 自动生成，<1280px 隐藏；scrollspy 判定线 32% 高，末节触底兜底，点击锁高亮。
-- 控制条是 HTML 组件（demo 内死值与 `theme/stage-page.css` 双份，改样式要手动同步 —— BUGS 台账在记）；`CV.chrome.bar` 全局键盘仅 `root===document` 绑，有 `destroy()`。
-- 两套几何的**唯一来源是 `assets/theme/spec.js`**（桌面 `dt*` 组 / 窄屏 `nr*` 组：画布、卡、槽、卡头、标题/徽章字号），`assets/prim/geom.js` 组装成 `G.desktop` / `G.narrow`；窄屏断点 860（`@media`）。**要改尺寸改表，别在页面或本文件里抄数字**。窄卡装不下四块 → 窄屏一张卡只放一个块。
-- 标注三档：够宽→灰尺寸线；<20px 缝→紫 `gapH`；贴边无参照→小字不画线。
+## 组件判据
+- **参数 = 能被独立赋值的自由度**：凡「A 必然等于 B」或「A 由内容算出来」就不是参数，写进上一级描述或删掉。
+- **复用行只写差异，读者判断不了构成** —— 画谱照「复用」画之前先回被复用节看实体（5.2.4 复用 5.1.3 的「拖尾方块」就被当成过整组）。
+- 送出的那格写「空」，不是「接收中」；槽位三态（空/接收中/有数据）语义别反。
+- 通信前每卡是**一整份 [A B C D]**；「各卡一片」只是 all-gather 的起点。
+- all-reduce 份数翻倍（1→2→4），不是加一；reduce-scatter 用 recursive halving，不用 ring。
 
-## 八原语速记
-语义：gather 拼 / scatter 拆 / broadcast 复制 / reduce 相加 / allgather 集齐 / allreduce 相加后每人一份 / reducescatter 分拆累加 / alltoall 每人发一段收一段。
-- 段落数 6/6/6/9/5/4/4/4；前四页卡位「左目标+右三源一列」，ag/ar/rs/at 为 2×2 网格。
-- reduce 铁律：上排唯一累加器，每来一份立刻折进。
-- all-gather 环 N−1 轮（0→1→3→2→0）；all-reduce recursive doubling 两路。
-- 源卡送完：reduce 清空（消耗），其余保留（复制）。
+## 技术坑（SVG / 浏览器）
+- SVG 没有 offsetWidth（用 getBoundingClientRect）；`<circle>` 不写 fill 是黑的；CSS font-size 会盖掉 SVG 属性。
+- **marker 的 id 是全局共享的**：一条线一个 marker，别共用，否则箭头颜色互相覆盖。
+- 逐帧写 opacity 别挂 `transition`（会被反复重启）；多段时间轴用秒写。
+- `filter: feGaussianBlur + feFuncA(slope)` 接在色块上会把**本体** alpha 乘掉（拖尾曾因此只剩 0.077）——要「外面补软影」就用 `feDropShadow`。
+- CSS `drop-shadow(…, blur)` 的 blur 是 2× 高斯标准差，所以 `feDropShadow` 的 stdDeviation 取 `blur/2` 才对得上文档里的「投影模糊 12 / 滤镜模糊 4」。
+- 位移＋缩放要 `transformBox='view-box'; transformOrigin='0 0'`，别叠两层 transform。
 
-## 不能反悔的决策
-- 整份包连线不按目标卡分色（会被读成「只收到 B/C/D」）；连线/箭头/整份包不带 `data-l`，包内小方块要带。
-- 落地只做弹跳不要涟漪环。文案只写语义不暗示算法。骨架与配方是两层，别混表。
-- 数据色 A`#7c3aed`/B`#0891b2`/C`#059669`/D`#d97706`，rank 与数据同色；终态深紫 `#4c1d95`(Σ)；整份包 `#8b93a6`。聚焦=hover||pinned。循环常开，倍速/循环开关已移除。
-- **组件文档判据：参数 = 能被独立赋值的自由度**。凡「A 必然等于 B」或「A 由内容算出来」，A 不是参数：删掉、关系写进上一级描述，或换成真正决定它的量。已按此削：1.1.2 无 宽度/圆角（随卡片）、3.2.1 无 宽度（内边距 9 + 最小宽度 30）、层序搬到 `0.5`。
-- **通信前必须是每卡一整份 [A B C D]**（reduce / all-reduce / reduce-scatter）；「各卡一片」是 all-gather 的起点，别混。
-- all-reduce 份数**翻倍**（1→2→4），不是加一；all-reduce / reduce-scatter 用 recursive doubling / halving，**reduce-scatter 不用 ring**（段号会错开一格）。
-
-## 组件约定
-- **一排 ↔ 两排**：`CV.rowSpan(n)` / `CV.rowOpen(T,n)` / `CV.rowClose(T,n)`（`assets/prim/motion.js`）。顺序是**串行两步**，绝不边宽边加 / 边撤边收：开 = ① 卡片绕中心长够 → ② 第二排空块逐块出现；收 = ① 空块从右往左逐块撤 → ② 卡片收回。消费页 reduce / allreduce / reducescatter 统一「开场一次 open + 收场一次 close」，循环期间停在两排高（只在「计算」那一拍临时长一层放方框）。
-- **三页步骤顺序（用户定死，别改）**：预留（一排变两排，只一次）→ 循环「传递 → 落位 → 计算 → 合并」→ 收场（两排变一排，只一次）。「计算」是循环里的独立一拍、必须在传递之后：`CALC_UP`（= `growDur + calcFade`，长 h3 + 方框淡入）→ 合并 → `CALC_DOWN`（= `calcFade + shrinkDur`，前一段只淡方框，之后 h3→h2）。**两个拍长都按规范表现算（`verbs/split.js`），不写死秒**。收场三层依次「计算层先退 → 第二排逐块撤 → 卡片收回」，方框必须早于卡片退场，否则卡片一矮计算框就跑到卡外成虚影。别每轮重来一次长高/收回（看着像每轮搬家）。
-- **槽位三态**（`CV.setSlot` = `CV.cast.set`，`assets/parts/cast.js`）：有数据 `{letter,color}` 实色块+字母 / 接收中 `(s,null,{active:true})` 紫底 `#f3eeff`+紫框+`···`（**只给接收位**）/ 空 `(s,null,{})` 灰底+灰虚线+无字。**送出的那一格写「空」，不是「接收中」**——早期用 `{active:true}` 语义正好反了。
-- **Σ 结果块标记法**：折进 2 份起的块显示 Σ + 下标列字母 + 上标已折份数，传 `{letter:'Σ', sub:'A', count:2}`（`count` 是上标 tspan，dy 按两级字号换算）；份数随每次相加 +1。`CV.createMerge`（= `CV.beat.fuse`，`assets/parts/beat.js`）的 `to` 同款。
-- **reduce-scatter 轮次之间撤多余空位**是独立一拍 `slim`（`assets/engine/verbs/split.js`，of `blockDur`）：第 1 轮每卡交 2 收 2、第 2 轮交 1 收 1；别在第二轮飞行时顺带淡掉（会被读成第二轮也收两段）。现行实现已升级为「卡片真收窄到保留两列」（2026-11-03 #2）。
-- `.pkt` 不能有 `transition: opacity`（逐帧写 opacity 会把过渡反复重启）。
-- **探针量几何的坑**：单章视图下 `display:none` 的节 `getBBox` 返回空、出界检查会静默跳过——先临时展开全部节再量；rAF 守恒判定要等 >500ms（计数窗 500ms）。docs/visual.html 的 h3 数量 ↔ 调试台锚点耦合（`assets/theme/spec.js` SCHEMA 的 `anchor`，如 03-card→`sub-03-5`，随节号顺延），增删该页 h3 必查那张表。
-
-## 参数与时序（v2）
-- 组件规范参数表在 `assets/theme/spec.js`（`CV.SPEC`，8 组 + 全局：01-color / 02-slot / 03-card / 04-wire / 05-packet / 07-calc / 08-seat / 09-merge，外加 `global`），唯一读法 `CV.spec('键')`（表外键抛错）；`specVal / specNum` 与消费端 `|| 字面量` 兜底已全部退役（参数总线 B1，探针 5.1c 守门）。规范值走记号/倍数，页面编排值直接写秒。
-- 覆盖链 = 代码基线 ← localStorage：参数基线 `assets/theme/defaults.js`（`CV_PARAM_DEFAULTS`，须在 spec.js 之前加载）← `localStorage('cv.params.v1')`；每页时序基线 `assets/scenes/pages-base.js`（`CV_PAGE_DEFAULTS`）← `localStorage('cv.page.<页>.v1')`。**两个基线文件八页均已加载**（2026-11-07 核；早期"在但未被加载、落盘无效"的账已销）。
-- 齿轮 = `parts/chrome.js` X5：规范行填倍数（规范键/规范值/×k/秒），abs 行直接填秒；改值 → boot 的 onChange → `director.reload()`；**面板内改值只更新秒数列，别重建 DOM（失焦）**。
-- `CV.choreo`（compile.js）：wait/transfer 节拍 → 显式分段表；transfer 自动展开 传递→落位延迟→落位弹跳→间隔（串行 travelEnd→fadeEnd→seatStart→seatEnd）。family 页 timeline（sum/split/move 动词）自算分段并产齿轮 rows；reduce/allreduce/alltoall 重复段共用一组（组头标进度条段号区间），reducescatter 平铺 14 行（行号=段号）。
-- **逐动作解说**（2026-10-31 落地）：`assets/engine/narration.js` = 词表 CV.NARR_LEX（表外动作抛错）+ 五种时间轴生成器，秒数只从编译产物现取；齿轮第二页签渲染，高亮走 bar 的 onPaint 钩子。改文案：动作加词表、静止行写 scene `narr.rest`，别在生成器外手写句子。口径细则见 docs/steps.html §12。
-- 进度条段宽 = 真实秒数（`steps[].t` 已按秒归一化）。等宽分段是错的。
-
-## 技术坑（v2 仍适用）
-- SVG 无 offsetWidth（用 getBoundingClientRect）；CSS `filter:grayscale` 对 SVG 不生效；`<circle>` 不写 fill 是黑的；CSS font-size 盖 SVG 属性 → 不给 `.gpu-title`/`.dst-badge`/`.slot-tx` 写 font-size，字号由 draw* 写属性。
-- `CV.mix` 同时吃 hex/rgb 返回 rgb；二次混合只认 hex 会 NaN→纯黑。
-- SVG 别叠两层 transform；位移缩放要先 `transformBox='view-box';transformOrigin='0 0'`。
-- 卡片改高用 `CV.cast.resize`；连续渐隐渐现逐帧写 opacity 别用 transition；多段时间轴用秒写。
-- **SVG marker 靠 id 全局共享**：一条边/一条流一个 marker，别按字母/轮次共用（否则箭头颜色互相覆盖）。
-- 槽位淡入淡出在 `CV.cast.set` 之后写 opacity（set 会写 `style.opacity`）。
-- 对照表 `'A'`/`'A:0'`/`'-'`；Σ 不加下标。
-
-## 新增一个原语（v2 流程，全流程见 docs/architecture.html）
-1. `assets/scenes/<id>.js` 剧本 + 薄壳 `<id>.html`（脚本列表照抄现成页）。
-2. `assets/registry.js` 登记 `pre / post / rel / verbs`。
-3. `tools/probes/<id>.mjs` 断言 + `docs/test-cases.html` 补用例行。
-
-## 验证（流程在 AGENTS，这里只记落点）
-- **用例清单唯一来源 = `docs/test-cases.html`**（**234 条**＝通用 3 + 全站通用 29 + 原语页 67 + index 与规范页 15 + 规范符合性 112 + 参数面板 8；口径同步在 AGENTS「口径有出处」条，旧编号映射见该页页尾——旧会话/旧提交引用的是旧编号）。
-- 全部已实现于 `tools/probes/<页>.mjs`（与页面同名自动配对；`_common.mjs` = 全站通用 29 条 + V1–V8 视觉契约；V4 空槽两态合法：空闲 `#f7f8fc` / 接收中 `#f3eeff`）。
-- 现状一律以 `node tools/verify.mjs <页>` 实跑为准：本文件不记「当前几红几紫」（记了就必漂，历史上记过一次 3 紫，早已全绿）。审计发现登记在 test-cases.html 顶部③（只记录未排期）。
-- 缺陷统一记 `docs/bugs.md`（只记录，不改业务代码）。
-- 写探针的坑：同卡多排槽位必须先按 y 再按 x（同 x 上下两排会交错）；t0 快照前先 seek(0)（页面自动播放）；rs/ar 块色走 `CV.mix` 输出 rgb() 串，比色前要归一；reduce 系槽→卡归属用「中心落卡内 + 底边 12px 容差」；`pg.goto` 只吃绝对 URL；anatomy 是单章视图（目录点击=切节，无真实 sec-NN 锚元素）。
-- 依赖扫描：`node tools/arch.mjs [--json]`，改完公共层重跑（`docs/specs.html` 的图会过期）。
+## 验证与台账
+- v1 的用例清单与探针在 `v1/docs/test-cases.html` + `v1/tools/probes/`，现状一律实跑为准，本文件不记红绿。
+- 缺陷台账 `v1/docs/bugs.md` 是历史台账（记录当时的真实路径，别改写成新路径）。
+- 画谱没有探针，验收靠「多档窗口量渲染尺寸 + 放大截图看观感 + 零 JS 报错」。
 
 ## 分支与推送
-- 单 worktree（本目录 = main）。`remote.origin.url` 本身就是 SSH（`git@github.com:Chitandaaaaa/CommonVisual.git`），**直接 `git push` 即可**，不必手拼地址、也不必设 pushurl（HTTPS 被代理挡，见用户级 MEMORY）。
-- 推前 `git status` + `git log --oneline -5` 对齐状态。
-- `.workbuddy/memory/` 2026-11-07 起入库，删 worktree 不再需要手工备份 memory（旧约定作废）。
+- 单 worktree（本目录 = main）。`remote.origin.url` 本身是 SSH，**直接 `git push`**，不必手拼地址（HTTPS 被代理挡，见用户级 MEMORY）。
+- 推前 `git status` + `git log --oneline -5` 对齐状态。`.workbuddy/memory/` 已入库。
+- memory 是 append-only 日志（`YYYY-MM-DD.md`）；**`MEMORY.md` 只留判据**：凡 grep / `ls` / 读表能得到的数字与清单都不抄（抄了必漂）。
 
 ## 协作约定
-- **规范文档只读，改前必评审（2026-11-09 用户明令）**：`docs/组件文档.md`、`docs/术语表.md`、`docs/规范/*` 等规范稿，发现与实现/真值不一致时**只准登记 `docs/bugs.md` 提报**，把证据（代码位置 / 真值页 / 两种画法的截图）摆出来由用户裁决「改文档 or 改实现」，不得自行以「以实现为准」改稿。真值冲突时唯一合法动作是提报。
-  - 别把「内容源以实现为准」当通用口令：`AGENTS.md` 那条只针对参考稿《分布式通信原语详解.md》（那份不作标准）；规范稿的上游是 `docs/specs.html` 在册清单，裁决权在用户（`docs/纲领.md` 第 5 条「设计先于实现」、`docs/设计铁律.md` D1）。
-- 多个问题一次说清；说清「什么时候」（进度条百分比/步骤名/终态）；给目标态+参照页；给验收标准（能直接变断言）；标优先级；别用「优化一下」这类没靶子的词。
-- **每次任务收尾必须回溯本次所有中间步骤，给出 P0/P1/P2 分级改进意见**；P0 当场固化进工具或本文件。
+- 多个问题一次说清；标优先级；别用「优化一下」这种没靶子的词；给目标态 + 参照 + 验收标准。
+- **每次收尾回溯本次所有中间步骤，给 P0/P1/P2 分级改进意见**；P0 当场固化进工具或本文件。
+- 规范文档只读；改前必评审（见「口径」第二条）。

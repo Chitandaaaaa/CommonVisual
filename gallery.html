@@ -137,6 +137,12 @@ function tick(now) {
   requestAnimationFrame(tick);
 }
 
+/* 上下标基线倍数（2.2.2 / 2.3.2）：下标 9.3 字下移 0.34 个自身字高，上标 7.8 字上移 1.28 个。
+   这两个倍数是 SVG 里 `dy: .34em / -1.28em` 的真实语义 —— em 按**该 tspan 自身**的 font-size 换算，
+   46 基准下即 3.16 / 9.98（上标是相对下标基线的位移，净值 6.82 落在 Σ 右上）。
+   文档那两行写的 5.1 / 19.2 是把 em 按父级 15 换算的结果，照它画上标会飞出色块顶（提报待评审）。 */
+const SCRIPT = { sub: 0.34, sup: 1.28 };
+
 /* ================= 部件画法 ================= */
 /* 数据块（2.1–2.6）：state = data|empty|recv|dim；letter/sub/cnt/color 可选 */
 function block(g, x, y, size, st, o) {
@@ -147,8 +153,11 @@ function block(g, x, y, size, st, o) {
   const tx = E('text', { x: x + s / 2, y: y + s / 2, 'text-anchor': 'middle',
     'dominant-baseline': 'central', 'font-family': MONO_FONT, 'font-weight': 700,
     'font-size': s * 15 / 46 }, r);
-  function span(node, s2, dy, w) {
-    const sp = E('tspan', { 'font-size': s * s2 / 46, dy: s * dy / 46,
+  /* 上下标（2.2.2 / 2.3.2）：字号 9.3 / 7.8（46 基准）等比缩；
+     基线偏移走《上下标基线倍数》——dy 取「相对脚本自身字号的倍数」，不写死像素。 */
+  function span(node, s2, emdy, w) {
+    const fs = s * s2 / 46;
+    const sp = E('tspan', { 'font-size': fs, dy: emdy * fs,
       'font-weight': w || 700 }, node); return sp;
   }
   if (st === 'data' || st === 'dim') {
@@ -157,9 +166,9 @@ function block(g, x, y, size, st, o) {
     r.setAttribute('opacity', st === 'dim' ? 0.78 : 1);
     tx.setAttribute('fill', st === 'dim' ? '#b7becc' : '#ffffff');
     tx.appendChild(document.createTextNode(o.letter || 'A'));
-    if (o.sub != null) span(tx, 9.3, 5.1).textContent = o.sub;
+    if (o.sub != null) span(tx, 9.3, SCRIPT.sub).textContent = o.sub;
     if (o.cnt != null) {
-      const sp = span(tx, 7.8, (o.sub != null ? -24.3 : -19.2), 600);
+      const sp = span(tx, 7.8, -SCRIPT.sup, 600);
       sp.textContent = o.cnt;
     }
   } else if (st === 'empty') {
@@ -296,8 +305,10 @@ function sigText(parent, cx, cy, key, k) {
   const tx = E('text', { x: cx, y: cy, 'text-anchor': 'middle', 'dominant-baseline': 'central',
     'font-family': MONO_FONT, 'font-weight': 700, 'font-size': 15 * k, fill: '#fff' }, parent);
   tx.appendChild(document.createTextNode('Σ'));
-  E('tspan', { 'font-size': 9.3 * k, dy: 5.1 * k, 'font-weight': 700 }, tx).textContent = key[0];
-  E('tspan', { 'font-size': 7.8 * k, dy: -24.3 * k, 'font-weight': 600 }, tx).textContent = key[1];
+  E('tspan', { 'font-size': 9.3 * k, dy: SCRIPT.sub * 9.3 * k, 'font-weight': 700 },
+    tx).textContent = key[0];
+  E('tspan', { 'font-size': 7.8 * k, dy: -SCRIPT.sup * 7.8 * k, 'font-weight': 600 },
+    tx).textContent = key[1];
   return tx;
 }
 
@@ -373,13 +384,13 @@ for (const k of ['A', 'B', 'C', 'D']) {
   s = MONO(grid, 80, 80, k);
   block(s, 17, 17, 46, 'data', { letter: k });
 }
-grid = SEC(comp, '2.2', '分片数据块', '字母＋下标片号（下标 9.3 · 下移 5.1）');
+grid = SEC(comp, '2.2', '分片数据块', '字母＋下标片号（下标 9.3 · 基线偏移 0.34 自身字高）');
 const SUBS = ['A0','A1','A2','A3','B0','B1','B2','B3','C0','C1','C2','C3','D0','D1','D2','D3'];
 for (const key of SUBS) {
   s = MONO(grid, 80, 80, key);
   block(s, 17, 17, 46, 'data', { letter: key[0], sub: key[1] });
 }
-grid = SEC(comp, '2.3', '规约数据块', 'Σ＋下标列字母＋上标份数（下标 9.3 · 上标 7.8/600）');
+grid = SEC(comp, '2.3', '规约数据块', 'Σ＋下标列字母＋上标份数（下标 9.3 · 上标 7.8/600 · 偏移 0.34 / 1.28 自身字高）');
 for (const k in SIG) {
   s = MONO(grid, 80, 80, k);
   block(s, 17, 17, 46, 'data', { letter: 'Σ', sub: k[0], cnt: k[1], color: SIG[k] });
@@ -416,8 +427,12 @@ narrowGrid(grid);
 strip(grid, '置灰', 'role', 'src', 'dim');
 
 /* ---- 4 连线与箭头 ---- */
-/* 4.x 一律用真实卡片（300×170 单排卡）＋舞台真实卡距：横向空当 180、纵向 160 */
-const W4 = 800, SRC4 = 490;
+/* 4.x 一律用真实卡片（300×170 单排卡）。卡与卡的空当（横 180 / 纵 160）不是《组件文档》定的
+   —— 文档只给单卡尺寸、没说舞台卡位，这里取 v1 参考实现的舞台卡距，仅为让样片比例像真页。
+   MID = 空白区中线距卡顶的距离：标题栏 36 + 空白区 118 ÷ 2 = 95
+   （1.1.5 空白区高 118、下沿距卡底 16；数据格 72..118 正好以 95 居中）。
+   早期误按「36→170 取中」算成 103，四条线整体偏高 8px。 */
+const W4 = 800, SRC4 = 490, MID = 95;
 function wideGrid(g) { g.classList.add('wide'); g.style.gridTemplateColumns = 'repeat(auto-fill,minmax(620px,1fr))'; }
 function wireCard(s, x, y, rank) {
   return cardG(s, s, { x: x, y: y, rank: rank,
@@ -428,23 +443,23 @@ grid = SEC(comp, '4.1', '弧线箭头', 'S 形 · 曲率 0.42（控制点沿主�
 wideGrid(grid);
 s = TILE(grid, W4, 310);
 wireCard(s, 10, 120, 0); wireCard(s, SRC4, 20, 1);
-/* 一条就够：源卡左缘（空白区中线 20+36+67=123）→ 目标卡右缘（120+36+67=223）。
+/* 一条就够：源卡左缘（空白区中线 20+95=115）→ 目标卡右缘（120+95=215）。
    两卡错开 100，S 形才看得出来；若两端等高，控制点共线就成了直线。 */
-E('path', { d: arcPath(SRC4, 123, 310, 223), fill: 'none', stroke: GRAY, 'stroke-width': 2,
+E('path', { d: arcPath(SRC4, 20 + MID, 310, 120 + MID), fill: 'none', stroke: GRAY, 'stroke-width': 2,
   'stroke-linecap': 'round', 'stroke-dasharray': '8 7', 'marker-end': markerOf(s, GRAY, 11) }, s);
 grid = SEC(comp, '4.2', '直线箭头', '任意走向直连 · 箭头 11');
 wideGrid(grid);
 s = TILE(grid, W4, 270);
 wireCard(s, 10, 10, 0); wireCard(s, SRC4, 70, 1);
-E('line', { x1: 310, y1: 95, x2: SRC4, y2: 155, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
+E('line', { x1: 310, y1: 10 + MID, x2: SRC4, y2: 70 + MID, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
   'marker-end': markerOf(s, GRAY, 11) }, s);
-grid = SEC(comp, '4.3', '双排横向直线箭头', '两条线方向相反 · 空白区中线上/下方 22（卡 y=20 → 中线 123，线在 101 / 145）');
+grid = SEC(comp, '4.3', '双排横向直线箭头', '两条线方向相反 · 空白区中线上/下方 22（卡 y=20 → 中线 115，线在 93 / 137）');
 wideGrid(grid);
 s = TILE(grid, W4, 240);
 wireCard(s, 10, 20, 0); wireCard(s, SRC4, 20, 1);
-E('line', { x1: 310, y1: 145, x2: SRC4, y2: 145, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
+E('line', { x1: 310, y1: 20 + MID + 22, x2: SRC4, y2: 20 + MID + 22, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
   'marker-end': markerOf(s, GRAY, 11) }, s);
-E('line', { x1: SRC4, y1: 101, x2: 310, y2: 101, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
+E('line', { x1: SRC4, y1: 20 + MID - 22, x2: 310, y2: 20 + MID - 22, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
   'marker-end': markerOf(s, GRAY, 11) }, s);
 grid = SEC(comp, '4.4', '双排纵向直线箭头', '上卡下边 ↔ 下卡上边 · 中线左/右 54');
 wideGrid(grid);
@@ -466,7 +481,7 @@ E('line', { x1: SRC4, y1: 180, x2: 310, y2: 340, stroke: GRAY, 'stroke-width': 2
 function wireState(grid, cap, color, w, dash, op, asize) {
   const s = TILE(grid, W4, 220, cap);
   wireCard(s, 10, 20, 0); wireCard(s, SRC4, 20, 1);
-  const ln = E('line', { x1: 310, y1: 123, x2: SRC4, y2: 123, stroke: color, 'stroke-width': w,
+  const ln = E('line', { x1: 310, y1: 20 + MID, x2: SRC4, y2: 20 + MID, stroke: color, 'stroke-width': w,
     opacity: op, 'marker-end': markerOf(s, color, asize) }, s);
   if (dash) ln.setAttribute('stroke-dasharray', dash);
 }
