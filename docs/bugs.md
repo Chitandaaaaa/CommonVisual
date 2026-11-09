@@ -33,6 +33,8 @@ node tools/verify.mjs index gather scatter broadcast reduce allgather allreduce 
 | 2026-11-02 | docs/steps.html | 手写稿再次漂移：reduce / allreduce / reducescatter 共 12 行「第二排-k · 显形」结束列空（瞬时），引擎自 11-02「方案 A」起按 blockDur 给 0.4s 窗（narration 三处 `b0 + CV.dur('blockDur')`）——4.15 对账红，HEAD 上即红、与参数总线 B1 无关 | `node tools/verify.mjs docs/steps.html --no-shot`（4.15） | 已修（2026-11-02 稿内 12 行结束列按 narrate 现值补 +0.40；文案未动） |
 | 2026-11-06 | docs/组件文档.md | 缺自检规则：每个三级节至少要有一个尺寸参数和一个位置参数；纯文字节必须有字号/字体/字重/颜色/位置。现在全靠人工扫 91 节，加组件必漏 | 解析 `####` 下参数表，按字段集合断言 | 待办（未排期，用户要求先记，后做） |
 | 2026-11-07 | allreduce | 页面静止行写「6 条直连灰色」，probe t=0 实测 lWires 8 条直线（4 对正交 × 双向车道：横向车道距 44＝2×humpH、纵向 108＝2×humpV）＋ 8 枚箭头，无对角线——文案条数与真值不符 | `node tools/probe.mjs allreduce 0:"数 lWires path"` | 待修（文案改「8 条车道线」；probe 真值已核，随《剧本》续写 1.6 布局节落册） |
+| 2026-11-09 | docs/组件文档.md | 缺「计算层卡」形态：只有单排/双排两节，卡片出计算层后的第三段高度（计算层区高、方牌落位）无处可查——《特效动画》7.1 结束状态「计算层显示」据册画不出来（docs/gallery.html 画谱借 +46px 示意） | 按《组件文档》1.2＋《特效动画》7.1 试画第三段卡 | 待办（补「计算层卡」节或 1.2 差异行，随组件文档下一轮增补排期） |
+| 2026-11-09 | docs/组件文档.md | 5.4 规约数据包两块/四块款「包内块为 ΣA2–ΣD4 的同轮组合」无枚举——组合集合未定义，全部类型只列了单块 12 种（docs/gallery.html 画谱画了 ΣA2+ΣB2、ΣA2–ΣD2 例款） | 按 5.4 试画两块/四块款 | 待办（枚举组合或写组合规则，随组件文档下一轮增补排期） |
 
 ## 巡检历史
 

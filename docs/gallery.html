@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>组件与动画总览 · 按文档重画</title>
+<style>
+  body { margin:0; padding:24px 28px 80px; background:#eef1f7;
+         font-family:"Segoe UI","Microsoft YaHei",sans-serif; color:#333a4e; }
+  h1 { font-size:22px; margin:8px 0 4px; }
+  .sub { color:#6b7488; font-size:13px; margin-bottom:20px; }
+  .part { margin-top:34px; }
+  .part > h2 { font-size:18px; border-left:4px solid #7c3aed; padding-left:10px; }
+  h3.sec { font-size:15px; margin:26px 0 8px; color:#444d66; }
+  h3.sec small { color:#8b93aa; font-weight:400; margin-left:8px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:14px; }
+  .grid.mini { grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); }
+  .tile { background:#f4f6fb; border:1px solid #dfe3ee; border-radius:10px; padding:10px 10px 6px; }
+  .tile svg { display:block; width:100%; height:auto; }
+  .mini-t svg { max-width:110px; margin:0 auto; }
+  .cap { font-size:12px; color:#6b7488; text-align:center; padding:4px 0 2px;
+         font-family:Consolas,monospace; }
+  .cap b { color:#444d66; }
+  .note { font-size:12.5px; color:#6b7488; background:#fff; border:1px dashed #c9d0e2;
+          border-radius:8px; padding:8px 12px; margin:6px 0 10px; }
+  .ctrl { display:flex; align-items:center; justify-content:center; gap:26px; height:48px; }
+  .sbtn { width:30px; height:30px; display:flex; align-items:center; justify-content:center;
+          cursor:pointer; transition:transform .15s; }
+  .sbtn:hover { transform:scale(1.14); }
+  .sbtn:hover svg * { fill:#161b2e; }
+  .pbtn { width:48px; height:48px; border-radius:24px; background:#6b7488; cursor:pointer;
+          display:flex; align-items:center; justify-content:center;
+          box-shadow:0 4px 12px rgba(90,99,119,.28); transition:all .15s; }
+  .pbtn:hover { background:#7d8699; transform:scale(1.07);
+          box-shadow:0 8px 20px rgba(90,99,119,.32); }
+  .track { position:relative; height:16px; cursor:pointer; }
+  .track .seg { position:absolute; top:6px; height:3px; border-radius:2px; background:#e6e9f0; overflow:hidden; }
+  .track .seg > i { position:absolute; left:0; top:0; bottom:0; background:#8b93a6; display:block; }
+  .track:hover .seg { top:5px; height:4px; }
+</style>
+</head>
+<body>
+<h1>组件与动画总览</h1>
+<div class="sub">按《组件文档》每个二级标题（含全部类型）画一份静态样本；按《特效动画》每个二级标题跑一个循环演示。
+零依赖：不引用 assets/ 任何代码，数值全部照抄两份文档，file:// 直接打开。</div>
+
+<div class="part" id="part-c"><h2>第一部分 · 组件（画自《组件文档》）</h2></div>
+<div id="comp"></div>
+
+<div class="part" id="part-a"><h2>第二部分 · 动画（跑自《特效动画》）</h2></div>
+<div id="anim"></div>
+
+<script>
+'use strict';
+/* ================= 核心 ================= */
+const NS = 'http://www.w3.org/2000/svg';
+let UID = 0;
+function E(t, a, p) { const n = document.createElementNS(NS, t);
+  for (const k in a) n.setAttribute(k, a[k]); if (p) p.appendChild(n); return n; }
+function SEC(parent, num, name, note) {
+  const h = document.createElement('h3'); h.className = 'sec';
+  h.innerHTML = num + ' ' + name + (note ? '<small>' + note + '</small>' : '');
+  parent.appendChild(h);
+  if (note) { const n = document.createElement('div'); n.className = 'note'; n.innerHTML = note; parent.appendChild(n); }
+  const g = document.createElement('div'); g.className = 'grid'; parent.appendChild(g);
+  return g;
+}
+function TILE(grid, w, h, cap) {
+  const t = document.createElement('div'); t.className = 'tile'; grid.appendChild(t);
+  const s = E('svg', { viewBox: '0 0 ' + w + ' ' + h }, t);
+  if (cap) { const c = document.createElement('div'); c.className = 'cap'; c.innerHTML = cap; t.appendChild(c); }
+  return s;
+}
+function MONO(grid, w, h, cap) { // 小样本网格用
+  const t = document.createElement('div'); t.className = 'tile mini-t'; grid.appendChild(t);
+  const s = E('svg', { viewBox: '0 0 ' + w + ' ' + h }, t);
+  if (cap) { const c = document.createElement('div'); c.className = 'cap'; c.innerHTML = cap; t.appendChild(c); }
+  return s;
+}
+/* 0.1 数据四色 / 0.2 连线灰 */
+const DATA = { A: '#7c3aed', B: '#0891b2', C: '#059669', D: '#d97706' };
+const GRAY = '#c3cadb';
+/* 0.3 规约块底色 */
+const SIG = { A2:'#6931ca',A3:'#5629a6',A4:'#442083',B2:'#0b789a',B3:'#0e5f82',B4:'#12466a',
+              C2:'#097c5f',C3:'#0d6254',C4:'#10484a',D2:'#b5630f',D3:'#904f17',D4:'#6c3b20' };
+const MONO_FONT = 'Consolas,monospace';
+const RLETTER = ['A', 'B', 'C', 'D']; // rank 序号 → 字母
+
+function defsOf(svg) { let d = svg.querySelector('defs');
+  if (!d) d = E('defs', {}, svg); return d; }
+function fShadow(svg, id, dy, blur, color, op) { // 投影/外发光滤镜
+  const f = E('filter', { id: id, x: '-60%', y: '-60%', width: '220%', height: '220%' }, defsOf(svg));
+  E('feDropShadow', { dx: 0, dy: dy, stdDeviation: blur / 2, 'flood-color': color, 'flood-opacity': op }, f);
+  return 'url(#' + id + ')';
+}
+function fBlur(svg, id, blur, op) {
+  const f = E('filter', { id: id, x: '-80%', y: '-80%', width: '260%', height: '260%' }, defsOf(svg));
+  E('feGaussianBlur', { stdDeviation: blur / 2 }, f);
+  const m = E('feComponentTransfer', {}, f);
+  E('feFuncA', { type: 'linear', slope: op }, m);
+  return 'url(#' + id + ')';
+}
+function mix(h1, h2, t) { // 颜色插值（动画演示用）
+  const a = [1, 3, 5].map(i => parseInt(h1.substr(i, 2), 16));
+  const b = [1, 3, 5].map(i => parseInt(h2.substr(i, 2), 16));
+  return '#' + a.map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, '0')).join('');
+}
+/* 10.2 变化方式四条曲线 */
+const CURVES = {
+  lin: p => p,
+  qin: p => p * p,
+  io:  p => p < .5 ? 2 * p * p : 1 - (2 - 2 * p) * (2 - 2 * p) / 2,
+  pop(q) { // 过冲回弹：三档点 + 贝塞尔(0.2,0.9,0.3,1.45)，缩放跟冲、透明不跟冲
+    const S = [{ t: 0, k: .35, o: 0 }, { t: .55, k: 1.16, o: 1 }, { t: 1, k: 1, o: 1 }];
+    q = q < 0 ? 0 : q > 1 ? 1 : q;
+    let i = 0; while (i < S.length - 2 && q > S[i + 1].t) i++;
+    const a = S[i], b = S[i + 1], u = (q - a.t) / (b.t - a.t);
+    const e = CURVES.bez(u, .2, .9, .3, 1.45);
+    return { k: a.k + (b.k - a.k) * e, o: Math.min(1, a.o + (b.o - a.o) * e) };
+  },
+  bez(t, x1, y1, x2, y2) { // cubic-bezier 求值
+    const fx = t => ((1 - t) ** 3) * 0 + 3 * (1 - t) ** 2 * t * x1 + 3 * (1 - t) * t * t * x2 + t ** 3 * 1;
+    const fy = t => ((1 - t) ** 3) * 0 + 3 * (1 - t) ** 2 * t * y1 + 3 * (1 - t) * t * t * y2 + t ** 3 * 1;
+    let lo = 0, hi = 1, m;
+    for (let j = 0; j < 24; j++) { m = (lo + hi) / 2; if (fx(m) < t) lo = m; else hi = m; }
+    return fy((lo + hi) / 2);
+  }
+};
+/* 循环驱动：每个演示注册 render(t)，t∈[0,period) 自动回绕 */
+const LOOPS = [];
+function LOOP(period, render) { LOOPS.push({ period, render }); }
+let T0 = performance.now();
+function tick(now) {
+  const t = (now - T0) / 1000;
+  for (const L of LOOPS) L.render(t % L.period);
+  requestAnimationFrame(tick);
+}
+
+/* ================= 部件画法 ================= */
+/* 数据块（2.1–2.6）：state = data|empty|recv|dim；letter/sub/cnt/color 可选 */
+function block(g, x, y, size, st, o) {
+  o = o || {};
+  const r = E('g', {}, g);
+  const s = size, rx = s * 8 / 46;
+  const rect = E('rect', { x: x, y: y, width: s, height: s, rx: rx }, r);
+  const tx = E('text', { x: x + s / 2, y: y + s / 2, 'text-anchor': 'middle',
+    'dominant-baseline': 'central', 'font-family': MONO_FONT, 'font-weight': 700,
+    'font-size': s * 15 / 46 }, r);
+  function span(node, s2, dy, w) {
+    const sp = E('tspan', { 'font-size': s * s2 / 46, dy: s * dy / 46,
+      'font-weight': w || 700 }, node); return sp;
+  }
+  if (st === 'data' || st === 'dim') {
+    const base = o.color || DATA[o.letter || 'A'];
+    rect.setAttribute('fill', st === 'dim' ? '#e4e8f0' : base);
+    r.setAttribute('opacity', st === 'dim' ? 0.78 : 1);
+    tx.setAttribute('fill', st === 'dim' ? '#b7becc' : '#ffffff');
+    tx.appendChild(document.createTextNode(o.letter || 'A'));
+    if (o.sub != null) span(tx, 9.3, 5.1).textContent = o.sub;
+    if (o.cnt != null) {
+      const sp = span(tx, 7.8, (o.sub != null ? -24.3 : -19.2), 600);
+      sp.textContent = o.cnt;
+    }
+  } else if (st === 'empty') {
+    rect.setAttribute('fill', '#f7f8fc');
+    rect.setAttribute('stroke', '#d5dae8'); rect.setAttribute('stroke-width', 1.3);
+    rect.setAttribute('stroke-dasharray', '4 3');
+    tx.setAttribute('fill', '#b9c0d2');
+  } else if (st === 'recv') {
+    rect.setAttribute('fill', '#f3eeff');
+    rect.setAttribute('stroke', '#a78bfa'); rect.setAttribute('stroke-width', 1.3);
+    tx.setAttribute('fill', '#a78bfa'); tx.textContent = '···';
+  }
+  return r;
+}
+/* 数据格行 */
+function slotRow(g, x0, y, n, states, o) {
+  o = o || {}; const sw = o.sw || 46, gap = o.gap || 12, out = [];
+  for (let i = 0; i < n; i++)
+    out.push(block(g, x0 + i * (sw + gap), y, sw, states[i].st, states[i]));
+  return out;
+}
+/* 徽章（3.1–3.4） */
+function badge(g, x, y, kind, text, st) {
+  st = st || 'n';
+  const w = kind === 'role' ? (text === 'dst' ? 30 : 28) : 36, h = 18;
+  const r = E('g', {}, g);
+  E('rect', { x: x, y: y, width: w, height: h, rx: 6,
+    fill: st === 'dim' ? 'rgba(158,168,188,.12)' : 'rgba(255,255,255,.26)' }, r);
+  const tx = E('text', { x: x + w / 2, y: y + h / 2, 'text-anchor': 'middle',
+    'dominant-baseline': 'central', 'font-family': MONO_FONT, 'font-weight': 700,
+    'font-size': 10, 'letter-spacing': 0.6,
+    fill: st === 'dim' ? '#b8bfcd' : '#ffffff' }, r);
+  tx.textContent = text;
+  return r;
+}
+/* 卡片（1.1–1.5）：variant = idle|send|recv|dim；rows = [{y, states:[…]}] */
+function cardG(svg, g, o) {
+  o = o || {};
+  const x = o.x || 0, y = o.y || 0, w = o.w || 300, h = o.h || 170;
+  const color = o.color || DATA[RLETTER[o.rank || 0]] || '#7c3aed';
+  const dim = o.variant === 'dim';
+  const r = E('g', {}, g);
+  let stroke = '#e3e7f0', sw = 1, filt = fShadow(svg, 'fc' + (++UID), 6, 12, '#2a3352', 0.1);
+  if (o.variant === 'send') { stroke = color; sw = 2.5; filt = fShadow(svg, 'fs' + (++UID), 0, 5, color, 0.53); }
+  if (o.variant === 'recv') { stroke = '#c9b6f7'; sw = 1.8; }
+  if (dim) stroke = '#eef1f8';
+  E('rect', { x: x, y: y, width: w, height: h, rx: 14, fill: '#ffffff',
+    stroke: stroke, 'stroke-width': sw, filter: filt }, r);
+  E('path', { d: 'M ' + x + ' ' + (y + 36) + ' L ' + x + ' ' + (y + 14) +
+    ' A 14 14 0 0 1 ' + (x + 14) + ' ' + y + ' L ' + (x + w - 14) + ' ' + y +
+    ' A 14 14 0 0 1 ' + (x + w) + ' ' + (y + 14) + ' L ' + (x + w) + ' ' + (y + 36) + ' Z',
+    fill: dim ? '#e8ecf4' : color }, r);
+  const tt = E('text', { x: x + 16, y: y + 24.5, 'text-anchor': 'start',
+    'font-size': 15, 'font-weight': 700, fill: dim ? '#aeb6c7' : '#ffffff' }, r);
+  tt.textContent = o.title || ('rank' + (o.rank != null ? o.rank : 0));
+  if (o.badge) badge(r, x + w - 14 - (o.badge.w || 28), y + 9, o.badge.kind, o.badge.text,
+    dim ? 'dim' : 'n');
+  if (o.rows) { const n = o.rowN || 4;
+    for (const row of o.rows)
+      slotRow(r, x + (w - n * 46 - (n - 1) * 12) / 2, row.y, n, row.states, o); }
+  return r;
+}
+/* 箭头 marker（4.1.2：平头小三角，尖在中点、底边贴满外框左边） */
+function markerOf(svg, color, size) {
+  const id = 'ar' + (++UID);
+  const m = E('marker', { id: id, viewBox: '0 0 11 11', refX: 11, refY: 5.5,
+    markerWidth: size, markerHeight: size, markerUnits: 'userSpaceOnUse',
+    orient: 'auto' }, defsOf(svg));
+  E('path', { d: 'M 0 0 L 11 5.5 L 0 11 Z', fill: color }, m);
+  return 'url(#' + id + ')';
+}
+/* 弧线（4.1.1）：S 形，曲率 0.42；a 起点 b 终点 */
+function arcPath(a, b, k) {
+  k = k == null ? 0.42 : k;
+  const dx = (b[0] - a[0]) * k;
+  return 'M ' + a[0] + ' ' + a[1] + ' C ' + (a[0] + dx) + ' ' + a[1] + ' ' +
+         (b[0] - dx) + ' ' + b[1] + ' ' + b[0] + ' ' + b[1];
+}
+/* 数据包（5.1–5.4）：dir = 弧度制朝向，拖尾永远拖在来路上 */
+function packetG(svg, g, x, y, kind, colors, deg) {
+  const r = E('g', { transform: 'translate(' + x + ' ' + y + ') rotate(' + (deg || 0) + ')' }, g);
+  const glow = fShadow(svg, 'pg' + (++UID), 0, 8, '#2a3352', 0.22);
+  function trail(d, size, rx, op, blur) {
+    E('rect', { x: -d - size / 2, y: -size / 2, width: size, height: size, rx: rx,
+      fill: colors[0], filter: fBlur(svg, 'tb' + (++UID), blur, 0.14), opacity: op }, r);
+  }
+  if (kind === 1) {
+    trail(46, 9.6, 2.7, 0.28, 3); trail(24, 16, 4.4, 0.55, 4);
+    E('rect', { x: -12, y: -12, width: 24, height: 24, rx: 6.5, fill: colors[0], filter: glow }, r);
+    const t = E('text', { x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+      'font-family': MONO_FONT, 'font-weight': 700, 'font-size': 13, fill: '#fff' }, r);
+    t.textContent = colors.txt;
+  } else {
+    const n = kind === 2 ? 2 : 4, bw = 20, gap = 3, pad = 6;
+    const bwAll = n * bw + (n - 1) * gap;
+    trail(46, 9.6, 2.7, kind === 2 ? 0.24 : 0.24, 3);
+    trail(24, 16, 4.4, kind === 2 ? 0.48 : 0.48, 4);
+    E('rect', { x: -bwAll / 2 - pad, y: -16, width: bwAll + pad * 2, height: 32, rx: 10,
+      fill: 'rgba(255,255,255,.97)', filter: glow }, r);
+    for (let i = 0; i < n; i++) {
+      const bx = -bwAll / 2 + i * (bw + gap);
+      E('rect', { x: bx, y: -10, width: bw, height: 20, rx: 5, fill: colors[i].c }, r);
+      const t = E('text', { x: bx + bw / 2, y: 0, 'text-anchor': 'middle',
+        'dominant-baseline': 'central', 'font-family': MONO_FONT, 'font-weight': 700,
+        'font-size': 11, fill: '#fff' }, r);
+      t.textContent = colors[i].t;
+    }
+  }
+  return r;
+}
+/* 规约块文字缩放包装（5.4：整体缩放 0.52） */
+function sigmaInto(g, x, y, key, scale) {
+  const w = E('g', { transform: 'translate(' + x + ' ' + y + ') scale(' + (scale || 1) + ')' }, g);
+  block(w, -23, -23, 46, 'data', { letter: 'Σ', sub: key[1], cnt: key[2], color: SIG[key] });
+  return w;
+}
+
+/* ================= 第一部分 · 组件 ================= */
+const comp = document.getElementById('comp');
+let grid, s;
+
+/* ---- 0 通用 ---- */
+grid = SEC(comp, '0.1', '数据四色', '同一份数据在任何位置都是同一种颜色');
+for (const k of ['A', 'B', 'C', 'D']) {
+  s = MONO(grid, 80, 80, 'rank ' + '0123' [['A','B','C','D'].indexOf(k)] + ' · ' + k);
+  E('rect', { x: 17, y: 17, width: 46, height: 46, rx: 8, fill: DATA[k] }, s);
+  const t = E('text', { x: 40, y: 40, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+    'font-family': MONO_FONT, 'font-weight': 700, 'font-size': 15, fill: '#fff' }, s);
+  t.textContent = k;
+}
+grid = SEC(comp, '0.2', '连线灰');
+s = MONO(grid, 120, 60);
+E('line', { x1: 12, y1: 30, x2: 108, y2: 30, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7' }, s);
+s = MONO(grid, 120, 60, '箭头');
+E('line', { x1: 12, y1: 30, x2: 96, y2: 30, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
+  'marker-end': markerOf(s, GRAY, 11) }, s);
+grid = SEC(comp, '0.3', '规约块底色', '12 种内容各一个固定底色，直接查表');
+for (const k in SIG) {
+  s = MONO(grid, 80, 80, k);
+  block(s, 17, 17, 46, 'data', { letter: 'Σ', sub: k[1], cnt: k[2], color: SIG[k] });
+}
+grid = SEC(comp, '0.4', '层序', '六层从下往上：背景 → 卡片 → 数据块 → 连线 → 特效 → 标签');
+s = TILE(grid, 340, 190, '① 背景（网格）② 卡片 ③ 数据块 ④ 连线 ⑤ 数据包 ⑥ 计算方牌');
+for (let i = 0; i < 8; i++) E('line', { x1: 10 + i * 40, y1: 10, x2: 10 + i * 40, y2: 180,
+  stroke: '#8b93aa', 'stroke-width': 1, opacity: 0.1 }, s);
+for (let i = 0; i < 4; i++) E('line', { x1: 10, y1: 10 + i * 40, x2: 330, y2: 10 + i * 40,
+  stroke: '#8b93aa', 'stroke-width': 1, opacity: 0.1 }, s);
+cardG(s, s, { x: 70, y: 40, rank: 0, title: 'rank0', rows: [{ y: 112, states: [{ st: 'data', letter: 'A' }, { st: 'empty' }, { st: 'empty' }, { st: 'empty' }] }] });
+E('line', { x1: 200, y1: 150, x2: 320, y2: 130, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7' }, s);
+packetG(s, s, 258, 140, 1, { 0: DATA.A, txt: 'A' }, 0);
+const chip = E('g', { transform: 'translate(120 100)' }, s);
+E('rect', { x: -28, y: -11, width: 56, height: 22, rx: 7, fill: '#fbfaff', stroke: '#d7d2ea', 'stroke-width': 1.2 }, chip);
+const ct = E('text', { x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+  'font-size': 11.5, 'font-weight': 600, 'letter-spacing': 0.46, fill: '#6a5f8a' }, chip);
+ct.textContent = '计算';
+
+/* ---- 1 卡片 ---- */
+grid = SEC(comp, '1.1', '单排卡', '300×170 · 标题栏 36 · 空白区 118 · 一排四格（行顶距卡顶 72，间距 12）');
+s = TILE(grid, 340, 200, 'rank0 · src 徽章');
+cardG(s, s, { x: 20, y: 15, rank: 0, badge: { kind: 'role', text: 'src', w: 28 },
+  rows: [{ y: 87, states: [{ st: 'data', letter: 'A' }, { st: 'data', letter: 'B' },
+    { st: 'data', letter: 'C' }, { st: 'data', letter: 'D' }] }] });
+grid = SEC(comp, '1.2', '双排卡', '300×203 · 两排上下对齐（行顶 67.5 / 125.5，行距 12）');
+s = TILE(grid, 340, 233, 'rank1 · dst 徽章');
+cardG(s, s, { x: 20, y: 15, h: 203, rank: 1, badge: { kind: 'role', text: 'dst', w: 30 },
+  rows: [{ y: 82.5, states: [{ st: 'data', letter: 'A' }, { st: 'empty' }, { st: 'empty' }, { st: 'empty' }] },
+         { y: 140.5, states: [{ st: 'empty' }, { st: 'empty' }, { st: 'empty' }, { st: 'empty' }] }] });
+grid = SEC(comp, '1.3', '发送态', '边框 2.5 数据色＋外发光（模糊 5 · 不透明度 0.53）');
+for (const k of ['A', 'B']) {
+  s = TILE(grid, 340, 200, 'rank' + ['A','B'].indexOf(k) + ' 发送态 · ' + k);
+  cardG(s, s, { x: 20, y: 15, rank: ['A','B'].indexOf(k), variant: 'send',
+    badge: { kind: 'role', text: 'src', w: 28 },
+    rows: [{ y: 87, states: [{ st: 'data', letter: k }, { st: 'empty' }, { st: 'empty' }, { st: 'empty' }] }] });
+}
+grid = SEC(comp, '1.4', '接收态', '边框 #c9b6f7 · 1.8');
+s = TILE(grid, 340, 200, 'rank2 接收态 · dst');
+cardG(s, s, { x: 20, y: 15, rank: 2, variant: 'recv', badge: { kind: 'role', text: 'dst', w: 30 },
+  rows: [{ y: 87, states: [{ st: 'recv' }, { st: 'empty' }, { st: 'empty' }, { st: 'empty' }] }] });
+grid = SEC(comp, '1.5', '聚焦置灰态', '其余卡整体置灰：边框 #eef1f8 · 标题栏 #e8ecf4 · 标题 #aeb6c7');
+s = TILE(grid, 340, 200, '置灰卡');
+cardG(s, s, { x: 20, y: 15, rank: 3, variant: 'dim', badge: { kind: 'role', text: 'src', w: 28 },
+  rows: [{ y: 87, states: [{ st: 'dim', letter: 'D' }, { st: 'empty' }, { st: 'empty' }, { st: 'empty' }] }] });
+
+/* ---- 2 数据块 ---- */
+grid = SEC(comp, '2.1', '数据块', '46×46 · 圆角 8 · 字 15 Consolas 700 白');
+for (const k of ['A', 'B', 'C', 'D']) {
+  s = MONO(grid, 80, 80, k);
+  block(s, 17, 17, 46, 'data', { letter: k });
+}
+grid = SEC(comp, '2.2', '分片数据块', '字母＋下标片号（下标 9.3 · 下移 5.1）');
+const SUBS = ['A0','A1','A2','A3','B0','B1','B2','B3','C0','C1','C2','C3','D0','D1','D2','D3'];
+for (const key of SUBS) {
+  s = MONO(grid, 80, 80, key);
+  block(s, 17, 17, 46, 'data', { letter: key[0], sub: key[1] });
+}
+grid = SEC(comp, '2.3', '规约数据块', 'Σ＋下标列字母＋上标份数（下标 9.3 · 上标 7.8/600）');
+for (const k in SIG) {
+  s = MONO(grid, 80, 80, k);
+  block(s, 17, 17, 46, 'data', { letter: 'Σ', sub: k[1], cnt: k[2], color: SIG[k] });
+}
+grid = SEC(comp, '2.4 / 2.5 / 2.6', '空态 · 接收态 · 聚焦置灰态');
+s = MONO(grid, 80, 80, '2.4 空态'); block(s, 17, 17, 46, 'empty');
+s = MONO(grid, 80, 80, '2.5 接收态'); block(s, 17, 17, 46, 'recv');
+s = MONO(grid, 80, 80, '2.6 置灰'); block(s, 17, 17, 46, 'dim', { letter: 'A' });
+/* ---- 3 徽章 ---- */
+function strip(grid, cap, kind, text, st) {
+  const s = TILE(grid, 130, 52, cap);
+  E('rect', { x: 10, y: 8, width: 110, height: 36, rx: 6, fill: DATA.A }, s);
+  const w = kind === 'role' ? (text === 'dst' ? 30 : 28) : 36;
+  badge(s, 10 + (110 - w) / 2, 17, kind, text, st);
+}
+grid = SEC(comp, '3.1', '角色徽章', '28（src）/ 30（dst）× 18 · 圆角 6 · 字 10 白');
+strip(grid, 'src', 'role', 'src'); strip(grid, 'dst', 'role', 'dst');
+grid = SEC(comp, '3.2', '进度徽章', '36×18');
+for (const t of ['0/4', '1/4', '2/4', '3/4', '4/4']) strip(grid, t, 'prog', t);
+grid = SEC(comp, '3.3', '标注徽章', '36×18');
+strip(grid, '4 段', 'note', '4 段'); strip(grid, '4 片', 'note', '4 片');
+grid = SEC(comp, '3.4', '徽章聚焦置灰态', '底色 rgba(158,168,188,.12) · 文字 #b8bfcd');
+strip(grid, '置灰', 'role', 'src', 'dim');
+
+/* ---- 4 连线与箭头 ---- */
+function cardStub(s, x, y, w, h) {
+  E('rect', { x: x, y: y, width: w, height: h, rx: 8, fill: '#fff', stroke: '#c9cfdf', 'stroke-width': 1.2 }, s);
+}
+grid = SEC(comp, '4.1', '弧线箭头', 'S 形 · 曲率 0.42 · 三线间距 37.4 以空白区中线居中 · 箭头 11');
+s = TILE(grid, 340, 190);
+cardStub(s, 4, 10, 26, 170); cardStub(s, 310, 10, 26, 170);
+for (const yy of [57.6, 95, 132.4])
+  E('path', { d: arcPath([30, yy], [310, yy]), fill: 'none', stroke: GRAY, 'stroke-width': 2,
+    'stroke-dasharray': '8 7', 'marker-end': markerOf(s, GRAY, 11) }, s);
+grid = SEC(comp, '4.2', '直线箭头', '任意走向直连 · 箭头 11');
+s = TILE(grid, 340, 190);
+cardStub(s, 4, 65, 70, 60); cardStub(s, 266, 40, 70, 60);
+E('line', { x1: 74, y1: 95, x2: 266, y2: 70, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
+  'marker-end': markerOf(s, GRAY, 11) }, s);
+grid = SEC(comp, '4.3', '双排横向直线箭头', '两条线方向相反 · 空白区中线上/下方 22');
+s = TILE(grid, 340, 170);
+cardStub(s, 4, 35, 70, 100); cardStub(s, 266, 35, 70, 100);
+E('line', { x1: 74, y1: 107, x2: 266, y2: 107, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
+  'marker-end': markerOf(s, GRAY, 11) }, s);
+E('line', { x1: 266, y1: 63, x2: 74, y2: 63, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
+  'marker-end': markerOf(s, GRAY, 11) }, s);
+grid = SEC(comp, '4.4', '双排纵向直线箭头', '上卡下边 ↔ 下卡上边 · 中线左/右 54');
+s = TILE(grid, 340, 200);
+cardStub(s, 110, 6, 120, 70); cardStub(s, 110, 124, 120, 70);
+E('line', { x1: 111, y1: 76, x2: 111, y2: 124, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
+  'marker-end': markerOf(s, GRAY, 11) }, s);
+E('line', { x1: 229, y1: 124, x2: 229, y2: 76, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7',
+  'marker-end': markerOf(s, GRAY, 11) }, s);
+grid = SEC(comp, '4.5', '双排交叉直线', '斜对卡 · 空当正中交叉 · 两条线都不画箭头');
+s = TILE(grid, 340, 190);
+cardStub(s, 20, 10, 90, 60); cardStub(s, 230, 120, 90, 60);
+cardStub(s, 230, 10, 90, 60); cardStub(s, 20, 120, 90, 60);
+E('line', { x1: 110, y1: 70, x2: 230, y2: 120, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7' }, s);
+E('line', { x1: 230, y1: 70, x2: 110, y2: 120, stroke: GRAY, 'stroke-width': 2, 'stroke-dasharray': '8 7' }, s);
+function wireState(grid, cap, color, w, dash, op, asize) {
+  const s = TILE(grid, 340, 120, cap);
+  cardStub(s, 4, 35, 40, 50); cardStub(s, 296, 35, 40, 50);
+  const ln = E('line', { x1: 44, y1: 60, x2: 296, y2: 60, stroke: color, 'stroke-width': w,
+    opacity: op, 'marker-end': markerOf(s, color, asize) }, s);
+  if (dash) ln.setAttribute('stroke-dasharray', dash);
+}
+grid = SEC(comp, '4.6', '飞行态', '数据色 · 宽 2.6 · 虚线 9 7 · 箭头 14.3');
+wireState(grid, '点亮（B）', DATA.B, 2.6, '9 7', 1, 14.3);
+grid = SEC(comp, '4.7', '余辉态', '数据色 · 宽 1.8 · 不透明度 0.42 · 箭头 9.9');
+wireState(grid, '余辉（B）', DATA.B, 1.8, null, 0.42, 9.9);
+grid = SEC(comp, '4.8', '连线聚焦置灰态', '#ccd2e0');
+wireState(grid, '置灰', '#ccd2e0', 2, '8 7', 1, 11);
+
+/* ---- 5 数据包 ---- */
+grid = SEC(comp, '5.1', '单块数据包', '包体 24×24 · 拖尾两块（16 退 24 浓 0.55 / 9.6 退 46 浓 0.28）');
+for (const k of ['A', 'B', 'C', 'D']) {
+  s = MONO(grid, 120, 70, '数据包' + k);
+  packetG(s, s, 78, 35, 1, { 0: DATA[k], txt: k }, 0);
+}
+grid = SEC(comp, '5.2 / 5.3', '两块 / 四块数据包', '白底板（55 / 101 ×32 · 内边距 6）· 小块 20×20');
+s = MONO(grid, 150, 70, '数据包AB');
+packetG(s, s, 75, 35, 2, [{ c: DATA.A, t: 'A' }, { c: DATA.B, t: 'B' }], 0);
+s = MONO(grid, 150, 70, '数据包CD');
+packetG(s, s, 75, 35, 2, [{ c: DATA.C, t: 'C' }, { c: DATA.D, t: 'D' }], 0);
+s = TILE(grid, 200, 80, '数据包ABCD');
+packetG(s, s, 100, 40, 4, [{ c: DATA.A, t: 'A' }, { c: DATA.B, t: 'B' }, { c: DATA.C, t: 'C' }, { c: DATA.D, t: 'D' }], 0);
+grid = SEC(comp, '5.4', '规约数据包', '单块款＝包体 24 内装 46 块整体缩放 0.52');
+for (const k in SIG) {
+  s = MONO(grid, 120, 70, '数据包' + k);
+  packetG(s, s, 78, 35, 1, { 0: SIG[k], txt: '' }, 0);
+  sigmaInto(s, 78, 35, k, 0.52);
+}
+s = MONO(grid, 150, 70, '两块款（例）');
+packetG(s, s, 75, 35, 2, [{ c: SIG.A2, t: '' }, { c: SIG.B2, t: '' }], 0);
+sigmaInto(s, 62, 35, 'A2', 0.435); sigmaInto(s, 88, 35, 'B2', 0.435);
+s = TILE(grid, 210, 80, '四块款（例）');
+packetG(s, s, 105, 40, 4, [{ c: SIG.A2, t: '' }, { c: SIG.B2, t: '' }, { c: SIG.C2, t: '' }, { c: SIG.D2, t: '' }], 0);
+sigmaInto(s, 66, 40, 'A2', 0.435); sigmaInto(s, 89, 40, 'B2', 0.435);
+sigmaInto(s, 112, 40, 'C2', 0.435); sigmaInto(s, 135, 40, 'D2', 0.435);
+/* ---- 6 舞台 ---- */
+grid = SEC(comp, '6.1', '画布', '底板 1130×680 · 网格 40（每格只画右边和下边）· 底色 #f4f6fb');
+s = TILE(grid, 1130, 680, '底板＋网格（等比缩小展示）');
+E('rect', { x: 0, y: 0, width: 1130, height: 680, fill: '#f4f6fb' }, s);
+for (let x = 40; x < 1130; x += 40) E('line', { x1: x, y1: 0, x2: x, y2: 680, stroke: '#8b93aa', 'stroke-width': 1, opacity: 0.1 }, s);
+for (let y = 40; y < 680; y += 40) E('line', { x1: 0, y1: y, x2: 1130, y2: y, stroke: '#8b93aa', 'stroke-width': 1, opacity: 0.1 }, s);
+
+/* ---- 7 控制条 ---- */
+function iconStep(dir, color) { // 7.6.2 步进图标
+  const s = E('svg', { viewBox: '0 0 30 30', width: 26, height: 26 });
+  if (dir === 'prev') {
+    E('rect', { x: 5, y: 5, width: 3.5, height: 20, rx: 1, fill: color }, s);
+    E('path', { d: 'M 25 5 L 25 25 L 11 15 Z', fill: color }, s);
+  } else {
+    E('path', { d: 'M 5 5 L 5 25 L 19 15 Z', fill: color }, s);
+    E('rect', { x: 21.5, y: 5, width: 3.5, height: 20, rx: 1, fill: color }, s);
+  }
+  return s;
+}
+function iconPlay(play) {
+  const s = E('svg', { viewBox: '0 0 48 48', width: 25, height: 25 });
+  if (play) E('path', { d: 'M 19 14 L 19 34 L 35 24 Z', fill: '#fff' }, s);
+  else { E('rect', { x: 17, y: 14, width: 4.5, height: 20, rx: 1, fill: '#fff' }, s);
+         E('rect', { x: 26.5, y: 14, width: 4.5, height: 20, rx: 1, fill: '#fff' }, s); }
+  return s;
+}
+function chipHtml(letter) { // 7.2.2 字幕色块
+  const bg = letter === 'Σ' ? '#4c1d95' : DATA[letter];
+  return '<span style="display:inline-block;width:17px;height:17px;border-radius:4px;' +
+    'background:' + bg + ';color:#fff;font:700 10.5px Consolas;text-align:center;' +
+    'line-height:17px;margin:0 1px;vertical-align:-2px">' + letter + '</span>';
+}
+function rankHtml(t) { // 7.2.3 rank 标签
+  return '<span style="display:inline-block;width:39px;height:17px;border-radius:4px;' +
+    'background:' + DATA[RLETTER[Number(t[4])]] + ';color:#fff;font:700 9.5px Consolas;letter-spacing:.1px;' +
+    'text-align:center;line-height:17px;margin:0 1px;vertical-align:-2px">' + t + '</span>';
+}
+const animRoot = document.getElementById('anim');
+const comp2 = document.getElementById('comp');
+grid = SEC(comp2, '7.2', '字幕', '行高 20.25 · 字 13.5 #5f6780 · 色块 17×17 · rank 标签 39×17');
+{
+  const t = document.createElement('div'); t.className = 'tile'; grid.appendChild(t);
+  const line = document.createElement('div');
+  line.style.cssText = 'text-align:center;font-size:13.5px;line-height:20.25px;color:#5f6780;padding:12px 0';
+  line.innerHTML = '全部类型：' + chipHtml('A') + chipHtml('B') + chipHtml('C') + chipHtml('D') + chipHtml('Σ') +
+    '　' + rankHtml('rank0') + rankHtml('rank1') + rankHtml('rank2') + rankHtml('rank3');
+  t.appendChild(line);
+}
+grid = SEC(comp2, '7.3 / 7.4', '进度条 · 悬浮进度条', '轨道 1200×16 · 分段高 3（悬浮 4）· 底 #e6e9f0 填 #8b93a6');
+function mkTrack(parent, fills) {
+  const tr = document.createElement('div'); tr.className = 'track';
+  tr.style.cssText = 'width:100%;max-width:600px;margin:8px auto';
+  const n = 8, gap = 5;
+  for (let i = 0; i < n; i++) {
+    const sg = document.createElement('div'); sg.className = 'seg';
+    sg.style.left = (i * (100 / n)) + '%';
+    sg.style.width = 'calc(' + (100 / n) + '% - ' + (i === n - 1 ? 0 : gap) + 'px)';
+    const f = document.createElement('i');
+    f.style.width = (fills[i] || 0) + '%';
+    sg.appendChild(f); tr.appendChild(sg);
+  }
+  parent.appendChild(tr); return tr;
+}
+{
+  const t = document.createElement('div'); t.className = 'tile'; grid.appendChild(t);
+  mkTrack(t, [100, 100, 60, 0, 0, 0, 0, 0]);
+  const c2 = document.createElement('div'); c2.className = 'cap'; c2.textContent = '7.4：指针悬停整条变高、填充到所在段';
+  t.appendChild(c2); t.querySelector('.track').classList.add('hov');
+  mkTrack(t, [100, 40, 0, 0, 0, 0, 0, 0]);
+}
+grid = SEC(comp2, '7.5 / 7.6 / 7.7', '按钮组 · 步进按钮 · 播放按钮', '步进 30 无底圆 · 图标 26 #6b7488 · 播放 48 圆 #6b7488');
+{
+  const t = document.createElement('div'); t.className = 'tile'; grid.appendChild(t);
+  const row = document.createElement('div'); row.className = 'ctrl';
+  const b1 = document.createElement('div'); b1.className = 'sbtn'; b1.appendChild(iconStep('prev', '#6b7488'));
+  const b2 = document.createElement('div'); b2.className = 'pbtn'; b2.appendChild(iconPlay(true));
+  const b3 = document.createElement('div'); b3.className = 'sbtn'; b3.appendChild(iconStep('next', '#6b7488'));
+  row.appendChild(b1); row.appendChild(b2); row.appendChild(b3); t.appendChild(row);
+}
+grid = SEC(comp2, '7.8 / 7.9', '步进 / 播放 悬停态', '图标加深 #161b2e 放大 1.14 · 底色 #7d8699 缩放 1.07');
+{
+  const t = document.createElement('div'); t.className = 'tile'; grid.appendChild(t);
+  const row = document.createElement('div'); row.className = 'ctrl';
+  const b1 = document.createElement('div'); b1.className = 'sbtn';
+  b1.style.transform = 'scale(1.14)'; b1.appendChild(iconStep('prev', '#161b2e'));
+  const b2 = document.createElement('div'); b2.className = 'pbtn';
+  b2.style.cssText += 'background:#7d8699;transform:scale(1.07);box-shadow:0 8px 20px rgba(90,99,119,.32)';
+  b2.appendChild(iconPlay(false));
+  row.appendChild(b1); row.appendChild(b2); t.appendChild(row);
+}
+grid = SEC(comp2, '7.1', '版面', '宽 1200 · 高 112.25 · 行距 14 · 三层＝字幕 20.25＋进度 16＋按钮 48');
+const host71 = grid;
+
+/* ---- 8 计算方牌 ---- */
+grid = SEC(comp, '8.1 / 8.2', '方牌本体 · 悬停态', '56×22 · 圆角 7 · 字 11.5 #6a5f8a；悬停换色＋气泡');
+s = MONO(grid, 130, 60, '8.1 本体');
+{
+  E('rect', { x: 10, y: 8, width: 110, height: 44, rx: 8, fill: '#fff' }, s);
+  E('rect', { x: 37, y: 19, width: 56, height: 22, rx: 7, fill: '#fbfaff', stroke: '#d7d2ea', 'stroke-width': 1.2 }, s);
+  const t = E('text', { x: 65, y: 30, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+    'font-size': 11.5, 'font-weight': 600, 'letter-spacing': 0.46, fill: '#6a5f8a' }, s);
+  t.textContent = '计算';
+}
+s = MONO(grid, 130, 96, '8.2 悬停＋气泡');
+{
+  E('rect', { x: 10, y: 8, width: 110, height: 44, rx: 8, fill: '#fff' }, s);
+  E('rect', { x: 37, y: 19, width: 56, height: 22, rx: 7, fill: '#f7f3ff', stroke: '#a78bfa', 'stroke-width': 1.2,
+    filter: fShadow(s, 'gl' + (++UID), 0, 8, '#2a3352', 0.22) }, s);
+  const t = E('text', { x: 65, y: 30, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+    'font-size': 11.5, 'font-weight': 600, 'letter-spacing': 0.46, fill: '#6d28d9' }, s);
+  t.textContent = '计算';
+  E('rect', { x: 65 - 78.5, y: 49, width: 157, height: 28, rx: 10, fill: 'rgba(54,59,78,.96)',
+    filter: fShadow(s, 'gb' + (++UID), 0, 8, '#2a3352', 0.22) }, s);
+  const b = E('text', { x: 65, y: 63, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+    'font-size': 10.5, 'font-family': MONO_FONT, fill: '#fff' }, s);
+  b.textContent = 'sum · avg · max · min';
+}
+
+/* ---- 9 图例框 ---- */
+grid = SEC(comp, '9.1', '虚框', '242×68 · 内边距 11 · 圆角 14 · 白 0.72 · 边 #c1cadf 1.5 虚线 4 3');
+s = TILE(grid, 280, 110);
+{
+  const g9 = E('g', { transform: 'translate(19 21)' }, s);
+  E('rect', { x: 0, y: 0, width: 242, height: 68, rx: 14, fill: 'rgba(255,255,255,.72)',
+    stroke: '#c1cadf', 'stroke-width': 1.5, 'stroke-dasharray': '4 3' }, g9);
+  ['A', 'B', 'C', 'D'].forEach((k, i) =>
+    block(g9, 11 + i * (46 + 12), 11, 46, 'data', { letter: k }));
+}
+/* ================= 第二部分 · 动画 ================= */
+/* 帧内箭头（平头小三角，尖在终点）：动 size/色不重建 marker */
+function arrowAt(g, x, y, deg) {
+  return E('path', { d: '', fill: GRAY,
+    transform: 'translate(' + x + ' ' + y + ') rotate(' + deg + ')' }, g);
+}
+function arrowSet(p, size, color) {
+  p.setAttribute('d', 'M ' + (-size) + ' ' + (-size / 2) + ' L 0 0 L ' + (-size) + ' ' + (size / 2) + ' Z');
+  p.setAttribute('fill', color);
+}
+/* 可动画卡片：返回 {setH} —— 底边动、顶边钉死（顶边不动＝3.3/7.x 口径） */
+function animCard(svg, x, y, o) {
+  o = o || {};
+  const g = E('g', {}, svg);
+  const filt = fShadow(svg, 'ac' + (++UID), 6, 12, '#2a3352', 0.1);
+  const rect = E('rect', { x: x, y: y, width: 300, height: o.h || 170, rx: 14,
+    fill: '#fff', stroke: '#e3e7f0', 'stroke-width': 1, filter: filt }, g);
+  const color = DATA[RLETTER[o.rank || 0]];
+  E('path', { d: 'M ' + x + ' ' + (y + 36) + ' L ' + x + ' ' + (y + 14) +
+    ' A 14 14 0 0 1 ' + (x + 14) + ' ' + y + ' L ' + (x + 286) + ' ' + y +
+    ' A 14 14 0 0 1 ' + (x + 300) + ' ' + (y + 14) + ' L ' + (x + 300) + ' ' + (y + 36) + ' Z',
+    fill: color }, g);
+  const tt = E('text', { x: x + 16, y: y + 24.5, 'font-size': 15, 'font-weight': 700, fill: '#fff' }, g);
+  tt.textContent = 'rank' + (o.rank || 0);
+  if (o.badge) badge(g, x + 300 - 14 - o.badge.w, y + 9, o.badge.kind, o.badge.text);
+  return { g: g, rect: rect, setH(h) { rect.setAttribute('height', h); } };
+}
+function DSEC(num, name, note) {
+  const h = document.createElement('h3'); h.className = 'sec';
+  h.innerHTML = num + ' ' + name + (note ? '<small>' + note + '</small>' : '');
+  animRoot.appendChild(h);
+  const g = document.createElement('div'); g.className = 'grid'; animRoot.appendChild(g);
+  return g;
+}
+function dtile(grid, cap, w, h) { return TILE(grid, w || 340, h || 190, cap); }
+
+/* ---- 第 1 章 数据包 ---- */
+grid = DSEC('第 1 章 数据包', '包出现 0.3s · 飞行 1.5s · 淡出 0.6s');
+{
+  const s = dtile(grid, '1.1 包出现 · 透明度 0→100 · appearFade 0.3s · 先慢后快 · 起点前移 18');
+  cardStub(s, 4, 65, 60, 60); cardStub(s, 276, 65, 60, 60);
+  E('line', { x1: 64, y1: 95, x2: 276, y2: 95, stroke: DATA.B, 'stroke-width': 2.6, 'stroke-dasharray': '9 7' }, s);
+  const ar = arrowAt(s, 276, 95, 0); arrowSet(ar, 14.3, DATA.B);
+  const pk = packetG(s, s, 64 + 18, 95, 1, { 0: DATA.B, txt: 'B' }, 0);
+  pk.setAttribute('opacity', 0);
+  LOOP(1.5, t => pk.setAttribute('opacity', CURVES.qin(Math.min(1, t / 0.3))));
+}
+{
+  const s = dtile(grid, '1.2 包飞行 · packDur 1.5s · 匀速 · 拖尾随行');
+  cardStub(s, 4, 65, 60, 60); cardStub(s, 276, 65, 60, 60);
+  E('path', { d: arcPath([64, 95], [276, 95]), fill: 'none', stroke: DATA.B, 'stroke-width': 2.6, 'stroke-dasharray': '9 7' }, s);
+  const ar = arrowAt(s, 276, 95, 0); arrowSet(ar, 14.3, DATA.B);
+  const pk = packetG(s, s, 64, 95, 1, { 0: DATA.B, txt: 'B' }, 0);
+  const P0 = [64, 95], P1 = [276, 95], K = 0.42;
+  const C1 = [P0[0] + (P1[0] - P0[0]) * K, P0[1]], C2 = [P1[0] - (P1[0] - P0[0]) * K, P1[1]];
+  LOOP(2.3, t => {
+    const u = Math.min(1, t / 1.5), v = 1 - u;
+    const x = v * v * v * P0[0] + 3 * v * v * u * C1[0] + 3 * v * u * u * C2[0] + u * u * u * P1[0];
+    const y = v * v * v * P0[1] + 3 * v * v * u * C1[1] + 3 * v * u * u * C2[1] + u * u * u * P1[1];
+    const dx = 3 * v * v * (C1[0] - P0[0]) + 6 * v * u * (C2[0] - C1[0]) + 3 * u * u * (P1[0] - C2[0]);
+    const dy = 3 * v * v * (C1[1] - P0[1]) + 6 * v * u * (C2[1] - C1[1]) + 3 * u * u * (P1[1] - C2[1]);
+    pk.setAttribute('transform', 'translate(' + x + ' ' + y + ') rotate(' + Math.atan2(dy, dx) * 180 / Math.PI + ')');
+  });
+}
+{
+  const s = dtile(grid, '1.3 包淡出消失 · packFade 0.6s · 匀速 · 箭头尖原位');
+  cardStub(s, 4, 65, 60, 60); cardStub(s, 276, 65, 60, 60);
+  E('line', { x1: 64, y1: 95, x2: 276, y2: 95, stroke: DATA.B, 'stroke-width': 1.8, opacity: 0.42 }, s);
+  const ar = arrowAt(s, 276, 95, 0); arrowSet(ar, 9.9, DATA.B);
+  const pk = packetG(s, s, 276, 95, 1, { 0: DATA.B, txt: 'B' }, 0);
+  LOOP(2.0, t => {
+    const o = t < 0.5 ? 1 : t < 1.1 ? 1 - CURVES.lin((t - 0.5) / 0.6) : 0;
+    pk.setAttribute('opacity', Math.max(0, o));
+  });
+}
+/* ---- 第 2 章 连线 ---- */
+grid = DSEC('第 2 章 连线', '点亮 0.3s · 余辉保持 0.6s（变色 0s）· 回灰 0.3s');
+{
+  const s = dtile(grid, '2.1 转飞行态 · wireFade 0.3s · 先慢后快再慢（灰→数据色 2→2.6 · 箭头 11→14.3）');
+  cardStub(s, 4, 65, 60, 60); cardStub(s, 276, 65, 60, 60);
+  const ln = E('line', { x1: 64, y1: 95, x2: 276, y2: 95 }, s);
+  const ar = arrowAt(s, 276, 95, 0);
+  LOOP(1.8, t => {
+    const u = t < 0.9 ? 0 : t < 1.2 ? CURVES.io((t - 0.9) / 0.3) : 1;
+    ln.setAttribute('stroke', mix(GRAY, DATA.B, u));
+    ln.setAttribute('stroke-width', 2 + 0.6 * u);
+    ln.setAttribute('stroke-dasharray', (8 + u) + ' 7');
+    ln.setAttribute('stroke-dashoffset', 0);
+    arrowSet(ar, 11 + 3.3 * u, mix(GRAY, DATA.B, u));
+  });
+}
+{
+  const s = dtile(grid, '2.2 转余辉态 · 变色 0s ＋ 保持 trailHold 0.6s（亮→余辉→亮）');
+  cardStub(s, 4, 65, 60, 60); cardStub(s, 276, 65, 60, 60);
+  const ln = E('line', { x1: 64, y1: 95, x2: 276, y2: 95 }, s);
+  const ar = arrowAt(s, 276, 95, 0);
+  LOOP(2.2, t => {
+    const glow = t >= 0.9 && t < 1.5;
+    ln.setAttribute('stroke', DATA.B);
+    ln.setAttribute('stroke-width', glow ? 1.8 : 2.6);
+    ln.setAttribute('opacity', glow ? 0.42 : 1);
+    arrowSet(ar, glow ? 9.9 : 14.3, DATA.B);
+  });
+}
+{
+  const s = dtile(grid, '2.3 变回闲置态 · wireFade 0.3s · 先慢后快再慢（余辉→灰）');
+  cardStub(s, 4, 65, 60, 60); cardStub(s, 276, 65, 60, 60);
+  const ln = E('line', { x1: 64, y1: 95, x2: 276, y2: 95 }, s);
+  const ar = arrowAt(s, 276, 95, 0);
+  LOOP(2.0, t => {
+    const u = t < 0.8 ? 0 : t < 1.1 ? CURVES.io((t - 0.8) / 0.3) : 1;
+    ln.setAttribute('stroke', mix(DATA.B, GRAY, u));
+    ln.setAttribute('stroke-width', 1.8 + 0.2 * u);
+    ln.setAttribute('opacity', 1 - 0.58 * (1 - u));
+    arrowSet(ar, 9.9 + 1.1 * u, mix(DATA.B, GRAY, u));
+  });
+}
+/* ---- 第 3 章 卡片 ---- */
+grid = DSEC('第 3 章 卡片', '进发送态／复原 0.3s · 变双排／变单排 0.8s（底边动、顶边不动）');
+function sendCard(svg, color) { // 返回 set(u)：0 闲置 → 1 发送态（持久节点，不重建）
+  const g = E('g', {}, svg);
+  const filt = fShadow(svg, 'sg' + (++UID), 0, 5, color, 0.53);
+  const glow = E('rect', { x: 20, y: 15, width: 300, height: 170, rx: 14, fill: 'none',
+    stroke: color, 'stroke-width': 2.5, filter: filt, opacity: 0 }, g);
+  const base = E('rect', { x: 20, y: 15, width: 300, height: 170, rx: 14, fill: '#fff',
+    stroke: '#e3e7f0', 'stroke-width': 1 }, g);
+  E('path', { d: 'M 20 51 L 20 29 A 14 14 0 0 1 34 15 L 306 15 A 14 14 0 0 1 320 29 L 320 51 Z', fill: color }, g);
+  const tt = E('text', { x: 36, y: 39.5, 'font-size': 15, 'font-weight': 700, fill: '#fff' }, g);
+  tt.textContent = 'rank1';
+  badge(g, 278, 24, 'role', 'src');
+  block(g, 60, 87, 46, 'data', { letter: 'B' });
+  block(g, 118, 87, 46, 'empty'); block(g, 176, 87, 46, 'empty'); block(g, 234, 87, 46, 'empty');
+  return u => {
+    glow.setAttribute('opacity', u);
+    base.setAttribute('stroke', mix('#e3e7f0', color, u));
+    base.setAttribute('stroke-width', 1 + 1.5 * u);
+  };
+}
+{
+  const s = dtile(grid, '3.1 进发送态 · focusDur 0.3s · 先慢后快再慢（边框亮数据色＋外发光）');
+  const set = sendCard(s, DATA.B);
+  LOOP(1.8, t => set(t < 0.9 ? 0 : t < 1.2 ? CURVES.io((t - 0.9) / 0.3) : 1));
+}
+{
+  const s = dtile(grid, '3.2 复原 · focusDur 0.3s · 先慢后快再慢（发送态→闲置）');
+  const set = sendCard(s, DATA.B);
+  LOOP(1.8, t => set(t < 0.9 ? 1 : t < 1.2 ? 1 - CURVES.io((t - 0.9) / 0.3) : 0));
+}
+{
+  const s = dtile(grid, '3.3 变双排 · cardDur 0.8s · 先慢后快再慢 · 底边伸长 170→203');
+  const c = animCard(s, 20, 15, { rank: 1, badge: { kind: 'role', text: 'dst', w: 30 } });
+  const r1 = [];
+  for (let i = 0; i < 4; i++) r1.push(block(c.g, 0, 0, 46, i === 0 ? 'data' : 'empty', { letter: 'B' }));
+  const r2 = [];
+  for (let i = 0; i < 4; i++) r2.push(block(c.g, 0, 0, 46, 'empty'));
+  LOOP(2.0, t => {
+    const u = t < 0.6 ? 0 : t < 1.4 ? CURVES.io((t - 0.6) / 0.8) : 1;
+    c.setH(170 + 33 * u);
+    r1.forEach((b, i) => { b.childNodes[0].setAttribute('x', 40 + i * 58);
+      b.childNodes[0].setAttribute('y', 72 - 4.5 * u); b.childNodes[1].setAttribute('y', 95 - 4.5 * u); });
+    r2.forEach((b, i) => { b.setAttribute('opacity', 0); });
+  });
+}
+{
+  const s = dtile(grid, '3.4 变单排 · cardDur 0.8s · 先慢后快再慢 · 底边缩回 203→170');
+  const c = animCard(s, 20, 15, { h: 203, rank: 1, badge: { kind: 'role', text: 'dst', w: 30 } });
+  const r1 = [];
+  for (let i = 0; i < 4; i++) r1.push(block(c.g, 0, 0, 46, i === 0 ? 'data' : 'empty', { letter: 'B' }));
+  LOOP(2.0, t => {
+    const u = t < 0.6 ? 1 : t < 1.4 ? 1 - CURVES.io((t - 0.6) / 0.8) : 0;
+    c.setH(170 + 33 * u);
+    r1.forEach((b, i) => { b.childNodes[0].setAttribute('x', 40 + i * 58);
+      b.childNodes[0].setAttribute('y', 72 - 4.5 * u); b.childNodes[1].setAttribute('y', 95 - 4.5 * u); });
+  });
+}
+/* ---- 第 4 章 数据格 ---- */
+grid = DSEC('第 4 章 数据格', '显形／变隐格 0.4s·格间隔 0.15s · 转接收态／变空 0s 瞬切');
+{
+  const s = dtile(grid, '4.1 显形 · blockDur 0.4s ＋ blockGap 0.15s · 先慢后快再慢（隐格→空数据格）');
+  const c = animCard(s, 20, 15, { h: 203, rank: 1, badge: { kind: 'role', text: 'dst', w: 30 } });
+  const cells = [];
+  for (let i = 0; i < 4; i++) { const b = block(c.g, 0, 0, 46, 'empty'); b.setAttribute('opacity', 0);
+    b.childNodes[0].setAttribute('x', 40 + i * 58); b.childNodes[0].setAttribute('y', 140.5);
+    b.childNodes[1].setAttribute('y', 163.5); cells.push(b); }
+  LOOP(2.8, t => {
+    c.setH(203);
+    cells.forEach((b, i) => {
+      const u = CURVES.io(Math.max(0, Math.min(1, (t - i * 0.55) / 0.4)));
+      b.setAttribute('opacity', u);
+    });
+  });
+}
+{
+  const s = dtile(grid, '4.2 转接收态 · 变色 0s（空态⇄接收态，直接改写）');
+  const cell = block(s, 147, 72, 46, 'empty');
+  const cell2 = block(s, 147, 72, 46, 'recv'); cell2.setAttribute('opacity', 0);
+  LOOP(2.2, t => {
+    const recv = t >= 1.1;
+    cell.setAttribute('opacity', recv ? 0 : 1);
+    cell2.setAttribute('opacity', recv ? 1 : 0);
+  });
+}
+{
+  const s = dtile(grid, '4.3 变空数据格 · 变色 0s（装块⇄空态，直接改写）');
+  const a = block(s, 147, 72, 46, 'data', { letter: 'B' });
+  const b = block(s, 147, 72, 46, 'empty'); b.setAttribute('opacity', 0);
+  LOOP(2.2, t => {
+    const empty = t >= 1.1;
+    a.setAttribute('opacity', empty ? 0 : 1);
+    b.setAttribute('opacity', empty ? 1 : 0);
+  });
+}
+{
+  const s = dtile(grid, '4.4 变隐格 · blockDur 0.4s ＋ blockGap 0.15s · 先慢后快再慢（空数据格→透明）');
+  const cells = [];
+  for (let i = 0; i < 4; i++) { const b = block(s, 40 + i * 58, 72, 46, 'empty'); cells.push(b); }
+  LOOP(3.0, t => {
+    cells.forEach((b, i) => {
+      const gone = Math.max(0, Math.min(1, (t - 0.4 - i * 0.55) / 0.4));
+      b.setAttribute('opacity', 1 - CURVES.io(gone) * (t > 0.4 ? 1 : 0) + (t < 0.4 ? 0 : 0));
+      if (t < 0.4) b.setAttribute('opacity', 1);
+    });
+  });
+}
+/* ---- 第 5 章 落位与弹跳 ---- */
+grid = DSEC('第 5 章 落位与弹跳', '落位 0s · 弹跳 popDur 0.55s 过冲回弹（缩放跟冲、透明不跟冲）');
+{
+  const s = dtile(grid, '5.1 落位 · 0s（出现即落定，节奏全在弹跳）');
+  const a = block(s, 147, 72, 46, 'empty');
+  const b = block(s, 147, 72, 46, 'data', { letter: 'B' }); b.setAttribute('opacity', 0);
+  LOOP(2.0, t => {
+    const in_ = t >= 1.0;
+    a.setAttribute('opacity', in_ ? 0 : 1);
+    b.setAttribute('opacity', in_ ? 1 : 0);
+  });
+}
+{
+  const s = dtile(grid, '5.2 弹跳 · popDur 0.55s · 过冲回弹（0.35→1.16→1）');
+  const g = E('g', { transform: 'translate(170 95)' }, s);
+  const inner = E('g', {}, g);
+  block(inner, -23, -23, 46, 'data', { letter: 'B' });
+  E('rect', { x: -23, y: -23, width: 46, height: 46, rx: 8, fill: 'none', stroke: '#d5dae8',
+    'stroke-width': 1.3, 'stroke-dasharray': '4 3' }, s).setAttribute('transform', 'translate(170 95)');
+  LOOP(1.9, t => {
+    const q = Math.min(1, t / 0.55), v = CURVES.pop(q);
+    inner.setAttribute('transform', 'scale(' + v.k + ')');
+    inner.setAttribute('opacity', v.o);
+  });
+}
+/* ---- 第 6 章 融合 ---- */
+grid = DSEC('第 6 章 融合', 'fuseDur 0.42s 分相位（唤醒 0.16→上浮 0.72→淡出 0.45→换装 0.78）· 段间隔 0.5s');
+{
+  const s = dtile(grid, '6.1 融合 · 单段 0.42s · 唤醒变亮→上浮缩小渐淡→换 Σ→白光扫过');
+  const c = animCard(s, 20, 15, { h: 203, rank: 1, badge: { kind: 'role', text: 'dst', w: 30 } });
+  c.setH(203);
+  for (let i = 1; i < 4; i++) { const b1 = block(c.g, 40 + i * 58, 82.5, 46, 'empty'),
+    b2 = block(c.g, 40 + i * 58, 140.5, 46, 'empty'); }
+  const topB = block(c.g, 40, 82.5, 46, 'data', { letter: 'B' });
+  const topS = block(c.g, 40, 82.5, 46, 'data', { letter: 'Σ', sub: 'B', cnt: '2', color: SIG.B2 });
+  topS.setAttribute('opacity', 0);
+  block(c.g, 40, 140.5, 46, 'data', { letter: 'B' }); // 源格：静态示意（动画由下方活动块承担）
+  const mv = E('g', {}, s), mvIn = E('g', {}, mv);
+  const mvRect = E('rect', { x: -23, y: -23, width: 46, height: 46, rx: 8, fill: DATA.B }, mvIn);
+  const mvt = E('text', { x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+    'font-family': MONO_FONT, 'font-weight': 700, 'font-size': 15, fill: '#fff' }, mvIn);
+  mvt.textContent = 'B';
+  const g1 = E('rect', { x: -8, y: -8, width: 16, height: 16, rx: 4.4, fill: DATA.B, opacity: 0 }, mv);
+  const g2 = E('rect', { x: -4.8, y: -4.8, width: 9.6, height: 9.6, rx: 2.7, fill: DATA.B, opacity: 0 }, mv);
+  const gloss = E('rect', { x: 40, y: 97.5, width: 46, height: 46, rx: 8, fill: '#ffffff', opacity: 0 }, s);
+  const CX = 63, CY0 = 163.5, CY1 = 105.5;
+  LOOP(2.7, t => {
+    const fuse = t >= 0.9 && t < 1.32;
+    const p = fuse ? (t - 0.9) / 0.42 : (t >= 1.32 ? 1 : 0);
+    const wake = Math.min(1, p / 0.16);
+    const rise = CURVES.io(Math.max(0, Math.min(1, (p - 0.16) / (0.72 - 0.16))));
+    const op = 1 - CURVES.io(Math.max(0, Math.min(1, (p - 0.45) / 0.33)));
+    const sc = 1 - 0.64 * rise;
+    const cy = CY0 + (CY1 - CY0) * rise;
+    mvRect.setAttribute('fill', mix(DATA.B, '#ffffff', 0.30 * wake));
+    mv.setAttribute('transform', 'translate(' + CX + ' ' + cy + ') scale(' + sc + ')');
+    mv.setAttribute('opacity', Math.max(0, p >= 1 ? 0 : op));
+    g1.setAttribute('transform', 'translate(' + (CX - 23 * 0.8) + ' ' + (cy + 18 - 8) + ') scale(0.8)');
+    g2.setAttribute('transform', 'translate(' + (CX - 23 * 0.6) + ' ' + (cy + 30 - 4.8) + ') scale(0.6)');
+    g1.setAttribute('opacity', (op * 0.40 * rise).toFixed(3));
+    g2.setAttribute('opacity', (op * 0.20 * rise).toFixed(3));
+    const gs = Math.max(0.45, 0.78 - 0.23), ge = Math.min(1, 0.78 + 0.22);
+    const gp = Math.max(0, Math.min(1, (p - gs) / (ge - gs)));
+    gloss.setAttribute('opacity', (Math.sin(Math.PI * gp) * 0.9).toFixed(3));
+    const merged = p >= 0.78;
+    topB.setAttribute('opacity', merged ? 0 : 1);
+    topS.setAttribute('opacity', merged ? 1 : 0);
+  });
+}
+/* ---- 第 7 章 计算层与方牌 ---- */
+grid = DSEC('第 7 章 计算层与方牌', '伸长 growDur 0.75s · 方牌浮现/消失 calcFade 0.35s · 缩回 shrinkDur 0.7s');
+function calcCard(svg) { // 双排卡＋下排＋方牌（隐藏），返回 {setH, chip}
+  const c = animCard(svg, 20, 15, { h: 249, rank: 1, badge: { kind: 'role', text: 'dst', w: 30 } });
+  for (let i = 0; i < 4; i++) { block(c.g, 40 + i * 58, 82.5, 46, i === 0 ? 'data' : 'empty', { letter: 'B' });
+    block(c.g, 40 + i * 58, 140.5, 46, 'empty'); }
+  const chip = E('g', { transform: 'translate(170 226)' }, c.g);
+  E('rect', { x: -28, y: -11, width: 56, height: 22, rx: 7, fill: '#fbfaff',
+    stroke: '#d7d2ea', 'stroke-width': 1.2 }, chip);
+  const t = E('text', { x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+    'font-size': 11.5, 'font-weight': 600, 'letter-spacing': 0.46, fill: '#6a5f8a' }, chip);
+  t.textContent = '计算';
+  chip.setAttribute('opacity', 0);
+  return { setH: c.setH, chip: chip };
+}
+{
+  const s = dtile(grid, '7.1 出计算层 · growDur 0.75s · 先慢后快再慢（底边伸长亮出计算层）');
+  const cc = calcCard(s);
+  LOOP(2.0, t => {
+    const u = t < 0.5 ? 0 : t < 1.25 ? CURVES.io((t - 0.5) / 0.75) : 1;
+    cc.setH(203 + 46 * u); cc.chip.setAttribute('opacity', 0);
+  });
+}
+{
+  const s = dtile(grid, '7.2 显示计算方牌 · calcFade 0.35s · 匀速（透明→完全显示）');
+  const cc = calcCard(s);
+  LOOP(2.4, t => {
+    cc.setH(249);
+    cc.chip.setAttribute('opacity', t < 1.0 ? 0 : t < 1.35 ? CURVES.lin((t - 1.0) / 0.35) : 1);
+  });
+}
+{
+  const s = dtile(grid, '7.3 隐藏计算方牌 · calcFade 0.35s · 匀速（完全显示→透明）');
+  const cc = calcCard(s);
+  LOOP(2.4, t => {
+    cc.setH(249);
+    cc.chip.setAttribute('opacity', t < 1.0 ? 1 : t < 1.35 ? 1 - CURVES.lin((t - 1.0) / 0.35) : 0);
+  });
+}
+{
+  const s = dtile(grid, '7.4 隐藏计算层 · shrinkDur 0.7s · 先慢后快再慢（底边缩回 249→203）');
+  const cc = calcCard(s);
+  LOOP(2.2, t => {
+    const u = t < 0.5 ? 1 : t < 1.2 ? 1 - CURVES.io((t - 0.5) / 0.7) : 0;
+    cc.setH(203 + 46 * u); cc.chip.setAttribute('opacity', 0);
+  });
+}
+/* ---- 第 8 章 徽章 ---- */
+grid = DSEC('第 8 章 徽章', '数字跳变 0s（直接改写）');
+{
+  const s = dtile(grid, '8.1 数字跳变 · 0s · 1/4⇄2/4 直接换字');
+  const c = animCard(s, 20, 15, { rank: 1, badge: { kind: 'prog', text: '1/4', w: 36 } });
+  for (let i = 0; i < 4; i++) block(c.g, 40 + i * 58, 87, 46, i === 0 ? 'data' : 'empty', { letter: 'B' });
+  const bt = c.g.childNodes[3].childNodes[1]; // 徽章文字
+  LOOP(2.2, t => { bt.textContent = t < 1.1 ? '1/4' : '2/4'; });
+}
+/* ---- 第 9 章 播放行为 ---- */
+grid = DSEC('第 9 章 播放行为', '播放控制不是动画单元：交互演示（点按试试）');
+{
+  const tile = document.createElement('div'); tile.className = 'tile'; grid.appendChild(tile);
+  const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = '9.1 播放与暂停 · 点击切换（暂停＝冻结，再播续走）';
+  const row = document.createElement('div'); row.className = 'ctrl';
+  const b = document.createElement('div'); b.className = 'pbtn';
+  let playing = true; b.appendChild(iconPlay(true));
+  b.onclick = () => { playing = !playing; b.innerHTML = ''; b.appendChild(iconPlay(playing)); };
+  row.appendChild(b); tile.appendChild(row); tile.appendChild(cap);
+}
+{
+  const tile = document.createElement('div'); tile.className = 'tile'; grid.appendChild(tile);
+  const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = '9.2 步进 · 下一步＝跳到下一步起点 · 上一步＝回上一步起点';
+  const row = document.createElement('div'); row.className = 'ctrl';
+  const tr = document.createElement('div'); tr.className = 'track';
+  tr.style.cssText = 'width:220px;height:16px';
+  const N = 5, segs = [];
+  for (let i = 0; i < N; i++) { const sg = document.createElement('div'); sg.className = 'seg';
+    sg.style.left = (i * 20) + '%'; sg.style.width = 'calc(20% - 4px)';
+    const f = document.createElement('i'); f.style.width = '0'; sg.appendChild(f);
+    tr.appendChild(sg); segs.push(f); }
+  let cur = 0;
+  function draw() { segs.forEach((f, i) => f.style.width = i < cur ? '100%' : '0'); }
+  const b1 = document.createElement('div'); b1.className = 'sbtn'; b1.appendChild(iconStep('prev', '#6b7488'));
+  b1.onclick = () => { cur = Math.max(0, cur - 1); draw(); };
+  const b2 = document.createElement('div'); b2.className = 'sbtn'; b2.appendChild(iconStep('next', '#6b7488'));
+  b2.onclick = () => { cur = Math.min(N, cur + 1); draw(); };
+  row.appendChild(b1); row.appendChild(tr); row.appendChild(b2);
+  tile.appendChild(row); tile.appendChild(cap);
+}
+{
+  const tile = document.createElement('div'); tile.className = 'tile'; grid.appendChild(tile);
+  const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = '9.3 进度条 · 点击/拖动拨时刻（页面刻度 0–1000 换算 0–1）· 悬浮变高';
+  const tr = mkTrack(tile, [100, 100, 40, 0, 0, 0, 0, 0]);
+  tr.style.maxWidth = '300px';
+  function scrubTo(ev) {
+    const r = tr.getBoundingClientRect(), u = Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width));
+    [...tr.querySelectorAll('.seg > i')].forEach((f, i, arr) => {
+      const segU = u * arr.length - i;
+      f.style.width = Math.max(0, Math.min(1, segU)) * 100 + '%';
+    });
+  }
+  tr.onmousedown = ev => { scrubTo(ev);
+    const mv = e2 => scrubTo(e2), up = () => { document.removeEventListener('mousemove', mv);
+      document.removeEventListener('mouseup', up); };
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up); };
+  tile.appendChild(cap);
+}
+{
+  const tile = document.createElement('div'); tile.className = 'tile'; grid.appendChild(tile);
+  const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = '9.4 循环与速度 · 速度倍率作用于整页时间轴（大于 1 更快）';
+  const tr = document.createElement('div');
+  tr.style.cssText = 'position:relative;height:10px;background:#e6e9f0;border-radius:5px;margin:16px 20px';
+  const dot = document.createElement('div');
+  dot.style.cssText = 'position:absolute;top:-3px;width:16px;height:16px;border-radius:8px;background:' + DATA.A;
+  tr.appendChild(dot); tile.appendChild(tr);
+  const row = document.createElement('div'); row.className = 'ctrl'; row.style.height = '34px';
+  let speed = 1;
+  [0.5, 1, 2].forEach(v => { const b = document.createElement('div');
+    b.className = 'sbtn'; b.style.width = '40px'; b.style.font = '700 13px Consolas';
+    b.style.color = '#6b7488'; b.textContent = v + '×';
+    b.onclick = () => { speed = v; [...row.children].forEach(c => c.style.color = '#6b7488'); b.style.color = '#161b2e'; };
+    if (v === 1) b.style.color = '#161b2e';
+    row.appendChild(b); });
+  tile.appendChild(row); tile.appendChild(cap);
+  let last = null, x = 0;
+  (function run(now) { if (last != null) { x = (x + (now - last) / 1000 * speed * 140) % 280; }
+    last = now; dot.style.left = (x - 8) + 'px'; requestAnimationFrame(run); })(performance.now());
+}
+
+/* ---- 7.1 版面（整条控制条，按容器宽缩放） ---- */
+{
+  const host = host71;
+  const tile = document.createElement('div'); tile.className = 'tile';
+  tile.style.cssText = 'grid-column:1/-1;overflow:hidden';
+  const inner = document.createElement('div');
+  inner.style.cssText = 'width:1200px;transform-origin:0 0;padding:8px 0';
+  const line = document.createElement('div');
+  line.style.cssText = 'text-align:center;font-size:13.5px;line-height:20.25px;color:#5f6780';
+  line.innerHTML = '字幕层：' + rankHtml('rank0') + ' 把 ' + chipHtml('A') + chipHtml('B') + chipHtml('C') + chipHtml('D') + ' 发给 ' + rankHtml('rank1');
+  inner.appendChild(line);
+  const tr = mkTrack(inner, [100, 100, 55, 0, 0, 0, 0, 0, 0, 0]);
+  tr.style.maxWidth = '1200px'; tr.style.margin = '14px auto';
+  const row = document.createElement('div'); row.className = 'ctrl';
+  const b1 = document.createElement('div'); b1.className = 'sbtn'; b1.appendChild(iconStep('prev', '#6b7488'));
+  const b2 = document.createElement('div'); b2.className = 'pbtn'; b2.appendChild(iconPlay(true));
+  const b3 = document.createElement('div'); b3.className = 'sbtn'; b3.appendChild(iconStep('next', '#6b7488'));
+  row.appendChild(b1); row.appendChild(b2); row.appendChild(b3); inner.appendChild(row);
+  tile.appendChild(inner); host.appendChild(tile); host.style.gridTemplateColumns = '100%';
+  function fit() { inner.style.transform = 'scale(' + Math.min(1, tile.clientWidth / 1220) + ')'; }
+  fit(); window.addEventListener('resize', fit);
+}
+
+/* 启动全部循环 */
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
