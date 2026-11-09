@@ -1,6 +1,12 @@
 # CommonVisual · 项目长期约定
 
-NCCL 八个原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducescatter/alltoall）的 Web 可视化。内容源 `分布式通信原语详解.md` **只作参考、不作标准**：NCCL 底层算法（ring 等）、「本项目映射」场景表都不是本站口径——它与实现冲突时以实现为准（见 AGENTS 四「边界与禁区」）。**注意这条只管参考稿**：规范稿（`docs/组件文档.md`、`docs/术语表.md`、`docs/规范/*`、`docs/visual.html`、`docs/steps.html`）反过来是上游，与实现冲突时只准提报评审、不得自行改稿（见本文件「协作约定」第一条）。**开工前读仓库根 `AGENTS.md`**（验证方法论）；结构看 `README.md` 目录树，规范清单与关系图看 `docs/specs.html`。本文件记「项目是什么、有哪些约定和坑」。
+NCCL 八个原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducescatter/alltoall）的 Web 可视化。内容源 `v1/分布式通信原语详解.md` **只作参考、不作标准**：NCCL 底层算法（ring 等）、「本项目映射」场景表都不是本站口径——它与实现冲突时以实现为准（见 AGENTS 四「边界与禁区」）。**注意这条只管参考稿**：规范稿（`组件文档.md`、`v1/docs/术语表.md`、`v1/docs/规范/*`、`v1/docs/visual.html`、`v1/docs/steps.html`）反过来是上游，与实现冲突时只准提报评审、不得自行改稿（见本文件「协作约定」第一条）。**开工前读 `v1/AGENTS.md`**（验证方法论）；结构看 `v1/README.md` 目录树，规范清单与关系图看 `v1/docs/specs.html`。本文件记「项目是什么、有哪些约定和坑」。
+
+## 仓库布局（2026-11-09 重排，动手前先认这个）
+- **仓库根 = 新一代规范本身**，只有四份：`组件文档.md`、`特效动画.md`、`剧本.md`、`gallery.html`（组件×动画画谱，零依赖，双击即看）。这四份是**在写的新稿**，与 v1 那些同名旧稿不是一回事。
+- **`v1/` = 历史实现与历史规范**：8 原语页 + `index.html`、`assets/`、`src/`、`docs/`、`tools/`、`package.json`、`node_modules`、`README.md`、`AGENTS.md`、`分布式通信原语详解.md`。相对路径全在 v1 内自洽（页面挂 `assets/…`、docs 挂 `../assets/…`），**根目录不提供任何站点入口**——要看动画进 `v1/`。
+- **命令一律在 `v1/` 里跑**：`cd v1 && node tools/verify.mjs <页> --no-shot`。根目录跑 `node tools/…` 找不到文件。
+- `.workbuddy/`、`.zcode/`、`.git/`、`.gitignore` 留在根（记忆与计划属于整个仓库，不随代码退役）。
 
 ## 文件构成（2026-11-07 起入库）
 - `MEMORY.md`（本文件）= 长期约定与坑，人工提炼，每次开工先读。
