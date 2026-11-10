@@ -2,10 +2,15 @@
 
 NCCL 八原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducescatter/alltoall）的 Web 可视化。两代并存：根目录在写新一代规范，`v1/` 是历史实现与历史规范。
 
+## 处理流程（2026-11-10 定，每题都走）
+1. **照规范参数画，画面是否合理？** 不合理 → 反思当初为什么这么设 → 是共性（同一类口径错）就全量扫同类再统一改；不是共性就改当前这处。
+2. **实现是否与规范一致？** 不一致 → 直接改；再归因：能力问题（认）还是规范问题（含糊/缺基准/换算口径未定义）→ 规范问题就回到第 1 步。
+记录成表：`问题 | 轴1 | 轴2 | 共性? | 处置`，只报这两轴。
+
 ## 仓库布局（2026-11-09 重排）
 - 根目录只有四份：`组件文档.md`、`特效动画.md`、`剧本.md`、`gallery.html`（组件×动画画谱，零依赖单文件，双击即看）。根目录不提供站点入口。
 - `v1/` = 历史实现 + 历史规范（8 原语页、`assets/`、`docs/`、`tools/`），相对路径在 v1 内自洽。命令都在 v1 里跑：`cd v1 && node tools/verify.mjs <页> --no-shot`。
-- `.workbuddy/`、`.zcode/` 留在根（记忆与计划属于整个仓库）。
+- `.workbuddy/`、`.zcode/` 留在根。
 
 ## 口径（用户定死，最易踩）
 - **只有根目录三份 md 是规范**；`v1/` 里的一切（含 `v1/assets/*` 的实现）**都是参考，不是标准**。冲突以根目录文档为准。
@@ -15,12 +20,13 @@ NCCL 八原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducescatt
 ## gallery.html（当前主战场）
 - `SEC()` 先插 `h3.sec` 再插 `.note` 再插 `.grid` —— 取样本网格要循环找 `.grid`，`nextElementSibling` 会拿到说明条。
 - **样片必须 1:1**：`.tile svg{width:100%}` 会把小件放大到列宽，小件一律自建 tile + 内联 `width:Npx`；大画布挂 `.grid.wide`（800 封顶）。
-- 画法函数：`block / slotRow / badge / cardG / packetG / wireCard`；第二部分用 `LOOP(period, render)` 驱动。
-- 画谱不引 assets，数值全部照抄文档 —— **改文档数值后要手动同步画谱**。说明条在 h3 的 `<small>` 和 `.note` 各出现一次（是否删其一待定）。
+- 画法：`block / slotRow / badge / cardG / packetG / wireCard`；动画区用 `LOOP(period, render)`。
+- 画谱不引 assets，数值照抄文档 —— **改文档数值后要手动同步画谱**。说明条在 h3 的 `<small>` 和 `.note` 各出现一次（是否删其一待定）。
 
 ## 几何判据（代码看不出来、跨会话仍成立）
 - **空白区中线 = 卡顶 + 95**（标题栏 36 + 空白区 118÷2；数据格 72 + 块 46÷2 同值）。4.x 连线 y 按此，曾误算 103 整组偏高 8px。
 - 4.x 卡与卡的空当（横 180 / 纵 160）**文档没定义**，取自 v1，只为比例像真页。
+- **5.4 包内 Σ 文字的缩放分母是包体 24（0.52），不是小块 20**：单块/两块/四块包同字号，别再随小块缩一次（缩了同一文字出现两种大小）。
 - **上下标偏移是写死的像素**（2026-11-10 用户裁定）：46 基准下 下标 9.3 字下移 3.2、上标 7.8 字上移 6.8，**两者都相对主文字基线**（术语表口径）。tspan 的 dy 逐段累计，所以上标写成 `-(3.2+6.8) = -10`。旧稿 5.1/19.2 是「em × 父级 15」的错值 —— SVG 里 em 按该 tspan **自身**字号换算（实测 0.34em@9.3 = 3.162）。画谱 `const SCRIPT = { sub: 3.2, sup: 6.8 }`，实测 Σ 基线 40 → 下标 43.2 / 上标 33.2，与规范 1:1。
 - 弧线（4.1）：控制点沿主轴摆，两端等高时四点共线退化成直线，样片两端必须有高差。
 - 4.7 余辉仍是虚线 8 7，只降宽度 1.8、不透明度 0.42。
@@ -41,9 +47,9 @@ NCCL 八原语（gather/scatter/broadcast/reduce/allgather/allreduce/reducescatt
 ## 验证与台账
 - v1 用例清单与探针：`v1/docs/test-cases.html` + `v1/tools/probes/`；现状一律实跑为准，本文件不记红绿。
 - 缺陷台账 `v1/docs/bugs.md` 是历史台账（记当时真实路径，别改写成新路径）。
-- 画谱没有探针，验收靠「多档窗口量渲染尺寸 + 放大截图看观感 + 零 JS 报错」。
+- 画谱无探针：多档窗口量尺寸 + 放大截图 + 零报错。
 
 ## 分支与协作
-- 单 worktree（本目录 = main）。`remote.origin.url` 本身是 SSH，**直接 `git push`**（HTTPS 被代理挡，见用户级 MEMORY）。`.workbuddy/memory/` 已入库。
+- 单 worktree（本目录 = main）。`remote.origin.url` 本身是 SSH，**直接 `git push`**（HTTPS 被代理挡，见用户级 MEMORY）；memory 已入库。
 - 本文件只留判据：grep / `ls` / 读表能得到的数字与清单都不抄（抄了必漂）。
 - 多个问题一次说清、标优先级、给目标态 + 参照 + 验收标准；每次收尾按 P0/P1/P2 提改进，P0 当场固化。

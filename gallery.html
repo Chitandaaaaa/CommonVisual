@@ -256,8 +256,9 @@ function arcPath(sx, sy, tx, ty, k) {
          tx + ' ' + (ty - dy * k) + ', ' + tx + ' ' + ty;
 }
 /* 数据包（5.1–5.4）：dir = 弧度制朝向，拖尾永远拖在来路上。
-   sig 有值时包内装的是规约块：单块款在包体上写 Σ（文字整体缩 24/46），
-   两块/四块款把小块画成规约数据块（文字随块缩 20/46）。 */
+   sig 有值时包内装的是规约块：按 5.4「文字复用 2.3.2 并整体缩放 0.52」，单块、两块、
+   四块款一律 24/46 —— 分母是**包体 24**，不随包内小块 20 再缩一次（否则同一种 Σ 文字
+   在单块包里 7.8、两块/四块包里 6.5，同一物件出现两种字号）。 */
 function packetG(svg, g, x, y, kind, colors, deg, sig) {
   const r = E('g', { transform: 'translate(' + x + ' ' + y + ') rotate(' + (deg || 0) + ')' }, g);
   const glow = fShadow(svg, 'pg' + (++UID), 0, 8, '#2a3352', 0.22);
@@ -289,7 +290,7 @@ function packetG(svg, g, x, y, kind, colors, deg, sig) {
     for (let i = 0; i < n; i++) {
       const bx = -bwAll / 2 + i * (bw + gap);
       E('rect', { x: bx, y: -10, width: bw, height: 20, rx: 5, fill: colors[i].c }, r);
-      if (colors[i].key) { sigText(r, bx + bw / 2, 0, colors[i].key, 20 / 46); continue; }
+      if (colors[i].key) { sigText(r, bx + bw / 2, 0, colors[i].key, 24 / 46); continue; }
       const t = E('text', { x: bx + bw / 2, y: 0, 'text-anchor': 'middle',
         'dominant-baseline': 'central', 'font-family': MONO_FONT, 'font-weight': 700,
         'font-size': 11, fill: '#fff' }, r);
