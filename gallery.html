@@ -42,7 +42,7 @@
 <body>
 <h1>组件与动画总览</h1>
 <div class="sub">按《组件文档》每个二级标题（含全部类型）画一份静态样本；按《特效动画》每个二级标题跑一个循环演示。
-零依赖：不引用 assets/ 任何代码，数值全部照抄两份文档，file:// 直接打开。</div>
+零依赖：不引用 v1/assets/ 任何代码，数值全部照抄两份文档，file:// 直接打开。</div>
 
 <div class="part" id="part-c"><h2>第一部分 · 组件（画自《组件文档》）</h2></div>
 <div id="comp"></div>
@@ -93,7 +93,7 @@ function fShadow(svg, id, dy, blur, color, op) { // 投影/外发光滤镜
   E('feDropShadow', { dx: 0, dy: dy, stdDeviation: blur / 2, 'flood-color': color, 'flood-opacity': op }, f);
   return 'url(#' + id + ')';
 }
-/* 拖尾滤镜：与 assets/parts/stage.js 的 fTrail 同构 —— feDropShadow 只在块外补一层软影，
+/* 拖尾滤镜：与 v1/assets/parts/stage.js 的 fTrail 同构 —— feDropShadow 只在块外补一层软影，
    块本体不透明度由浓度直接给。早期这里用 feGaussianBlur + feFuncA(0.14) 作用在色块上，
    alpha 被乘成 0.14，再乘浓度 0.55 → 实际 0.077，拖尾几乎看不见（2026-11-09 修）。 */
 function fTrail(svg, id, std, op) {
@@ -137,11 +137,11 @@ function tick(now) {
   requestAnimationFrame(tick);
 }
 
-/* 上下标基线倍数（2.2.2 / 2.3.2）：下标 9.3 字下移 0.34 个自身字高，上标 7.8 字上移 1.28 个。
-   这两个倍数是 SVG 里 `dy: .34em / -1.28em` 的真实语义 —— em 按**该 tspan 自身**的 font-size 换算，
-   46 基准下即 3.16 / 9.98（上标是相对下标基线的位移，净值 6.82 落在 Σ 右上）。
-   文档那两行写的 5.1 / 19.2 是把 em 按父级 15 换算的结果，照它画上标会飞出色块顶（提报待评审）。 */
-const SCRIPT = { sub: 0.34, sup: 1.28 };
+/* 上下标基线偏移（2.2.2 / 2.3.2）：规范值是写死的像素（46 基准），不用 em/倍数。
+   SVG 里 tspan 的 dy 用 em 时按**该 tspan 自身**的 font-size 换算，不按父级 ——
+   旧稿把 0.34em / 1.28em 乘父级 15 得到 5.1 / 19.2，照它画上标会飞出色块顶（已修）。
+   tspan 的 dy 是逐段累计的，所以上标那段要写「两段之和」：-(3.2 + 6.8) = -10。 */
+const SCRIPT = { sub: 3.2, sup: 6.8 };
 
 /* ================= 部件画法 ================= */
 /* 数据块（2.1–2.6）：state = data|empty|recv|dim；letter/sub/cnt/color 可选 */
@@ -154,10 +154,10 @@ function block(g, x, y, size, st, o) {
     'dominant-baseline': 'central', 'font-family': MONO_FONT, 'font-weight': 700,
     'font-size': s * 15 / 46 }, r);
   /* 上下标（2.2.2 / 2.3.2）：字号 9.3 / 7.8（46 基准）等比缩；
-     基线偏移走《上下标基线倍数》——dy 取「相对脚本自身字号的倍数」，不写死像素。 */
-  function span(node, s2, emdy, w) {
+     基线偏移走《上下标基线偏移》——写死的像素，同样按块尺寸等比缩。 */
+  function span(node, s2, dyPx, w) { // dyPx = 46 基准的像素位移
     const fs = s * s2 / 46;
-    const sp = E('tspan', { 'font-size': fs, dy: emdy * fs,
+    const sp = E('tspan', { 'font-size': fs, dy: dyPx * s / 46,
       'font-weight': w || 700 }, node); return sp;
   }
   if (st === 'data' || st === 'dim') {
@@ -168,7 +168,7 @@ function block(g, x, y, size, st, o) {
     tx.appendChild(document.createTextNode(o.letter || 'A'));
     if (o.sub != null) span(tx, 9.3, SCRIPT.sub).textContent = o.sub;
     if (o.cnt != null) {
-      const sp = span(tx, 7.8, -SCRIPT.sup, 600);
+      const sp = span(tx, 7.8, -(SCRIPT.sub + SCRIPT.sup), 600);
       sp.textContent = o.cnt;
     }
   } else if (st === 'empty') {
@@ -232,7 +232,7 @@ function cardG(svg, g, o) {
   return r;
 }
 /* 箭头 marker（4.1.2：平头小三角 —— 尖是一小段平边、底边贴满外框左边）
-   路径与 assets/parts/payload.js 的 CV.payload.marker 同一份：viewBox 8 宽，
+   路径与 v1/assets/parts/payload.js 的 CV.payload.marker 同一份：viewBox 8 宽，
    size = 箭头大小（11 / 14.3 / 9.9 ＝ 5.5 × 线宽）。 */
 function markerOf(svg, color, size) {
   const id = 'ar' + (++UID);
@@ -280,8 +280,8 @@ function packetG(svg, g, x, y, kind, colors, deg, sig) {
     /* 按《组件文档》5.2.4 / 5.2.5：拖尾「复用 5.1.3 / 5.1.4」＝单方块 16 / 9.6，
        只改浓度 0.48 / 0.24，退后 24 / 46。底色取第一块的数据色（见 0.1）。
        注意：按此画法拖尾几乎整块被白底板挡住，只露出前缘几像素——
-       与 assets/parts/payload.js 的「整组小块 ×0.8 / ×0.6」实现不一致，
-       差异已登记 docs/bugs.md，待评审后再定画法。 */
+       与 v1/assets/parts/payload.js 的「整组小块 ×0.8 / ×0.6」实现不一致，
+       差异已登记 v1/docs/bugs.md，待评审后再定画法。 */
     trail(46, 9.6, 2.7, 0.24, 3, colors[0].c);
     trail(24, 16, 4.4, 0.48, 4, colors[0].c);
     E('rect', { x: -bwAll / 2 - pad, y: -16, width: bwAll + pad * 2, height: 32, rx: 10,
@@ -305,9 +305,9 @@ function sigText(parent, cx, cy, key, k) {
   const tx = E('text', { x: cx, y: cy, 'text-anchor': 'middle', 'dominant-baseline': 'central',
     'font-family': MONO_FONT, 'font-weight': 700, 'font-size': 15 * k, fill: '#fff' }, parent);
   tx.appendChild(document.createTextNode('Σ'));
-  E('tspan', { 'font-size': 9.3 * k, dy: SCRIPT.sub * 9.3 * k, 'font-weight': 700 },
+  E('tspan', { 'font-size': 9.3 * k, dy: SCRIPT.sub * k, 'font-weight': 700 },
     tx).textContent = key[0];
-  E('tspan', { 'font-size': 7.8 * k, dy: -SCRIPT.sup * 7.8 * k, 'font-weight': 600 },
+  E('tspan', { 'font-size': 7.8 * k, dy: -(SCRIPT.sub + SCRIPT.sup) * k, 'font-weight': 600 },
     tx).textContent = key[1];
   return tx;
 }
@@ -384,13 +384,13 @@ for (const k of ['A', 'B', 'C', 'D']) {
   s = MONO(grid, 80, 80, k);
   block(s, 17, 17, 46, 'data', { letter: k });
 }
-grid = SEC(comp, '2.2', '分片数据块', '字母＋下标片号（下标 9.3 · 基线偏移 0.34 自身字高）');
+grid = SEC(comp, '2.2', '分片数据块', '字母＋下标片号（下标 9.3 · 基线下移 3.2）');
 const SUBS = ['A0','A1','A2','A3','B0','B1','B2','B3','C0','C1','C2','C3','D0','D1','D2','D3'];
 for (const key of SUBS) {
   s = MONO(grid, 80, 80, key);
   block(s, 17, 17, 46, 'data', { letter: key[0], sub: key[1] });
 }
-grid = SEC(comp, '2.3', '规约数据块', 'Σ＋下标列字母＋上标份数（下标 9.3 · 上标 7.8/600 · 偏移 0.34 / 1.28 自身字高）');
+grid = SEC(comp, '2.3', '规约数据块', 'Σ＋下标列字母＋上标份数（下标 9.3 下移 3.2 · 上标 7.8/600 上移 6.8）');
 for (const k in SIG) {
   s = MONO(grid, 80, 80, k);
   block(s, 17, 17, 46, 'data', { letter: 'Σ', sub: k[0], cnt: k[1], color: SIG[k] });
