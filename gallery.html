@@ -142,6 +142,8 @@ function tick(now) {
    旧稿把 0.34em / 1.28em 乘父级 15 得到 5.1 / 19.2，照它画上标会飞出色块顶（已修）。
    tspan 的 dy 是逐段累计的，所以上标那段要写「两段之和」：-(3.2 + 6.8) = -10。 */
 const SCRIPT = { sub: 3.2, sup: 6.8 };
+/* 规约数据包的文字缩放（5.4.4）：直接取规范值 0.52，不再写成 24÷46 这类派生算式。 */
+const SIG_SCALE = 0.52;
 
 /* ================= 部件画法 ================= */
 /* 数据块（2.1–2.6）：state = data|empty|recv|dim；letter/sub/cnt/color 可选 */
@@ -256,7 +258,7 @@ function arcPath(sx, sy, tx, ty, k) {
          tx + ' ' + (ty - dy * k) + ', ' + tx + ' ' + ty;
 }
 /* 数据包（5.1–5.4）：dir = 弧度制朝向，拖尾永远拖在来路上。
-   sig 有值时包内装的是规约块：文字按 5.4.1 缩放 0.52，单块 / 两块 / 四块款同一套字号。 */
+   sig 有值时包内装的是规约块：文字按 5.4.4 缩放 0.52，单块 / 两块 / 四块款同一套字号。 */
 function packetG(svg, g, x, y, kind, colors, deg, sig) {
   const r = E('g', { transform: 'translate(' + x + ' ' + y + ') rotate(' + (deg || 0) + ')' }, g);
   const glow = fShadow(svg, 'pg' + (++UID), 0, 8, '#2a3352', 0.22);
@@ -267,7 +269,7 @@ function packetG(svg, g, x, y, kind, colors, deg, sig) {
   if (kind === 1) {
     trail(46, 9.6, 2.7, 0.28, 3); trail(24, 16, 4.4, 0.55, 4);
     E('rect', { x: -12, y: -12, width: 24, height: 24, rx: 6.5, fill: colors[0], filter: glow }, r);
-    if (sig) sigText(r, 0, 0, sig, 24 / 46);
+    if (sig) sigText(r, 0, 0, sig, SIG_SCALE);
     else {
       const t = E('text', { x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'central',
         'font-family': MONO_FONT, 'font-weight': 700, 'font-size': 13, fill: '#fff' }, r);
@@ -286,7 +288,7 @@ function packetG(svg, g, x, y, kind, colors, deg, sig) {
     for (let i = 0; i < n; i++) {
       const bx = -bwAll / 2 + i * (bw + gap);
       E('rect', { x: bx, y: -10, width: bw, height: 20, rx: 5, fill: colors[i].c }, r);
-      if (colors[i].key) { sigText(r, bx + bw / 2, 0, colors[i].key, 24 / 46); continue; }
+      if (colors[i].key) { sigText(r, bx + bw / 2, 0, colors[i].key, SIG_SCALE); continue; }
       const t = E('text', { x: bx + bw / 2, y: 0, 'text-anchor': 'middle',
         'dominant-baseline': 'central', 'font-family': MONO_FONT, 'font-weight': 700,
         'font-size': 11, fill: '#fff' }, r);
@@ -295,16 +297,17 @@ function packetG(svg, g, x, y, kind, colors, deg, sig) {
   }
   return r;
 }
-/* 规约块文字（2.3.2 的 Σ＋下标列字母＋上标份数，按块尺寸等比缩）：k = 块尺寸 ÷ 46。
-   key 形如 'A2'（列字母 + 份数）。与 block() 的字号/偏移同一套算式，
-   只是不画方块（方块由包体或小块自己给）。 */
+/* 规约块文字（2.3.2 的 Σ＋下标列字母＋上标份数，k = 缩放倍数）：key 形如 'A2'（列字母 + 份数）。
+   与 block() 的字号/偏移同一套算式，只是不画方块（方块由包体或小块自己给）。
+   数值统一保留 3 位，别让 0.52 × 15 写出 7.800000000000001。 */
+const r3 = v => Math.round(v * 1000) / 1000;
 function sigText(parent, cx, cy, key, k) {
   const tx = E('text', { x: cx, y: cy, 'text-anchor': 'middle', 'dominant-baseline': 'central',
-    'font-family': MONO_FONT, 'font-weight': 700, 'font-size': 15 * k, fill: '#fff' }, parent);
+    'font-family': MONO_FONT, 'font-weight': 700, 'font-size': r3(15 * k), fill: '#fff' }, parent);
   tx.appendChild(document.createTextNode('Σ'));
-  E('tspan', { 'font-size': 9.3 * k, dy: SCRIPT.sub * k, 'font-weight': 700 },
+  E('tspan', { 'font-size': r3(9.3 * k), dy: r3(SCRIPT.sub * k), 'font-weight': 700 },
     tx).textContent = key[0];
-  E('tspan', { 'font-size': 7.8 * k, dy: -(SCRIPT.sub + SCRIPT.sup) * k, 'font-weight': 600 },
+  E('tspan', { 'font-size': r3(7.8 * k), dy: r3(-(SCRIPT.sub + SCRIPT.sup) * k), 'font-weight': 600 },
     tx).textContent = key[1];
   return tx;
 }
@@ -522,7 +525,7 @@ pktGrid(grid);
 s = pktTile(grid, '数据包ABCD');
 packetG(s, s, PX3, PY, 4, [{ c: DATA.A, t: 'A' }, { c: DATA.B, t: 'B' },
   { c: DATA.C, t: 'C' }, { c: DATA.D, t: 'D' }], 0);
-grid = SEC(comp, '5.4', '规约数据包', '包体 / 底板 / 拖尾同 5.1–5.3 · 小块换规约数据块（Σ＋下标＋上标）· 文字按 5.4.1 缩放 0.52');
+grid = SEC(comp, '5.4', '规约数据包', '包体 / 白底板 / 小块 / 拖尾复用 5.1–5.3 · 底色见 0.3 · 文字按 5.4.4 缩放 0.52');
 pktGrid(grid);
 for (const k in SIG) {
   s = pktTile(grid, '数据包' + k);
